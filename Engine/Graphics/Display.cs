@@ -296,13 +296,13 @@ public static class Display
 
     public static long GetGpuMemoryUsage()
     {
-        long num = 8 * BackbufferSize.X * BackbufferSize.Y;
+        long gpuMemoryBytes = 8 * BackbufferSize.X * BackbufferSize.Y;
         foreach (var resource in GraphicsResource.resources)
         {
-            num += resource.GetGpuMemoryUsage();
+            gpuMemoryBytes += resource.GetGpuMemoryUsage();
         }
 
-        return num;
+        return gpuMemoryBytes;
     }
 
     public static void Clear(Color? color, float? depth = null, int? stencil = null)
@@ -320,12 +320,12 @@ public static class Display
     ) where T : struct
     {
         shader.VerifyNotDisposed();
-        var num = Marshal.SizeOf<T>();
+        var elementSize = Marshal.SizeOf<T>();
 
-        if (vertexDeclaration.VertexStride / num * num != vertexDeclaration.VertexStride)
+        if (vertexDeclaration.VertexStride / elementSize * elementSize != vertexDeclaration.VertexStride)
         {
             throw new InvalidOperationException(
-                $"Vertex is not an integer multiple of array element, vertex stride is {vertexDeclaration.VertexStride}, array element is {num}."
+                $"Vertex is not an integer multiple of array element, vertex stride is {vertexDeclaration.VertexStride}, array element is {elementSize}."
             );
         }
 
@@ -348,11 +348,11 @@ public static class Display
     ) where T : struct
     {
         shader.VerifyNotDisposed();
-        var num = Marshal.SizeOf<T>();
-        if (vertexDeclaration.VertexStride / num * num != vertexDeclaration.VertexStride)
+        var elementSize = Marshal.SizeOf<T>();
+        if (vertexDeclaration.VertexStride / elementSize * elementSize != vertexDeclaration.VertexStride)
         {
             throw new InvalidOperationException(
-                $"Vertex is not an integer multiple of array element, vertex stride is {vertexDeclaration.VertexStride}, array element is {num}."
+                $"Vertex is not an integer multiple of array element, vertex stride is {vertexDeclaration.VertexStride}, array element is {elementSize}."
             );
         }
 

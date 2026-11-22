@@ -50,7 +50,7 @@ public static class BevelledShapeRenderer
         PathRenderer.GeneratePathNormals(_tmpPositions, [], true, _tmpNormals);
         if (bevelColor != Color.Transparent && bevelSize != 0f)
         {
-            var num = MathUtils.Abs(bevelSize);
+            var bevelWidth = MathUtils.Abs(bevelSize);
             var directionToLight = Vector2.Normalize(bevelSize > 0f ? new Vector2(-1f, -2f) : -new Vector2(-1f, -2f));
             _tmpPathPoints.Count = 0;
             GeneratePathPoints(
@@ -58,7 +58,7 @@ public static class BevelledShapeRenderer
                 0f,
                 0f,
                 0f,
-                num,
+                bevelWidth,
                 bevelColor,
                 bevelColor,
                 bevelColor,
@@ -72,7 +72,7 @@ public static class BevelledShapeRenderer
             _tmpPositions2.Count = 0;
             for (var i = 0; i < _tmpNormals.Count; i++)
             {
-                _tmpPositions2.Add(_tmpPathPoints[i].Position + _tmpNormals[i] * num);
+                _tmpPositions2.Add(_tmpPathPoints[i].Position + _tmpNormals[i] * bevelWidth);
             }
 
             _tmpIndices.Count = 0;
@@ -94,11 +94,11 @@ public static class BevelledShapeRenderer
             }
 
             _tmpPathPoints.Count = 0;
-            var outerRadiusR = num + antialiasSize;
+            var outerRadiusR = bevelWidth + antialiasSize;
             GeneratePathPoints(
                 _tmpPositions,
                 0f,
-                num,
+                bevelWidth,
                 0f,
                 outerRadiusR,
                 bevelColor,
@@ -422,27 +422,27 @@ public static class BevelledShapeRenderer
 
         while (true)
         {
-            var num = _tmpIndicesTriangulation.Count - 1;
-            ushort num2;
-            ushort num3;
-            ushort num4;
+            var candidateIndex = _tmpIndicesTriangulation.Count - 1;
+            ushort previousVertex;
+            ushort currentVertex;
+            ushort nextVertex;
             while (true)
             {
-                if (num >= 3)
+                if (candidateIndex >= 3)
                 {
-                    num2 = _tmpIndicesTriangulation[
-                        (num - 1 + _tmpIndicesTriangulation.Count) % _tmpIndicesTriangulation.Count];
-                    num3 = _tmpIndicesTriangulation[num];
-                    num4 = _tmpIndicesTriangulation[(num + 1) % _tmpIndicesTriangulation.Count];
-                    var vector = source[num2];
-                    var vector2 = source[num3];
-                    var vector3 = source[num4];
-                    if (Vector2.Cross(vector2 - vector, vector3 - vector2) >= 0f)
+                    previousVertex = _tmpIndicesTriangulation[
+                        (candidateIndex - 1 + _tmpIndicesTriangulation.Count) % _tmpIndicesTriangulation.Count];
+                    currentVertex = _tmpIndicesTriangulation[candidateIndex];
+                    nextVertex = _tmpIndicesTriangulation[(candidateIndex + 1) % _tmpIndicesTriangulation.Count];
+                    var previousPosition = source[previousVertex];
+                    var currentPosition = source[currentVertex];
+                    var nextPosition = source[nextVertex];
+                    if (Vector2.Cross(currentPosition - previousPosition, nextPosition - currentPosition) >= 0f)
                     {
                         break;
                     }
 
-                    num--;
+                    candidateIndex--;
                     continue;
                 }
 
@@ -454,10 +454,10 @@ public static class BevelledShapeRenderer
                 return;
             }
 
-            destination.Add(num2);
-            destination.Add(num3);
-            destination.Add(num4);
-            _tmpIndicesTriangulation.RemoveAt(num);
+            destination.Add(previousVertex);
+            destination.Add(currentVertex);
+            destination.Add(nextVertex);
+            _tmpIndicesTriangulation.RemoveAt(candidateIndex);
         }
     }
 
@@ -478,8 +478,8 @@ public static class BevelledShapeRenderer
                 var index2 = loop ? (i + 1) % points.Count : MathUtils.Min(i + 1, points.Count - 1);
                 var value = points[index];
                 var v = -Vector2.Perpendicular(Vector2.Normalize(points[index2].Position - value.Position));
-                var num = directional * Vector2.Dot(v, directionToLight);
-                var color = new Color(new Vector3(num + ambient));
+                var directionalBrightness = directional * Vector2.Dot(v, directionToLight);
+                var color = new Color(new Vector3(directionalBrightness + ambient));
                 value.InnerColorL *= color;
                 value.InnerColorR *= color;
                 value.OuterColorL *= color;
@@ -558,8 +558,8 @@ public static class BevelledShapeRenderer
         DynamicArray<Vector2> result
     )
     {
-        var num = loop ? points.Count : points.Count - 2;
-        for (var i = 0; i < num; i++)
+        var cornerCount = loop ? points.Count : points.Count - 2;
+        for (var i = 0; i < cornerCount; i++)
         {
             var point = points[i];
             var point2 = points[(i + 1) % points.Count];
@@ -588,46 +588,48 @@ public static class BevelledShapeRenderer
         DynamicArray<Vector2> result
     )
     {
-        var vector = p0 - p1;
-        var vector2 = p2 - p1;
-        var num = vector.Length();
-        var num2 = vector2.Length();
-        var num3 = MathUtils.Min(num * 0.49f, num2 * 0.49f, radius);
-        if (num3 > 0f)
+        var previousEdge = p0 - p1;
+        var nextEdge = p2 - p1;
+        var previousEdgeLength = previousEdge.Length();
+        var nextEdgeLength = nextEdge.Length();
+        var tangentDistance = MathUtils.Min(previousEdgeLength * 0.49f, nextEdgeLength * 0.49f, radius);
+        if (tangentDistance > 0f)
         {
-            var vector3 = vector / num;
-            var vector4 = vector2 / num2;
-            var vector5 = p1 + vector3 * num3;
-            var vector6 = p1 + vector4 * num3;
-            var v = p1 - vector5;
-            var v2 = p1 - vector6;
-            var l = new Line2(vector5, vector5 + Vector2.Perpendicular(v));
-            var l2 = new Line2(vector6, vector6 + Vector2.Perpendicular(v2));
-            var vector7 = Line2.Intersection(l, l2);
-            if (vector7.HasValue)
+            var towardPrevious = previousEdge / previousEdgeLength;
+            var towardNext = nextEdge / nextEdgeLength;
+            var arcStart = p1 + towardPrevious * tangentDistance;
+            var arcEnd = p1 + towardNext * tangentDistance;
+            var v = p1 - arcStart;
+            var v2 = p1 - arcEnd;
+            var l = new Line2(arcStart, arcStart + Vector2.Perpendicular(v));
+            var l2 = new Line2(arcEnd, arcEnd + Vector2.Perpendicular(v2));
+            var arcCenter = Line2.Intersection(l, l2);
+            if (arcCenter.HasValue)
             {
-                var num4 = Vector2.Distance(vector7.Value, vector5);
+                var arcRadius = Vector2.Distance(arcCenter.Value, arcStart);
                 if (count < 0)
                 {
-                    var num5 = 0.25f;
-                    var num6 = (num4 + bevelSize) * pixelsPerUnit;
-                    var num7 = MathUtils.Acos(1f - num5 / num6);
-                    count = !float.IsNaN(num7)
-                        ? (int)MathUtils.Clamp(MathUtils.Ceiling(((float)Math.PI / num7 - 4f) / 4f), 0f, 50f)
+                    var maxPixelError = 0.25f;
+                    var radiusInPixels = (arcRadius + bevelSize) * pixelsPerUnit;
+                    var halfStepAngle = MathUtils.Acos(1f - maxPixelError / radiusInPixels);
+                    count = !float.IsNaN(halfStepAngle)
+                        ? (int)MathUtils.Clamp(MathUtils.Ceiling(((float)Math.PI / halfStepAngle - 4f) / 4f), 0f, 50f)
                         : 0;
                 }
 
-                var num8 = Vector2.Angle(vector5 - vector7.Value, Vector2.UnitY);
-                var num9 = MathUtils.NormalizeAngle(Vector2.Angle(vector6 - vector7.Value, Vector2.UnitY) - num8);
-                result.Add(vector5);
+                var startAngle = Vector2.Angle(arcStart - arcCenter.Value, Vector2.UnitY);
+                var sweepAngle =
+                    MathUtils.NormalizeAngle(Vector2.Angle(arcEnd - arcCenter.Value, Vector2.UnitY) - startAngle);
+                result.Add(arcStart);
                 for (var i = 1; i <= count; i++)
                 {
-                    var x = num8 + num9 * i / (count + 1);
-                    var item = vector7.Value + new Vector2(num4 * MathUtils.Sin(x), num4 * MathUtils.Cos(x));
+                    var x = startAngle + sweepAngle * i / (count + 1);
+                    var item = arcCenter.Value +
+                               new Vector2(arcRadius * MathUtils.Sin(x), arcRadius * MathUtils.Cos(x));
                     result.Add(item);
                 }
 
-                result.Add(vector6);
+                result.Add(arcEnd);
                 return;
             }
         }

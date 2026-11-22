@@ -47,35 +47,38 @@ public class DispenserBlock : CubeBlock, IElectricElementBlock
     )
     {
         var forward = eyeForward;
-        var num = Vector3.Dot(forward, Vector3.UnitZ);
-        var num2 = Vector3.Dot(forward, Vector3.UnitX);
-        var num3 = Vector3.Dot(forward, -Vector3.UnitZ);
-        var num4 = Vector3.Dot(forward, -Vector3.UnitX);
-        var num5 = Vector3.Dot(forward, Vector3.UnitY);
-        var num6 = Vector3.Dot(forward, -Vector3.UnitY);
-        var num7 = MathUtils.Min(MathUtils.Min(num, num2, num3), MathUtils.Min(num4, num5, num6));
+        var positiveZAlignment = Vector3.Dot(forward, Vector3.UnitZ);
+        var positiveXAlignment = Vector3.Dot(forward, Vector3.UnitX);
+        var negativeZAlignment = Vector3.Dot(forward, -Vector3.UnitZ);
+        var negativeXAlignment = Vector3.Dot(forward, -Vector3.UnitX);
+        var positiveYAlignment = Vector3.Dot(forward, Vector3.UnitY);
+        var negativeYAlignment = Vector3.Dot(forward, -Vector3.UnitY);
+        var minimumAlignment = MathUtils.Min(
+            MathUtils.Min(positiveZAlignment, positiveXAlignment, negativeZAlignment),
+            MathUtils.Min(negativeXAlignment, positiveYAlignment, negativeYAlignment)
+        );
         var direction = 0;
-        if (num.CloseTo(num7))
+        if (positiveZAlignment.CloseTo(minimumAlignment))
         {
             direction = 0;
         }
-        else if (num2.CloseTo(num7))
+        else if (positiveXAlignment.CloseTo(minimumAlignment))
         {
             direction = 1;
         }
-        else if (num3.CloseTo(num7))
+        else if (negativeZAlignment.CloseTo(minimumAlignment))
         {
             direction = 2;
         }
-        else if (num4.CloseTo(num7))
+        else if (negativeXAlignment.CloseTo(minimumAlignment))
         {
             direction = 3;
         }
-        else if (num5.CloseTo(num7))
+        else if (positiveYAlignment.CloseTo(minimumAlignment))
         {
             direction = 4;
         }
-        else if (num6.CloseTo(num7))
+        else if (negativeYAlignment.CloseTo(minimumAlignment))
         {
             direction = 5;
         }

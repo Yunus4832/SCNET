@@ -39,46 +39,46 @@ public class ComponentAutoJump : Component, IUpdateable
                 if (vector != Vector2.Zero && !_collidedWithBody)
                 {
                     var v = Vector2.Normalize(vector);
-                    var vector2 = _componentCreature.ComponentBody.Matrix.Right * lastWalkOrder.Value.X +
-                                  _componentCreature.ComponentBody.Matrix.Forward * lastWalkOrder.Value.Y;
-                    var v2 = Vector2.Normalize(new Vector2(vector2.X, vector2.Z));
-                    var flag = false;
+                    var walkDirection = _componentCreature.ComponentBody.Matrix.Right * lastWalkOrder.Value.X +
+                                        _componentCreature.ComponentBody.Matrix.Forward * lastWalkOrder.Value.Y;
+                    var v2 = Vector2.Normalize(new Vector2(walkDirection.X, walkDirection.Z));
+                    var hasObstacleDirection = false;
                     var v3 = Vector3.Zero;
-                    var vector3 = Vector3.Zero;
-                    var vector4 = Vector3.Zero;
+                    var firstSideProbe = Vector3.Zero;
+                    var secondSideProbe = Vector3.Zero;
                     if (Vector2.Dot(v2, -v) > 0.6f)
                     {
                         if (Vector2.Dot(v2, Vector2.UnitX) > 0.6f)
                         {
                             v3 = _componentCreature.ComponentBody.Position + Vector3.UnitX;
-                            vector3 = v3 - Vector3.UnitZ;
-                            vector4 = v3 + Vector3.UnitZ;
-                            flag = true;
+                            firstSideProbe = v3 - Vector3.UnitZ;
+                            secondSideProbe = v3 + Vector3.UnitZ;
+                            hasObstacleDirection = true;
                         }
                         else if (Vector2.Dot(v2, -Vector2.UnitX) > 0.6f)
                         {
                             v3 = _componentCreature.ComponentBody.Position - Vector3.UnitX;
-                            vector3 = v3 - Vector3.UnitZ;
-                            vector4 = v3 + Vector3.UnitZ;
-                            flag = true;
+                            firstSideProbe = v3 - Vector3.UnitZ;
+                            secondSideProbe = v3 + Vector3.UnitZ;
+                            hasObstacleDirection = true;
                         }
                         else if (Vector2.Dot(v2, Vector2.UnitY) > 0.6f)
                         {
                             v3 = _componentCreature.ComponentBody.Position + Vector3.UnitZ;
-                            vector3 = v3 - Vector3.UnitX;
-                            vector4 = v3 + Vector3.UnitX;
-                            flag = true;
+                            firstSideProbe = v3 - Vector3.UnitX;
+                            secondSideProbe = v3 + Vector3.UnitX;
+                            hasObstacleDirection = true;
                         }
                         else if (Vector2.Dot(v2, -Vector2.UnitY) > 0.6f)
                         {
                             v3 = _componentCreature.ComponentBody.Position - Vector3.UnitZ;
-                            vector3 = v3 - Vector3.UnitX;
-                            vector4 = v3 + Vector3.UnitX;
-                            flag = true;
+                            firstSideProbe = v3 - Vector3.UnitX;
+                            secondSideProbe = v3 + Vector3.UnitX;
+                            hasObstacleDirection = true;
                         }
                     }
 
-                    if (flag)
+                    if (hasObstacleDirection)
                     {
                         var cellContents = _subsystemTerrain.Terrain.GetCellContents(
                             Terrain.ToCell(v3.X),
@@ -86,14 +86,14 @@ public class ComponentAutoJump : Component, IUpdateable
                             Terrain.ToCell(v3.Z)
                         );
                         var cellContents2 = _subsystemTerrain.Terrain.GetCellContents(
-                            Terrain.ToCell(vector3.X),
-                            Terrain.ToCell(vector3.Y),
-                            Terrain.ToCell(vector3.Z)
+                            Terrain.ToCell(firstSideProbe.X),
+                            Terrain.ToCell(firstSideProbe.Y),
+                            Terrain.ToCell(firstSideProbe.Z)
                         );
                         var cellContents3 = _subsystemTerrain.Terrain.GetCellContents(
-                            Terrain.ToCell(vector4.X),
-                            Terrain.ToCell(vector4.Y),
-                            Terrain.ToCell(vector4.Z)
+                            Terrain.ToCell(secondSideProbe.X),
+                            Terrain.ToCell(secondSideProbe.Y),
+                            Terrain.ToCell(secondSideProbe.Z)
                         );
                         var cellContents4 = _subsystemTerrain.Terrain.GetCellContents(
                             Terrain.ToCell(v3.X),
@@ -101,14 +101,14 @@ public class ComponentAutoJump : Component, IUpdateable
                             Terrain.ToCell(v3.Z)
                         );
                         var cellContents5 = _subsystemTerrain.Terrain.GetCellContents(
-                            Terrain.ToCell(vector3.X),
-                            Terrain.ToCell(vector3.Y) + 1,
-                            Terrain.ToCell(vector3.Z)
+                            Terrain.ToCell(firstSideProbe.X),
+                            Terrain.ToCell(firstSideProbe.Y) + 1,
+                            Terrain.ToCell(firstSideProbe.Z)
                         );
                         var cellContents6 = _subsystemTerrain.Terrain.GetCellContents(
-                            Terrain.ToCell(vector4.X),
-                            Terrain.ToCell(vector4.Y) + 1,
-                            Terrain.ToCell(vector4.Z)
+                            Terrain.ToCell(secondSideProbe.X),
+                            Terrain.ToCell(secondSideProbe.Y) + 1,
+                            Terrain.ToCell(secondSideProbe.Z)
                         );
                         var block = WorldContentBinding.For(Project).Catalog.Blocks[cellContents];
                         var block2 = WorldContentBinding.For(Project).Catalog.Blocks[cellContents2];

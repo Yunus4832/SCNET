@@ -104,15 +104,17 @@ public class SliderWidget : CanvasWidget
     public override void ArrangeOverride()
     {
         base.ArrangeOverride();
-        var num = LayoutDirection == LayoutDirection.Horizontal
+        var trackLength = LayoutDirection == LayoutDirection.Horizontal
             ? _canvasWidget.ActualSize.X
             : _canvasWidget.ActualSize.Y;
-        var num2 = LayoutDirection == LayoutDirection.Horizontal ? _tabWidget.ActualSize.X : _tabWidget.ActualSize.Y;
-        var num3 = MaxValue > MinValue ? (Value - MinValue) / (MaxValue - MinValue) : 0f;
+        var thumbLength = LayoutDirection == LayoutDirection.Horizontal
+            ? _tabWidget.ActualSize.X
+            : _tabWidget.ActualSize.Y;
+        var fraction = MaxValue > MinValue ? (Value - MinValue) / (MaxValue - MinValue) : 0f;
         if (LayoutDirection == LayoutDirection.Horizontal)
         {
             var zero = Vector2.Zero;
-            zero.X = num3 * (num - num2);
+            zero.X = fraction * (trackLength - thumbLength);
             zero.Y = MathUtils.Max((ActualSize.Y - _tabWidget.ActualSize.Y) / 2f, 0f);
             _canvasWidget.SetWidgetPosition(_tabWidget, zero);
         }
@@ -120,7 +122,7 @@ public class SliderWidget : CanvasWidget
         {
             var zero2 = Vector2.Zero;
             zero2.X = MathUtils.Max(ActualSize.X - _tabWidget.ActualSize.X, 0f) / 2f;
-            zero2.Y = num3 * (num - num2);
+            zero2.Y = fraction * (trackLength - thumbLength);
             _canvasWidget.SetWidgetPosition(_tabWidget, zero2);
         }
 
@@ -129,10 +131,12 @@ public class SliderWidget : CanvasWidget
 
     public override void Update()
     {
-        var num = LayoutDirection == LayoutDirection.Horizontal
+        var trackLength = LayoutDirection == LayoutDirection.Horizontal
             ? _canvasWidget.ActualSize.X
             : _canvasWidget.ActualSize.Y;
-        var num2 = LayoutDirection == LayoutDirection.Horizontal ? _tabWidget.ActualSize.X : _tabWidget.ActualSize.Y;
+        var thumbLength = LayoutDirection == LayoutDirection.Horizontal
+            ? _tabWidget.ActualSize.X
+            : _tabWidget.ActualSize.Y;
         if (Input.Tap.HasValue && HitTestGlobal(Input.Tap.Value) == _tabWidget)
         {
             if (Input.Press != null)
@@ -149,12 +153,12 @@ public class SliderWidget : CanvasWidget
                 var value = Value;
                 if (LayoutDirection == LayoutDirection.Horizontal)
                 {
-                    var f = (vector.X - num2 / 2f) / (num - num2);
+                    var f = (vector.X - thumbLength / 2f) / (trackLength - thumbLength);
                     Value = MathUtils.Lerp(MinValue, MaxValue, f);
                 }
                 else
                 {
-                    var f2 = (vector.Y - num2 / 2f) / (num - num2);
+                    var f2 = (vector.Y - thumbLength / 2f) / (trackLength - thumbLength);
                     Value = MathUtils.Lerp(MinValue, MaxValue, f2);
                 }
 
@@ -171,9 +175,9 @@ public class SliderWidget : CanvasWidget
             _dragStartPoint = null;
         }
 
-        var flag = _dragStartPoint.HasValue && IsEnabledGlobal && IsVisibleGlobal;
-        SlidingCompleted = IsSliding && !flag;
-        IsSliding = flag;
+        var isDragging = _dragStartPoint.HasValue && IsEnabledGlobal && IsVisibleGlobal;
+        SlidingCompleted = IsSliding && !isDragging;
+        IsSliding = isDragging;
         if (_dragStartPoint.HasValue)
         {
             Input.Clear();

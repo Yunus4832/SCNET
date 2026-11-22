@@ -79,7 +79,7 @@ public class StarfishBlockPresentation(StarfishBlock block, BlockPresentationCat
 
     public override void Initialize()
     {
-        var num = 63;
+        var textureSlot = 63;
         var model = ContentManager.Get<Model>("Models/Starfish");
         var starfishNode = model.FindNode("Starfish")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(starfishNode);
@@ -105,9 +105,9 @@ public class StarfishBlockPresentation(StarfishBlock block, BlockPresentationCat
                         Matrix.CreateRotationX(zero.X) *
                         Matrix.CreateRotationY(zero.Y) *
                         Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-                var num2 = 4 * i + j;
-                BlockMeshes[num2] = new BlockMesh();
-                BlockMeshes[num2].AppendModelPrimitive(
+                var meshIndex = 4 * i + j;
+                BlockMeshes[meshIndex] = new BlockMesh();
+                BlockMeshes[meshIndex].AppendModelPrimitive(
                     starfishNode.RequireMesh().Primitives[0],
                     nodeAbsoluteTransform * m,
                     false,
@@ -138,7 +138,9 @@ public class StarfishBlockPresentation(StarfishBlock block, BlockPresentationCat
             false,
             Color.White
         );
-        StandaloneBlockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(num % 16 / 16f, num / 16 / 16f, 0f));
+        StandaloneBlockMesh.TransformTextureCoordinates(
+            Matrix.CreateTranslation(textureSlot % 16 / 16f, textureSlot / 16 / 16f, 0f)
+        );
         base.Initialize();
     }
 }

@@ -50,12 +50,12 @@ public static class BlocksManager
     )
     {
         environmentData ??= _defaultEnvironmentData;
-        var num = LightingManager.GetBrightness(environmentData.Light);
+        var lightBrightness = LightingManager.GetBrightness(environmentData.Light);
         var v = new Vector4(color);
-        v.X *= num;
-        v.Y *= num;
-        v.Z *= num;
-        var flag = v == Vector4.One;
+        v.X *= lightBrightness;
+        v.Y *= lightBrightness;
+        v.Z *= lightBrightness;
+        var useOriginalColor = v == Vector4.One;
         var texturedBatch3D = primitivesRenderer.TexturedBatch(
             texture,
             true,
@@ -65,7 +65,7 @@ public static class BlocksManager
             null,
             SamplerState.PointClamp
         );
-        var flag2 = false;
+        var applyPerspectiveDivide = false;
         var m = !environmentData.ViewProjectionMatrix.HasValue
             ? matrix
             : matrix * environmentData.ViewProjectionMatrix.Value;
@@ -76,7 +76,7 @@ public static class BlocksManager
 
         if (m.M14 != 0f || m.M24 != 0f || m.M34 != 0f || m.M44.UncloseTo(1f))
         {
-            flag2 = true;
+            applyPerspectiveDivide = true;
         }
 
         if (blockMesh is null)
@@ -95,19 +95,19 @@ public static class BlocksManager
         for (var i = 0; i < count; i++)
         {
             var blockMeshVertex = array[i];
-            if (flag2)
+            if (applyPerspectiveDivide)
             {
                 var v2 = new Vector4(blockMeshVertex.Position, 1f);
                 Vector4.Transform(ref v2, ref m, out v2);
-                var num2 = 1f / v2.W;
-                blockMeshVertex.Position = new Vector3(v2.X * num2, v2.Y * num2, v2.Z * num2);
+                var inverseW = 1f / v2.W;
+                blockMeshVertex.Position = new Vector3(v2.X * inverseW, v2.Y * inverseW, v2.Z * inverseW);
             }
             else
             {
                 Vector3.Transform(ref blockMeshVertex.Position, ref m, out blockMeshVertex.Position);
             }
 
-            if (flag || blockMeshVertex.IsEmissive)
+            if (useOriginalColor || blockMeshVertex.IsEmissive)
             {
                 triangleVertices.Array[count4++] = new VertexPositionColorTexture(
                     blockMeshVertex.Position,
@@ -141,12 +141,12 @@ public static class BlocksManager
 
     internal static Vector4 TextureSlotToTextureCoords(int slot)
     {
-        var num = slot % 16;
-        var num2 = slot / 16;
-        var x = (num + 0.001f) / 16f;
-        var y = (num2 + 0.001f) / 16f;
-        var z = (num + 1 - 0.001f) / 16f;
-        var w = (num2 + 1 - 0.001f) / 16f;
+        var slotX = slot % 16;
+        var slotY = slot / 16;
+        var x = (slotX + 0.001f) / 16f;
+        var y = (slotY + 0.001f) / 16f;
+        var z = (slotX + 1 - 0.001f) / 16f;
+        var w = (slotY + 1 - 0.001f) / 16f;
         return new Vector4(x, y, z, w);
     }
 
@@ -156,12 +156,12 @@ public static class BlocksManager
         var slotTexCoords = new Vector4[totalCount];
         for (var i = 0; i < totalCount; i++)
         {
-            var num = i % textureSlotCount;
-            var num2 = i / textureSlotCount;
-            var x = (num + 0.001f) / textureSlotCount;
-            var y = (num2 + 0.001f) / textureSlotCount;
-            var z = (num + 1 - 0.001f) / textureSlotCount;
-            var w = (num2 + 1 - 0.001f) / textureSlotCount;
+            var slotX = i % textureSlotCount;
+            var slotY = i / textureSlotCount;
+            var x = (slotX + 0.001f) / textureSlotCount;
+            var y = (slotY + 0.001f) / textureSlotCount;
+            var z = (slotX + 1 - 0.001f) / textureSlotCount;
+            var w = (slotY + 1 - 0.001f) / textureSlotCount;
             slotTexCoords[i] = new Vector4(x, y, z, w);
         }
 

@@ -19,8 +19,8 @@ public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior
                 delegate(int newVoltageLevel)
                 {
                     var data2 = ButtonBlock.SetVoltageLevel(data, newVoltageLevel);
-                    var num = Terrain.ReplaceData(value, data2);
-                    if (num == value)
+                    var updatedValue = Terrain.ReplaceData(value, data2);
+                    if (updatedValue == value)
                     {
                         return;
                     }
@@ -47,8 +47,8 @@ public class SubsystemButtonBlockBehavior : SubsystemBlockBehavior
                 voltageLevel,
                 delegate(int newVoltageLevel)
                 {
-                    var num = ButtonBlock.SetVoltageLevel(data, newVoltageLevel);
-                    if (num == data)
+                    var updatedData = ButtonBlock.SetVoltageLevel(data, newVoltageLevel);
+                    if (updatedData == data)
                     {
                         return;
                     }

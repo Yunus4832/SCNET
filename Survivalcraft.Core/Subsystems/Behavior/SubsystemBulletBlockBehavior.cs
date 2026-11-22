@@ -25,8 +25,8 @@ public class SubsystemBulletBlockBehavior : SubsystemBlockBehavior
 
         var cellValue =
             _subsystemTerrain.Terrain.GetCellValue(cellFace.Value.X, cellFace.Value.Y, cellFace.Value.Z);
-        var num = Terrain.ExtractContents(cellValue);
-        var obj = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var hitContents = Terrain.ExtractContents(cellValue);
+        var obj = WorldContentBinding.For(Project).Catalog.Blocks[hitContents];
         if (worldItem.Velocity.Length() > 30f)
         {
             ComponentCharacter? player = null;
@@ -49,15 +49,15 @@ public class SubsystemBulletBlockBehavior : SubsystemBlockBehavior
             return result;
         }
 
-        var num2 = 1f;
+        var impactFactor = 1f;
         var minDistance = 8f;
         if (bulletType == BulletBlock.BulletType.BuckshotBall)
         {
-            num2 = 0.25f;
+            impactFactor = 0.25f;
             minDistance = 4f;
         }
 
-        if (!(_random.Float(0f, 1f) < num2))
+        if (!(_random.Float(0f, 1f) < impactFactor))
         {
             return result;
         }

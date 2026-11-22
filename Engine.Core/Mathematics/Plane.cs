@@ -50,14 +50,14 @@ public struct Plane : IEquatable<Plane>
 
     public static Plane Normalize(Plane p)
     {
-        var num = p.Normal.Length();
-        if (!(num > 0f))
+        var normalLength = p.Normal.Length();
+        if (!(normalLength > 0f))
         {
             return new Plane(Vector3.UnitX, 0f);
         }
 
-        var num2 = 1f / num;
-        return new Plane(p.Normal * num2, p.D * num2);
+        var inverseLength = 1f / normalLength;
+        return new Plane(p.Normal * inverseLength, p.D * inverseLength);
     }
 
     public static bool operator ==(Plane p1, Plane p2)

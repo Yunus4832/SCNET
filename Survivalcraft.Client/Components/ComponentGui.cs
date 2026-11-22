@@ -375,20 +375,20 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
     public void UpdateSidePanelsAnimation()
     {
-        var num = MathUtils.Min(Time.FrameDuration, 0.1f);
-        var num2 = AreTouchControlsVisible ? 0f : 1f;
-        var x = num2 - _sidePanelsFactor;
+        var frameDelta = MathUtils.Min(Time.FrameDuration, 0.1f);
+        var targetPanelFactor = AreTouchControlsVisible ? 0f : 1f;
+        var x = targetPanelFactor - _sidePanelsFactor;
         if (MathUtils.Abs(x) > 0.01f)
         {
             _sidePanelsFactor += MathUtils.Clamp(
-                12f * MathUtils.PowSign(x, 0.75f) * num,
+                12f * MathUtils.PowSign(x, 0.75f) * frameDelta,
                 0f - MathUtils.Abs(x),
                 MathUtils.Abs(x)
             );
         }
         else
         {
-            _sidePanelsFactor = num2;
+            _sidePanelsFactor = targetPanelFactor;
         }
 
         var safeAreaPadding = HudSafeAreaManager.GetEffectivePadding(
@@ -414,8 +414,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         if (_modalPanelAnimationData?.Factor < 1f)
         {
             var factor = _modalPanelAnimationData.Factor;
-            var num = 0.5f + 0.5f * MathUtils.Pow(1f - factor, 0.1f);
-            var num2 = 0.5f + 0.5f * MathUtils.Pow(factor, 0.1f);
+            var oldPanelScale = 0.5f + 0.5f * MathUtils.Pow(1f - factor, 0.1f);
+            var newPanelScale = 0.5f + 0.5f * MathUtils.Pow(factor, 0.1f);
             var s = 1f - factor;
             if (_modalPanelAnimationData.OldWidget != null)
             {
@@ -423,7 +423,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                 _modalPanelAnimationData.OldWidget.ColorTransform = Color.White * s;
                 _modalPanelAnimationData.OldWidget.RenderTransform =
                     Matrix.CreateTranslation((0f - actualSize.X) / 2f, (0f - actualSize.Y) / 2f, 0f) *
-                    Matrix.CreateScale(num, num, 1f) *
+                    Matrix.CreateScale(oldPanelScale, oldPanelScale, 1f) *
                     Matrix.CreateTranslation(actualSize.X / 2f, actualSize.Y / 2f, 0f);
             }
 
@@ -436,7 +436,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             _modalPanelAnimationData.NewWidget.ColorTransform = Color.White * factor;
             _modalPanelAnimationData.NewWidget.RenderTransform =
                 Matrix.CreateTranslation((0f - actualSize2.X) / 2f, (0f - actualSize2.Y) / 2f, 0f) *
-                Matrix.CreateScale(num2, num2, 1f) *
+                Matrix.CreateScale(newPanelScale, newPanelScale, 1f) *
                 Matrix.CreateTranslation(actualSize2.X / 2f, actualSize2.Y / 2f, 0f);
         }
         else
@@ -484,12 +484,12 @@ public class ComponentGui : Component, IUpdateable, IDrawable
             labelWidget2.Text = _message.SmallText;
             labelWidget.IsVisible = !string.IsNullOrEmpty(_message.LargeText);
             labelWidget2.IsVisible = !string.IsNullOrEmpty(_message.SmallText);
-            var num = (float)MathUtils.Min(
+            var messageOpacity = (float)MathUtils.Min(
                 MathUtils.Saturate(2.0 * (realTime - _message.StartTime)),
                 MathUtils.Saturate(2.0 * (_message.StartTime + _message.Duration - realTime))
             );
-            labelWidget.Color = new Color(num, num, num, num);
-            labelWidget2.Color = new Color(num, num, num, num);
+            labelWidget.Color = new Color(messageOpacity, messageOpacity, messageOpacity, messageOpacity);
+            labelWidget2.Color = new Color(messageOpacity, messageOpacity, messageOpacity, messageOpacity);
             if (Time.RealTime > _message.StartTime + _message.Duration)
             {
                 _message = null;
@@ -801,8 +801,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
         if ((_mountButtonWidget.IsClicked || playerInput.ToggleMount))
         {
-            var flag = componentRider.Mount != null;
-            if (!flag && _lastResolvedContextAction != null)
+            var isMounted = componentRider.Mount != null;
+            if (!isMounted && _lastResolvedContextAction != null)
             {
                 try
                 {
@@ -815,7 +815,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
                 if (!WorldRuntimeContext.IsProjectActive(Project)) { return; }
             }
-            else if (flag)
+            else if (isMounted)
             {
                 componentRider.StartDismounting();
             }
@@ -828,7 +828,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
                 }
             }
 
-            if (componentRider.Mount != null != flag)
+            if (componentRider.Mount != null != isMounted)
             {
                 DisplaySmallMessage(
                     componentRider.Mount != null
@@ -869,8 +869,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
         {
             var inventory = ComponentCharacter.ComponentMiner.Inventory;
             var activeSlotIndex = inventory.ActiveSlotIndex;
-            var num = Terrain.ExtractContents(inventory.GetSlotValue(activeSlotIndex));
-            if (Modding.Blocks.WorldContentBinding.For(Project).Catalog.Blocks[num].Editable)
+            var heldContents = Terrain.ExtractContents(inventory.GetSlotValue(activeSlotIndex));
+            if (Modding.Blocks.WorldContentBinding.For(Project).Catalog.Blocks[heldContents].Editable)
             {
                 var editInventoryContext =
                     new BlockEditInventoryItemContext(inventory, activeSlotIndex, ComponentCharacter);
@@ -879,7 +879,7 @@ public class ComponentGui : Component, IUpdateable, IDrawable
 
                 if (!editInventoryContext.Cancel && !editInventoryContext.Handled)
                 {
-                    var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
+                    var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(heldContents);
                     for (var i = 0;
                          i < blockBehaviors.Length &&
                          !blockBehaviors[i]
@@ -1040,8 +1040,8 @@ public class ComponentGui : Component, IUpdateable, IDrawable
     {
         var inventory = ComponentCharacter.ComponentMiner.Inventory;
         var activeSlotIndex = inventory.ActiveSlotIndex;
-        var num = Terrain.ExtractContents(inventory.GetSlotValue(activeSlotIndex));
-        return Modding.Blocks.WorldContentBinding.For(Project).Catalog.Blocks[num].Editable;
+        var heldContents = Terrain.ExtractContents(inventory.GetSlotValue(activeSlotIndex));
+        return Modding.Blocks.WorldContentBinding.For(Project).Catalog.Blocks[heldContents].Editable;
     }
 
     public class ModalPanelAnimationData

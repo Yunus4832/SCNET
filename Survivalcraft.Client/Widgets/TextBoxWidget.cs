@@ -340,8 +340,8 @@ public class TextBoxWidget : Widget
                 : Text.Remove(CaretPosition, 1);
         }
 
-        var num = Font.CalculateCharacterPosition(Text, 0, new Vector2(FontScale), FontSpacing);
-        _scroll = MathUtils.Max(0, num - ActualSize.X);
+        var initialCaretX = Font.CalculateCharacterPosition(Text, 0, new Vector2(FontScale), FontSpacing);
+        _scroll = MathUtils.Max(0, initialCaretX - ActualSize.X);
     }
 
     private void DeleteCharacterAtCaret()
@@ -449,9 +449,9 @@ public class TextBoxWidget : Widget
         }
 
         var displayCaretPosition = CaretPosition + _compositionCaretPosition;
-        var num = CalculateCaretX(displayText, displayCaretPosition);
+        var caretX = CalculateCaretX(displayText, displayCaretPosition);
 
-        var v = new Vector2(0f, ActualSize.Y / 2f) + new Vector2(num - _scroll, 0f);
+        var v = new Vector2(0f, ActualSize.Y / 2f) + new Vector2(caretX - _scroll, 0f);
 
         if (v.X < 0f)
         {
@@ -463,7 +463,7 @@ public class TextBoxWidget : Widget
             _scroll += v.X - ActualSize.X + 1f;
         }
 
-        UpdateTextInputRectangle(num);
+        UpdateTextInputRectangle(caretX);
         if (!(MathUtils.Remainder(Time.RealTime - _focusStartTime, 0.5) < 0.25))
         {
             return;

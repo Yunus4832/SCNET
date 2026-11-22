@@ -123,14 +123,14 @@ public sealed class BlockContentCatalog : IDisposable
     // 新增高度渲染cube
     public int DamageItem(int value, int damageCount)
     {
-        var num = Terrain.ExtractContents(value);
-        var block = Blocks[num];
+        var contents = Terrain.ExtractContents(value);
+        var block = Blocks[contents];
         if (block.Durability >= 0)
         {
-            var num2 = block.GetDamage(value) + damageCount;
-            if (num2 <= block.Durability)
+            var newDamage = block.GetDamage(value) + damageCount;
+            if (newDamage <= block.Durability)
             {
-                return block.SetDamage(value, num2);
+                return block.SetDamage(value, newDamage);
             }
 
             return block.GetDamageDestructionValue(value);

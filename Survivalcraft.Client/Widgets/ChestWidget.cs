@@ -17,25 +17,25 @@ public class ChestWidget : CanvasWidget
         LoadContents(this, node);
         _inventoryGrid = Children.Find<GridPanelWidget>("InventoryGrid")!;
         _chestGrid = Children.Find<GridPanelWidget>("ChestGrid")!;
-        var num = 0;
+        var slotIndex = 0;
         for (var i = 0; i < _chestGrid.RowsCount; i++)
         {
             for (var j = 0; j < _chestGrid.ColumnsCount; j++)
             {
                 var inventorySlotWidget = new InventorySlotWidget();
-                inventorySlotWidget.AssignInventorySlot(componentChest, num++);
+                inventorySlotWidget.AssignInventorySlot(componentChest, slotIndex++);
                 _chestGrid.Children.Add(inventorySlotWidget);
                 _chestGrid.SetWidgetCell(inventorySlotWidget, new Point2(j, i));
             }
         }
 
-        num = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
+        slotIndex = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
         for (var k = 0; k < _inventoryGrid.RowsCount; k++)
         {
             for (var l = 0; l < _inventoryGrid.ColumnsCount; l++)
             {
                 var inventorySlotWidget2 = new InventorySlotWidget();
-                inventorySlotWidget2.AssignInventorySlot(inventory, num++);
+                inventorySlotWidget2.AssignInventorySlot(inventory, slotIndex++);
                 _inventoryGrid.Children.Add(inventorySlotWidget2);
                 _inventoryGrid.SetWidgetCell(inventorySlotWidget2, new Point2(l, k));
             }

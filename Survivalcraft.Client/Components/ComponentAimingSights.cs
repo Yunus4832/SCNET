@@ -75,12 +75,12 @@ public class ComponentAimingSights : Component, IUpdateable, IDrawable
                 var subtexture = ContentManager.Get<Subtexture>("Textures/Atlas/Crosshair");
                 var s2 = 1.25f;
                 var v3 = camera.ViewPosition + camera.ViewDirection * 50f;
-                var vector2 = Vector3.Normalize(Vector3.Cross(camera.ViewDirection, Vector3.UnitY));
-                var v4 = Vector3.Normalize(Vector3.Cross(camera.ViewDirection, vector2));
-                var p5 = v3 + s2 * (-vector2 - v4);
-                var p6 = v3 + s2 * (vector2 - v4);
-                var p7 = v3 + s2 * (vector2 + v4);
-                var p8 = v3 + s2 * (-vector2 + v4);
+                var sightRight = Vector3.Normalize(Vector3.Cross(camera.ViewDirection, Vector3.UnitY));
+                var v4 = Vector3.Normalize(Vector3.Cross(camera.ViewDirection, sightRight));
+                var p5 = v3 + s2 * (-sightRight - v4);
+                var p6 = v3 + s2 * (sightRight - v4);
+                var p7 = v3 + s2 * (sightRight + v4);
+                var p8 = v3 + s2 * (-sightRight + v4);
                 var texturedBatch3D2 =
                     PrimitivesRenderer3D.TexturedBatch(subtexture.Texture, false, 0, DepthStencilState.None);
                 var count2 = texturedBatch3D2.TriangleVertices.Count;

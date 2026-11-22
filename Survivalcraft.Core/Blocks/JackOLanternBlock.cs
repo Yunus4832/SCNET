@@ -43,24 +43,32 @@ public class JackOLanternBlock : Block
     )
     {
         var forward = eyeForward;
-        var num = Vector3.Dot(forward, Vector3.UnitZ);
-        var num2 = Vector3.Dot(forward, Vector3.UnitX);
-        var num3 = Vector3.Dot(forward, -Vector3.UnitZ);
-        var num4 = Vector3.Dot(forward, -Vector3.UnitX);
+        var positiveZAlignment = Vector3.Dot(forward, Vector3.UnitZ);
+        var positiveXAlignment = Vector3.Dot(forward, Vector3.UnitX);
+        var negativeZAlignment = Vector3.Dot(forward, -Vector3.UnitZ);
+        var negativeXAlignment = Vector3.Dot(forward, -Vector3.UnitX);
         var data = 0;
-        if (num.CloseTo(MathUtils.Max(num, num2, num3, num4)))
+        if (positiveZAlignment.CloseTo(
+                MathUtils.Max(positiveZAlignment, positiveXAlignment, negativeZAlignment, negativeXAlignment)
+            ))
         {
             data = 0;
         }
-        else if (num2.CloseTo(MathUtils.Max(num, num2, num3, num4)))
+        else if (positiveXAlignment.CloseTo(
+                     MathUtils.Max(positiveZAlignment, positiveXAlignment, negativeZAlignment, negativeXAlignment)
+                 ))
         {
             data = 1;
         }
-        else if (num3.CloseTo(MathUtils.Max(num, num2, num3, num4)))
+        else if (negativeZAlignment.CloseTo(
+                     MathUtils.Max(positiveZAlignment, positiveXAlignment, negativeZAlignment, negativeXAlignment)
+                 ))
         {
             data = 2;
         }
-        else if (num4.CloseTo(MathUtils.Max(num, num2, num3, num4)))
+        else if (negativeXAlignment.CloseTo(
+                     MathUtils.Max(positiveZAlignment, positiveXAlignment, negativeZAlignment, negativeXAlignment)
+                 ))
         {
             data = 3;
         }

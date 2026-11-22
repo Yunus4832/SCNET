@@ -30,7 +30,7 @@ public abstract class SlabBlockPresentation(SlabBlock block, BlockPresentationCa
     )
     {
         var data = Terrain.ExtractData(value);
-        var num = SlabBlock.GetIsTop(data) ? 1 : 0;
+        var halfIndex = SlabBlock.GetIsTop(data) ? 1 : 0;
         var color = SlabBlock.GetColor(data);
         if (color.HasValue)
         {
@@ -39,7 +39,7 @@ public abstract class SlabBlockPresentation(SlabBlock block, BlockPresentationCa
                 x,
                 y,
                 z,
-                ColoredBlockMeshes[num],
+                ColoredBlockMeshes[halfIndex],
                 PalettePresentation.GetColor(generator.SubsystemPalette, color),
                 null,
                 [],
@@ -53,7 +53,7 @@ public abstract class SlabBlockPresentation(SlabBlock block, BlockPresentationCa
                 x,
                 y,
                 z,
-                UncoloredBlockMeshes[num],
+                UncoloredBlockMeshes[halfIndex],
                 Color.White,
                 null,
                 [],

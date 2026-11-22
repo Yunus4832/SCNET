@@ -136,10 +136,10 @@ public class ComponentCetaceanBreatheBehavior : ComponentBehavior, IUpdateable
         var s = 2f * _componentCreature.ComponentBody.ImmersionDepth;
         for (var i = 0; i < 16; i++)
         {
-            var vector2 = i < 4
+            var horizontalDirection = i < 4
                 ? new Vector2(forward.X, forward.Z) + _random.Vector2(0f, 0.25f)
                 : _random.Vector2(0.5f, 1f);
-            var v = Vector3.Normalize(new Vector3(vector2.X, 1f, vector2.Y));
+            var v = Vector3.Normalize(new Vector3(horizontalDirection.X, 1f, horizontalDirection.Y));
             var end = vector + s * v;
             var terrainRaycastResult = _subsystemTerrain.Raycast(
                 vector,

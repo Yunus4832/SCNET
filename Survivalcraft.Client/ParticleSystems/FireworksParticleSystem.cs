@@ -26,8 +26,8 @@ public class FireworksParticleSystem : ParticleSystem<FireworksParticleSystem.Pa
         TextureSlotsCount = 2;
         if (shape is FireworksBlock.Shape.SmallBurst or FireworksBlock.Shape.LargeBurst)
         {
-            var num = shape == FireworksBlock.Shape.SmallBurst ? 100 : 200;
-            while (_nextParticle < num)
+            var burstParticleCount = shape == FireworksBlock.Shape.SmallBurst ? 100 : 200;
+            while (_nextParticle < burstParticleCount)
             {
                 var particle = Particles[_nextParticle++];
                 particle.IsActive = true;
@@ -50,11 +50,11 @@ public class FireworksParticleSystem : ParticleSystem<FireworksParticleSystem.Pa
         {
             case FireworksBlock.Shape.Circle:
             {
-                var num4 = _random.Float(0f, (float)Math.PI * 2f);
-                var num5 = 150;
-                for (var j = 0; j < num5; j++)
+                var angleOffset = _random.Float(0f, (float)Math.PI * 2f);
+                var ringParticleCount = 150;
+                for (var j = 0; j < ringParticleCount; j++)
                 {
-                    var x2 = (float)Math.PI * 2f * j / num5 + num4;
+                    var x2 = (float)Math.PI * 2f * j / ringParticleCount + angleOffset;
                     var v2 = new Vector3(
                         MathUtils.Sin(x2) + 0.1f * _random.Float(-1f, 1f),
                         0f,
@@ -76,19 +76,19 @@ public class FireworksParticleSystem : ParticleSystem<FireworksParticleSystem.Pa
             }
             case FireworksBlock.Shape.Disc:
             {
-                var num10 = _random.Float(0f, (float)Math.PI * 2f);
-                var num11 = 13;
-                for (var m = 0; m <= num11; m++)
+                var angleOffset = _random.Float(0f, (float)Math.PI * 2f);
+                var radialBands = 13;
+                for (var m = 0; m <= radialBands; m++)
                 {
-                    var num12 = m / (float)num11;
-                    var num13 = (int)MathUtils.Round(num12 * 2f * num11);
-                    for (var n = 0; n < num13; n++)
+                    var radiusFraction = m / (float)radialBands;
+                    var particlesInRing = (int)MathUtils.Round(radiusFraction * 2f * radialBands);
+                    for (var n = 0; n < particlesInRing; n++)
                     {
-                        var x5 = (float)Math.PI * 2f * n / num13 + num10;
+                        var x5 = (float)Math.PI * 2f * n / particlesInRing + angleOffset;
                         var v4 = new Vector3(
-                            num12 * MathUtils.Sin(x5) + 0.1f * _random.Float(-1f, 1f),
+                            radiusFraction * MathUtils.Sin(x5) + 0.1f * _random.Float(-1f, 1f),
                             0f,
-                            num12 * MathUtils.Cos(x5) + 0.1f * _random.Float(-1f, 1f)
+                            radiusFraction * MathUtils.Cos(x5) + 0.1f * _random.Float(-1f, 1f)
                         );
                         var obj4 = Particles[_nextParticle++];
                         obj4.IsActive = true;
@@ -107,20 +107,20 @@ public class FireworksParticleSystem : ParticleSystem<FireworksParticleSystem.Pa
             }
             case FireworksBlock.Shape.Ball:
             {
-                var num14 = _random.Float(0f, (float)Math.PI * 2f);
-                var num15 = 12;
+                var angleOffset = _random.Float(0f, (float)Math.PI * 2f);
+                var latitudeBands = 12;
                 Vector3 v5 = default;
-                for (var num16 = 0; num16 <= num15; num16++)
+                for (var latitudeBand = 0; latitudeBand <= latitudeBands; latitudeBand++)
                 {
-                    var x6 = (float)Math.PI * num16 / num15;
+                    var x6 = (float)Math.PI * latitudeBand / latitudeBands;
                     v5.Y = MathUtils.Cos(x6);
-                    var num17 = MathUtils.Sin(x6);
-                    var num18 = (int)MathUtils.Round(num17 * 2f * num15);
-                    for (var num19 = 0; num19 < num18; num19++)
+                    var latitudeRadius = MathUtils.Sin(x6);
+                    var particlesInBand = (int)MathUtils.Round(latitudeRadius * 2f * latitudeBands);
+                    for (var longitudeIndex = 0; longitudeIndex < particlesInBand; longitudeIndex++)
                     {
-                        var x7 = (float)Math.PI * 2f * num19 / num18 + num14;
-                        v5.X = num17 * MathUtils.Sin(x7);
-                        v5.Z = num17 * MathUtils.Cos(x7);
+                        var x7 = (float)Math.PI * 2f * longitudeIndex / particlesInBand + angleOffset;
+                        v5.X = latitudeRadius * MathUtils.Sin(x7);
+                        v5.Z = latitudeRadius * MathUtils.Cos(x7);
                         var obj5 = Particles[_nextParticle++];
                         obj5.IsActive = true;
                         obj5.Position = position;
@@ -139,20 +139,22 @@ public class FireworksParticleSystem : ParticleSystem<FireworksParticleSystem.Pa
             case FireworksBlock.Shape.ShortTrails:
             case FireworksBlock.Shape.LongTrails:
             {
-                var num6 = _random.Float(0f, (float)Math.PI * 2f);
-                var num7 = 3;
+                var angleOffset = _random.Float(0f, (float)Math.PI * 2f);
+                var latitudeBands = 3;
                 Vector3 v3 = default;
-                for (var k = 0; k <= num7; k++)
+                for (var k = 0; k <= latitudeBands; k++)
                 {
-                    var x3 = (float)Math.PI * k / num7;
-                    var num8 = MathUtils.Sin(x3);
-                    var num9 = (int)MathUtils.Round(num8 * (shape == FireworksBlock.Shape.ShortTrails ? 3 : 2) * num7);
-                    for (var l = 0; l < num9; l++)
+                    var x3 = (float)Math.PI * k / latitudeBands;
+                    var latitudeRadius = MathUtils.Sin(x3);
+                    var particlesInBand = (int)MathUtils.Round(
+                        latitudeRadius * (shape == FireworksBlock.Shape.ShortTrails ? 3 : 2) * latitudeBands
+                    );
+                    for (var l = 0; l < particlesInBand; l++)
                     {
-                        var x4 = (float)Math.PI * 2f * l / num9 + num6;
-                        v3.X = num8 * MathUtils.Sin(x4) + 0.3f * _random.Float(-1f, 1f);
+                        var x4 = (float)Math.PI * 2f * l / particlesInBand + angleOffset;
+                        v3.X = latitudeRadius * MathUtils.Sin(x4) + 0.3f * _random.Float(-1f, 1f);
                         v3.Y = MathUtils.Cos(x3) + 0.3f * _random.Float(-1f, 1f);
-                        v3.Z = num8 * MathUtils.Cos(x4) + 0.3f * _random.Float(-1f, 1f);
+                        v3.Z = latitudeRadius * MathUtils.Cos(x4) + 0.3f * _random.Float(-1f, 1f);
                         var obj3 = Particles[_nextParticle++];
                         obj3.IsActive = true;
                         obj3.Position = position;
@@ -171,11 +173,11 @@ public class FireworksParticleSystem : ParticleSystem<FireworksParticleSystem.Pa
             }
             case FireworksBlock.Shape.FlatTrails:
             {
-                var num2 = _random.Float(0f, (float)Math.PI * 2f);
-                var num3 = 13;
-                for (var i = 0; i < num3; i++)
+                var angleOffset = _random.Float(0f, (float)Math.PI * 2f);
+                var ringParticleCount = 13;
+                for (var i = 0; i < ringParticleCount; i++)
                 {
-                    var x = (float)Math.PI * 2f * i / num3 + num2;
+                    var x = (float)Math.PI * 2f * i / ringParticleCount + angleOffset;
                     var v = new Vector3(
                         MathUtils.Sin(x) + 0.1f * _random.Float(-1f, 1f),
                         0f,
@@ -202,9 +204,9 @@ public class FireworksParticleSystem : ParticleSystem<FireworksParticleSystem.Pa
     public override bool Simulate(float dt)
     {
         dt = MathUtils.Clamp(dt, 0f, 0.1f);
-        var num = MathUtils.Pow(0.01f, dt);
-        var num2 = MathUtils.Pow(0.1f, dt);
-        var flag = false;
+        var strongDamping = MathUtils.Pow(0.01f, dt);
+        var normalDamping = MathUtils.Pow(0.1f, dt);
+        var hasActiveParticles = false;
         for (var i = 0; i < Particles.Length; i++)
         {
             var particle = Particles[i];
@@ -213,13 +215,13 @@ public class FireworksParticleSystem : ParticleSystem<FireworksParticleSystem.Pa
                 continue;
             }
 
-            flag = true;
+            hasActiveParticles = true;
             particle.TimeToLive -= dt;
             if (particle.TimeToLive > 0f)
             {
                 var position = particle.Position += particle.Velocity * dt;
                 particle.Velocity.Y += -9.81f * dt;
-                particle.Velocity *= particle.HighDamping ? num : num2;
+                particle.Velocity *= particle.HighDamping ? strongDamping : normalDamping;
                 particle.Color = particle.BaseColor * MathUtils.Min(particle.FadeRate * particle.TimeToLive, 1f);
                 particle.Rotation += particle.RotationSpeed * dt;
                 if (!particle.HighDamping && _random.Float(0f, 1f) < _flickering)
@@ -237,8 +239,8 @@ public class FireworksParticleSystem : ParticleSystem<FireworksParticleSystem.Pa
                     continue;
                 }
 
-                var num3 = particle.Velocity.Length();
-                particle.GenerationAccumulator += particle.GenerationFrequency * num3 * dt;
+                var speed = particle.Velocity.Length();
+                particle.GenerationAccumulator += particle.GenerationFrequency * speed * dt;
                 if (!(particle.GenerationAccumulator > 1f) || _nextParticle >= Particles.Length)
                 {
                     continue;
@@ -262,7 +264,7 @@ public class FireworksParticleSystem : ParticleSystem<FireworksParticleSystem.Pa
             }
         }
 
-        return !flag;
+        return !hasActiveParticles;
     }
 
     public class Particle : Game.ParticleSystems.Particle

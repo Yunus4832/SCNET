@@ -86,14 +86,14 @@ public sealed class CommandDefinition<TCommand>(
 
     private bool Allows(CommandPrincipalKind kind)
     {
-        var flag = kind switch
+        var principalFlag = kind switch
         {
             CommandPrincipalKind.LocalOperator => CommandPrincipalKinds.LocalOperator,
             CommandPrincipalKind.Player => CommandPrincipalKinds.Player,
             CommandPrincipalKind.System => CommandPrincipalKinds.System,
             _ => CommandPrincipalKinds.None
         };
-        return (AllowedPrincipals & flag) != 0;
+        return (AllowedPrincipals & principalFlag) != 0;
     }
 
     private static bool HasAuthority(Project? project)

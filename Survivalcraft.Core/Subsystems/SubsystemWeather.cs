@@ -122,7 +122,7 @@ public class SubsystemWeather : Subsystem, IUpdateable
             }
         }
 
-        var num = (float)MathUtils.Max(
+        var secondsFromPrecipitationBoundary = (float)MathUtils.Max(
             0.0,
             MathUtils.Min(
                 _subsystemGameInfo.TotalElapsedGameTime - PrecipitationStartTime,
@@ -130,7 +130,7 @@ public class SubsystemWeather : Subsystem, IUpdateable
             )
         );
         PrecipitationIntensity = _subsystemGameInfo.WorldSettings.AreWeatherEffectsEnabled
-            ? MathUtils.Saturate(num * 0.04f)
+            ? MathUtils.Saturate(secondsFromPrecipitationBoundary * 0.04f)
             : 0f;
         if (PrecipitationIntensity.CloseTo(1f) && SubsystemTime.PeriodicGameTimeEvent(1.0, 0.0))
         {
@@ -144,27 +144,27 @@ public class SubsystemWeather : Subsystem, IUpdateable
                     continue;
                 }
 
-                var num2 = terrainChunk.Origin.X + _random.Int(0, 15);
-                var num3 = terrainChunk.Origin.Y + _random.Int(0, 15);
-                Vector3? vector = null;
-                for (var j = num2 - 8; j < num2 + 8; j++)
+                var searchCenterX = terrainChunk.Origin.X + _random.Int(0, 15);
+                var searchCenterZ = terrainChunk.Origin.Y + _random.Int(0, 15);
+                Vector3? highestStrikePoint = null;
+                for (var j = searchCenterX - 8; j < searchCenterX + 8; j++)
                 {
-                    for (var k = num3 - 8; k < num3 + 8; k++)
+                    for (var k = searchCenterZ - 8; k < searchCenterZ + 8; k++)
                     {
                         var topHeight = SubsystemTerrain.Terrain.GetTopHeight(j, k);
-                        if (!vector.HasValue || topHeight > vector.Value.Y)
+                        if (!highestStrikePoint.HasValue || topHeight > highestStrikePoint.Value.Y)
                         {
-                            vector = new Vector3(j, topHeight, k);
+                            highestStrikePoint = new Vector3(j, topHeight, k);
                         }
                     }
                 }
 
-                if (!vector.HasValue)
+                if (!highestStrikePoint.HasValue)
                 {
                     continue;
                 }
 
-                SubsystemSky.MakeLightningStrike(vector.Value);
+                SubsystemSky.MakeLightningStrike(highestStrikePoint.Value);
                 return;
             }
         }
@@ -176,14 +176,14 @@ public class SubsystemWeather : Subsystem, IUpdateable
     {
         var shaftValue = SubsystemTerrain.Terrain.GetShaftValue(x, z);
         var seasonalTemperature = SubsystemTerrain.Terrain.GetSeasonalTemperature(shaftValue);
-        var num = Terrain.ExtractTopHeight(shaftValue);
+        var surfaceHeight = Terrain.ExtractTopHeight(shaftValue);
         PrecipitationShaftInfo result;
-        if (IsPlaceFrozen(seasonalTemperature, num))
+        if (IsPlaceFrozen(seasonalTemperature, surfaceHeight))
         {
             result = default; //new 下方同理，2.4去掉了全球全局降水因素。
             result.Intensity = PrecipitationIntensity;
             result.Type = PrecipitationType.Snow;
-            result.YLimit = num + 1;
+            result.YLimit = surfaceHeight + 1;
             return result;
         }
 
@@ -193,38 +193,38 @@ public class SubsystemWeather : Subsystem, IUpdateable
             result = default;
             result.Intensity = PrecipitationIntensity;
             result.Type = PrecipitationType.Rain;
-            result.YLimit = num + 1;
+            result.YLimit = surfaceHeight + 1;
             return result;
         }
 
         result = default;
         result.Intensity = 0f;
         result.Type = PrecipitationType.Rain;
-        result.YLimit = num + 1;
+        result.YLimit = surfaceHeight + 1;
         return result;
     }
 
     public void ManualLightingStrike(Vector3 position, Vector3 direction)
     {
-        var num = Terrain.ToCell(position.X + direction.X * 32f);
-        var num2 = Terrain.ToCell(position.Z + direction.Z * 32f);
-        Vector3? vector = null;
+        var targetX = Terrain.ToCell(position.X + direction.X * 32f);
+        var targetZ = Terrain.ToCell(position.Z + direction.Z * 32f);
+        Vector3? highestStrikePoint = null;
         for (var i = 0; i < 300; i++)
         {
-            var num3 = _random.Int(-8, 8);
-            var num4 = _random.Int(-8, 8);
-            var num5 = num + num3;
-            var num6 = num2 + num4;
-            var num7 = SubsystemTerrain.Terrain.CalculateTopmostCellHeight(num5, num6);
-            if (!vector.HasValue || num7 > vector.Value.Y)
+            var offsetX = _random.Int(-8, 8);
+            var offsetZ = _random.Int(-8, 8);
+            var sampleX = targetX + offsetX;
+            var sampleZ = targetZ + offsetZ;
+            var surfaceHeight = SubsystemTerrain.Terrain.CalculateTopmostCellHeight(sampleX, sampleZ);
+            if (!highestStrikePoint.HasValue || surfaceHeight > highestStrikePoint.Value.Y)
             {
-                vector = new Vector3(num5, num7, num6);
+                highestStrikePoint = new Vector3(sampleX, surfaceHeight, sampleZ);
             }
         }
 
-        if (vector.HasValue)
+        if (highestStrikePoint.HasValue)
         {
-            SubsystemSky.MakeLightningStrike(vector.Value);
+            SubsystemSky.MakeLightningStrike(highestStrikePoint.Value);
         }
     }
 
@@ -277,22 +277,24 @@ public class SubsystemWeather : Subsystem, IUpdateable
         {
             if (WorldRuntimeContext.For(Project).IsAuthority)
             {
-                var num = _subsystemSeasons.Season is Season.Autumn or Season.Winter
+                var seasonalFogFrequency = _subsystemSeasons.Season is Season.Autumn or Season.Winter
                     ? 1.75f
                     : 1f;
                 if (FogEndTime == 0.0 &&
                     _subsystemGameInfo.WorldSettings.StartingPositionMode == StartingPositionMode.Hard)
                 {
                     FogStartTime =
-                        _subsystemGameInfo.TotalElapsedGameTime + 60f * _random.Float(1f, 10f) / num; //1,10
+                        _subsystemGameInfo.TotalElapsedGameTime +
+                        60f * _random.Float(1f, 10f) / seasonalFogFrequency; //1,10
                 }
                 else
                 {
                     FogStartTime =
-                        _subsystemGameInfo.TotalElapsedGameTime + 60f * _random.Float(10f, 40f) / num; //10,40
+                        _subsystemGameInfo.TotalElapsedGameTime +
+                        60f * _random.Float(10f, 40f) / seasonalFogFrequency; //10,40
                 }
 
-                FogEndTime = FogStartTime + 60f * _random.Float(4f, 8f) * num; //4,8
+                FogEndTime = FogStartTime + 60f * _random.Float(4f, 8f) * seasonalFogFrequency; //4,8
                 FogRampTime = _random.Float(20f, 40f);
                 FogProgress = 0f;
 
@@ -404,15 +406,15 @@ public class SubsystemWeather : Subsystem, IUpdateable
         var terrain = SubsystemTerrain.Terrain;
         foreach (var order in _shuffledOrder)
         {
-            var num = order & 0xF;
-            var num2 = order >> 4;
-            var num3 = chunk.GetTopHeightFast(num, num2);
-            var cellValueFast = chunk.GetCellValueFast(num, num3, num2);
-            var num4 = Terrain.ExtractContents(cellValueFast);
-            var num5 = chunk.Origin.X + num;
-            var num6 = num3;
-            var num7 = chunk.Origin.Y + num2;
-            var precipitationShaftInfo = GetPrecipitationShaftInfo(num5, num7);
+            var localX = order & 0xF;
+            var localZ = order >> 4;
+            var cellY = chunk.GetTopHeightFast(localX, localZ);
+            var cellValueFast = chunk.GetCellValueFast(localX, cellY, localZ);
+            var contents = Terrain.ExtractContents(cellValueFast);
+            var worldX = chunk.Origin.X + localX;
+            var worldY = cellY;
+            var worldZ = chunk.Origin.Y + localZ;
+            var precipitationShaftInfo = GetPrecipitationShaftInfo(worldX, worldZ);
             if (precipitationShaftInfo.Type == PrecipitationType.Snow)
             {
                 if (!_random.Bool(freezeProbability))
@@ -420,46 +422,49 @@ public class SubsystemWeather : Subsystem, IUpdateable
                     continue;
                 }
 
-                if (num4 == 18 &&
-                    SubsystemTerrain.Environment.CalculateOceanShoreDistance(num5, num7) >
+                if (contents == 18 &&
+                    SubsystemTerrain.Environment.CalculateOceanShoreDistance(worldX, worldZ) >
                     -35f)
                 {
-                    var cellContents = terrain.GetCellContents(num5 + 1, num6, num7);
-                    var cellContents2 = terrain.GetCellContents(num5 - 1, num6, num7);
-                    var cellContents3 = terrain.GetCellContents(num5, num6, num7 - 1);
-                    var cellContents4 = terrain.GetCellContents(num5, num6, num7 + 1);
-                    var num8 = WorldContentBinding.For(Project).Catalog.FluidBlocks[cellContents] ==
-                               null &&
-                               cellContents != 0;
-                    var flag =
+                    var cellContents = terrain.GetCellContents(worldX + 1, worldY, worldZ);
+                    var cellContents2 = terrain.GetCellContents(worldX - 1, worldY, worldZ);
+                    var cellContents3 = terrain.GetCellContents(worldX, worldY, worldZ - 1);
+                    var cellContents4 = terrain.GetCellContents(worldX, worldY, worldZ + 1);
+                    var hasDryNeighborPositiveX = WorldContentBinding.For(Project).Catalog.FluidBlocks[cellContents] ==
+                                                  null &&
+                                                  cellContents != 0;
+                    var hasDryNeighborNegativeX =
                         WorldContentBinding.For(Project).Catalog.FluidBlocks[cellContents2] ==
                         null &&
                         cellContents2 != 0;
-                    var flag2 =
+                    var hasDryNeighborNegativeZ =
                         WorldContentBinding.For(Project).Catalog.FluidBlocks[cellContents3] ==
                         null &&
                         cellContents3 != 0;
-                    var flag3 =
+                    var hasDryNeighborPositiveZ =
                         WorldContentBinding.For(Project).Catalog.FluidBlocks[cellContents4] ==
                         null &&
                         cellContents4 != 0;
-                    if (num8 || flag || flag2 || flag3)
+                    if (hasDryNeighborPositiveX ||
+                        hasDryNeighborNegativeX ||
+                        hasDryNeighborNegativeZ ||
+                        hasDryNeighborPositiveZ)
                     {
-                        SubsystemTerrain.ChangeCell(num5, num6, num7, Terrain.MakeBlockValue(62));
+                        SubsystemTerrain.ChangeCell(worldX, worldY, worldZ, Terrain.MakeBlockValue(62));
                     }
                 }
                 else
                 {
-                    if ((!forceDepositSnow && !(precipitationShaftInfo.Intensity > 0.5f)) || num6 + 1 >= 255)
+                    if ((!forceDepositSnow && !(precipitationShaftInfo.Intensity > 0.5f)) || worldY + 1 >= 255)
                     {
                         continue;
                     }
 
                     if (SubsystemSnowBlockBehavior.CanSupportSnow(SubsystemTerrain.Catalog, cellValueFast))
                     {
-                        if (num4 != 62 || ShaftHasSnowOnIce(num5, num7))
+                        if (contents != 62 || ShaftHasSnowOnIce(worldX, worldZ))
                         {
-                            SubsystemTerrain.ChangeCell(num5, num6 + 1, num7, Terrain.MakeBlockValue(61));
+                            SubsystemTerrain.ChangeCell(worldX, worldY + 1, worldZ, Terrain.MakeBlockValue(61));
                         }
                     }
                     else if (SubsystemSnowBlockBehavior.CanBeReplacedBySnow(
@@ -467,7 +472,7 @@ public class SubsystemWeather : Subsystem, IUpdateable
                                  cellValueFast
                              )) //new 新方法，关联到了落叶方块
                     {
-                        SubsystemTerrain.ChangeCell(num5, num6, num7, Terrain.MakeBlockValue(61));
+                        SubsystemTerrain.ChangeCell(worldX, worldY, worldZ, Terrain.MakeBlockValue(61));
                     }
                 }
             }
@@ -479,17 +484,17 @@ public class SubsystemWeather : Subsystem, IUpdateable
                 }
 
                 for (;
-                     num6 > 0;
-                     num3--, num6--, cellValueFast = chunk.GetCellValueFast(num, num3, num2), num4 =
+                     worldY > 0;
+                     cellY--, worldY--, cellValueFast = chunk.GetCellValueFast(localX, cellY, localZ), contents =
                          Terrain.ExtractContents(cellValueFast))
                 {
-                    switch (num4)
+                    switch (contents)
                     {
                         case 61:
-                            SubsystemTerrain.DestroyCell(0, num5, num6, num7, 0, true, true);
+                            SubsystemTerrain.DestroyCell(0, worldX, worldY, worldZ, 0, true, true);
                             continue;
                         case 62:
-                            SubsystemTerrain.DestroyCell(0, num5, num6, num7, 0, false, true);
+                            SubsystemTerrain.DestroyCell(0, worldX, worldY, worldZ, 0, false, true);
                             continue;
                     }
 

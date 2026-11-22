@@ -86,18 +86,18 @@ public struct CellFace(int x, int y, int z, int face) : IEquatable<CellFace>
     public static int Vector3ToFace(Vector3 v, int maxFace = 5)
     {
         maxFace = MathUtils.Clamp(maxFace, 0, 5);
-        var num = -1f / 0f;
+        var bestAlignment = -1f / 0f;
         var result = 0;
         for (var i = 0; i <= maxFace; i++)
         {
-            var num2 = Vector3.Dot(_faceToVector3Array[i], v);
-            if (!(num2 > num))
+            var alignment = Vector3.Dot(_faceToVector3Array[i], v);
+            if (!(alignment > bestAlignment))
             {
                 continue;
             }
 
             result = i;
-            num = num2;
+            bestAlignment = alignment;
         }
 
         return result;

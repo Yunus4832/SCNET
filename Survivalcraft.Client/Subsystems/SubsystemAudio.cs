@@ -60,10 +60,10 @@ public class SubsystemAudio : Subsystem, IUpdateable
         }
 
         _nextSoundTime = double.MaxValue;
-        var num = 0;
-        while (num < _queuedSounds.Count)
+        var soundIndex = 0;
+        while (soundIndex < _queuedSounds.Count)
         {
-            var soundInfo = _queuedSounds[num];
+            var soundInfo = _queuedSounds[soundIndex];
             if (_subsystemTime.GameTime >= soundInfo.Time)
             {
                 if (_subsystemTime.GameTimeFactor.CloseTo(1f) &&
@@ -81,29 +81,29 @@ public class SubsystemAudio : Subsystem, IUpdateable
                     );
                 }
 
-                _queuedSounds.RemoveAt(num);
+                _queuedSounds.RemoveAt(soundIndex);
             }
             else
             {
                 _nextSoundTime = MathUtils.Min(_nextSoundTime, soundInfo.Time);
-                num++;
+                soundIndex++;
             }
         }
     }
 
     public float CalculateListenerDistanceSquared(Vector3 p)
     {
-        var num = float.MaxValue;
+        var closestDistanceSquared = float.MaxValue;
         foreach (var position in _listenerPositions)
         {
-            var num2 = Vector3.DistanceSquared(position, p);
-            if (num2 < num)
+            var distanceSquared = Vector3.DistanceSquared(position, p);
+            if (distanceSquared < closestDistanceSquared)
             {
-                num = num2;
+                closestDistanceSquared = distanceSquared;
             }
         }
 
-        return num;
+        return closestDistanceSquared;
     }
 
     public float CalculateListenerDistance(Vector3 p)
@@ -137,12 +137,12 @@ public class SubsystemAudio : Subsystem, IUpdateable
     {
         if (!WorldRuntimeContext.For(Project).HasPresentation) { return; }
 
-        var num = _subsystemTime.GameTime + delay;
-        _nextSoundTime = MathUtils.Min(_nextSoundTime, num);
+        var playbackTime = _subsystemTime.GameTime + delay;
+        _nextSoundTime = MathUtils.Min(_nextSoundTime, playbackTime);
         _queuedSounds.Add(
             new SoundInfo
             {
-                Time = num,
+                Time = playbackTime,
                 Name = name,
                 Volume = volume,
                 Pitch = pitch,
@@ -153,14 +153,14 @@ public class SubsystemAudio : Subsystem, IUpdateable
 
     public void PlaySound(string name, float volume, float pitch, Vector3 position, float minDistance, float delay)
     {
-        var num = CalculateVolume(CalculateListenerDistance(position), minDistance);
-        PlaySound(name, volume * num, pitch, 0f, delay);
+        var distanceAttenuation = CalculateVolume(CalculateListenerDistance(position), minDistance);
+        PlaySound(name, volume * distanceAttenuation, pitch, 0f, delay);
     }
 
     public void PlaySound(string name, float volume, float pitch, Vector3 position, float minDistance, bool autoDelay)
     {
-        var num = CalculateVolume(CalculateListenerDistance(position), minDistance);
-        PlaySound(name, volume * num, pitch, 0f, autoDelay ? CalculateDelay(position) : 0f);
+        var distanceAttenuation = CalculateVolume(CalculateListenerDistance(position), minDistance);
+        PlaySound(name, volume * distanceAttenuation, pitch, 0f, autoDelay ? CalculateDelay(position) : 0f);
     }
 
     public void PlayRandomSound(string directory, float volume, float pitch, float pan, float delay)
@@ -188,8 +188,8 @@ public class SubsystemAudio : Subsystem, IUpdateable
         float delay
     )
     {
-        var num = CalculateVolume(CalculateListenerDistance(position), minDistance);
-        PlayRandomSound(directory, volume * num, pitch, 0f, delay);
+        var distanceAttenuation = CalculateVolume(CalculateListenerDistance(position), minDistance);
+        PlayRandomSound(directory, volume * distanceAttenuation, pitch, 0f, delay);
     }
 
     public void PlayRandomSound(
@@ -201,8 +201,8 @@ public class SubsystemAudio : Subsystem, IUpdateable
         bool autoDelay
     )
     {
-        var num = CalculateVolume(CalculateListenerDistance(position), minDistance);
-        PlayRandomSound(directory, volume * num, pitch, 0f, autoDelay ? CalculateDelay(position) : 0f);
+        var distanceAttenuation = CalculateVolume(CalculateListenerDistance(position), minDistance);
+        PlayRandomSound(directory, volume * distanceAttenuation, pitch, 0f, autoDelay ? CalculateDelay(position) : 0f);
     }
 
     public Sound CreateSound(string name)
@@ -363,8 +363,8 @@ public class SubsystemAudio : Subsystem, IUpdateable
         var realTime = Time.RealTime;
         var lastUpdateTime = value.LastUpdateTime;
         var lastPlayedTime = value.LastPlayedTime;
-        var num = lastUpdateTime > 0.0 ? (float)(realTime - lastUpdateTime) : 0f;
-        value.Value = MathUtils.Max(value.Value - 10f * num, 0f);
+        var elapsedSeconds = lastUpdateTime > 0.0 ? (float)(realTime - lastUpdateTime) : 0f;
+        value.Value = MathUtils.Max(value.Value - 10f * elapsedSeconds, 0f);
         value.LastUpdateTime = realTime;
         if (!(value.Value <= 6f) ||
             (lastPlayedTime != 0.0 && !(volume > value.LastPlayedVolume) && !(realTime - lastPlayedTime >= 0.0)))

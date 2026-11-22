@@ -51,11 +51,11 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
 
         var slotValue = inventory.GetSlotValue(activeSlotIndex);
         var slotCount = inventory.GetSlotCount(activeSlotIndex);
-        var num = Terrain.ExtractContents(slotValue);
+        var heldContents = Terrain.ExtractContents(slotValue);
         var data = Terrain.ExtractData(slotValue);
-        var num2 = slotValue;
-        var num3 = 0;
-        if (num != 212 || slotCount <= 0)
+        var updatedValue = slotValue;
+        var toolDamage = 0;
+        if (heldContents != 212 || slotCount <= 0)
         {
             return false;
         }
@@ -66,32 +66,32 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
             _aimStartTimes[componentMiner] = value;
         }
 
-        var num4 = (float)(_subsystemTime.GameTime - value);
-        var num5 = (float)MathUtils.Remainder(_subsystemTime.GameTime, 1000.0);
+        var aimDuration = (float)(_subsystemTime.GameTime - value);
+        var swayTime = (float)MathUtils.Remainder(_subsystemTime.GameTime, 1000.0);
         var v = ((componentMiner.ComponentCreature.ComponentBody.IsSneaking ? 0.01f : 0.03f) +
-                 0.2f * MathUtils.Saturate((num4 - 2.5f) / 6f)) *
+                 0.2f * MathUtils.Saturate((aimDuration - 2.5f) / 6f)) *
                 new Vector3
                 {
-                    X = SimplexNoise.OctavedNoise(num5, 2f, 3, 2f, 0.5f),
-                    Y = SimplexNoise.OctavedNoise(num5 + 100f, 2f, 3, 2f, 0.5f),
-                    Z = SimplexNoise.OctavedNoise(num5 + 200f, 2f, 3, 2f, 0.5f)
+                    X = SimplexNoise.OctavedNoise(swayTime, 2f, 3, 2f, 0.5f),
+                    Y = SimplexNoise.OctavedNoise(swayTime + 100f, 2f, 3, 2f, 0.5f),
+                    Z = SimplexNoise.OctavedNoise(swayTime + 200f, 2f, 3, 2f, 0.5f)
                 };
         aim.Direction = Vector3.Normalize(aim.Direction + v);
         switch (state)
         {
             case AimState.InProgress:
             {
-                if (num4 >= 10f)
+                if (aimDuration >= 10f)
                 {
                     componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
                     return true;
                 }
 
-                if (num4 > 0.5f && !MusketBlock.GetHammerState(Terrain.ExtractData(num2)))
+                if (aimDuration > 0.5f && !MusketBlock.GetHammerState(Terrain.ExtractData(updatedValue)))
                 {
-                    num2 = Terrain.MakeBlockValue(
-                        num,
-                        MusketBlock.SetHammerState(Terrain.ExtractData(num2), true)
+                    updatedValue = Terrain.MakeBlockValue(
+                        heldContents,
+                        MusketBlock.SetHammerState(Terrain.ExtractData(updatedValue), true)
                     );
                     if (componentMiner.ComponentCharacter != null)
                     {
@@ -123,11 +123,11 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                 break;
             }
             case AimState.Cancelled:
-                if (MusketBlock.GetHammerState(Terrain.ExtractData(num2)))
+                if (MusketBlock.GetHammerState(Terrain.ExtractData(updatedValue)))
                 {
-                    num2 = Terrain.MakeBlockValue(
-                        num,
-                        MusketBlock.SetHammerState(Terrain.ExtractData(num2), false)
+                    updatedValue = Terrain.MakeBlockValue(
+                        heldContents,
+                        MusketBlock.SetHammerState(Terrain.ExtractData(updatedValue), false)
                     );
                     if (componentMiner.ComponentCharacter != null)
                     {
@@ -146,14 +146,14 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                 break;
             case AimState.Completed:
             {
-                var flag = false;
+                var shouldFire = false;
                 var value2 = 0;
-                var num6 = 0;
+                var projectileCount = 0;
                 var s = 0f;
                 var vector = Vector3.Zero;
                 var loadState = MusketBlock.GetLoadState(data);
                 var bulletType = MusketBlock.GetBulletType(data);
-                if (MusketBlock.GetHammerState(Terrain.ExtractData(num2)))
+                if (MusketBlock.GetHammerState(Terrain.ExtractData(updatedValue)))
                 {
                     switch (loadState)
                     {
@@ -162,18 +162,18 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                             break;
                         case MusketBlock.LoadState.Gunpowder:
                         case MusketBlock.LoadState.Wad:
-                            flag = true;
+                            shouldFire = true;
                             RequestFeedback(componentMiner, 1);
                             break;
                         case MusketBlock.LoadState.Loaded:
-                            flag = true;
+                            shouldFire = true;
                             if (bulletType == BulletBlock.BulletType.Buckshot)
                             {
                                 value2 = Terrain.MakeBlockValue(
                                     214,
                                     BulletBlock.SetBulletType(0, BulletBlock.BulletType.BuckshotBall)
                                 );
-                                num6 = 8;
+                                projectileCount = 8;
                                 vector = new Vector3(0.04f, 0.04f, 0.25f);
                                 s = 80f;
                             }
@@ -183,7 +183,7 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                                     214,
                                     BulletBlock.SetBulletType(0, BulletBlock.BulletType.BuckshotBall)
                                 );
-                                num6 = 1;
+                                projectileCount = 1;
                                 vector = new Vector3(0.06f, 0.06f, 0f);
                                 s = 60f;
                             }
@@ -193,7 +193,7 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                                     214,
                                     BulletBlock.SetBulletType(0, bulletType.Value)
                                 );
-                                num6 = 1;
+                                projectileCount = 1;
                                 s = 120f;
                             }
 
@@ -201,7 +201,7 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                     }
                 }
 
-                if (flag)
+                if (shouldFire)
                 {
                     if (componentMiner.ComponentCreature.ComponentBody.ImmersionFactor > 0.4f)
                     {
@@ -216,21 +216,21 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                     }
                     else
                     {
-                        var vector2 = componentMiner.ComponentCreature.ComponentCreaturePose.EyePosition +
-                                      componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f -
-                                      componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f;
-                        var vector3 = Vector3.Normalize(vector2 + aim.Direction * 10f - vector2);
-                        var vector4 = Vector3.Normalize(Vector3.Cross(vector3, Vector3.UnitY));
-                        var v2 = Vector3.Normalize(Vector3.Cross(vector3, vector4));
-                        for (var i = 0; i < num6; i++)
+                        var muzzlePosition = componentMiner.ComponentCreature.ComponentCreaturePose.EyePosition +
+                                             componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f -
+                                             componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f;
+                        var shotDirection = Vector3.Normalize(muzzlePosition + aim.Direction * 10f - muzzlePosition);
+                        var shotRight = Vector3.Normalize(Vector3.Cross(shotDirection, Vector3.UnitY));
+                        var v2 = Vector3.Normalize(Vector3.Cross(shotDirection, shotRight));
+                        for (var i = 0; i < projectileCount; i++)
                         {
-                            var v3 = _random.Float(0f - vector.X, vector.X) * vector4 +
+                            var v3 = _random.Float(0f - vector.X, vector.X) * shotRight +
                                      _random.Float(0f - vector.Y, vector.Y) * v2 +
-                                     _random.Float(0f - vector.Z, vector.Z) * vector3;
+                                     _random.Float(0f - vector.Z, vector.Z) * shotDirection;
                             var projectile = _subsystemProjectiles.FireProjectile(
                                 value2,
-                                vector2,
-                                s * (vector3 + v3),
+                                muzzlePosition,
+                                s * (shotDirection + v3),
                                 Vector3.Zero,
                                 componentMiner.ComponentCreature
                             );
@@ -248,23 +248,25 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                             64f,
                             true
                         );
-                        SmokeRequested?.Invoke(new WeaponSmokeRequest(vector2 + 0.3f * vector3, vector3));
-                        _subsystemNoise.MakeNoise(vector2, 1f, 40f);
-                        componentMiner.ComponentCreature.ComponentBody.ApplyImpulse(-4f * vector3);
+                        SmokeRequested?.Invoke(
+                            new WeaponSmokeRequest(muzzlePosition + 0.3f * shotDirection, shotDirection)
+                        );
+                        _subsystemNoise.MakeNoise(muzzlePosition, 1f, 40f);
+                        componentMiner.ComponentCreature.ComponentBody.ApplyImpulse(-4f * shotDirection);
                     }
 
-                    num2 = Terrain.MakeBlockValue(
-                        Terrain.ExtractContents(num2),
-                        MusketBlock.SetLoadState(Terrain.ExtractData(num2), MusketBlock.LoadState.Empty)
+                    updatedValue = Terrain.MakeBlockValue(
+                        Terrain.ExtractContents(updatedValue),
+                        MusketBlock.SetLoadState(Terrain.ExtractData(updatedValue), MusketBlock.LoadState.Empty)
                     );
-                    num3 = 1;
+                    toolDamage = 1;
                 }
 
-                if (MusketBlock.GetHammerState(Terrain.ExtractData(num2)))
+                if (MusketBlock.GetHammerState(Terrain.ExtractData(updatedValue)))
                 {
-                    num2 = Terrain.MakeBlockValue(
-                        Terrain.ExtractContents(num2),
-                        MusketBlock.SetHammerState(Terrain.ExtractData(num2), false)
+                    updatedValue = Terrain.MakeBlockValue(
+                        Terrain.ExtractContents(updatedValue),
+                        MusketBlock.SetHammerState(Terrain.ExtractData(updatedValue), false)
                     );
                     RequestSound(
                         "Audio/HammerRelease",
@@ -282,15 +284,15 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
                     return true;
                 }
 
-                if (num2 != slotValue)
+                if (updatedValue != slotValue)
                 {
                     inventory.RemoveSlotItems(activeSlotIndex, 1);
-                    inventory.AddSlotItems(activeSlotIndex, num2, 1);
+                    inventory.AddSlotItems(activeSlotIndex, updatedValue, 1);
                 }
 
-                if (num3 > 0)
+                if (toolDamage > 0)
                 {
-                    componentMiner.DamageActiveTool(num3);
+                    componentMiner.DamageActiveTool(toolDamage);
                 }
 
                 return true;
@@ -299,27 +301,27 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
 
         if (WorldRuntimeContext.For(Project).IsAuthority)
         {
-            if (num2 != slotValue)
+            if (updatedValue != slotValue)
             {
                 inventory.RemoveSlotItems(activeSlotIndex, 1);
-                inventory.AddSlotItems(activeSlotIndex, num2, 1);
+                inventory.AddSlotItems(activeSlotIndex, updatedValue, 1);
             }
 
-            if (num3 > 0)
+            if (toolDamage > 0)
             {
-                componentMiner.DamageActiveTool(num3);
+                componentMiner.DamageActiveTool(toolDamage);
             }
         }
         else
         {
             //防止客户端声音重复
-            if (num2 == slotValue)
+            if (updatedValue == slotValue)
             {
                 return false;
             }
 
             inventory.RemoveNetSlotItems(activeSlotIndex, 1);
-            inventory.AddNetSlotItems(activeSlotIndex, num2, 1);
+            inventory.AddNetSlotItems(activeSlotIndex, updatedValue, 1);
         }
 
         return false;
@@ -327,19 +329,19 @@ public class SubsystemMusketBlockBehavior : SubsystemBlockBehavior
 
     public override int GetProcessInventoryItemCapacity(IInventory inventory, int slotIndex, int value)
     {
-        var num = Terrain.ExtractContents(value);
+        var itemContents = Terrain.ExtractContents(value);
         var loadState = MusketBlock.GetLoadState(Terrain.ExtractData(inventory.GetSlotValue(slotIndex)));
-        if (loadState == MusketBlock.LoadState.Empty && num == 109)
+        if (loadState == MusketBlock.LoadState.Empty && itemContents == 109)
         {
             return 1;
         }
 
-        if (loadState == MusketBlock.LoadState.Gunpowder && num == 205)
+        if (loadState == MusketBlock.LoadState.Gunpowder && itemContents == 205)
         {
             return 1;
         }
 
-        if (loadState == MusketBlock.LoadState.Wad && num == 214)
+        if (loadState == MusketBlock.LoadState.Wad && itemContents == 214)
         {
             return 1;
         }

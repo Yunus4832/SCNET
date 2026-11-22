@@ -17,8 +17,8 @@ public class ThermometerBlock : Block, IElectricElementBlock
         int z
     )
     {
-        var num = Terrain.ExtractData(value);
-        return new ThermometerElectricElement(subsystemElectricity, new CellFace(x, y, z, num & 3));
+        var mountingData = Terrain.ExtractData(value);
+        return new ThermometerElectricElement(subsystemElectricity, new CellFace(x, y, z, mountingData & 3));
     }
 
     public ElectricConnectorType? GetConnectorType(
@@ -69,8 +69,8 @@ public class ThermometerBlock : Block, IElectricElementBlock
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = Terrain.ExtractData(value);
-        return num < CollisionBoxesByData.Length ? CollisionBoxesByData[num] : [];
+        var mountingData = Terrain.ExtractData(value);
+        return mountingData < CollisionBoxesByData.Length ? CollisionBoxesByData[mountingData] : [];
     }
 
     public override BlockPlacementData GetPlacementValue(

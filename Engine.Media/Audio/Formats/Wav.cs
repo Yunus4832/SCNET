@@ -208,13 +208,13 @@ public static class Wav
                     throw new NotSupportedException("Underlying stream cannot be seeked.");
                 }
 
-                var num = value * ChannelsCount * 2;
-                if (num < 0 || num > BytesCount)
+                var byteOffset = value * ChannelsCount * 2;
+                if (byteOffset < 0 || byteOffset > BytesCount)
                 {
-                    throw new ArgumentOutOfRangeException(nameof(num));
+                    throw new ArgumentOutOfRangeException(nameof(byteOffset));
                 }
 
-                _stream.Position = _dataStart + num;
+                _stream.Position = _dataStart + byteOffset;
                 _position = value;
             }
         }
@@ -280,9 +280,9 @@ public static class Wav
             }
 
             count = (int)MathUtils.Min(count, _bytesCount - _position * 2 * ChannelsCount);
-            var num = _stream.Read(buffer, offset, count);
-            _position += num / 2 / ChannelsCount;
-            return num;
+            var bytesRead = _stream.Read(buffer, offset, count);
+            _position += bytesRead / 2 / ChannelsCount;
+            return bytesRead;
         }
 
         public override StreamingSource Duplicate()

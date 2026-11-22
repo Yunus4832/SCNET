@@ -14,23 +14,23 @@ internal static class PathRenderer
     public static int TrimPathStart(DynamicArray<Vector2> positions, BoundingRectangle rectangle)
     {
         var count = positions.Count;
-        var num = -1;
+        var firstOutsideIndex = -1;
         for (var i = 0; i < positions.Count; i++)
         {
             if (!rectangle.Contains(positions[i]))
             {
-                num = i;
+                firstOutsideIndex = i;
                 break;
             }
         }
 
-        if (num < 0)
+        if (firstOutsideIndex < 0)
         {
             positions.Count = 0;
         }
-        else if (num > 0)
+        else if (firstOutsideIndex > 0)
         {
-            positions.RemoveRange(0, num - 1);
+            positions.RemoveRange(0, firstOutsideIndex - 1);
             var ray = new Ray2(positions[1], Vector2.Normalize(positions[0] - positions[1]));
             var valueOrDefault = ray.Intersection(rectangle).GetValueOrDefault();
             positions[0] = ray.Position + ray.Direction * valueOrDefault;
@@ -50,23 +50,23 @@ internal static class PathRenderer
     public static int TrimPathStart(DynamicArray<Vector2> positions, BoundingCircle circle)
     {
         var count = positions.Count;
-        var num = -1;
+        var firstOutsideIndex = -1;
         for (var i = 0; i < positions.Count; i++)
         {
             if (!circle.Contains(positions[i]))
             {
-                num = i;
+                firstOutsideIndex = i;
                 break;
             }
         }
 
-        if (num < 0)
+        if (firstOutsideIndex < 0)
         {
             positions.Count = 0;
         }
-        else if (num > 0)
+        else if (firstOutsideIndex > 0)
         {
-            positions.RemoveRange(0, num - 1);
+            positions.RemoveRange(0, firstOutsideIndex - 1);
             var ray = new Ray2(positions[1], Vector2.Normalize(positions[0] - positions[1]));
             var valueOrDefault = ray.Intersection(circle).GetValueOrDefault();
             positions[0] = ray.Position + ray.Direction * valueOrDefault;
@@ -103,12 +103,15 @@ internal static class PathRenderer
             {
                 for (var i = 0; i < positions.Count; i++)
                 {
-                    var num = (i - 1 + positions.Count) % positions.Count;
-                    var num2 = i;
-                    var num3 = (i + 1) % positions.Count;
+                    var previousIndex = (i - 1 + positions.Count) % positions.Count;
+                    var currentIndex = i;
+                    var nextIndex = (i + 1) % positions.Count;
                     normals.Add(
-                        array2[num] || array2[num2]
-                            ? Normal2(array[num2] - array[num], array[num3] - array[num2])
+                        array2[previousIndex] || array2[currentIndex]
+                            ? Normal2(
+                                array[currentIndex] - array[previousIndex],
+                                array[nextIndex] - array[currentIndex]
+                            )
                             : default
                     );
                 }
@@ -139,10 +142,12 @@ internal static class PathRenderer
         {
             for (var k = 0; k < positions.Count; k++)
             {
-                var num4 = (k - 1 + positions.Count) % positions.Count;
-                var num5 = k;
-                var num6 = (k + 1) % positions.Count;
-                normals.Add(Normal2(array[num5] - array[num4], array[num6] - array[num5]));
+                var previousIndex = (k - 1 + positions.Count) % positions.Count;
+                var currentIndex = k;
+                var nextIndex = (k + 1) % positions.Count;
+                normals.Add(
+                    Normal2(array[currentIndex] - array[previousIndex], array[nextIndex] - array[currentIndex])
+                );
             }
         }
         else
@@ -393,8 +398,8 @@ internal static class PathRenderer
         float depth
     )
     {
-        var num = loop ? normals.Count : normals.Count - 1;
-        for (var i = 0; i < num; i++)
+        var segmentCount = loop ? normals.Count : normals.Count - 1;
+        for (var i = 0; i < segmentCount; i++)
         {
             if (visibility.Count > i && !visibility[i])
             {
@@ -406,31 +411,31 @@ internal static class PathRenderer
             var point2 = points[index2];
             var position = point.Position;
             var position2 = point2.Position;
-            var vector = normals[i];
-            var vector2 = normals[index2];
-            if (vector.LengthSquared() > point.MiterLimit)
+            var startNormal = normals[i];
+            var endNormal = normals[index2];
+            if (startNormal.LengthSquared() > point.MiterLimit)
             {
-                vector = Normal1(position2 - position);
+                startNormal = Normal1(position2 - position);
             }
 
-            if (vector2.LengthSquared() > point2.MiterLimit)
+            if (endNormal.LengthSquared() > point2.MiterLimit)
             {
-                vector2 = Normal1(position2 - position);
+                endNormal = Normal1(position2 - position);
             }
 
             if (point.OuterRadiusL != 0f || point2.OuterRadiusL != 0f)
             {
-                var vector3 = vector * (0f - point.InnerRadiusL);
-                var vector4 = vector * (0f - point.OuterRadiusL);
-                var vector5 = vector2 * (0f - point2.InnerRadiusL);
-                var vector6 = vector2 * (0f - point2.OuterRadiusL);
+                var startInnerLeftOffset = startNormal * (0f - point.InnerRadiusL);
+                var startOuterLeftOffset = startNormal * (0f - point.OuterRadiusL);
+                var endInnerLeftOffset = endNormal * (0f - point2.InnerRadiusL);
+                var endOuterLeftOffset = endNormal * (0f - point2.OuterRadiusL);
                 if (flatShading)
                 {
                     batch.QueueQuad(
-                        position + vector4,
-                        position + vector3,
-                        position2 + vector5,
-                        position2 + vector6,
+                        position + startOuterLeftOffset,
+                        position + startInnerLeftOffset,
+                        position2 + endInnerLeftOffset,
+                        position2 + endOuterLeftOffset,
                         0f,
                         point.OuterColorR,
                         point.InnerColorR,
@@ -441,10 +446,10 @@ internal static class PathRenderer
                 else
                 {
                     batch.QueueQuad(
-                        position + vector4,
-                        position + vector3,
-                        position2 + vector5,
-                        position2 + vector6,
+                        position + startOuterLeftOffset,
+                        position + startInnerLeftOffset,
+                        position2 + endInnerLeftOffset,
+                        position2 + endOuterLeftOffset,
                         0f,
                         point.OuterColorR,
                         point.InnerColorR,
@@ -459,17 +464,17 @@ internal static class PathRenderer
                 continue;
             }
 
-            var vector7 = vector * point.InnerRadiusR;
-            var vector8 = vector * point.OuterRadiusR;
-            var vector9 = vector2 * point2.InnerRadiusR;
-            var vector10 = vector2 * point2.OuterRadiusR;
+            var startInnerRightOffset = startNormal * point.InnerRadiusR;
+            var startOuterRightOffset = startNormal * point.OuterRadiusR;
+            var endInnerRightOffset = endNormal * point2.InnerRadiusR;
+            var endOuterRightOffset = endNormal * point2.OuterRadiusR;
             if (flatShading)
             {
                 batch.QueueQuad(
-                    position + vector8,
-                    position + vector7,
-                    position2 + vector9,
-                    position2 + vector10,
+                    position + startOuterRightOffset,
+                    position + startInnerRightOffset,
+                    position2 + endInnerRightOffset,
+                    position2 + endOuterRightOffset,
                     0f,
                     point.OuterColorR,
                     point.InnerColorR,
@@ -480,10 +485,10 @@ internal static class PathRenderer
             else
             {
                 batch.QueueQuad(
-                    position + vector8,
-                    position + vector7,
-                    position2 + vector9,
-                    position2 + vector10,
+                    position + startOuterRightOffset,
+                    position + startInnerRightOffset,
+                    position2 + endInnerRightOffset,
+                    position2 + endOuterRightOffset,
                     0f,
                     point.OuterColorR,
                     point.InnerColorR,
@@ -505,9 +510,9 @@ internal static class PathRenderer
         float depth
     )
     {
-        var num = lengthOffset;
-        var num2 = loop ? normals.Count : normals.Count - 1;
-        for (var i = 0; i < num2; i++)
+        var textureU = lengthOffset;
+        var segmentCount = loop ? normals.Count : normals.Count - 1;
+        for (var i = 0; i < segmentCount; i++)
         {
             if (!visibility[i])
             {
@@ -520,47 +525,53 @@ internal static class PathRenderer
             var point2 = points[index2];
             var position = point.Position;
             var position2 = point2.Position;
-            var num3 = 1f / point.LengthScale;
-            var vector = position2 - position;
-            var num4 = vector.Length();
-            var v = vector / num4 * num3;
-            var vector2 = normals[index];
-            var vector3 = normals[index2];
-            if (vector2.LengthSquared() > point.MiterLimit)
+            var inverseLengthScale = 1f / point.LengthScale;
+            var segmentDelta = position2 - position;
+            var segmentLength = segmentDelta.Length();
+            var textureGradient = segmentDelta / segmentLength * inverseLengthScale;
+            var startNormal = normals[index];
+            var endNormal = normals[index2];
+            if (startNormal.LengthSquared() > point.MiterLimit)
             {
-                vector2 = Normal1(position2 - position);
+                startNormal = Normal1(position2 - position);
             }
 
-            if (vector3.LengthSquared() > point2.MiterLimit)
+            if (endNormal.LengthSquared() > point2.MiterLimit)
             {
-                vector3 = Normal1(position2 - position);
+                endNormal = Normal1(position2 - position);
             }
 
-            var vector4 = new Vector2(num, 0.5f);
-            num += num4 * num3;
-            var vector5 = new Vector2(num, 0.5f);
+            var startUv = new Vector2(textureU, 0.5f);
+            textureU += segmentLength * inverseLengthScale;
+            var endUv = new Vector2(textureU, 0.5f);
             if (point.OuterRadiusL > 0f || point2.OuterRadiusL > 0f)
             {
-                var vector6 = vector2 * (0f - point.InnerRadiusL);
-                var vector7 = vector2 * (0f - point.OuterRadiusL);
-                var vector8 = vector3 * (0f - point2.InnerRadiusL);
-                var vector9 = vector3 * (0f - point2.OuterRadiusL);
-                var vector10 = new Vector2(Vector2.Dot(vector6, v), -0.5f * point.InnerRadiusL / point.OuterRadiusL);
-                var vector11 = new Vector2(Vector2.Dot(vector7, v), -0.5f);
-                var vector12 = new Vector2(Vector2.Dot(vector8, v), -0.5f * point2.InnerRadiusL / point2.OuterRadiusL);
-                var vector13 = new Vector2(Vector2.Dot(vector9, v), -0.5f);
+                var startInnerLeftOffset = startNormal * (0f - point.InnerRadiusL);
+                var startOuterLeftOffset = startNormal * (0f - point.OuterRadiusL);
+                var endInnerLeftOffset = endNormal * (0f - point2.InnerRadiusL);
+                var endOuterLeftOffset = endNormal * (0f - point2.OuterRadiusL);
+                var startInnerLeftUvOffset = new Vector2(
+                    Vector2.Dot(startInnerLeftOffset, textureGradient),
+                    -0.5f * point.InnerRadiusL / point.OuterRadiusL
+                );
+                var startOuterLeftUvOffset = new Vector2(Vector2.Dot(startOuterLeftOffset, textureGradient), -0.5f);
+                var endInnerLeftUvOffset = new Vector2(
+                    Vector2.Dot(endInnerLeftOffset, textureGradient),
+                    -0.5f * point2.InnerRadiusL / point2.OuterRadiusL
+                );
+                var endOuterLeftUvOffset = new Vector2(Vector2.Dot(endOuterLeftOffset, textureGradient), -0.5f);
                 if (flatShading)
                 {
                     batch.QueueQuad(
-                        position + vector7,
-                        position + vector6,
-                        position2 + vector8,
-                        position2 + vector9,
+                        position + startOuterLeftOffset,
+                        position + startInnerLeftOffset,
+                        position2 + endInnerLeftOffset,
+                        position2 + endOuterLeftOffset,
                         0f,
-                        vector4 + vector11,
-                        vector4 + vector10,
-                        vector5 + vector12,
-                        vector5 + vector13,
+                        startUv + startOuterLeftUvOffset,
+                        startUv + startInnerLeftUvOffset,
+                        endUv + endInnerLeftUvOffset,
+                        endUv + endOuterLeftUvOffset,
                         point.OuterColorR,
                         point.InnerColorR,
                         point.InnerColorR,
@@ -570,15 +581,15 @@ internal static class PathRenderer
                 else
                 {
                     batch.QueueQuad(
-                        position + vector7,
-                        position + vector6,
-                        position2 + vector8,
-                        position2 + vector9,
+                        position + startOuterLeftOffset,
+                        position + startInnerLeftOffset,
+                        position2 + endInnerLeftOffset,
+                        position2 + endOuterLeftOffset,
                         0f,
-                        vector4 + vector11,
-                        vector4 + vector10,
-                        vector5 + vector12,
-                        vector5 + vector13,
+                        startUv + startOuterLeftUvOffset,
+                        startUv + startInnerLeftUvOffset,
+                        endUv + endInnerLeftUvOffset,
+                        endUv + endOuterLeftUvOffset,
                         point.OuterColorR,
                         point.InnerColorR,
                         point2.InnerColorR,
@@ -592,26 +603,32 @@ internal static class PathRenderer
                 continue;
             }
 
-            var vector14 = vector2 * point.InnerRadiusR;
-            var vector15 = vector2 * point.OuterRadiusR;
-            var vector16 = vector3 * point2.InnerRadiusR;
-            var vector17 = vector3 * point2.OuterRadiusR;
-            var vector18 = new Vector2(Vector2.Dot(vector14, v), 0.5f * point.InnerRadiusR / point.OuterRadiusR);
-            var vector19 = new Vector2(Vector2.Dot(vector15, v), 0.5f);
-            var vector20 = new Vector2(Vector2.Dot(vector16, v), 0.5f * point2.InnerRadiusR / point2.OuterRadiusR);
-            var vector21 = new Vector2(Vector2.Dot(vector17, v), 0.5f);
+            var startInnerRightOffset = startNormal * point.InnerRadiusR;
+            var startOuterRightOffset = startNormal * point.OuterRadiusR;
+            var endInnerRightOffset = endNormal * point2.InnerRadiusR;
+            var endOuterRightOffset = endNormal * point2.OuterRadiusR;
+            var startInnerRightUvOffset = new Vector2(
+                Vector2.Dot(startInnerRightOffset, textureGradient),
+                0.5f * point.InnerRadiusR / point.OuterRadiusR
+            );
+            var startOuterRightUvOffset = new Vector2(Vector2.Dot(startOuterRightOffset, textureGradient), 0.5f);
+            var endInnerRightUvOffset = new Vector2(
+                Vector2.Dot(endInnerRightOffset, textureGradient),
+                0.5f * point2.InnerRadiusR / point2.OuterRadiusR
+            );
+            var endOuterRightUvOffset = new Vector2(Vector2.Dot(endOuterRightOffset, textureGradient), 0.5f);
             if (flatShading)
             {
                 batch.QueueQuad(
-                    position + vector15,
-                    position + vector14,
-                    position2 + vector16,
-                    position2 + vector17,
+                    position + startOuterRightOffset,
+                    position + startInnerRightOffset,
+                    position2 + endInnerRightOffset,
+                    position2 + endOuterRightOffset,
                     0f,
-                    vector4 + vector19,
-                    vector4 + vector18,
-                    vector5 + vector20,
-                    vector5 + vector21,
+                    startUv + startOuterRightUvOffset,
+                    startUv + startInnerRightUvOffset,
+                    endUv + endInnerRightUvOffset,
+                    endUv + endOuterRightUvOffset,
                     point.OuterColorR,
                     point.InnerColorR,
                     point.InnerColorR,
@@ -621,15 +638,15 @@ internal static class PathRenderer
             else
             {
                 batch.QueueQuad(
-                    position + vector15,
-                    position + vector14,
-                    position2 + vector16,
-                    position2 + vector17,
+                    position + startOuterRightOffset,
+                    position + startInnerRightOffset,
+                    position2 + endInnerRightOffset,
+                    position2 + endOuterRightOffset,
                     0f,
-                    vector4 + vector19,
-                    vector4 + vector18,
-                    vector5 + vector20,
-                    vector5 + vector21,
+                    startUv + startOuterRightUvOffset,
+                    startUv + startInnerRightUvOffset,
+                    endUv + endInnerRightUvOffset,
+                    endUv + endOuterRightUvOffset,
                     point.OuterColorR,
                     point.InnerColorR,
                     point2.InnerColorR,
@@ -647,8 +664,8 @@ internal static class PathRenderer
     private static Vector2 Normal2(Vector2 d1, Vector2 d2)
     {
         d1 = Vector2.Normalize(d1);
-        var num = MathUtils.Tan(((float)Math.PI - Vector2.Angle(d1, d2)) / 2f);
-        return Vector2.Perpendicular(d1) - d1 / num;
+        var halfInteriorAngleTangent = MathUtils.Tan(((float)Math.PI - Vector2.Angle(d1, d2)) / 2f);
+        return Vector2.Perpendicular(d1) - d1 / halfInteriorAngleTangent;
     }
 
     public struct Point : IEquatable<Point>

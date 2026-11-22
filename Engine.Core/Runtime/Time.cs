@@ -31,11 +31,11 @@ public static class Time
 
     public static bool PeriodicEvent(double period, double offset)
     {
-        var num = FrameStartTime - offset;
-        var num2 = MathUtils.Floor(num / period) * period;
-        if (num >= num2)
+        var offsetTime = FrameStartTime - offset;
+        var periodStart = MathUtils.Floor(offsetTime / period) * period;
+        if (offsetTime >= periodStart)
         {
-            return num - FrameDuration < num2;
+            return offsetTime - FrameDuration < periodStart;
         }
 
         return false;
@@ -72,19 +72,19 @@ public static class Time
         FrameDuration = (float)(realTime - FrameStartTime);
         PreviousFrameStartTime = FrameStartTime;
         FrameStartTime = realTime;
-        var num = 0;
-        while (num < _delayedExecutionsRequests.Count)
+        var requestIndex = 0;
+        while (requestIndex < _delayedExecutionsRequests.Count)
         {
-            var delayedExecutionRequest = _delayedExecutionsRequests[num];
+            var delayedExecutionRequest = _delayedExecutionsRequests[requestIndex];
             if ((delayedExecutionRequest.Time >= 0.0 && FrameStartTime >= delayedExecutionRequest.Time) ||
                 (delayedExecutionRequest.FramesCount >= 0 && FrameIndex >= delayedExecutionRequest.FramesCount))
             {
-                _delayedExecutionsRequests.RemoveAt(num);
+                _delayedExecutionsRequests.RemoveAt(requestIndex);
                 delayedExecutionRequest.Action();
             }
             else
             {
-                num++;
+                requestIndex++;
             }
         }
     }

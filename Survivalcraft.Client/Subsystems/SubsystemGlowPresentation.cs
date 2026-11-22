@@ -40,34 +40,34 @@ public sealed class SubsystemGlowPresentation : Subsystem, IDrawable
             }
 
             var vector = key.Position - camera.ViewPosition;
-            var num = Vector3.Dot(vector, camera.ViewDirection);
-            if (!(num > 0.01f))
+            var viewDepth = Vector3.Dot(vector, camera.ViewDirection);
+            if (!(viewDepth > 0.01f))
             {
                 continue;
             }
 
-            var num2 = vector.Length();
-            if (!(num2 < _subsystemSky.VisibilityRange))
+            var distance = vector.Length();
+            if (!(distance < _subsystemSky.VisibilityRange))
             {
                 continue;
             }
 
-            var num3 = key.Size;
+            var glowSize = key.Size;
             if (key.FarDistance > 0f)
             {
-                num3 += (key.FarSize - key.Size) * MathUtils.Saturate(num2 / key.FarDistance);
+                glowSize += (key.FarSize - key.Size) * MathUtils.Saturate(distance / key.FarDistance);
             }
 
-            var v = (0f - (0.01f + 0.02f * num)) / num2 * vector;
+            var v = (0f - (0.01f + 0.02f * viewDepth)) / distance * vector;
             var color = Color.LerpNotSaturated(
                 key.Color,
                 _subsystemSky.ViewFogColor,
                 _subsystemSky.CalculateFog(camera.ViewPosition, key.Position)
             );
-            var p = key.Position + num3 * (-key.Right - key.Up) + v;
-            var p2 = key.Position + num3 * (key.Right - key.Up) + v;
-            var p3 = key.Position + num3 * (key.Right + key.Up) + v;
-            var p4 = key.Position + num3 * (-key.Right + key.Up) + v;
+            var p = key.Position + glowSize * (-key.Right - key.Up) + v;
+            var p2 = key.Position + glowSize * (key.Right - key.Up) + v;
+            var p3 = key.Position + glowSize * (key.Right + key.Up) + v;
+            var p4 = key.Position + glowSize * (-key.Right + key.Up) + v;
 
             _batchesByType[(int)key.Type].QueueQuad(
                 p,

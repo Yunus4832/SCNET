@@ -49,11 +49,11 @@ public struct Line2 : IEquatable<Line2>
 
     public static Line2 Normalize(Line2 l)
     {
-        var num = l.Normal.Length();
-        if (num > 0f)
+        var normalLength = l.Normal.Length();
+        if (normalLength > 0f)
         {
-            var num2 = 1f / num;
-            return new Line2(l.Normal * num2, l.D * num2);
+            var inverseLength = 1f / normalLength;
+            return new Line2(l.Normal * inverseLength, l.D * inverseLength);
         }
 
         return new Line2(Vector2.UnitX, 0f);
@@ -61,16 +61,16 @@ public struct Line2 : IEquatable<Line2>
 
     public static Vector2? Intersection(Line2 l1, Line2 l2)
     {
-        var num = 0f - Vector2.Cross(l1.Normal, l2.Normal);
-        if (num == 0f)
+        var determinant = 0f - Vector2.Cross(l1.Normal, l2.Normal);
+        if (determinant == 0f)
         {
             return null;
         }
 
-        var num2 = 1f / num;
+        var inverseDeterminant = 1f / determinant;
         return new Vector2(
-            (l2.Normal.Y * l1.D - l1.Normal.Y * l2.D) * num2,
-            (l1.Normal.X * l2.D - l2.Normal.X * l1.D) * num2
+            (l2.Normal.Y * l1.D - l1.Normal.Y * l2.D) * inverseDeterminant,
+            (l1.Normal.X * l2.D - l2.Normal.X * l1.D) * inverseDeterminant
         );
     }
 

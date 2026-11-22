@@ -298,7 +298,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         var input = Input;
         var viewPlayer = GetViewPlayer();
         var slotValue = _inventory.GetSlotValue(_slotIndex);
-        var num = Terrain.ExtractContents(slotValue);
+        var contents = Terrain.ExtractContents(slotValue);
         UpdateEnvironmentData(_blockIconWidget.DrawBlockEnvironmentData);
         if (_componentCharacter != null)
         {
@@ -335,10 +335,16 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
 
             if (inventory != null)
             {
-                var num2 = ComponentInventoryBase.FindAcquireSlotForItem(inventory, slotValue);
-                if (num2 >= 0)
+                var destinationSlot = ComponentInventoryBase.FindAcquireSlotForItem(inventory, slotValue);
+                if (destinationSlot >= 0)
                 {
-                    HandleMoveItem(_inventory, _slotIndex, inventory, num2, _inventory.GetSlotCount(_slotIndex));
+                    HandleMoveItem(
+                        _inventory,
+                        _slotIndex,
+                        inventory,
+                        destinationSlot,
+                        _inventory.GetSlotCount(_slotIndex)
+                    );
                 }
             }
         }
@@ -347,7 +353,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
             HitTestGlobal(input.Click.Value.Start) == this &&
             HitTestGlobal(input.Click.Value.End) == this)
         {
-            var flag = false;
+            var splitHandled = false;
             if (viewPlayer != null)
             {
                 var viewInput = viewPlayer.Entity.FindComponent<ComponentInput>(true)!;
@@ -356,11 +362,11 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
                     viewInput.SplitSourceSlotIndex == _slotIndex)
                 {
                     viewInput.SetSplitSourceInventoryAndSlot(null, -1);
-                    flag = true;
+                    splitHandled = true;
                 }
                 else if (splitSourceInventory != null)
                 {
-                    flag = HandleMoveItem(
+                    splitHandled = HandleMoveItem(
                         splitSourceInventory,
                         viewInput.SplitSourceSlotIndex,
                         _inventory,
@@ -373,7 +379,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
 
             var isHotbarSlot = _inventory is IPagedInventory pagedInventory &&
                                _slotIndex < pagedInventory.HotbarSlotsCount;
-            if (!flag && _inventory.ActiveSlotIndex != _slotIndex && isHotbarSlot)
+            if (!splitHandled && _inventory.ActiveSlotIndex != _slotIndex && isHotbarSlot)
             {
                 _inventory.ActiveSlotIndex = _slotIndex;
                 if (_inventory.ActiveSlotIndex == _slotIndex)
@@ -423,7 +429,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
             dragMode = DragMode.SingleItem;
         }
 
-        var num3 = dragMode != 0 ? 1 : slotCount;
+        var draggedCount = dragMode != 0 ? 1 : slotCount;
         var subsystemTerrain = _inventory.Project.FindSubsystem<SubsystemTerrain>();
         var containerWidget =
             (ContainerWidget)LoadWidget(null, ContentManager.Get<XElement>("Widgets/InventoryDragWidget"), null);
@@ -434,8 +440,8 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         containerWidget.Children.Find<BlockIconWidget>("InventoryDragWidget.Icon")!.DrawBlockEnvironmentData
             .SubsystemTerrain = subsystemTerrain;
         containerWidget.Children.Find<LabelWidget>("InventoryDragWidget.Name")!.Text =
-            PresentationCatalog.Get(num).GetDisplayName(subsystemTerrain, slotValue);
-        containerWidget.Children.Find<LabelWidget>("InventoryDragWidget.Count")!.Text = num3.ToString();
+            PresentationCatalog.Get(contents).GetDisplayName(subsystemTerrain, slotValue);
+        containerWidget.Children.Find<LabelWidget>("InventoryDragWidget.Count")!.Text = draggedCount.ToString();
         containerWidget.Children.Find<LabelWidget>("InventoryDragWidget.Count")!.IsVisible =
             _inventory is not ComponentCreativeInventory && _inventory is not ComponentFurnitureInventory;
         UpdateEnvironmentData(
@@ -459,37 +465,37 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
     {
         if (_inventory != null)
         {
-            var flag = _inventory is ComponentCreativeInventory or ComponentFurnitureInventory;
-            var num = _inventory.GetSlotCount(_slotIndex);
-            if (!flag && _dragMode.HasValue)
+            var isCatalogInventory = _inventory is ComponentCreativeInventory or ComponentFurnitureInventory;
+            var slotCount = _inventory.GetSlotCount(_slotIndex);
+            if (!isCatalogInventory && _dragMode.HasValue)
             {
-                num = _dragMode.Value != 0 ? MathUtils.Max(num - 1, 0) : 0;
+                slotCount = _dragMode.Value != 0 ? MathUtils.Max(slotCount - 1, 0) : 0;
             }
 
             _rectangleWidget.IsVisible = true;
-            if (num > 0)
+            if (slotCount > 0)
             {
                 var slotValue = _inventory.GetSlotValue(_slotIndex);
-                var num2 = Terrain.ExtractContents(slotValue);
-                var block = Catalog.Blocks[num2];
-                var flag2 = block.GetRotPeriod(slotValue) > 0 && block.GetDamage(slotValue) > 0;
+                var contents = Terrain.ExtractContents(slotValue);
+                var block = Catalog.Blocks[contents];
+                var isSpoiling = block.GetRotPeriod(slotValue) > 0 && block.GetDamage(slotValue) > 0;
                 _blockIconWidget.Value = Terrain.NormalizeCellValue(slotValue);
                 _blockIconWidget.IsVisible = !HideBlockIcon;
-                if (num != _lastCount)
+                if (slotCount != _lastCount)
                 {
-                    _countWidget.Text = num.ToString();
-                    _lastCount = num;
+                    _countWidget.Text = slotCount.ToString();
+                    _lastCount = slotCount;
                 }
 
-                _countWidget.IsVisible = num > 1 && !flag;
+                _countWidget.IsVisible = slotCount > 1 && !isCatalogInventory;
                 _editOverlayWidget.IsVisible = !HideEditOverlay && block.Editable;
                 _interactiveOverlayWidget.IsVisible = !HideInteractiveOverlay &&
                                                       (_subsystemTerrain != null
                                                           ? block.IsInteractive(_subsystemTerrain, slotValue)
                                                           : block.Interactive);
                 _foodOverlayWidget.IsVisible = !HideFoodOverlay && block.GetRotPeriod(slotValue) > 0;
-                _foodOverlayWidget.FillColor = flag2 ? new Color(128, 64, 0) : new Color(160, 160, 160);
-                if (!flag && !HideHealthBar && block.Durability >= 0)
+                _foodOverlayWidget.FillColor = isSpoiling ? new Color(128, 64, 0) : new Color(160, 160, 160);
+                if (!isCatalogInventory && !HideHealthBar && block.Durability >= 0)
                 {
                     var damage = block.GetDamage(slotValue);
                     _healthBarWidget.IsVisible = true;
@@ -551,31 +557,37 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
             if (_inventory.GetSlotProcessCapacity(_slotIndex, slotValue) >= 0 ||
                 _inventory.GetSlotCapacity(_slotIndex, slotValue) > 0)
             {
-                var num = 80f * GlobalTransform.Right.Length();
+                var iconSize = 80f * GlobalTransform.Right.Length();
                 var center = Vector2.Transform(ActualSize / 2f, GlobalTransform);
                 var flatBatch2D = dc.PrimitivesRenderer2D.FlatBatch(100);
                 flatBatch2D.QueueEllipse(
                     center,
-                    new Vector2(num),
+                    new Vector2(iconSize),
                     0f,
                     new Color(0, 0, 0, 96) * GlobalColorTransform,
                     64
                 );
                 flatBatch2D.QueueEllipse(
                     center,
-                    new Vector2(num - 0.5f),
+                    new Vector2(iconSize - 0.5f),
                     0f,
                     new Color(0, 0, 0, 64) * GlobalColorTransform,
                     64
                 );
                 flatBatch2D.QueueEllipse(
                     center,
-                    new Vector2(num + 0.5f),
+                    new Vector2(iconSize + 0.5f),
                     0f,
                     new Color(0, 0, 0, 48) * GlobalColorTransform,
                     64
                 );
-                flatBatch2D.QueueDisc(center, new Vector2(num), 0f, new Color(0, 0, 0, 48) * GlobalColorTransform, 64);
+                flatBatch2D.QueueDisc(
+                    center,
+                    new Vector2(iconSize),
+                    0f,
+                    new Color(0, 0, 0, 48) * GlobalColorTransform,
+                    64
+                );
             }
         }
 

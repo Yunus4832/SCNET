@@ -91,9 +91,9 @@ public struct Profiler : IDisposable
             throw new InvalidOperationException("Profiler.Dispose called without a matching constructor.");
         }
 
-        var num = Stopwatch.GetTimestamp() - _startTicks;
-        _metric.TotalTicks += num;
-        _metric.MaxTicks = MathUtils.Max(_metric.MaxTicks, num);
+        var elapsedTicks = Stopwatch.GetTimestamp() - _startTicks;
+        _metric.TotalTicks += elapsedTicks;
+        _metric.MaxTicks = MathUtils.Max(_metric.MaxTicks, elapsedTicks);
         _metric.HitCount++;
         _metric = null;
     }
@@ -113,22 +113,22 @@ public struct Profiler : IDisposable
 
     public static void ReportAverage(Metric metric, StringBuilder text)
     {
-        var num = MaxNameLength + 2;
+        var nameColumnWidth = MaxNameLength + 2;
         var length = text.Length;
         text.Append(metric.Name);
-        text.Append('.', Math.Max(1, num - text.Length + length));
+        text.Append('.', Math.Max(1, nameColumnWidth - text.Length + length));
         text.AppendNumber(metric.AverageHitCount.Value, 2);
         text.Append('x');
-        text.Append('.', Math.Max(1, num + 9 - text.Length + length));
+        text.Append('.', Math.Max(1, nameColumnWidth + 9 - text.Length + length));
         FormatTimeSimple(text, metric.AverageTime.Value);
     }
 
     public static void ReportFrame(Metric metric, StringBuilder text)
     {
-        var num = MaxNameLength + 2;
+        var nameColumnWidth = MaxNameLength + 2;
         var length = text.Length;
         text.Append(metric.Name);
-        text.Append('.', Math.Max(1, num - text.Length + length));
+        text.Append('.', Math.Max(1, nameColumnWidth - text.Length + length));
         FormatTimeSimple(text, metric.TotalTicks / (float)Stopwatch.Frequency);
     }
 

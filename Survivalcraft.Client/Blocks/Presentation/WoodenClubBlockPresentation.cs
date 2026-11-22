@@ -43,7 +43,7 @@ public class WoodenClubBlockPresentation(WoodenClubBlock block, BlockPresentatio
 
     public override void Initialize()
     {
-        var num = 47;
+        var textureSlot = 47;
         var model = ContentManager.Get<Model>("Models/WoodenClub");
         var handleNode = model.FindNode("Handle")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(handleNode);
@@ -57,7 +57,9 @@ public class WoodenClubBlockPresentation(WoodenClubBlock block, BlockPresentatio
             false,
             Color.White
         );
-        blockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(num % 16 / 16f, num / 16 / 16f, 0f));
+        blockMesh.TransformTextureCoordinates(
+            Matrix.CreateTranslation(textureSlot % 16 / 16f, textureSlot / 16 / 16f, 0f)
+        );
         StandaloneBlockMesh.AppendBlockMesh(blockMesh);
         base.Initialize();
     }

@@ -80,10 +80,10 @@ public static partial class GamePad
 
         while (CachedTriggerEvents.TryDequeue(out var info))
         {
-            var num = TranslateDeviceId(info.GamepadIndex);
-            if (num >= 0)
+            var deviceIndex = TranslateDeviceId(info.GamepadIndex);
+            if (deviceIndex >= 0)
             {
-                states[num].Triggers[(int)info.Trigger] = info.Value;
+                states[deviceIndex].Triggers[(int)info.Trigger] = info.Value;
             }
         }
     }

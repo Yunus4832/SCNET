@@ -26,8 +26,8 @@ public class HitValueParticleSystem : ParticleSystem<HitValueParticleSystem.Part
     public override bool Simulate(float dt)
     {
         dt = MathUtils.Clamp(dt, 0f, 0.1f);
-        var num = MathUtils.Pow(0.1f, dt);
-        var flag = false;
+        var velocityDamping = MathUtils.Pow(0.1f, dt);
+        var hasActiveParticles = false;
         foreach (var particle in Particles)
         {
             if (!particle.IsActive)
@@ -35,12 +35,12 @@ public class HitValueParticleSystem : ParticleSystem<HitValueParticleSystem.Part
                 continue;
             }
 
-            flag = true;
+            hasActiveParticles = true;
             particle.TimeToLive -= dt;
             if (particle.TimeToLive > 0f)
             {
                 particle.Velocity += new Vector3(0f, 0.5f, 0f) * dt;
-                particle.Velocity *= num;
+                particle.Velocity *= velocityDamping;
                 particle.Position += particle.Velocity * dt;
                 particle.Color = particle.BaseColor * MathUtils.Saturate(2f * particle.TimeToLive);
             }
@@ -50,7 +50,7 @@ public class HitValueParticleSystem : ParticleSystem<HitValueParticleSystem.Part
             }
         }
 
-        return !flag;
+        return !hasActiveParticles;
     }
 
     public override void Draw(Camera camera)
@@ -75,17 +75,17 @@ public class HitValueParticleSystem : ParticleSystem<HitValueParticleSystem.Part
                 continue;
             }
 
-            var num = Vector3.Distance(camera.ViewPosition, particle.Position);
-            var num2 = MathUtils.Saturate(3f * (num - 0.2f));
-            var num3 = MathUtils.Saturate(0.2f * (20f - num));
-            var num4 = num2 * num3;
-            if (!(num4 > 0f))
+            var viewDistance = Vector3.Distance(camera.ViewPosition, particle.Position);
+            var nearFade = MathUtils.Saturate(3f * (viewDistance - 0.2f));
+            var farFade = MathUtils.Saturate(0.2f * (20f - viewDistance));
+            var distanceFade = nearFade * farFade;
+            if (!(distanceFade > 0f))
             {
                 continue;
             }
 
-            var s = 0.006f * MathUtils.Sqrt(num);
-            var color = particle.Color * num4;
+            var s = 0.006f * MathUtils.Sqrt(viewDistance);
+            var color = particle.Color * distanceFade;
             _batch.QueueText(
                 particle.Text,
                 particle.Position,

@@ -43,7 +43,7 @@ public struct Vector4(float x, float y, float z, float w) : IEquatable<Vector4>
 
     public override bool Equals(object? obj)
     {
-        return obj is Vector4 vector4 && Equals(vector4);
+        return obj is Vector4 other && Equals(other);
     }
 
     public override int GetHashCode()
@@ -179,21 +179,21 @@ public struct Vector4(float x, float y, float z, float w) : IEquatable<Vector4>
 
     public static Vector4 Normalize(Vector4 v)
     {
-        var num = v.Length();
-        if (!(num > 0f))
+        var length = v.Length();
+        if (!(length > 0f))
         {
             return UnitX;
         }
 
-        return v / num;
+        return v / length;
     }
 
     public static Vector4 LimitLength(Vector4 v, float maxLength)
     {
-        var num = v.LengthSquared();
-        if (num > maxLength * maxLength)
+        var lengthSquared = v.LengthSquared();
+        if (lengthSquared > maxLength * maxLength)
         {
-            return v * (maxLength / MathUtils.Sqrt(num));
+            return v * (maxLength / MathUtils.Sqrt(lengthSquared));
         }
 
         return v;
@@ -322,7 +322,7 @@ public struct Vector4(float x, float y, float z, float w) : IEquatable<Vector4>
 
     public static Vector4 operator /(Vector4 v, float d)
     {
-        var num = 1f / d;
-        return new Vector4(v.X * num, v.Y * num, v.Z * num, v.W * num);
+        var inverseDivisor = 1f / d;
+        return new Vector4(v.X * inverseDivisor, v.Y * inverseDivisor, v.Z * inverseDivisor, v.W * inverseDivisor);
     }
 }

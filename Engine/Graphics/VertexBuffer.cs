@@ -39,16 +39,16 @@ public sealed class VertexBuffer : GraphicsResource
         var gCHandle = GCHandle.Alloc(source, GCHandleType.Pinned);
         try
         {
-            var num = Marshal.SizeOf<T>();
+            var elementSize = Marshal.SizeOf<T>();
             var vertexStride = VertexDeclaration.VertexStride;
             GLWrapper.BindBuffer(BufferTargetARB.ArrayBuffer, buffer);
-            var data = gCHandle.AddrOfPinnedObject() + sourceStartIndex * num;
+            var data = gCHandle.AddrOfPinnedObject() + sourceStartIndex * elementSize;
             unsafe
             {
                 GLWrapper.GL.BufferSubData(
                     BufferTargetARB.ArrayBuffer,
                     new IntPtr(targetStartIndex * vertexStride),
-                    new UIntPtr((uint)(num * sourceCount)),
+                    new UIntPtr((uint)(elementSize * sourceCount)),
                     data.ToPointer()
                 );
             }
@@ -127,14 +127,15 @@ public sealed class VertexBuffer : GraphicsResource
     ) where T : struct
     {
         VerifyNotDisposed();
-        var num = Marshal.SizeOf<T>();
+        var elementSize = Marshal.SizeOf<T>();
         var vertexStride = VertexDeclaration.VertexStride;
         if (sourceStartIndex < 0 || sourceCount < 0 || sourceStartIndex + sourceCount > source.Length)
         {
             throw new ArgumentException("Range is out of source bounds.");
         }
 
-        if (targetStartIndex < 0 || targetStartIndex * vertexStride + sourceCount * num > VerticesCount * vertexStride)
+        if (targetStartIndex < 0 ||
+            targetStartIndex * vertexStride + sourceCount * elementSize > VerticesCount * vertexStride)
         {
             throw new ArgumentException("Range is out of target bounds.");
         }

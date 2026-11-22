@@ -102,7 +102,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
                         (value, _) => WorldContentBinding.For(Project).Catalog
                             .Blocks[Terrain.ExtractContents(value)].Collidable
                     );
-                    var flag = block.DisintegratesOnHit;
+                    var disintegrates = block.DisintegratesOnHit;
                     if (terrainRaycastResult.HasValue || bodyRaycastResult.HasValue)
                     {
                         var cellFace = terrainRaycastResult.HasValue
@@ -113,13 +113,13 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
                             _subsystemBlockBehaviors.GetBlockBehaviors(Terrain.ExtractContents(projectile.Value));
                         foreach (var behavior in blockBehaviors)
                         {
-                            flag |= behavior.OnHitAsProjectile(cellFace, componentBody!, projectile);
+                            disintegrates |= behavior.OnHitAsProjectile(cellFace, componentBody!, projectile);
                         }
 
-                        projectile.ToRemove |= flag;
+                        projectile.ToRemove |= disintegrates;
                     }
 
-                    Vector3? vector2 = null;
+                    Vector3? embeddedPosition = null;
                     if (bodyRaycastResult.HasValue &&
                         (!terrainRaycastResult.HasValue ||
                          bodyRaycastResult.Value.Distance <
@@ -156,16 +156,16 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
                     {
                         var cellFace2 = terrainRaycastResult.Value.CellFace;
                         var cellValue = _subsystemTerrain.Terrain.GetCellValue(cellFace2.X, cellFace2.Y, cellFace2.Z);
-                        var num = Terrain.ExtractContents(cellValue);
-                        var block2 = WorldContentBinding.For(Project).Catalog.Blocks[num];
-                        var num2 = projectile.Velocity.Length();
-                        var blockBehaviors2 = _subsystemBlockBehaviors.GetBlockBehaviors(num);
+                        var hitContents = Terrain.ExtractContents(cellValue);
+                        var block2 = WorldContentBinding.For(Project).Catalog.Blocks[hitContents];
+                        var impactSpeed = projectile.Velocity.Length();
+                        var blockBehaviors2 = _subsystemBlockBehaviors.GetBlockBehaviors(hitContents);
                         foreach (var behavior in blockBehaviors2)
                         {
                             behavior.OnHitByProjectile(cellFace2, projectile);
                         }
 
-                        if (num2 > 10f && _random.Float(0f, 1f) > block2.ProjectileResilience)
+                        if (impactSpeed > 10f && _random.Float(0f, 1f) > block2.ProjectileResilience)
                         {
                             _subsystemTerrain.DestroyCell(0, cellFace2.X, cellFace2.Y, cellFace2.Z, 0, true, false);
                             RequestEffect(ProjectilePackage.EffectType.Impact, cellValue, position);
@@ -180,13 +180,14 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
                                 terrainRaycastResult.Value.CellFace.Z,
                                 1f
                             );
-                            var vector3 = projectile.Position - 0.75f * Vector3.Normalize(projectile.Velocity);
+                            var pointBehindProjectile =
+                                projectile.Position - 0.75f * Vector3.Normalize(projectile.Velocity);
                             for (var k = 0; k < 8; k++)
                             {
                                 var v2 = k == 0 ? Vector3.Normalize(projectile.Velocity) : _random.Vector3(1.5f);
                                 var terrainRaycastResult2 = _subsystemTerrain.Raycast(
-                                    vector3,
-                                    vector3 + v2,
+                                    pointBehindProjectile,
+                                    pointBehindProjectile + v2,
                                     false,
                                     true,
                                     (_, _) => true
@@ -203,19 +204,20 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
                             }
                         }
 
-                        if (num2 > 5f)
+                        if (impactSpeed > 5f)
                         {
                             RequestEffect(ProjectilePackage.EffectType.Impact, cellValue, position);
                             SendEffect(ProjectilePackage.EffectType.Impact, cellValue, position);
                         }
 
-                        if (block.Stickable && num2 > 10f && _random.Bool(block2.ProjectileStickProbability))
+                        if (block.Stickable && impactSpeed > 10f && _random.Bool(block2.ProjectileStickProbability))
                         {
                             var v3 = Vector3.Normalize(projectile.Velocity);
-                            var s = MathUtils.Lerp(0.1f, 0.2f, MathUtils.Saturate((num2 - 15f) / 20f));
-                            vector2 = position +
-                                      terrainRaycastResult.Value.Distance * Vector3.Normalize(projectile.Velocity) +
-                                      v3 * s;
+                            var s = MathUtils.Lerp(0.1f, 0.2f, MathUtils.Saturate((impactSpeed - 15f) / 20f));
+                            embeddedPosition = position +
+                                               terrainRaycastResult.Value.Distance *
+                                               Vector3.Normalize(projectile.Velocity) +
+                                               v3 * s;
                         }
                         else
                         {
@@ -236,9 +238,10 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
                                 projectile.Velocity *= new Vector3(0.3f, 0.3f, -0.3f);
                             }
 
-                            var num3 = projectile.Velocity.Length();
+                            var speed = projectile.Velocity.Length();
                             projectile.Velocity =
-                                num3 * Vector3.Normalize(projectile.Velocity + _random.Vector3(num3 / 6f, num3 / 3f));
+                                speed *
+                                Vector3.Normalize(projectile.Velocity + _random.Vector3(speed / 6f, speed / 3f));
                             projectile.AngularVelocity *= -0.3f;
                         }
 
@@ -247,27 +250,28 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
 
                     if (terrainRaycastResult.HasValue || bodyRaycastResult.HasValue)
                     {
-                        if (flag)
+                        if (disintegrates)
                         {
                             RequestEffect(ProjectilePackage.EffectType.Debris, projectile.Value, projectile.Position);
                             SendEffect(ProjectilePackage.EffectType.Debris, projectile.Value, projectile.Position);
                         }
-                        else if (!projectile.ToRemove && (vector2.HasValue || projectile.Velocity.Length() < 1f))
+                        else if (!projectile.ToRemove &&
+                                 (embeddedPosition.HasValue || projectile.Velocity.Length() < 1f))
                         {
                             if (projectile.ProjectileStoppedAction == ProjectileStoppedAction.TurnIntoPickable)
                             {
-                                var num4 = WorldContentBinding.For(Project).Catalog
+                                var damagedItemValue = WorldContentBinding.For(Project).Catalog
                                     .DamageItem(projectile.Value, 1);
-                                if (num4 != 0)
+                                if (damagedItemValue != 0)
                                 {
-                                    if (vector2.HasValue)
+                                    if (embeddedPosition.HasValue)
                                     {
                                         var matrix = ProjectileMotionMath.CreateVelocityAlignment(
-                                            vector2.Value,
+                                            embeddedPosition.Value,
                                             projectile.Velocity
                                         );
                                         _subsystemPickables.AddPickable(
-                                            num4,
+                                            damagedItemValue,
                                             1,
                                             projectile.Position,
                                             Vector3.Zero,
@@ -276,7 +280,13 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
                                     }
                                     else
                                     {
-                                        _subsystemPickables.AddPickable(num4, 1, position, Vector3.Zero, null);
+                                        _subsystemPickables.AddPickable(
+                                            damagedItemValue,
+                                            1,
+                                            position,
+                                            Vector3.Zero,
+                                            null
+                                        );
                                     }
                                 }
 
@@ -295,28 +305,28 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
                         }
                     }
 
-                    var num5 = projectile.IsInWater
+                    var damping = projectile.IsInWater
                         ? MathUtils.Pow(0.001f, dt)
                         : MathUtils.Pow(block.ProjectileDamping, dt);
                     projectile.Velocity.Y += -10f * dt;
-                    projectile.Velocity *= num5;
+                    projectile.Velocity *= damping;
                     projectile.IsResting &= projectile.Velocity.Y <= 0f;
-                    projectile.AngularVelocity *= num5;
+                    projectile.AngularVelocity *= damping;
                     projectile.Position = vector;
                     projectile.Rotation += projectile.AngularVelocity * dt;
 
 
-                    var flag2 = IsWater(projectile.Position);
-                    if (projectile.IsInWater != flag2)
+                    var isInWater = IsWater(projectile.Position);
+                    if (projectile.IsInWater != isInWater)
                     {
-                        if (flag2)
+                        if (isInWater)
                         {
-                            var num6 = new Vector2(projectile.Velocity.X + projectile.Velocity.Z).Length();
-                            if (num6 > 6f && num6 > 4f * MathUtils.Abs(projectile.Velocity.Y))
+                            var horizontalSpeed = new Vector2(projectile.Velocity.X + projectile.Velocity.Z).Length();
+                            if (horizontalSpeed > 6f && horizontalSpeed > 4f * MathUtils.Abs(projectile.Velocity.Y))
                             {
                                 projectile.Velocity *= 0.5f;
                                 projectile.Velocity.Y *= -1f;
-                                flag2 = false;
+                                isInWater = false;
                             }
                             else
                             {
@@ -344,7 +354,7 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
                             }
                         }
 
-                        projectile.IsInWater = flag2;
+                        projectile.IsInWater = isInWater;
                     }
 
                     if (IsMagma(projectile.Position))
@@ -591,8 +601,8 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
         int networkId = 0
     )
     {
-        var num = Terrain.ExtractContents(value);
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var contents = Terrain.ExtractContents(value);
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
         var v = Vector3.Normalize(velocity);
         var vector = position;
         if (owner != null)
@@ -601,15 +611,15 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
             var boundingBox = owner.ComponentBody.BoundingBox;
             boundingBox.Min -= new Vector3(0.4f);
             boundingBox.Max += new Vector3(0.4f);
-            var num2 = ray.Intersection(boundingBox);
-            if (num2.HasValue)
+            var exitDistance = ray.Intersection(boundingBox);
+            if (exitDistance.HasValue)
             {
-                if (num2.Value == 0f)
+                if (exitDistance.Value == 0f)
                 {
                     return null;
                 }
 
-                vector = position + v * (5f - num2.Value + 0.1f);
+                vector = position + v * (5f - exitDistance.Value + 0.1f);
             }
         }
 
@@ -713,8 +723,8 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
     private void InitializeFiredProjectile(Projectile projectile)
     {
         projectile.IsFireProjectile = true;
-        var num = Terrain.ExtractContents(projectile.Value);
-        var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
+        var contents = Terrain.ExtractContents(projectile.Value);
+        var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(contents);
         foreach (var behavior in blockBehaviors)
         {
             behavior.OnFiredAsProjectile(projectile);
@@ -777,17 +787,17 @@ public class SubsystemProjectiles : Subsystem, IUpdateable
             return;
         }
 
-        var num = 0;
+        var entryIndex = 0;
         foreach (var projectile in _projectiles)
         {
             var valuesDictionary3 = new ValuesDictionary();
-            valuesDictionary2.SetValue(num.ToString(CultureInfo.InvariantCulture), valuesDictionary3);
+            valuesDictionary2.SetValue(entryIndex.ToString(CultureInfo.InvariantCulture), valuesDictionary3);
             valuesDictionary3.SetValue("Value", projectile.Value);
             valuesDictionary3.SetValue("NetworkId", projectile.NetworkId);
             valuesDictionary3.SetValue("Position", projectile.Position);
             valuesDictionary3.SetValue("Velocity", projectile.Velocity);
             valuesDictionary3.SetValue("CreationTime", projectile.CreationTime);
-            num++;
+            entryIndex++;
         }
     }
 

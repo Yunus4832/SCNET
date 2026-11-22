@@ -11,9 +11,9 @@ public abstract class BottomSuckerBlock : WaterBlock
     {
         var point = raycastResult.CellFace.Point + CellFace.FaceToPoint3(raycastResult.CellFace.Face);
         var cellValue = subsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z);
-        var num = Terrain.ExtractContents(cellValue);
+        var supportContents = Terrain.ExtractContents(cellValue);
         var data = Terrain.ExtractData(cellValue);
-        var obj = Catalog.Blocks[num];
+        var obj = Catalog.Blocks[supportContents];
         var face = (int)(WorldRuntimeContext.For(subsystemTerrain.Project).Clock.TickIndex % 4);
         BlockPlacementData result;
         if (obj is WaterBlock)

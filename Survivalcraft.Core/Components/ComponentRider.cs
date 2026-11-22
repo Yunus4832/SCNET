@@ -122,7 +122,7 @@ public class ComponentRider : Component, IUpdateable
         var point = new Vector2(ComponentCreature.ComponentBody.Position.X, ComponentCreature.ComponentBody.Position.Z);
         _componentBodies.Clear();
         _subsystemBodies.FindBodiesAroundPoint(point, 2.5f, _componentBodies);
-        var num = 0f;
+        var bestScore = 0f;
         ComponentMount? result = null;
         foreach (var item in from b in _componentBodies
                  select b.Entity.FindComponent<ComponentMount>()
@@ -130,13 +130,13 @@ public class ComponentRider : Component, IUpdateable
                  where m != null && m.Entity != Entity
                  select m)
         {
-            var num2 = ScoreMount(item, 2.5f);
-            if (!(num2 > num))
+            var candidateScore = ScoreMount(item, 2.5f);
+            if (!(candidateScore > bestScore))
             {
                 continue;
             }
 
-            num = num2;
+            bestScore = candidateScore;
             result = item;
         }
 

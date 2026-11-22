@@ -182,16 +182,16 @@ public struct Matrix(
 
     public float Determinant()
     {
-        var num = M33 * M44 - M34 * M43;
-        var num2 = M32 * M44 - M34 * M42;
-        var num3 = M32 * M43 - M33 * M42;
-        var num4 = M31 * M44 - M34 * M41;
-        var num5 = M31 * M43 - M33 * M41;
-        var num6 = M31 * M42 - M32 * M41;
-        return M11 * (M22 * num - M23 * num2 + M24 * num3) -
-               M12 * (M21 * num - M23 * num4 + M24 * num5) +
-               M13 * (M21 * num2 - M22 * num4 + M24 * num6) -
-               M14 * (M21 * num3 - M22 * num5 + M23 * num6);
+        var minorR34C34 = M33 * M44 - M34 * M43;
+        var minorR34C24 = M32 * M44 - M34 * M42;
+        var minorR34C23 = M32 * M43 - M33 * M42;
+        var minorR34C14 = M31 * M44 - M34 * M41;
+        var minorR34C13 = M31 * M43 - M33 * M41;
+        var minorR34C12 = M31 * M42 - M32 * M41;
+        return M11 * (M22 * minorR34C34 - M23 * minorR34C24 + M24 * minorR34C23) -
+               M12 * (M21 * minorR34C34 - M23 * minorR34C14 + M24 * minorR34C13) +
+               M13 * (M21 * minorR34C24 - M22 * minorR34C14 + M24 * minorR34C12) -
+               M14 * (M21 * minorR34C23 - M22 * minorR34C13 + M23 * minorR34C12);
     }
 
     public Vector3 ToYawPitchRoll()
@@ -205,12 +205,12 @@ public struct Matrix(
         translation.X = M41;
         translation.Y = M42;
         translation.Z = M43;
-        float num = !(M11 * M12 * M13 * M14 < 0f) ? 1 : -1;
-        float num2 = !(M21 * M22 * M23 * M24 < 0f) ? 1 : -1;
-        float num3 = !(M31 * M32 * M33 * M34 < 0f) ? 1 : -1;
-        scale.X = num * MathUtils.Sqrt(M11 * M11 + M12 * M12 + M13 * M13);
-        scale.Y = num2 * MathUtils.Sqrt(M21 * M21 + M22 * M22 + M23 * M23);
-        scale.Z = num3 * MathUtils.Sqrt(M31 * M31 + M32 * M32 + M33 * M33);
+        float scaleSignX = !(M11 * M12 * M13 * M14 < 0f) ? 1 : -1;
+        float scaleSignY = !(M21 * M22 * M23 * M24 < 0f) ? 1 : -1;
+        float scaleSignZ = !(M31 * M32 * M33 * M34 < 0f) ? 1 : -1;
+        scale.X = scaleSignX * MathUtils.Sqrt(M11 * M11 + M12 * M12 + M13 * M13);
+        scale.Y = scaleSignY * MathUtils.Sqrt(M21 * M21 + M22 * M22 + M23 * M23);
+        scale.Z = scaleSignZ * MathUtils.Sqrt(M31 * M31 + M32 * M32 + M33 * M33);
         if (scale.X == 0f || scale.Y == 0f || scale.Z == 0f)
         {
             rotation = Quaternion.Identity;
@@ -245,26 +245,26 @@ public struct Matrix(
         var x = axis.X;
         var y = axis.Y;
         var z = axis.Z;
-        var num = MathUtils.Sin(angle);
-        var num2 = MathUtils.Cos(angle);
-        var num3 = x * x;
-        var num4 = y * y;
-        var num5 = z * z;
-        var num6 = x * y;
-        var num7 = x * z;
-        var num8 = y * z;
+        var sinAngle = MathUtils.Sin(angle);
+        var cosAngle = MathUtils.Cos(angle);
+        var xx = x * x;
+        var yy = y * y;
+        var zz = z * z;
+        var xy = x * y;
+        var xz = x * z;
+        var yz = y * z;
         var result = default(Matrix);
-        result.M11 = num3 + num2 * (1f - num3);
-        result.M12 = num6 - num2 * num6 + num * z;
-        result.M13 = num7 - num2 * num7 - num * y;
+        result.M11 = xx + cosAngle * (1f - xx);
+        result.M12 = xy - cosAngle * xy + sinAngle * z;
+        result.M13 = xz - cosAngle * xz - sinAngle * y;
         result.M14 = 0f;
-        result.M21 = num6 - num2 * num6 - num * z;
-        result.M22 = num4 + num2 * (1f - num4);
-        result.M23 = num8 - num2 * num8 + num * x;
+        result.M21 = xy - cosAngle * xy - sinAngle * z;
+        result.M22 = yy + cosAngle * (1f - yy);
+        result.M23 = yz - cosAngle * yz + sinAngle * x;
         result.M24 = 0f;
-        result.M31 = num7 - num2 * num7 + num * y;
-        result.M32 = num8 - num2 * num8 - num * x;
-        result.M33 = num5 + num2 * (1f - num5);
+        result.M31 = xz - cosAngle * xz + sinAngle * y;
+        result.M32 = yz - cosAngle * yz - sinAngle * x;
+        result.M33 = zz + cosAngle * (1f - zz);
         result.M34 = 0f;
         result.M41 = 0f;
         result.M42 = 0f;
@@ -285,25 +285,25 @@ public struct Matrix(
 
     public static Matrix CreateLookAt(Vector3 position, Vector3 target, Vector3 up)
     {
-        var vector = Vector3.Normalize(position - target);
-        var vector2 = Vector3.Normalize(Vector3.Cross(up, vector));
-        up = Vector3.Normalize(Vector3.Cross(vector, vector2));
+        var backward = Vector3.Normalize(position - target);
+        var right = Vector3.Normalize(Vector3.Cross(up, backward));
+        up = Vector3.Normalize(Vector3.Cross(backward, right));
         var result = default(Matrix);
-        result.M11 = vector2.X;
+        result.M11 = right.X;
         result.M12 = up.X;
-        result.M13 = vector.X;
+        result.M13 = backward.X;
         result.M14 = 0f;
-        result.M21 = vector2.Y;
+        result.M21 = right.Y;
         result.M22 = up.Y;
-        result.M23 = vector.Y;
+        result.M23 = backward.Y;
         result.M24 = 0f;
-        result.M31 = vector2.Z;
+        result.M31 = right.Z;
         result.M32 = up.Z;
-        result.M33 = vector.Z;
+        result.M33 = backward.Z;
         result.M34 = 0f;
-        result.M41 = 0f - Vector3.Dot(vector2, position);
+        result.M41 = 0f - Vector3.Dot(right, position);
         result.M42 = 0f - Vector3.Dot(up, position);
-        result.M43 = 0f - Vector3.Dot(vector, position);
+        result.M43 = 0f - Vector3.Dot(backward, position);
         result.M44 = 1f;
         return result;
     }
@@ -374,11 +374,11 @@ public struct Matrix(
         float farPlane
     )
     {
-        var num = 1f / MathUtils.Tan(fieldOfViewY * 0.5f);
+        var verticalScale = 1f / MathUtils.Tan(fieldOfViewY * 0.5f);
         var result = default(Matrix);
-        result.M11 = num / aspectRatio;
+        result.M11 = verticalScale / aspectRatio;
         result.M12 = result.M13 = result.M14 = 0f;
-        result.M22 = num;
+        result.M22 = verticalScale;
         result.M21 = result.M23 = result.M24 = 0f;
         result.M31 = result.M32 = 0f;
         result.M33 = farPlane / (nearPlane - farPlane);
@@ -414,36 +414,36 @@ public struct Matrix(
     public static Matrix CreateRotationX(float radians)
     {
         var identity = Identity;
-        var num = MathUtils.Cos(radians);
-        var num2 = MathUtils.Sin(radians);
-        identity.M22 = num;
-        identity.M23 = num2;
-        identity.M32 = 0f - num2;
-        identity.M33 = num;
+        var cosAngle = MathUtils.Cos(radians);
+        var sinAngle = MathUtils.Sin(radians);
+        identity.M22 = cosAngle;
+        identity.M23 = sinAngle;
+        identity.M32 = 0f - sinAngle;
+        identity.M33 = cosAngle;
         return identity;
     }
 
     public static Matrix CreateRotationY(float radians)
     {
         var identity = Identity;
-        var num = MathUtils.Cos(radians);
-        var num2 = MathUtils.Sin(radians);
-        identity.M11 = num;
-        identity.M13 = 0f - num2;
-        identity.M31 = num2;
-        identity.M33 = num;
+        var cosAngle = MathUtils.Cos(radians);
+        var sinAngle = MathUtils.Sin(radians);
+        identity.M11 = cosAngle;
+        identity.M13 = 0f - sinAngle;
+        identity.M31 = sinAngle;
+        identity.M33 = cosAngle;
         return identity;
     }
 
     public static Matrix CreateRotationZ(float radians)
     {
         var identity = Identity;
-        var num = MathUtils.Cos(radians);
-        var num2 = MathUtils.Sin(radians);
-        identity.M11 = num;
-        identity.M12 = num2;
-        identity.M21 = 0f - num2;
-        identity.M22 = num;
+        var cosAngle = MathUtils.Cos(radians);
+        var sinAngle = MathUtils.Sin(radians);
+        identity.M11 = cosAngle;
+        identity.M12 = sinAngle;
+        identity.M21 = 0f - sinAngle;
+        identity.M22 = cosAngle;
         return identity;
     }
 
@@ -488,30 +488,30 @@ public struct Matrix(
 
     public static Matrix CreateShadow(Vector4 lightDirection, Plane plane)
     {
-        var num = plane.Normal.X * lightDirection.X +
-                  plane.Normal.Y * lightDirection.Y +
-                  plane.Normal.Z * lightDirection.Z;
-        var num2 = 0f - plane.Normal.X;
-        var num3 = 0f - plane.Normal.Y;
-        var num4 = 0f - plane.Normal.Z;
-        var num5 = 0f - plane.D;
+        var normalDotLight = plane.Normal.X * lightDirection.X +
+                             plane.Normal.Y * lightDirection.Y +
+                             plane.Normal.Z * lightDirection.Z;
+        var negativeNormalX = 0f - plane.Normal.X;
+        var negativeNormalY = 0f - plane.Normal.Y;
+        var negativeNormalZ = 0f - plane.Normal.Z;
+        var negativePlaneD = 0f - plane.D;
         var result = default(Matrix);
-        result.M11 = num2 * lightDirection.X + num;
-        result.M21 = num3 * lightDirection.X;
-        result.M31 = num4 * lightDirection.X;
-        result.M41 = num5 * lightDirection.X;
-        result.M12 = num2 * lightDirection.Y;
-        result.M22 = num3 * lightDirection.Y + num;
-        result.M32 = num4 * lightDirection.Y;
-        result.M42 = num5 * lightDirection.Y;
-        result.M13 = num2 * lightDirection.Z;
-        result.M23 = num3 * lightDirection.Z;
-        result.M33 = num4 * lightDirection.Z + num;
-        result.M43 = num5 * lightDirection.Z;
-        result.M14 = num2 * lightDirection.W;
-        result.M24 = num3 * lightDirection.W;
-        result.M34 = num4 * lightDirection.W;
-        result.M44 = num5 * lightDirection.W + num;
+        result.M11 = negativeNormalX * lightDirection.X + normalDotLight;
+        result.M21 = negativeNormalY * lightDirection.X;
+        result.M31 = negativeNormalZ * lightDirection.X;
+        result.M41 = negativePlaneD * lightDirection.X;
+        result.M12 = negativeNormalX * lightDirection.Y;
+        result.M22 = negativeNormalY * lightDirection.Y + normalDotLight;
+        result.M32 = negativeNormalZ * lightDirection.Y;
+        result.M42 = negativePlaneD * lightDirection.Y;
+        result.M13 = negativeNormalX * lightDirection.Z;
+        result.M23 = negativeNormalY * lightDirection.Z;
+        result.M33 = negativeNormalZ * lightDirection.Z + normalDotLight;
+        result.M43 = negativePlaneD * lightDirection.Z;
+        result.M14 = negativeNormalX * lightDirection.W;
+        result.M24 = negativeNormalY * lightDirection.W;
+        result.M34 = negativeNormalZ * lightDirection.W;
+        result.M44 = negativePlaneD * lightDirection.W + normalDotLight;
         return result;
     }
 
@@ -539,62 +539,69 @@ public struct Matrix(
 
     public static Matrix Invert(Matrix m)
     {
-        var m2 = m.M11;
-        var m3 = m.M12;
-        var m4 = m.M13;
-        var m5 = m.M14;
-        var m6 = m.M21;
-        var m7 = m.M22;
-        var m8 = m.M23;
-        var m9 = m.M24;
-        var m10 = m.M31;
-        var m11 = m.M32;
-        var m12 = m.M33;
-        var m13 = m.M34;
-        var m14 = m.M41;
-        var m15 = m.M42;
-        var m16 = m.M43;
-        var m17 = m.M44;
-        var num = m12 * m17 - m13 * m16;
-        var num2 = m11 * m17 - m13 * m15;
-        var num3 = m11 * m16 - m12 * m15;
-        var num4 = m10 * m17 - m13 * m14;
-        var num5 = m10 * m16 - m12 * m14;
-        var num6 = m10 * m15 - m11 * m14;
-        var num7 = m7 * num - m8 * num2 + m9 * num3;
-        var num8 = 0f - (m6 * num - m8 * num4 + m9 * num5);
-        var num9 = m6 * num2 - m7 * num4 + m9 * num6;
-        var num10 = 0f - (m6 * num3 - m7 * num5 + m8 * num6);
-        var num11 = 1f / (m2 * num7 + m3 * num8 + m4 * num9 + m5 * num10);
+        var element11 = m.M11;
+        var element12 = m.M12;
+        var element13 = m.M13;
+        var element14 = m.M14;
+        var element21 = m.M21;
+        var element22 = m.M22;
+        var element23 = m.M23;
+        var element24 = m.M24;
+        var element31 = m.M31;
+        var element32 = m.M32;
+        var element33 = m.M33;
+        var element34 = m.M34;
+        var element41 = m.M41;
+        var element42 = m.M42;
+        var element43 = m.M43;
+        var element44 = m.M44;
+        var minorR34C34 = element33 * element44 - element34 * element43;
+        var minorR34C24 = element32 * element44 - element34 * element42;
+        var minorR34C23 = element32 * element43 - element33 * element42;
+        var minorR34C14 = element31 * element44 - element34 * element41;
+        var minorR34C13 = element31 * element43 - element33 * element41;
+        var minorR34C12 = element31 * element42 - element32 * element41;
+        var cofactor11 = element22 * minorR34C34 - element23 * minorR34C24 + element24 * minorR34C23;
+        var cofactor12 = 0f - (element21 * minorR34C34 - element23 * minorR34C14 + element24 * minorR34C13);
+        var cofactor13 = element21 * minorR34C24 - element22 * minorR34C14 + element24 * minorR34C12;
+        var cofactor14 = 0f - (element21 * minorR34C23 - element22 * minorR34C13 + element23 * minorR34C12);
+        var inverseDeterminant =
+            1f / (element11 * cofactor11 + element12 * cofactor12 + element13 * cofactor13 + element14 * cofactor14);
         var result = default(Matrix);
-        result.M11 = num7 * num11;
-        result.M21 = num8 * num11;
-        result.M31 = num9 * num11;
-        result.M41 = num10 * num11;
-        result.M12 = (0f - (m3 * num - m4 * num2 + m5 * num3)) * num11;
-        result.M22 = (m2 * num - m4 * num4 + m5 * num5) * num11;
-        result.M32 = (0f - (m2 * num2 - m3 * num4 + m5 * num6)) * num11;
-        result.M42 = (m2 * num3 - m3 * num5 + m4 * num6) * num11;
-        var num12 = m8 * m17 - m9 * m16;
-        var num13 = m7 * m17 - m9 * m15;
-        var num14 = m7 * m16 - m8 * m15;
-        var num15 = m6 * m17 - m9 * m14;
-        var num16 = m6 * m16 - m8 * m14;
-        var num17 = m6 * m15 - m7 * m14;
-        result.M13 = (m3 * num12 - m4 * num13 + m5 * num14) * num11;
-        result.M23 = (0f - (m2 * num12 - m4 * num15 + m5 * num16)) * num11;
-        result.M33 = (m2 * num13 - m3 * num15 + m5 * num17) * num11;
-        result.M43 = (0f - (m2 * num14 - m3 * num16 + m4 * num17)) * num11;
-        var num18 = m8 * m13 - m9 * m12;
-        var num19 = m7 * m13 - m9 * m11;
-        var num20 = m7 * m12 - m8 * m11;
-        var num21 = m6 * m13 - m9 * m10;
-        var num22 = m6 * m12 - m8 * m10;
-        var num23 = m6 * m11 - m7 * m10;
-        result.M14 = (0f - (m3 * num18 - m4 * num19 + m5 * num20)) * num11;
-        result.M24 = (m2 * num18 - m4 * num21 + m5 * num22) * num11;
-        result.M34 = (0f - (m2 * num19 - m3 * num21 + m5 * num23)) * num11;
-        result.M44 = (m2 * num20 - m3 * num22 + m4 * num23) * num11;
+        result.M11 = cofactor11 * inverseDeterminant;
+        result.M21 = cofactor12 * inverseDeterminant;
+        result.M31 = cofactor13 * inverseDeterminant;
+        result.M41 = cofactor14 * inverseDeterminant;
+        result.M12 = (0f - (element12 * minorR34C34 - element13 * minorR34C24 + element14 * minorR34C23)) *
+                     inverseDeterminant;
+        result.M22 = (element11 * minorR34C34 - element13 * minorR34C14 + element14 * minorR34C13) * inverseDeterminant;
+        result.M32 = (0f - (element11 * minorR34C24 - element12 * minorR34C14 + element14 * minorR34C12)) *
+                     inverseDeterminant;
+        result.M42 = (element11 * minorR34C23 - element12 * minorR34C13 + element13 * minorR34C12) * inverseDeterminant;
+        var minorR24C34 = element23 * element44 - element24 * element43;
+        var minorR24C24 = element22 * element44 - element24 * element42;
+        var minorR24C23 = element22 * element43 - element23 * element42;
+        var minorR24C14 = element21 * element44 - element24 * element41;
+        var minorR24C13 = element21 * element43 - element23 * element41;
+        var minorR24C12 = element21 * element42 - element22 * element41;
+        result.M13 = (element12 * minorR24C34 - element13 * minorR24C24 + element14 * minorR24C23) * inverseDeterminant;
+        result.M23 = (0f - (element11 * minorR24C34 - element13 * minorR24C14 + element14 * minorR24C13)) *
+                     inverseDeterminant;
+        result.M33 = (element11 * minorR24C24 - element12 * minorR24C14 + element14 * minorR24C12) * inverseDeterminant;
+        result.M43 = (0f - (element11 * minorR24C23 - element12 * minorR24C13 + element13 * minorR24C12)) *
+                     inverseDeterminant;
+        var minorR23C34 = element23 * element34 - element24 * element33;
+        var minorR23C24 = element22 * element34 - element24 * element32;
+        var minorR23C23 = element22 * element33 - element23 * element32;
+        var minorR23C14 = element21 * element34 - element24 * element31;
+        var minorR23C13 = element21 * element33 - element23 * element31;
+        var minorR23C12 = element21 * element32 - element22 * element31;
+        result.M14 = (0f - (element12 * minorR23C34 - element13 * minorR23C24 + element14 * minorR23C23)) *
+                     inverseDeterminant;
+        result.M24 = (element11 * minorR23C34 - element13 * minorR23C14 + element14 * minorR23C13) * inverseDeterminant;
+        result.M34 = (0f - (element11 * minorR23C24 - element12 * minorR23C14 + element14 * minorR23C12)) *
+                     inverseDeterminant;
+        result.M44 = (element11 * minorR23C23 - element12 * minorR23C13 + element13 * minorR23C12) * inverseDeterminant;
         return result;
     }
 
@@ -696,8 +703,8 @@ public struct Matrix(
 
     public static Matrix operator /(Matrix m, float d)
     {
-        var num = 1f / d;
-        return m * num;
+        var inverseDivisor = 1f / d;
+        return m * inverseDivisor;
     }
 
     private static void AddColumn(ref float left, ref float right)

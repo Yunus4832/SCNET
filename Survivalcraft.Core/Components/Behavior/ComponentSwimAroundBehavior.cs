@@ -115,40 +115,40 @@ public class ComponentSwimAroundBehavior : ComponentBehavior, IUpdateable
         var vector = 0.5f *
                      (_componentCreature.ComponentBody.BoundingBox.Min +
                       _componentCreature.ComponentBody.BoundingBox.Max);
-        var num = 2f;
+        var bestDistance = 2f;
         Vector3? result = null;
-        var num2 = _random.Float(10f, 16f);
+        var probeDistance = _random.Float(10f, 16f);
         for (var i = 0; i < 16; i++)
         {
-            var vector2 = _random.Vector2(1f, 1f);
+            var horizontalDirection = _random.Vector2(1f, 1f);
             var y = 0.3f * _random.Float(-0.9f, 1f);
-            var v = Vector3.Normalize(new Vector3(vector2.X, y, vector2.Y));
-            var vector3 = vector + num2 * v;
+            var v = Vector3.Normalize(new Vector3(horizontalDirection.X, y, horizontalDirection.Y));
+            var probeEnd = vector + probeDistance * v;
             var terrainRaycastResult = _subsystemTerrain.Raycast(
                 vector,
-                vector3,
+                probeEnd,
                 false,
                 false,
                 delegate(int value, float d)
                 {
-                    var num3 = Terrain.ExtractContents(value);
-                    return !(WorldContentBinding.For(Project).Catalog.Blocks[num3] is WaterBlock);
+                    var contents = Terrain.ExtractContents(value);
+                    return !(WorldContentBinding.For(Project).Catalog.Blocks[contents] is WaterBlock);
                 }
             );
             if (!terrainRaycastResult.HasValue)
             {
-                if (!(num2 > num))
+                if (!(probeDistance > bestDistance))
                 {
                     continue;
                 }
 
-                result = vector3;
-                num = num2;
+                result = probeEnd;
+                bestDistance = probeDistance;
             }
-            else if (terrainRaycastResult.Value.Distance > num)
+            else if (terrainRaycastResult.Value.Distance > bestDistance)
             {
                 result = vector + v * terrainRaycastResult.Value.Distance;
-                num = terrainRaycastResult.Value.Distance;
+                bestDistance = terrainRaycastResult.Value.Distance;
             }
         }
 

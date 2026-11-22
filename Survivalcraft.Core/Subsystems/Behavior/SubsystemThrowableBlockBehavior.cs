@@ -50,23 +50,23 @@ public class SubsystemThrowableBlockBehavior : SubsystemBlockBehavior
                 var activeSlotIndex = componentMiner.Inventory.ActiveSlotIndex;
                 var slotValue = componentMiner.Inventory.GetSlotValue(activeSlotIndex);
                 var slotCount = componentMiner.Inventory.GetSlotCount(activeSlotIndex);
-                var num = Terrain.ExtractContents(slotValue);
-                var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+                var heldContents = Terrain.ExtractContents(slotValue);
+                var block = WorldContentBinding.For(Project).Catalog.Blocks[heldContents];
                 if (slotCount <= 0)
                 {
                     return true;
                 }
 
-                var num2 = block.ProjectileSpeed;
+                var launchSpeed = block.ProjectileSpeed;
                 if (componentMiner.ComponentCharacter != null)
                 {
-                    num2 *= 0.5f * (componentMiner.ComponentCharacter.ComponentLevel.StrengthFactor - 1f) + 1f;
+                    launchSpeed *= 0.5f * (componentMiner.ComponentCharacter.ComponentLevel.StrengthFactor - 1f) + 1f;
                 }
 
                 if (_subsystemProjectiles.FireProjectile(
                         slotValue,
                         vector,
-                        v * num2,
+                        v * launchSpeed,
                         _random.Vector3(5f, 10f),
                         componentMiner.ComponentCreature
                     ) ==

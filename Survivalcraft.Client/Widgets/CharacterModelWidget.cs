@@ -142,27 +142,47 @@ public class CharacterModelWidget : CanvasWidget
                 : CharacterSkinTexture;
         if (AnimateHeadSeed != 0)
         {
-            var num = AnimateHeadSeed < 0 ? GetHashCode() : AnimateHeadSeed;
-            var num2 = (float)MathUtils.Remainder(Time.FrameStartTime + 1000.0 * num, 10000.0);
+            var headSeed = AnimateHeadSeed < 0 ? GetHashCode() : AnimateHeadSeed;
+            var headNoiseTime = (float)MathUtils.Remainder(Time.FrameStartTime + 1000.0 * headSeed, 10000.0);
             Vector2 vector = default;
-            vector.X = MathUtils.Lerp(-0.75f, 0.75f, SimplexNoise.OctavedNoise(num2 + 100f, 0.2f, 1, 2f, 0.5f));
-            vector.Y = MathUtils.Lerp(-0.5f, 0.5f, SimplexNoise.OctavedNoise(num2 + 200f, 0.17f, 1, 2f, 0.5f));
+            vector.X = MathUtils.Lerp(
+                -0.75f,
+                0.75f,
+                SimplexNoise.OctavedNoise(headNoiseTime + 100f, 0.2f, 1, 2f, 0.5f)
+            );
+            vector.Y = MathUtils.Lerp(-0.5f, 0.5f, SimplexNoise.OctavedNoise(headNoiseTime + 200f, 0.17f, 1, 2f, 0.5f));
             var value = Matrix.CreateRotationX(vector.Y) * Matrix.CreateRotationZ(vector.X);
             _modelWidget.SetNodeTransform(_modelWidget.Model.FindNode("Head")!.Index, value);
         }
 
         if (!OuterClothing && AnimateHandsSeed != 0)
         {
-            var num3 = AnimateHandsSeed < 0 ? GetHashCode() : AnimateHandsSeed;
-            var num4 = (float)MathUtils.Remainder(Time.FrameStartTime + 1000.0 * num3, 10000.0);
-            Vector2 vector2 = default;
-            vector2.X = MathUtils.Lerp(0.2f, 0f, SimplexNoise.OctavedNoise(num4 + 100f, 0.7f, 1, 2f, 0.5f));
-            vector2.Y = MathUtils.Lerp(-0.3f, 0.3f, SimplexNoise.OctavedNoise(num4 + 200f, 0.7f, 1, 2f, 0.5f));
-            Vector2 vector3 = default;
-            vector3.X = MathUtils.Lerp(-0.2f, 0f, SimplexNoise.OctavedNoise(num4 + 300f, 0.7f, 1, 2f, 0.5f));
-            vector3.Y = MathUtils.Lerp(-0.3f, 0.3f, SimplexNoise.OctavedNoise(num4 + 400f, 0.7f, 1, 2f, 0.5f));
-            var value2 = Matrix.CreateRotationX(vector2.Y) * Matrix.CreateRotationY(vector2.X);
-            var value3 = Matrix.CreateRotationX(vector3.Y) * Matrix.CreateRotationY(vector3.X);
+            var handSeed = AnimateHandsSeed < 0 ? GetHashCode() : AnimateHandsSeed;
+            var handNoiseTime = (float)MathUtils.Remainder(Time.FrameStartTime + 1000.0 * handSeed, 10000.0);
+            Vector2 firstHandAngles = default;
+            firstHandAngles.X = MathUtils.Lerp(
+                0.2f,
+                0f,
+                SimplexNoise.OctavedNoise(handNoiseTime + 100f, 0.7f, 1, 2f, 0.5f)
+            );
+            firstHandAngles.Y = MathUtils.Lerp(
+                -0.3f,
+                0.3f,
+                SimplexNoise.OctavedNoise(handNoiseTime + 200f, 0.7f, 1, 2f, 0.5f)
+            );
+            Vector2 secondHandAngles = default;
+            secondHandAngles.X = MathUtils.Lerp(
+                -0.2f,
+                0f,
+                SimplexNoise.OctavedNoise(handNoiseTime + 300f, 0.7f, 1, 2f, 0.5f)
+            );
+            secondHandAngles.Y = MathUtils.Lerp(
+                -0.3f,
+                0.3f,
+                SimplexNoise.OctavedNoise(handNoiseTime + 400f, 0.7f, 1, 2f, 0.5f)
+            );
+            var value2 = Matrix.CreateRotationX(firstHandAngles.Y) * Matrix.CreateRotationY(firstHandAngles.X);
+            var value3 = Matrix.CreateRotationX(secondHandAngles.Y) * Matrix.CreateRotationY(secondHandAngles.X);
             _modelWidget.SetNodeTransform(_modelWidget.Model.FindNode("Hand1")!.Index, value2);
             _modelWidget.SetNodeTransform(_modelWidget.Model.FindNode("Hand2")!.Index, value3);
         }

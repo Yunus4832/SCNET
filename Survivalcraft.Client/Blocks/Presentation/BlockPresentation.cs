@@ -105,8 +105,8 @@ public abstract class BlockPresentation(Block block, BlockPresentationCatalog ca
         Texture2D[] defaultCrackTextures
     )
     {
-        var num2 = MathUtils.Clamp((int)(digProgress * 8f), 0, 7);
-        return defaultCrackTextures[num2];
+        var crackStage = MathUtils.Clamp((int)(digProgress * 8f), 0, 7);
+        return defaultCrackTextures[crackStage];
     }
 
     public virtual float GetObjectShadowStrength(int value)
@@ -139,8 +139,8 @@ public abstract class BlockPresentation(Block block, BlockPresentationCatalog ca
 
     public virtual bool ShouldGenerateFace(SubsystemTerrain subsystemTerrain, int face, int value, int neighborValue)
     {
-        var num = Terrain.ExtractContents(neighborValue);
-        return Block.Catalog.Blocks[num]
+        var neighborContents = Terrain.ExtractContents(neighborValue);
+        return Block.Catalog.Blocks[neighborContents]
             .IsFaceTransparent(subsystemTerrain, CellFace.OppositeFace(face), neighborValue);
     }
 
@@ -154,8 +154,8 @@ public abstract class BlockPresentation(Block block, BlockPresentationCatalog ca
         int z
     )
     {
-        var num = Terrain.ExtractContents(neighborValue);
-        return Block.Catalog.Blocks[num]
+        var neighborContents = Terrain.ExtractContents(neighborValue);
+        return Block.Catalog.Blocks[neighborContents]
             .IsFaceTransparent(subsystemTerrain, CellFace.OppositeFace(face), neighborValue);
     }
 

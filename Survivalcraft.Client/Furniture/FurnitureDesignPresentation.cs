@@ -103,7 +103,7 @@ public sealed class FurnitureDesignPresentation(BlockPresentationCatalog catalog
         var geometry = new FurnitureGeometry();
         for (var i = 0; i < 6; i++)
         {
-            var num = CellFace.OppositeFace(i);
+            var oppositeFace = CellFace.OppositeFace(i);
             Point3 point;
             Point3 point2;
             Point3 point3;
@@ -164,23 +164,23 @@ public sealed class FurnitureDesignPresentation(BlockPresentationCatalog catalog
                 {
                     for (var l = 0; l < resolution; l++)
                     {
-                        var num2 = j * point.X + k * point3.X + l * point2.X + point5.X;
-                        var num3 = j * point.Y + k * point3.Y + l * point2.Y + point5.Y;
-                        var num4 = j * point.Z + k * point3.Z + l * point2.Z + point5.Z;
-                        var num5 = num2 + num3 * resolution + num4 * resolution * resolution;
-                        var num6 = design.GetValue(num5);
+                        var voxelX = j * point.X + k * point3.X + l * point2.X + point5.X;
+                        var voxelY = j * point.Y + k * point3.Y + l * point2.Y + point5.Y;
+                        var voxelZ = j * point.Z + k * point3.Z + l * point2.Z + point5.Z;
+                        var voxelIndex = voxelX + voxelY * resolution + voxelZ * resolution * resolution;
+                        var voxelValue = design.GetValue(voxelIndex);
                         Cell cell = default;
-                        cell.Value = num6;
+                        cell.Value = voxelValue;
                         var cell2 = cell;
-                        if (j > 0 && num6 != 0)
+                        if (j > 0 && voxelValue != 0)
                         {
-                            var num7 = num2 -
-                                       point.X +
-                                       (num3 - point.Y) * resolution +
-                                       (num4 - point.Z) * resolution * resolution;
-                            var value = design.GetValue(num7);
+                            var neighborIndex = voxelX -
+                                                point.X +
+                                                (voxelY - point.Y) * resolution +
+                                                (voxelZ - point.Z) * resolution * resolution;
+                            var value = design.GetValue(neighborIndex);
                             if (!FurnitureDesign.IsValueTransparent(value) ||
-                                Terrain.ExtractContents(num6) == Terrain.ExtractContents(value))
+                                Terrain.ExtractContents(voxelValue) == Terrain.ExtractContents(value))
                             {
                                 cell2.Value = 0;
                             }
@@ -207,27 +207,27 @@ public sealed class FurnitureDesignPresentation(BlockPresentationCatalog catalog
                         }
 
                         MarkUsed(array, new Point2(n, m), point6, resolution);
-                        var num8 = 0.0005f * resolution;
-                        var num9 = n - num8;
-                        var num10 = n + point6.X + num8;
-                        var num11 = m - num8;
-                        var num12 = m + point6.Y + num8;
-                        var x = j * point.X + num11 * point3.X + num9 * point2.X + point4.X;
-                        var y = j * point.Y + num11 * point3.Y + num9 * point2.Y + point4.Y;
-                        var z = j * point.Z + num11 * point3.Z + num9 * point2.Z + point4.Z;
-                        var x2 = j * point.X + num11 * point3.X + num10 * point2.X + point4.X;
-                        var y2 = j * point.Y + num11 * point3.Y + num10 * point2.Y + point4.Y;
-                        var z2 = j * point.Z + num11 * point3.Z + num10 * point2.Z + point4.Z;
-                        var x3 = j * point.X + num12 * point3.X + num10 * point2.X + point4.X;
-                        var y3 = j * point.Y + num12 * point3.Y + num10 * point2.Y + point4.Y;
-                        var z3 = j * point.Z + num12 * point3.Z + num10 * point2.Z + point4.Z;
-                        var x4 = j * point.X + num12 * point3.X + num9 * point2.X + point4.X;
-                        var y4 = j * point.Y + num12 * point3.Y + num9 * point2.Y + point4.Y;
-                        var z4 = j * point.Z + num12 * point3.Z + num9 * point2.Z + point4.Z;
+                        var edgePadding = 0.0005f * resolution;
+                        var left = n - edgePadding;
+                        var right = n + point6.X + edgePadding;
+                        var top = m - edgePadding;
+                        var bottom = m + point6.Y + edgePadding;
+                        var x = j * point.X + top * point3.X + left * point2.X + point4.X;
+                        var y = j * point.Y + top * point3.Y + left * point2.Y + point4.Y;
+                        var z = j * point.Z + top * point3.Z + left * point2.Z + point4.Z;
+                        var x2 = j * point.X + top * point3.X + right * point2.X + point4.X;
+                        var y2 = j * point.Y + top * point3.Y + right * point2.Y + point4.Y;
+                        var z2 = j * point.Z + top * point3.Z + right * point2.Z + point4.Z;
+                        var x3 = j * point.X + bottom * point3.X + right * point2.X + point4.X;
+                        var y3 = j * point.Y + bottom * point3.Y + right * point2.Y + point4.Y;
+                        var z3 = j * point.Z + bottom * point3.Z + right * point2.Z + point4.Z;
+                        var x4 = j * point.X + bottom * point3.X + left * point2.X + point4.X;
+                        var y4 = j * point.Y + bottom * point3.Y + left * point2.Y + point4.Y;
+                        var z4 = j * point.Z + bottom * point3.Z + left * point2.Z + point4.Z;
                         var blockMesh3 = blockMesh;
-                        var num13 = Terrain.ExtractContents(value2);
-                        var block = _catalog.Rules.Blocks[num13];
-                        var num14 = _catalog.Get(num13).GetFaceTextureSlot(i, value2);
+                        var contents = Terrain.ExtractContents(value2);
+                        var block = _catalog.Rules.Blocks[contents];
+                        var textureSlot = _catalog.Get(contents).GetFaceTextureSlot(i, value2);
                         var isEmissive = false;
                         var color = Color.White;
                         if (block is IPaintableBlock paintableBlock)
@@ -238,7 +238,7 @@ public sealed class FurnitureDesignPresentation(BlockPresentationCatalog catalog
                         else if (block is WaterBlock)
                         {
                             color = BlockColorsMap.WaterColorsMap.Lookup(12, 12);
-                            num14 = 189;
+                            textureSlot = 189;
                         }
                         else if (block is CarpetBlock)
                         {
@@ -248,27 +248,27 @@ public sealed class FurnitureDesignPresentation(BlockPresentationCatalog catalog
                         else if (block is TorchBlock or WickerLampBlock)
                         {
                             isEmissive = true;
-                            num14 = 31;
+                            textureSlot = 31;
                         }
                         else if (block is GlassBlock)
                         {
                             blockMesh3 = blockMesh2;
                         }
 
-                        var num15 = num14 % 16;
-                        var num16 = num14 / 16;
+                        var atlasX = textureSlot % 16;
+                        var atlasY = textureSlot / 16;
                         var count = blockMesh3.Vertices.Count;
                         blockMesh3.Vertices.Count += 4;
                         var array2 = blockMesh3.Vertices.Array;
-                        var x5 = ((n + 0.01f) / resolution + num15) / 16f;
-                        var x6 = ((n + point6.X - 0.01f) / resolution + num15) / 16f;
-                        var y5 = ((m + 0.01f) / resolution + num16) / 16f;
-                        var y6 = ((m + point6.Y - 0.01f) / resolution + num16) / 16f;
+                        var x5 = ((n + 0.01f) / resolution + atlasX) / 16f;
+                        var x6 = ((n + point6.X - 0.01f) / resolution + atlasX) / 16f;
+                        var y5 = ((m + 0.01f) / resolution + atlasY) / 16f;
+                        var y6 = ((m + point6.Y - 0.01f) / resolution + atlasY) / 16f;
                         array2[count] = new BlockMeshVertex
                         {
                             Position = new Vector3(x, y, z) / resolution,
                             Color = color,
-                            Face = (byte)num,
+                            Face = (byte)oppositeFace,
                             TextureCoordinates = new Vector2(x5, y5),
                             IsEmissive = isEmissive
                         };
@@ -276,7 +276,7 @@ public sealed class FurnitureDesignPresentation(BlockPresentationCatalog catalog
                         {
                             Position = new Vector3(x2, y2, z2) / resolution,
                             Color = color,
-                            Face = (byte)num,
+                            Face = (byte)oppositeFace,
                             TextureCoordinates = new Vector2(x6, y5),
                             IsEmissive = isEmissive
                         };
@@ -284,7 +284,7 @@ public sealed class FurnitureDesignPresentation(BlockPresentationCatalog catalog
                         {
                             Position = new Vector3(x3, y3, z3) / resolution,
                             Color = color,
-                            Face = (byte)num,
+                            Face = (byte)oppositeFace,
                             TextureCoordinates = new Vector2(x6, y6),
                             IsEmissive = isEmissive
                         };
@@ -292,7 +292,7 @@ public sealed class FurnitureDesignPresentation(BlockPresentationCatalog catalog
                         {
                             Position = new Vector3(x4, y4, z4) / resolution,
                             Color = color,
-                            Face = (byte)num,
+                            Face = (byte)oppositeFace,
                             TextureCoordinates = new Vector2(x5, y6),
                             IsEmissive = isEmissive
                         };
@@ -330,15 +330,15 @@ public sealed class FurnitureDesignPresentation(BlockPresentationCatalog catalog
     private static Point2 FindLargestSize(Cell[] surface, Point2 start, int value, int resolution)
     {
         var result = Point2.Zero;
-        var num = resolution;
+        var rightLimit = resolution;
         for (var i = start.Y; i < resolution; i++)
         {
-            for (var j = start.X; j <= num; j++)
+            for (var j = start.X; j <= rightLimit; j++)
             {
-                if (j == num || surface[j + i * resolution].Value != value)
+                if (j == rightLimit || surface[j + i * resolution].Value != value)
                 {
-                    num = j;
-                    var point = new Point2(num - start.X, i - start.Y + 1);
+                    rightLimit = j;
+                    var point = new Point2(rightLimit - start.X, i - start.Y + 1);
                     if (point.X * point.Y > result.X * result.Y)
                     {
                         result = point;

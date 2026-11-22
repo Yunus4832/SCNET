@@ -38,15 +38,15 @@ public class SubsystemIvyBlockBehavior : SubsystemPollableBlockBehavior, IUpdate
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
         var face = IvyBlock.GetFace(Terrain.ExtractData(SubsystemTerrain.Terrain.GetCellValue(x, y, z)));
-        var flag = false;
+        var supportedByIvyAbove = false;
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y + 1, z);
         if (Terrain.ExtractContents(cellValue) == 197 &&
             IvyBlock.GetFace(Terrain.ExtractData(cellValue)) == face)
         {
-            flag = true;
+            supportedByIvyAbove = true;
         }
 
-        if (flag)
+        if (supportedByIvyAbove)
         {
             return;
         }

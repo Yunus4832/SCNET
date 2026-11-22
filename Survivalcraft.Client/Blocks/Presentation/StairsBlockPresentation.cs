@@ -201,16 +201,16 @@ public abstract class StairsBlockPresentation(
                     break;
             }
 
-            float num = isUpsideDown ? rotation : -rotation;
+            float signedRotation = isUpsideDown ? rotation : -rotation;
             blockMesh.TransformTextureCoordinates(
                 Matrix.CreateTranslation(-0.03125f, -0.03125f, 0f) *
-                Matrix.CreateRotationZ(num * (float)Math.PI / 2f) *
+                Matrix.CreateRotationZ(signedRotation * (float)Math.PI / 2f) *
                 Matrix.CreateTranslation(0.03125f, 0.03125f, 0f),
                 16
             );
             blockMesh.TransformTextureCoordinates(
                 Matrix.CreateTranslation(-0.03125f, -0.03125f, 0f) *
-                Matrix.CreateRotationZ((0f - num) * (float)Math.PI / 2f) *
+                Matrix.CreateRotationZ((0f - signedRotation) * (float)Math.PI / 2f) *
                 Matrix.CreateTranslation(0.03125f, 0.03125f, 0f),
                 32
             );

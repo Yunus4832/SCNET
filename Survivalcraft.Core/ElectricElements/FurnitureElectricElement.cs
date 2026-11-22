@@ -21,14 +21,14 @@ public abstract class FurnitureElectricElement(
         var face = 0;
         while (face < 6)
         {
-            var num = face < 4 ? (face - rotation + 4) % 4 : face;
-            if ((design.MountingFacesMask & (1 << num)) != 0)
+            var designFace = face < 4 ? (face - rotation + 4) % 4 : face;
+            if ((design.MountingFacesMask & (1 << designFace)) != 0)
             {
                 yield return new CellFace(point.X, point.Y, point.Z, CellFace.OppositeFace(face));
             }
 
-            var num2 = face + 1;
-            face = num2;
+            var nextFace = face + 1;
+            face = nextFace;
         }
     }
 }

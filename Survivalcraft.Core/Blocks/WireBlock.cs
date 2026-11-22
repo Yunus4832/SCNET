@@ -49,33 +49,33 @@ public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock
 
     public int GetConnectedWireFacesMask(int value, int face)
     {
-        var num = 0;
+        var connectedFaces = 0;
         if (!WireExistsOnFace(value, face))
         {
-            return num;
+            return connectedFaces;
         }
 
-        var num2 = CellFace.OppositeFace(face);
-        var flag = false;
+        var oppositeFace = CellFace.OppositeFace(face);
+        var hasSideConnection = false;
         for (var i = 0; i < 6; i++)
         {
             if (i == face)
             {
-                num |= 1 << i;
+                connectedFaces |= 1 << i;
             }
-            else if (i != num2 && WireExistsOnFace(value, i))
+            else if (i != oppositeFace && WireExistsOnFace(value, i))
             {
-                num |= 1 << i;
-                flag = true;
+                connectedFaces |= 1 << i;
+                hasSideConnection = true;
             }
         }
 
-        if (flag && WireExistsOnFace(value, num2))
+        if (hasSideConnection && WireExistsOnFace(value, oppositeFace))
         {
-            num |= 1 << num2;
+            connectedFaces |= 1 << oppositeFace;
         }
 
-        return num;
+        return connectedFaces;
     }
 
     public int? GetPaintColor(int value)
@@ -147,15 +147,15 @@ public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock
             raycastResult.CellFace.Y + point.Y,
             raycastResult.CellFace.Z + point.Z
         );
-        var num = Terrain.ExtractContents(cellValue);
-        var block = Catalog.Blocks[num];
+        var contents = Terrain.ExtractContents(cellValue);
+        var block = Catalog.Blocks[contents];
         var wireFacesBitmask = GetWireFacesBitmask(cellValue);
-        var num2 = wireFacesBitmask | (1 << raycastResult.CellFace.Face);
+        var updatedFaces = wireFacesBitmask | (1 << raycastResult.CellFace.Face);
         BlockPlacementData result;
-        if (num2 != wireFacesBitmask || !(block is WireBlock))
+        if (updatedFaces != wireFacesBitmask || !(block is WireBlock))
         {
             result = default;
-            result.Value = SetWireFacesBitmask(value, num2);
+            result.Value = SetWireFacesBitmask(value, updatedFaces);
             result.CellFace = raycastResult.CellFace;
             return result;
         }
@@ -246,10 +246,10 @@ public class WireBlock : Block, IElectricWireElementBlock, IElectricElementBlock
 
     public int SetWireFacesBitmask(int value, int bitmask)
     {
-        var num = Terrain.ExtractData(value);
-        num &= -64;
-        num |= bitmask & 0x3F;
-        return Terrain.ReplaceData(Terrain.ReplaceContents(value, BlockIndex), num);
+        var wireData = Terrain.ExtractData(value);
+        wireData &= -64;
+        wireData |= bitmask & 0x3F;
+        return Terrain.ReplaceData(Terrain.ReplaceContents(value, BlockIndex), wireData);
     }
 
     public static int? GetColor(int data)

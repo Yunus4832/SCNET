@@ -52,10 +52,10 @@ public class SeaUrchinBlock : BottomSuckerBlock
                         Matrix.CreateRotationX(zero.X) *
                         Matrix.CreateRotationY(zero.Y) *
                         Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-                var num = 4 * i + j;
-                blockPositions[num] = new CollisionGeometryBuilder();
-                blockPositions[num].Append(urchinNode.Primitives[0], nodeAbsoluteTransform * m);
-                CollisionBoxes[num] = [blockPositions[num].GetBounds()];
+                var meshIndex = 4 * i + j;
+                blockPositions[meshIndex] = new CollisionGeometryBuilder();
+                blockPositions[meshIndex].Append(urchinNode.Primitives[0], nodeAbsoluteTransform * m);
+                CollisionBoxes[meshIndex] = [blockPositions[meshIndex].GetBounds()];
             }
         }
 

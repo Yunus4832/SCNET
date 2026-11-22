@@ -60,35 +60,35 @@ public class WidgetsList(ContainerWidget containerWidget) : IEnumerable<Widget>
 
     public void InsertBefore(Widget beforeWidget, Widget widget)
     {
-        var num = _widgets.IndexOf(beforeWidget);
-        if (num < 0)
+        var anchorIndex = _widgets.IndexOf(beforeWidget);
+        if (anchorIndex < 0)
         {
             throw new InvalidOperationException("Widget not present in container.");
         }
 
-        Insert(num, widget);
+        Insert(anchorIndex, widget);
     }
 
     public void InsertAfter(Widget afterWidget, Widget widget)
     {
-        var num = _widgets.IndexOf(afterWidget);
-        if (num < 0)
+        var anchorIndex = _widgets.IndexOf(afterWidget);
+        if (anchorIndex < 0)
         {
             throw new InvalidOperationException("Widget not present in container.");
         }
 
-        Insert(num + 1, widget);
+        Insert(anchorIndex + 1, widget);
     }
 
     public void Remove(Widget widget)
     {
-        var num = IndexOf(widget);
-        if (num < 0)
+        var itemIndex = IndexOf(widget);
+        if (itemIndex < 0)
         {
             throw new InvalidOperationException("Child widget not present in container.");
         }
 
-        RemoveAt(num);
+        RemoveAt(itemIndex);
     }
 
     private void RemoveAt(int index)

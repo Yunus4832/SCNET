@@ -71,8 +71,8 @@ public class ComponentDiggingCracks : Component, IDrawable
         }
 
         var cellValue = _subsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z);
-        var num = Terrain.ExtractContents(cellValue);
-        var block = Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(num);
+        var contents = Terrain.ExtractContents(cellValue);
+        var block = Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(contents);
         if (cellValue != _value || point != _point)
         {
             foreach (var item in _drawItem)

@@ -19,7 +19,7 @@ public class DoorElectricElement : ElectricElement
 
     public override bool Simulate()
     {
-        var num = SubsystemElectricity.CircuitStep - _lastChangeCircuitStep;
+        var stepsSinceChange = SubsystemElectricity.CircuitStep - _lastChangeCircuitStep;
         float voltage = CalculateHighInputsCount() > 0 ? 1 : 0;
         if (IsSignalHigh(voltage) != IsSignalHigh(_voltage))
         {
@@ -37,7 +37,7 @@ public class DoorElectricElement : ElectricElement
             return false;
         }
 
-        if (num >= 10)
+        if (stepsSinceChange >= 10)
         {
             if (!IsSignalHigh(_voltage))
             {
@@ -55,7 +55,7 @@ public class DoorElectricElement : ElectricElement
         {
             SubsystemElectricity.QueueElectricElementForSimulation(
                 this,
-                SubsystemElectricity.CircuitStep + 10 - num
+                SubsystemElectricity.CircuitStep + 10 - stepsSinceChange
             );
         }
 

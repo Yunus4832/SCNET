@@ -24,8 +24,8 @@ public class SpikedPlankBlockPresentation(SpikedPlankBlock block, BlockPresentat
         int z
     )
     {
-        var num = Terrain.ExtractData(value);
-        if (num >= BlockMeshesByData.Length || BlockMeshesByData[num] == null)
+        var meshIndex = Terrain.ExtractData(value);
+        if (meshIndex >= BlockMeshesByData.Length || BlockMeshesByData[meshIndex] == null)
         {
             return;
         }
@@ -35,7 +35,7 @@ public class SpikedPlankBlockPresentation(SpikedPlankBlock block, BlockPresentat
             x,
             y,
             z,
-            BlockMeshesByData[num],
+            BlockMeshesByData[meshIndex],
             Color.White,
             null,
             [],
@@ -78,7 +78,7 @@ public class SpikedPlankBlockPresentation(SpikedPlankBlock block, BlockPresentat
             var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(modelNode);
             for (var j = 0; j < 6; j++)
             {
-                var num = SetMountingFace(SetSpikesState(0, i != 0), j);
+                var meshIndex = SetMountingFace(SetSpikesState(0, i != 0), j);
                 var m = j >= 4
                     ? j != 4
                         ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
@@ -87,8 +87,8 @@ public class SpikedPlankBlockPresentation(SpikedPlankBlock block, BlockPresentat
                       Matrix.CreateTranslation(0f, 0f, -0.5f) *
                       Matrix.CreateRotationY(j * (float)Math.PI / 2f) *
                       Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-                BlockMeshesByData[num] = new BlockMesh();
-                BlockMeshesByData[num].AppendModelPrimitive(
+                BlockMeshesByData[meshIndex] = new BlockMesh();
+                BlockMeshesByData[meshIndex].AppendModelPrimitive(
                     modelNode.RequireMesh().Primitives[0],
                     nodeAbsoluteTransform * m,
                     false,

@@ -31,15 +31,15 @@ public class DebugCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidg
         dt = MathUtils.Min(dt, 0.1f);
         var zero = Vector3.Zero;
         Vector2 vector;
-        bool num;
-        bool flag;
+        bool fastMovement;
+        bool slowMovement;
         if (GameWidget.CharacterData.ComponentCharacter != null)
         {
             var i = GameWidget.CharacterData.ComponentCharacter.Entity.FindComponent<ComponentInput>(true)!.PlayerInput;
             zero = i.CameraMove;
             vector = new Vector2(i.CameraLook.X, i.CameraLook.Y);
-            num = i.ToggleSneak;
-            flag = i.Jump;
+            fastMovement = i.ToggleSneak;
+            slowMovement = i.Jump;
         }
         else
         {
@@ -64,31 +64,31 @@ public class DebugCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidg
             }
 
             vector = 0.03f * new Vector2(Mouse.MouseMovement.X, -Mouse.MouseMovement.Y);
-            num = Keyboard.IsKeyDown(Key.Shift);
-            flag = Keyboard.IsKeyDown(Key.Control);
+            fastMovement = Keyboard.IsKeyDown(Key.Shift);
+            slowMovement = Keyboard.IsKeyDown(Key.Control);
         }
 
         var direction = Direction;
         var unitY = Vector3.UnitY;
-        var vector2 = Vector3.Normalize(Vector3.Cross(direction, unitY));
-        var num2 = 8f;
-        if (num)
+        var cameraRight = Vector3.Normalize(Vector3.Cross(direction, unitY));
+        var moveSpeed = 8f;
+        if (fastMovement)
         {
-            num2 *= 10f;
+            moveSpeed *= 10f;
         }
 
-        if (flag)
+        if (slowMovement)
         {
-            num2 /= 10f;
+            moveSpeed /= 10f;
         }
 
         var zero2 = Vector3.Zero;
-        zero2 += num2 * zero.X * vector2;
-        zero2 += num2 * zero.Y * unitY;
-        zero2 += num2 * zero.Z * direction;
+        zero2 += moveSpeed * zero.X * cameraRight;
+        zero2 += moveSpeed * zero.Y * unitY;
+        zero2 += moveSpeed * zero.Z * direction;
         Position += zero2 * dt;
         Direction = Vector3.Transform(Direction, Matrix.CreateFromAxisAngle(unitY, -4f * vector.X * dt));
-        Direction = Vector3.Transform(Direction, Matrix.CreateFromAxisAngle(vector2, 4f * vector.Y * dt));
+        Direction = Vector3.Transform(Direction, Matrix.CreateFromAxisAngle(cameraRight, 4f * vector.Y * dt));
         SetupPerspectiveCamera(Position, Direction, Vector3.UnitY);
         var v = ViewportSize / 2f;
         var flatBatch2D = PrimitivesRenderer2D.FlatBatch(0, DepthStencilState.None);

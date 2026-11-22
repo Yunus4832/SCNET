@@ -39,36 +39,37 @@ public class ComponentBirdModel : ComponentCreatureModel
     {
         if (!WorldRuntimeContext.For(Project).HasPresentation) { return; }
 
-        var num = Vector3.Dot(
+        var forwardSpeed = Vector3.Dot(
             ComponentCreature.ComponentBody.Velocity,
             ComponentCreature.ComponentBody.Matrix.Forward
         );
-        if (MathUtils.Abs(num) > 0.1f)
+        if (MathUtils.Abs(forwardSpeed) > 0.1f)
         {
-            MovementAnimationPhase += num * dt * _walkAnimationSpeed;
+            MovementAnimationPhase += forwardSpeed * dt * _walkAnimationSpeed;
         }
         else
         {
-            var num2 = MathUtils.Floor(MovementAnimationPhase);
-            if (MovementAnimationPhase.UncloseTo(num2))
+            var previousStride = MathUtils.Floor(MovementAnimationPhase);
+            if (MovementAnimationPhase.UncloseTo(previousStride))
             {
-                MovementAnimationPhase = MovementAnimationPhase - num2 > 0.5f
-                    ? MathUtils.Min(MovementAnimationPhase + 2f * dt, num2 + 1f)
-                    : MathUtils.Max(MovementAnimationPhase - 2f * dt, num2);
+                MovementAnimationPhase = MovementAnimationPhase - previousStride > 0.5f
+                    ? MathUtils.Min(MovementAnimationPhase + 2f * dt, previousStride + 1f)
+                    : MathUtils.Max(MovementAnimationPhase - 2f * dt, previousStride);
             }
         }
 
-        var num3 = (0f - _walkBobHeight) * MathUtils.Sqr(MathUtils.Sin((float)Math.PI * 2f * MovementAnimationPhase));
-        var num4 = MathUtils.Min(12f * subsystemTime.GameTimeDelta, 1f);
-        Bob += num4 * (num3 - Bob);
+        var targetBob = (0f - _walkBobHeight) *
+                        MathUtils.Sqr(MathUtils.Sin((float)Math.PI * 2f * MovementAnimationPhase));
+        var bobBlend = MathUtils.Min(12f * subsystemTime.GameTimeDelta, 1f);
+        Bob += bobBlend * (targetBob - Bob);
         if (_hasWings)
         {
             if (ComponentCreature.ComponentLocomotion.LastFlyOrder.HasValue)
             {
-                var num5 = ComponentCreature.ComponentLocomotion.LastFlyOrder.Value.LengthSquared() > 0.99f
+                var flapSpeedFactor = ComponentCreature.ComponentLocomotion.LastFlyOrder.Value.LengthSquared() > 0.99f
                     ? 1.5f
                     : 1f;
-                FlyPhase = MathUtils.Remainder(FlyPhase + _flyAnimationSpeed * num5 * dt, 1f);
+                FlyPhase = MathUtils.Remainder(FlyPhase + _flyAnimationSpeed * flapSpeedFactor * dt, 1f);
                 if (ComponentCreature.ComponentLocomotion.LastFlyOrder.Value.Y < -0.1f &&
                     ComponentCreature.ComponentBody.Velocity.Length() > 4f)
                 {
@@ -99,28 +100,28 @@ public class ComponentBirdModel : ComponentCreatureModel
 
     public override void Animate()
     {
-        var num = 0f;
+        var wingAngle = 0f;
         if (_hasWings)
         {
-            num += 1.2f * MathUtils.Sin((float)Math.PI * 2f * (FlyPhase + 0.75f));
+            wingAngle += 1.2f * MathUtils.Sin((float)Math.PI * 2f * (FlyPhase + 0.75f));
             if (ComponentCreature.ComponentBody.StandingOnValue.HasValue)
             {
-                num += 0.3f * MathUtils.Sin((float)Math.PI * 2f * MovementAnimationPhase);
+                wingAngle += 0.3f * MathUtils.Sin((float)Math.PI * 2f * MovementAnimationPhase);
             }
         }
 
-        float num2;
-        float num3;
+        float firstLegPitch;
+        float secondLegPitch;
         if (ComponentCreature.ComponentBody.StandingOnValue.HasValue ||
             ComponentCreature.ComponentBody.ImmersionFactor > 0f ||
             ComponentCreature.ComponentLocomotion.FlySpeed == 0f)
         {
-            num2 = 0.6f * MathUtils.Sin((float)Math.PI * 2f * MovementAnimationPhase);
-            num3 = 0f - num2;
+            firstLegPitch = 0.6f * MathUtils.Sin((float)Math.PI * 2f * MovementAnimationPhase);
+            secondLegPitch = 0f - firstLegPitch;
         }
         else
         {
-            num2 = num3 = 0f - MathUtils.DegToRad(60f);
+            firstLegPitch = secondLegPitch = 0f - MathUtils.DegToRad(60f);
         }
 
         var vector = ComponentCreature.ComponentBody.Rotation.ToYawPitchRoll();
@@ -128,49 +129,49 @@ public class ComponentBirdModel : ComponentCreatureModel
         {
             var yaw = ComponentCreature.ComponentLocomotion.LookAngles.X / 2f;
             var yaw2 = ComponentCreature.ComponentLocomotion.LookAngles.X / 2f;
-            var num4 = 0f;
-            var num5 = 0f;
+            var neckPitch = 0f;
+            var headPitch = 0f;
             if (ComponentCreature.ComponentBody.StandingOnValue.HasValue ||
                 ComponentCreature.ComponentBody.ImmersionFactor > 0f)
             {
-                num4 = 0.5f * MathUtils.Sin((float)Math.PI * 2f * MovementAnimationPhase / 2f);
-                num5 = 0f - num4;
+                neckPitch = 0.5f * MathUtils.Sin((float)Math.PI * 2f * MovementAnimationPhase / 2f);
+                headPitch = 0f - neckPitch;
             }
 
-            var num6 = MathUtils.Cos((float)Math.PI * 2f * _peckPhase);
-            num4 -= 1.25f * (1f - (num6 >= 0f ? num6 : -0.5f * num6));
-            num4 += ComponentCreature.ComponentLocomotion.LookAngles.Y;
+            var peckWave = MathUtils.Cos((float)Math.PI * 2f * _peckPhase);
+            neckPitch -= 1.25f * (1f - (peckWave >= 0f ? peckWave : -0.5f * peckWave));
+            neckPitch += ComponentCreature.ComponentLocomotion.LookAngles.Y;
             SetNodeTransform(
                 _bodyNode.Index,
                 Matrix.CreateFromYawPitchRoll(vector.X, 0f, 0f) *
                 Matrix.CreateTranslation(ComponentCreature.ComponentBody.Position + new Vector3(0f, Bob, 0f))
             );
-            SetNodeTransform(_neckNode.Index, Matrix.CreateFromYawPitchRoll(yaw2, num4, 0f));
+            SetNodeTransform(_neckNode.Index, Matrix.CreateFromYawPitchRoll(yaw2, neckPitch, 0f));
             SetNodeTransform(
                 _headNode.Index,
                 Matrix.CreateFromYawPitchRoll(
                     yaw,
-                    num5 + MathUtils.Clamp(vector.Y, -(float)Math.PI / 4f, (float)Math.PI / 4f),
+                    headPitch + MathUtils.Clamp(vector.Y, -(float)Math.PI / 4f, (float)Math.PI / 4f),
                     vector.Z
                 )
             );
             if (_hasWings)
             {
-                SetNodeTransform(_wing1Node!.Index, Matrix.CreateRotationY(num));
-                SetNodeTransform(_wing2Node!.Index, Matrix.CreateRotationY(0f - num));
+                SetNodeTransform(_wing1Node!.Index, Matrix.CreateRotationY(wingAngle));
+                SetNodeTransform(_wing2Node!.Index, Matrix.CreateRotationY(0f - wingAngle));
             }
 
-            SetNodeTransform(_leg1Node.Index, Matrix.CreateRotationX(num2));
-            SetNodeTransform(_leg2Node.Index, Matrix.CreateRotationX(num3));
+            SetNodeTransform(_leg1Node.Index, Matrix.CreateRotationX(firstLegPitch));
+            SetNodeTransform(_leg2Node.Index, Matrix.CreateRotationX(secondLegPitch));
         }
         else
         {
-            var num7 = 1f - DeathPhase;
-            var num8 = ComponentCreature.ComponentBody.BoundingBox.Max.Y -
-                       ComponentCreature.ComponentBody.BoundingBox.Min.Y;
+            var uprightBlend = 1f - DeathPhase;
+            var bodyHeight = ComponentCreature.ComponentBody.BoundingBox.Max.Y -
+                             ComponentCreature.ComponentBody.BoundingBox.Min.Y;
             var position = ComponentCreature.ComponentBody.Position +
                            0.5f *
-                           num8 *
+                           bodyHeight *
                            Vector3.Normalize(ComponentCreature.ComponentBody.Matrix.Forward * new Vector3(1f, 0f, 1f));
             SetNodeTransform(
                 _bodyNode.Index,
@@ -181,12 +182,12 @@ public class ComponentBirdModel : ComponentCreatureModel
             SetNodeTransform(_headNode.Index, Matrix.Identity);
             if (_hasWings)
             {
-                SetNodeTransform(_wing1Node!.Index, Matrix.CreateRotationY(num * num7));
-                SetNodeTransform(_wing2Node!.Index, Matrix.CreateRotationY((0f - num) * num7));
+                SetNodeTransform(_wing1Node!.Index, Matrix.CreateRotationY(wingAngle * uprightBlend));
+                SetNodeTransform(_wing2Node!.Index, Matrix.CreateRotationY((0f - wingAngle) * uprightBlend));
             }
 
-            SetNodeTransform(_leg1Node.Index, Matrix.CreateRotationX(num2 * num7));
-            SetNodeTransform(_leg2Node.Index, Matrix.CreateRotationX(num3 * num7));
+            SetNodeTransform(_leg1Node.Index, Matrix.CreateRotationX(firstLegPitch * uprightBlend));
+            SetNodeTransform(_leg2Node.Index, Matrix.CreateRotationX(secondLegPitch * uprightBlend));
         }
 
         base.Animate();

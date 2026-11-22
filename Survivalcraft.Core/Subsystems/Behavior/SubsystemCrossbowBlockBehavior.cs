@@ -54,9 +54,9 @@ public class SubsystemCrossbowBlockBehavior : SubsystemBlockBehavior
 
         var slotValue = inventory.GetSlotValue(activeSlotIndex);
         var slotCount = inventory.GetSlotCount(activeSlotIndex);
-        var num = Terrain.ExtractContents(slotValue);
+        var heldContents = Terrain.ExtractContents(slotValue);
         var data = Terrain.ExtractData(slotValue);
-        if (num != 200 || slotCount <= 0)
+        if (heldContents != 200 || slotCount <= 0)
         {
             return false;
         }
@@ -68,22 +68,22 @@ public class SubsystemCrossbowBlockBehavior : SubsystemBlockBehavior
             _aimStartTimes[componentMiner] = value;
         }
 
-        var num2 = (float)(_subsystemTime.GameTime - value);
-        var num3 = (float)MathUtils.Remainder(_subsystemTime.GameTime, 1000.0);
+        var aimDuration = (float)(_subsystemTime.GameTime - value);
+        var swayTime = (float)MathUtils.Remainder(_subsystemTime.GameTime, 1000.0);
         var v = ((componentMiner.ComponentCreature.ComponentBody.IsSneaking ? 0.01f : 0.03f) +
-                 0.15f * MathUtils.Saturate((num2 - 2.5f) / 6f)) *
+                 0.15f * MathUtils.Saturate((aimDuration - 2.5f) / 6f)) *
                 new Vector3
                 {
-                    X = SimplexNoise.OctavedNoise(num3, 2f, 3, 2f, 0.5f),
-                    Y = SimplexNoise.OctavedNoise(num3 + 100f, 2f, 3, 2f, 0.5f),
-                    Z = SimplexNoise.OctavedNoise(num3 + 200f, 2f, 3, 2f, 0.5f)
+                    X = SimplexNoise.OctavedNoise(swayTime, 2f, 3, 2f, 0.5f),
+                    Y = SimplexNoise.OctavedNoise(swayTime + 100f, 2f, 3, 2f, 0.5f),
+                    Z = SimplexNoise.OctavedNoise(swayTime + 200f, 2f, 3, 2f, 0.5f)
                 };
         aim.Direction = Vector3.Normalize(aim.Direction + v);
         switch (state)
         {
             case AimState.InProgress:
             {
-                if (num2 >= 10f)
+                if (aimDuration >= 10f)
                 {
                     componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
                     return true;
@@ -154,7 +154,7 @@ public class SubsystemCrossbowBlockBehavior : SubsystemBlockBehavior
                 if (WorldRuntimeContext.For(Project).IsAuthority)
                 {
                     inventory.RemoveSlotItems(activeSlotIndex, 1);
-                    var value3 = Terrain.MakeBlockValue(num, CrossbowBlock.SetDraw(data, 0));
+                    var value3 = Terrain.MakeBlockValue(heldContents, CrossbowBlock.SetDraw(data, 0));
                     inventory.AddSlotItems(activeSlotIndex, value3, 1);
                     componentMiner.DamageActiveTool(1);
                 }
@@ -181,9 +181,9 @@ public class SubsystemCrossbowBlockBehavior : SubsystemBlockBehavior
 
     public override int GetProcessInventoryItemCapacity(IInventory inventory, int slotIndex, int value)
     {
-        var num = Terrain.ExtractContents(value);
+        var itemContents = Terrain.ExtractContents(value);
         var arrowType = ArrowBlock.GetArrowType(Terrain.ExtractData(value));
-        if (num != 192 || !_supportedArrowTypes.Contains(arrowType))
+        if (itemContents != 192 || !_supportedArrowTypes.Contains(arrowType))
         {
             return 0;
         }

@@ -17,7 +17,7 @@ public class MotionDetectorBlock : MountedElectricElementBlock
         var nodeAbsoluteTransform = motionDetectorNode.AbsoluteTransform;
         for (var i = 0; i < 6; i++)
         {
-            var num = i;
+            var mountingFace = i;
             var m = i >= 4
                 ? i != 4
                     ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
@@ -26,9 +26,9 @@ public class MotionDetectorBlock : MountedElectricElementBlock
                   Matrix.CreateTranslation(0f, 0f, -0.5f) *
                   Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
                   Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-            blockPositionsByData[num] = new CollisionGeometryBuilder();
-            blockPositionsByData[num].Append(motionDetectorNode.Primitives[0], nodeAbsoluteTransform * m);
-            CollisionBoxesByData[num] = [blockPositionsByData[num].GetBounds()];
+            blockPositionsByData[mountingFace] = new CollisionGeometryBuilder();
+            blockPositionsByData[mountingFace].Append(motionDetectorNode.Primitives[0], nodeAbsoluteTransform * m);
+            CollisionBoxesByData[mountingFace] = [blockPositionsByData[mountingFace].GetBounds()];
         }
     }
 
@@ -53,8 +53,8 @@ public class MotionDetectorBlock : MountedElectricElementBlock
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = Terrain.ExtractData(value);
-        return num >= CollisionBoxesByData.Length ? [] : CollisionBoxesByData[num];
+        var meshIndex = Terrain.ExtractData(value);
+        return meshIndex >= CollisionBoxesByData.Length ? [] : CollisionBoxesByData[meshIndex];
     }
 
 

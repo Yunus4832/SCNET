@@ -29,7 +29,7 @@ public class SubsystemWhistleBlockBehavior : SubsystemBlockBehavior
             64f,
             dynamicArray
         );
-        var num = float.PositiveInfinity;
+        var nearestDistance = float.PositiveInfinity;
         var list = new List<ComponentBody>();
         foreach (var item in dynamicArray)
         {
@@ -39,11 +39,14 @@ public class SubsystemWhistleBlockBehavior : SubsystemBlockBehavior
                 continue;
             }
 
-            var num2 = Vector3.Distance(item.Position, componentMiner.ComponentCreature.ComponentBody.Position);
-            if (num2 > 4f && componentSummonBehavior.SummonTarget == null)
+            var candidateDistance = Vector3.Distance(
+                item.Position,
+                componentMiner.ComponentCreature.ComponentBody.Position
+            );
+            if (candidateDistance > 4f && componentSummonBehavior.SummonTarget == null)
             {
                 list.Add(item);
-                num = MathUtils.Min(num, num2);
+                nearestDistance = MathUtils.Min(nearestDistance, candidateDistance);
             }
             else
             {
@@ -55,7 +58,8 @@ public class SubsystemWhistleBlockBehavior : SubsystemBlockBehavior
         {
             var componentSummonBehavior2 = item2.Entity.FindComponent<ComponentSummonBehavior>();
             if (componentSummonBehavior2 != null &&
-                Vector3.Distance(item2.Position, componentMiner.ComponentCreature.ComponentBody.Position) < num + 4f)
+                Vector3.Distance(item2.Position, componentMiner.ComponentCreature.ComponentBody.Position) <
+                nearestDistance + 4f)
             {
                 componentSummonBehavior2.SummonTarget = componentMiner.ComponentCreature.ComponentBody;
             }

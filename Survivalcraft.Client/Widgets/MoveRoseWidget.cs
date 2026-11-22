@@ -42,15 +42,15 @@ public class MoveRoseWidget : Widget
         _direction = Vector3.Zero;
         _jump = false;
         var v = ActualSize / 2f;
-        var num = ActualSize.X / 2f;
-        var num2 = num / 3.5f;
-        var num3 = MathUtils.DegToRad(35f);
+        var outerRadius = ActualSize.X / 2f;
+        var innerRadius = outerRadius / 3.5f;
+        var directionThreshold = MathUtils.DegToRad(35f);
         foreach (var touchLocation in Input.TouchLocations)
         {
             if (HitTestGlobal(touchLocation.Position) == this)
             {
                 if (touchLocation.State == TouchLocationState.Pressed &&
-                    Vector2.Distance(ScreenToWidget(touchLocation.Position), v) <= num2)
+                    Vector2.Distance(ScreenToWidget(touchLocation.Position), v) <= innerRadius)
                 {
                     _jump = true;
                     _jumpTouchId = touchLocation.Id;
@@ -66,26 +66,27 @@ public class MoveRoseWidget : Widget
                 if (touchLocation.State is TouchLocationState.Moved or TouchLocationState.Pressed)
                 {
                     var v2 = ScreenToWidget(touchLocation.Position);
-                    var num4 = Vector2.Distance(v2, v);
-                    if (!(num4 > num2) || !(num4 <= num))
+                    var touchRadius = Vector2.Distance(v2, v);
+                    if (!(touchRadius > innerRadius) || !(touchRadius <= outerRadius))
                     {
                         continue;
                     }
 
-                    var num5 = Vector2.Angle(v2 - v, -Vector2.UnitY);
-                    if (MathUtils.Abs(MathUtils.NormalizeAngle(num5 - 0f)) < num3)
+                    var touchAngle = Vector2.Angle(v2 - v, -Vector2.UnitY);
+                    if (MathUtils.Abs(MathUtils.NormalizeAngle(touchAngle - 0f)) < directionThreshold)
                     {
                         _direction = _jumpTouchId.HasValue ? new Vector3(0f, 1f, 0f) : new Vector3(0f, 0f, 1f);
                     }
-                    else if (MathUtils.Abs(MathUtils.NormalizeAngle(num5 - (float)Math.PI / 2f)) < num3)
+                    else if (MathUtils.Abs(MathUtils.NormalizeAngle(touchAngle - (float)Math.PI / 2f)) <
+                             directionThreshold)
                     {
                         _direction = new Vector3(-1f, 0f, 0f);
                     }
-                    else if (MathUtils.Abs(MathUtils.NormalizeAngle(num5 - (float)Math.PI)) < num3)
+                    else if (MathUtils.Abs(MathUtils.NormalizeAngle(touchAngle - (float)Math.PI)) < directionThreshold)
                     {
                         _direction = _jumpTouchId.HasValue ? new Vector3(0f, -1f, 0f) : new Vector3(0f, 0f, -1f);
                     }
-                    else if (MathUtils.Abs(MathUtils.NormalizeAngle(num5 - 4.712389f)) < num3)
+                    else if (MathUtils.Abs(MathUtils.NormalizeAngle(touchAngle - 4.712389f)) < directionThreshold)
                     {
                         _direction = new Vector3(1f, 0f, 0f);
                     }
@@ -109,9 +110,9 @@ public class MoveRoseWidget : Widget
         var count2 = texturedBatch2D2.TriangleVertices.Count;
         var p = ActualSize / 2f;
         var vector = new Vector2(0f, 0f);
-        var vector2 = new Vector2(ActualSize.X, 0f);
-        var vector3 = new Vector2(ActualSize.X, ActualSize.Y);
-        var vector4 = new Vector2(0f, ActualSize.Y);
+        var topRight = new Vector2(ActualSize.X, 0f);
+        var bottomRight = new Vector2(ActualSize.X, ActualSize.Y);
+        var bottomLeft = new Vector2(0f, ActualSize.Y);
         if (_direction.Z > 0f)
         {
             var subtextureCoords = GetSubtextureCoords(subtexture2, new Vector2(0f, 0f));
@@ -119,7 +120,7 @@ public class MoveRoseWidget : Widget
             var subtextureCoords3 = GetSubtextureCoords(subtexture2, new Vector2(0.5f, 0.5f));
             texturedBatch2D2.QueueTriangle(
                 vector,
-                vector2,
+                topRight,
                 p,
                 0f,
                 subtextureCoords,
@@ -135,7 +136,7 @@ public class MoveRoseWidget : Widget
             var subtextureCoords6 = GetSubtextureCoords(subtexture, new Vector2(0.5f, 0.5f));
             texturedBatch2D.QueueTriangle(
                 vector,
-                vector2,
+                topRight,
                 p,
                 0f,
                 subtextureCoords4,
@@ -151,8 +152,8 @@ public class MoveRoseWidget : Widget
             var subtextureCoords8 = GetSubtextureCoords(subtexture2, new Vector2(1f, 1f));
             var subtextureCoords9 = GetSubtextureCoords(subtexture2, new Vector2(0.5f, 0.5f));
             texturedBatch2D2.QueueTriangle(
-                vector2,
-                vector3,
+                topRight,
+                bottomRight,
                 p,
                 0f,
                 subtextureCoords7,
@@ -167,8 +168,8 @@ public class MoveRoseWidget : Widget
             var subtextureCoords11 = GetSubtextureCoords(subtexture, new Vector2(1f, 1f));
             var subtextureCoords12 = GetSubtextureCoords(subtexture, new Vector2(0.5f, 0.5f));
             texturedBatch2D.QueueTriangle(
-                vector2,
-                vector3,
+                topRight,
+                bottomRight,
                 p,
                 0f,
                 subtextureCoords10,
@@ -184,8 +185,8 @@ public class MoveRoseWidget : Widget
             var subtextureCoords14 = GetSubtextureCoords(subtexture2, new Vector2(0f, 1f));
             var subtextureCoords15 = GetSubtextureCoords(subtexture2, new Vector2(0.5f, 0.5f));
             texturedBatch2D2.QueueTriangle(
-                vector3,
-                vector4,
+                bottomRight,
+                bottomLeft,
                 p,
                 0f,
                 subtextureCoords13,
@@ -200,8 +201,8 @@ public class MoveRoseWidget : Widget
             var subtextureCoords17 = GetSubtextureCoords(subtexture, new Vector2(0f, 1f));
             var subtextureCoords18 = GetSubtextureCoords(subtexture, new Vector2(0.5f, 0.5f));
             texturedBatch2D.QueueTriangle(
-                vector3,
-                vector4,
+                bottomRight,
+                bottomLeft,
                 p,
                 0f,
                 subtextureCoords16,
@@ -217,7 +218,7 @@ public class MoveRoseWidget : Widget
             var subtextureCoords20 = GetSubtextureCoords(subtexture2, new Vector2(0f, 0f));
             var subtextureCoords21 = GetSubtextureCoords(subtexture2, new Vector2(0.5f, 0.5f));
             texturedBatch2D2.QueueTriangle(
-                vector4,
+                bottomLeft,
                 vector,
                 p,
                 0f,
@@ -233,7 +234,7 @@ public class MoveRoseWidget : Widget
             var subtextureCoords23 = GetSubtextureCoords(subtexture, new Vector2(0f, 0f));
             var subtextureCoords24 = GetSubtextureCoords(subtexture, new Vector2(0.5f, 0.5f));
             texturedBatch2D.QueueTriangle(
-                vector4,
+                bottomLeft,
                 vector,
                 p,
                 0f,

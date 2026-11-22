@@ -75,8 +75,8 @@ public class RainSplashParticleSystem : ParticleSystem<RainSplashParticleSystem.
         if (_isActive)
         {
             dt = MathUtils.Clamp(dt, 0f, 0.1f);
-            var num = MathUtils.Pow(0.0005f, dt);
-            var flag = false;
+            var velocityDamping = MathUtils.Pow(0.0005f, dt);
+            var hasActiveParticles = false;
             for (var i = 0; i < Particles.Length; i++)
             {
                 var particle = Particles[i];
@@ -84,7 +84,7 @@ public class RainSplashParticleSystem : ParticleSystem<RainSplashParticleSystem.
                 {
                     particle.Position += particle.Velocity * dt;
                     particle.Velocity.Y += particle.Gravity * dt;
-                    particle.Velocity *= num;
+                    particle.Velocity *= velocityDamping;
                     particle.Size = new Vector2(
                         MathUtils.Lerp(
                             particle.BaseSize1,
@@ -102,12 +102,12 @@ public class RainSplashParticleSystem : ParticleSystem<RainSplashParticleSystem.
                     }
                     else
                     {
-                        flag = true;
+                        hasActiveParticles = true;
                     }
                 }
             }
 
-            if (!flag)
+            if (!hasActiveParticles)
             {
                 _isActive = false;
             }

@@ -97,7 +97,7 @@ public class NewWorldScreen : Screen
                                        enumValues2.Count);
         }
 
-        var flag = ClientApplication.Worlds.ValidateWorldName(_worldSettings.Name);
+        var isNameValid = ClientApplication.Worlds.ValidateWorldName(_worldSettings.Name);
         _nameTextBox.Text = _worldSettings.Name;
         _seedTextBox.Text = _worldSettings.Seed;
         _gameModeButton.Text =
@@ -107,8 +107,8 @@ public class NewWorldScreen : Screen
                 "StartingPositionMode",
                 _worldSettings.StartingPositionMode.ToString()
             );
-        _playButton.IsVisible = flag;
-        _errorLabel.IsVisible = !flag;
+        _playButton.IsVisible = isNameValid;
+        _errorLabel.IsVisible = !isNameValid;
         _blankSeedLabel.IsVisible = _worldSettings.Seed.Length == 0 && !_seedTextBox.HasFocus;
         if (_worldOptionsButton.IsClicked)
         {

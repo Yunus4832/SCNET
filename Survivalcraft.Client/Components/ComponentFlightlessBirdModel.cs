@@ -40,15 +40,15 @@ public class ComponentFlightlessBirdModel : ComponentCreatureModel
         if (!WorldRuntimeContext.For(Project).HasPresentation) { return; }
 
         var footstepsPhase = _footstepsPhase;
-        var num = ComponentCreature.ComponentLocomotion.SlipSpeed ??
-                  Vector3.Dot(
-                      ComponentCreature.ComponentBody.Velocity,
-                      ComponentCreature.ComponentBody.Matrix.Forward
-                  );
-        if (MathUtils.Abs(num) > 0.2f)
+        var walkSpeed = ComponentCreature.ComponentLocomotion.SlipSpeed ??
+                        Vector3.Dot(
+                            ComponentCreature.ComponentBody.Velocity,
+                            ComponentCreature.ComponentBody.Matrix.Forward
+                        );
+        if (MathUtils.Abs(walkSpeed) > 0.2f)
         {
-            MovementAnimationPhase += num * dt * _walkAnimationSpeed;
-            _footstepsPhase += 1.25f * _walkAnimationSpeed * num * dt;
+            MovementAnimationPhase += walkSpeed * dt * _walkAnimationSpeed;
+            _footstepsPhase += 1.25f * _walkAnimationSpeed * walkSpeed * dt;
         }
         else
         {
@@ -56,11 +56,14 @@ public class ComponentFlightlessBirdModel : ComponentCreatureModel
             _footstepsPhase = 0f;
         }
 
-        var num2 = (0f - _walkBobHeight) * MathUtils.Sqr(MathUtils.Sin((float)Math.PI * 2f * MovementAnimationPhase));
-        var num3 = MathUtils.Min(12f * subsystemTime.GameTimeDelta, 1f);
-        Bob += num3 * (num2 - Bob);
-        var num4 = MathUtils.Floor(_footstepsPhase);
-        if (WorldRuntimeContext.For(Project).HasPresentation && _footstepsPhase > num4 && footstepsPhase <= num4)
+        var targetBob = (0f - _walkBobHeight) *
+                        MathUtils.Sqr(MathUtils.Sin((float)Math.PI * 2f * MovementAnimationPhase));
+        var bobBlend = MathUtils.Min(12f * subsystemTime.GameTimeDelta, 1f);
+        Bob += bobBlend * (targetBob - Bob);
+        var footstepBoundary = MathUtils.Floor(_footstepsPhase);
+        if (WorldRuntimeContext.For(Project).HasPresentation &&
+            _footstepsPhase > footstepBoundary &&
+            footstepsPhase <= footstepBoundary)
         {
             ComponentCreature.Entity.FindComponent<ComponentCreatureSoundsPresentation>(true)!.PlayFootstepSound(1f);
         }
@@ -82,14 +85,14 @@ public class ComponentFlightlessBirdModel : ComponentCreatureModel
         var vector = ComponentCreature.ComponentBody.Rotation.ToYawPitchRoll();
         if (ComponentCreature.ComponentHealth.Health > 0f)
         {
-            var num = 0f;
-            var num2 = 0f;
-            var num3 = 0f;
+            var firstLegPitch = 0f;
+            var secondLegPitch = 0f;
+            var headBobPitch = 0f;
             if (MovementAnimationPhase != 0f &&
                 (ComponentCreature.ComponentBody.StandingOnValue.HasValue ||
                  ComponentCreature.ComponentBody.ImmersionFactor > 0f))
             {
-                var num4 =
+                var strideAmplitude =
                     Vector3.Dot(
                         ComponentCreature.ComponentBody.Velocity,
                         ComponentCreature.ComponentBody.Matrix.Forward
@@ -97,26 +100,26 @@ public class ComponentFlightlessBirdModel : ComponentCreatureModel
                     0.75f * ComponentCreature.ComponentLocomotion.WalkSpeed
                         ? 1.5f * _walkLegsAngle
                         : _walkLegsAngle;
-                var num5 = MathUtils.Sin((float)Math.PI * 2f * (MovementAnimationPhase + 0f));
-                var num6 = MathUtils.Sin((float)Math.PI * 2f * (MovementAnimationPhase + 0.5f));
-                num = num4 * num5 + creaturePose.AttackPhase;
-                num2 = num4 * num6;
-                num3 = MathUtils.DegToRad(5f) * MathUtils.Sin((float)Math.PI * 4f * MovementAnimationPhase);
+                var firstLegWave = MathUtils.Sin((float)Math.PI * 2f * (MovementAnimationPhase + 0f));
+                var secondLegWave = MathUtils.Sin((float)Math.PI * 2f * (MovementAnimationPhase + 0.5f));
+                firstLegPitch = strideAmplitude * firstLegWave + creaturePose.AttackPhase;
+                secondLegPitch = strideAmplitude * secondLegWave;
+                headBobPitch = MathUtils.DegToRad(5f) * MathUtils.Sin((float)Math.PI * 4f * MovementAnimationPhase);
             }
 
             if (_kickFactor != 0f)
             {
                 var x = MathUtils.DegToRad(60f) *
                         MathUtils.Sin((float)Math.PI * MathUtils.Sigmoid(creaturePose.AttackPhase, 5f));
-                num = MathUtils.Lerp(num, x, _kickFactor);
+                firstLegPitch = MathUtils.Lerp(firstLegPitch, x, _kickFactor);
             }
 
-            var num7 = MathUtils.Min(12f * subsystemTime.GameTimeDelta, 1f);
-            _legAngle1 += num7 * (num - _legAngle1);
-            _legAngle2 += num7 * (num2 - _legAngle2);
-            _headAngleY += num7 * (num3 - _headAngleY);
-            var vector2 = ComponentCreature.ComponentLocomotion.LookAngles;
-            vector2.Y += _headAngleY;
+            var poseBlend = MathUtils.Min(12f * subsystemTime.GameTimeDelta, 1f);
+            _legAngle1 += poseBlend * (firstLegPitch - _legAngle1);
+            _legAngle2 += poseBlend * (secondLegPitch - _legAngle2);
+            _headAngleY += poseBlend * (headBobPitch - _headAngleY);
+            var headAngles = ComponentCreature.ComponentLocomotion.LookAngles;
+            headAngles.Y += _headAngleY;
             if (_feedFactor > 0f)
             {
                 var y = 0f -
@@ -131,16 +134,16 @@ public class ComponentFlightlessBirdModel : ComponentCreatureModel
                                 0.75f
                             )
                         );
-                vector2 = Vector2.Lerp(v2: new Vector2(0f, y), v1: vector2, f: _feedFactor);
+                headAngles = Vector2.Lerp(v2: new Vector2(0f, y), v1: headAngles, f: _feedFactor);
             }
 
-            vector2.X = MathUtils.Clamp(vector2.X, 0f - MathUtils.DegToRad(90f), MathUtils.DegToRad(90f));
-            vector2.Y = MathUtils.Clamp(vector2.Y, 0f - MathUtils.DegToRad(90f), MathUtils.DegToRad(50f));
-            var vector3 = Vector2.Zero;
+            headAngles.X = MathUtils.Clamp(headAngles.X, 0f - MathUtils.DegToRad(90f), MathUtils.DegToRad(90f));
+            headAngles.Y = MathUtils.Clamp(headAngles.Y, 0f - MathUtils.DegToRad(90f), MathUtils.DegToRad(50f));
+            var neckAngles = Vector2.Zero;
             if (_neckNode != null)
             {
-                vector3 = 0.4f * vector2;
-                vector2 = 0.6f * vector2;
+                neckAngles = 0.4f * headAngles;
+                headAngles = 0.6f * headAngles;
             }
 
             SetNodeTransform(
@@ -149,13 +152,13 @@ public class ComponentFlightlessBirdModel : ComponentCreatureModel
             );
             SetNodeTransform(
                 _headNode.Index,
-                Matrix.CreateRotationX(vector2.Y) * Matrix.CreateRotationZ(0f - vector2.X)
+                Matrix.CreateRotationX(headAngles.Y) * Matrix.CreateRotationZ(0f - headAngles.X)
             );
             if (_neckNode != null)
             {
                 SetNodeTransform(
                     _neckNode.Index,
-                    Matrix.CreateRotationX(vector3.Y) * Matrix.CreateRotationZ(0f - vector3.X)
+                    Matrix.CreateRotationX(neckAngles.Y) * Matrix.CreateRotationZ(0f - neckAngles.X)
                 );
             }
 
@@ -164,15 +167,15 @@ public class ComponentFlightlessBirdModel : ComponentCreatureModel
         }
         else
         {
-            var num8 = 1f - DeathPhase;
-            float num9 = Vector3.Dot(componentFrame.Matrix.Right, DeathCauseOffset) > 0f ? 1 : -1;
-            var num10 = ComponentCreature.ComponentBody.BoundingBox.Max.Y -
-                        ComponentCreature.ComponentBody.BoundingBox.Min.Y;
+            var uprightBlend = 1f - DeathPhase;
+            float fallSide = Vector3.Dot(componentFrame.Matrix.Right, DeathCauseOffset) > 0f ? 1 : -1;
+            var bodyHeight = ComponentCreature.ComponentBody.BoundingBox.Max.Y -
+                             ComponentCreature.ComponentBody.BoundingBox.Min.Y;
             SetNodeTransform(
                 _bodyNode.Index,
-                Matrix.CreateTranslation(-0.5f * num10 * DeathPhase * Vector3.UnitY) *
-                Matrix.CreateFromYawPitchRoll(vector.X, 0f, (float)Math.PI / 2f * DeathPhase * num9) *
-                Matrix.CreateTranslation(0.2f * num10 * DeathPhase * Vector3.UnitY) *
+                Matrix.CreateTranslation(-0.5f * bodyHeight * DeathPhase * Vector3.UnitY) *
+                Matrix.CreateFromYawPitchRoll(vector.X, 0f, (float)Math.PI / 2f * DeathPhase * fallSide) *
+                Matrix.CreateTranslation(0.2f * bodyHeight * DeathPhase * Vector3.UnitY) *
                 Matrix.CreateTranslation(position)
             );
             SetNodeTransform(_headNode.Index, Matrix.Identity);
@@ -181,8 +184,8 @@ public class ComponentFlightlessBirdModel : ComponentCreatureModel
                 SetNodeTransform(_neckNode.Index, Matrix.Identity);
             }
 
-            SetNodeTransform(_leg1Node.Index, Matrix.CreateRotationX(_legAngle1 * num8));
-            SetNodeTransform(_leg2Node.Index, Matrix.CreateRotationX(_legAngle2 * num8));
+            SetNodeTransform(_leg1Node.Index, Matrix.CreateRotationX(_legAngle1 * uprightBlend));
+            SetNodeTransform(_leg2Node.Index, Matrix.CreateRotationX(_legAngle2 * uprightBlend));
         }
 
         base.Animate();

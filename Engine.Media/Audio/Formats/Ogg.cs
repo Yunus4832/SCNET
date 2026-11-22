@@ -9,14 +9,14 @@ public static class Ogg
     public static bool IsOggStream(Stream stream)
     {
         var position = stream.Position;
-        var num = stream.ReadByte();
-        var num2 = stream.ReadByte();
-        var num3 = stream.ReadByte();
-        var num4 = stream.ReadByte();
+        var signatureByte0 = stream.ReadByte();
+        var signatureByte1 = stream.ReadByte();
+        var signatureByte2 = stream.ReadByte();
+        var signatureByte3 = stream.ReadByte();
         stream.Position = position;
-        if (num == 79 && num2 == 103 && num3 == 103)
+        if (signatureByte0 == 79 && signatureByte1 == 103 && signatureByte2 == 103)
         {
-            return num4 == 83;
+            return signatureByte3 == 83;
         }
 
         return false;
@@ -98,40 +98,40 @@ public static class Ogg
                 throw new InvalidOperationException("Invalid range.");
             }
 
-            var num = 0;
+            var bytesWritten = 0;
             while (count >= 2)
             {
                 var count2 = MathUtils.Min(count / 2, _samples.Length);
-                var num2 = _reader.ReadSamples(_samples, 0, count2);
-                if (num2 == 0)
+                var samplesRead = _reader.ReadSamples(_samples, 0, count2);
+                if (samplesRead == 0)
                 {
                     break;
                 }
 
-                num += num2;
+                bytesWritten += samplesRead;
                 if (BitConverter.IsLittleEndian)
                 {
-                    for (var i = 0; i < num2; i++)
+                    for (var i = 0; i < samplesRead; i++)
                     {
-                        var num3 = (short)(_samples[i] * 32767f);
-                        buffer[offset++] = (byte)num3;
-                        buffer[offset++] = (byte)(num3 >> 8);
+                        var pcmSample = (short)(_samples[i] * 32767f);
+                        buffer[offset++] = (byte)pcmSample;
+                        buffer[offset++] = (byte)(pcmSample >> 8);
                     }
                 }
                 else
                 {
-                    for (var j = 0; j < num2; j++)
+                    for (var j = 0; j < samplesRead; j++)
                     {
-                        var num4 = (short)(_samples[j] * 32767f);
-                        buffer[offset++] = (byte)(num4 >> 8);
-                        buffer[offset++] = (byte)num4;
+                        var pcmSample = (short)(_samples[j] * 32767f);
+                        buffer[offset++] = (byte)(pcmSample >> 8);
+                        buffer[offset++] = (byte)pcmSample;
                     }
                 }
 
-                count -= num2 * 2;
+                count -= samplesRead * 2;
             }
 
-            return num * 2;
+            return bytesWritten * 2;
         }
 
         /// <summary>

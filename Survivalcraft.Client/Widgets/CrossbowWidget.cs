@@ -41,10 +41,10 @@ public class CrossbowWidget : CanvasWidget
             }
         }
 
-        var num = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
+        var backpackSlot = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
         foreach (var child in _inventoryGrid.Children)
         {
-            (child as InventorySlotWidget)?.AssignInventorySlot(inventory, num++);
+            (child as InventorySlotWidget)?.AssignInventorySlot(inventory, backpackSlot++);
         }
 
         _inventorySlotWidget.AssignInventorySlot(inventory, slotIndex);
@@ -56,11 +56,11 @@ public class CrossbowWidget : CanvasWidget
     {
         var slotValue = _inventory.GetSlotValue(_slotIndex);
         var slotCount = _inventory.GetSlotCount(_slotIndex);
-        var num = Terrain.ExtractContents(slotValue);
+        var contents = Terrain.ExtractContents(slotValue);
         var data = Terrain.ExtractData(slotValue);
         var draw = CrossbowBlock.GetDraw(data);
         var arrowType = CrossbowBlock.GetArrowType(data);
-        if (num == 200 && slotCount > 0)
+        if (contents == 200 && slotCount > 0)
         {
             if (draw < 15)
             {
@@ -81,11 +81,11 @@ public class CrossbowWidget : CanvasWidget
                 if (Input.Press.HasValue)
                 {
                     var vector = _inventorySlotWidget.ScreenToWidget(Input.Press.Value);
-                    var num2 = vector.Y - DrawToPosition(draw);
+                    var grabOffset = vector.Y - DrawToPosition(draw);
                     if (MathUtils.Abs(vector.X - _inventorySlotWidget.ActualSize.X / 2f) < 25f &&
-                        MathUtils.Abs(num2) < 25f)
+                        MathUtils.Abs(grabOffset) < 25f)
                     {
-                        _dragStartOffset = num2;
+                        _dragStartOffset = grabOffset;
                     }
                 }
             }
@@ -97,12 +97,12 @@ public class CrossbowWidget : CanvasWidget
 
             if (Input.Press.HasValue)
             {
-                var num3 = PositionToDraw(
+                var newDraw = PositionToDraw(
                     _inventorySlotWidget.ScreenToWidget(Input.Press.Value).Y -
                     _dragStartOffset.Value
                 );
-                SetDraw(num3);
-                if (draw <= 9 && num3 > 9)
+                SetDraw(newDraw);
+                if (draw <= 9 && newDraw > 9)
                 {
                     AudioManager.PlaySound("Audio/CrossbowDraw", 1f, _random.Float(-0.2f, 0.2f), 0f);
                 }

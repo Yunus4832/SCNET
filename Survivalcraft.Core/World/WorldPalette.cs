@@ -58,20 +58,20 @@ public class WorldPalette
 
         Names = array2;
         var names = Names;
-        var num = 0;
+        var colorIndex = 0;
         while (true)
         {
-            if (num >= names.Length)
+            if (colorIndex >= names.Length)
             {
                 return;
             }
 
-            if (!string.IsNullOrEmpty(names[num]) && !VerifyColorName(names[num]))
+            if (!string.IsNullOrEmpty(names[colorIndex]) && !VerifyColorName(names[colorIndex]))
             {
                 break;
             }
 
-            num++;
+            colorIndex++;
         }
 
         throw new InvalidOperationException("A world palette contains an invalid color name.");

@@ -25,28 +25,28 @@ public class WaterSplashParticleSystem : ParticleSystem<WaterSplashParticleSyste
         SetLightOrigin(terrain, position);
         var white = Color.White;
         white.A = 255;
-        var num5 = large ? 1.5f : 1f;
+        var splashScale = large ? 1.5f : 1f;
         for (var i = 0; i < Particles.Length; i++)
         {
             var obj = Particles[i];
             obj.IsActive = true;
             obj.Position = position;
             obj.Color = white;
-            obj.Size = new Vector2(0.14f * num5);
+            obj.Size = new Vector2(0.14f * splashScale);
             obj.TimeToLive = obj.Duration = _random.Float(0.5f, 2.5f);
             var v = 1.5f *
                     _random.Float(0f, 1f) *
                     Vector3.Normalize(new Vector3(_random.Float(-1f, 1f), 0f, _random.Float(-1f, 1f)));
-            obj.Velocity = num5 * (v + new Vector3(0f, _random.Float(0f, 5f), 0f));
+            obj.Velocity = splashScale * (v + new Vector3(0f, _random.Float(0f, 5f), 0f));
         }
     }
 
     public override bool Simulate(float dt)
     {
         dt = MathUtils.Clamp(dt, 0f, 0.1f);
-        var num = MathUtils.Pow(0.1f, dt);
+        var velocityDamping = MathUtils.Pow(0.1f, dt);
         _time += dt;
-        var flag = false;
+        var hasActiveParticles = false;
         foreach (var particle in Particles)
         {
             if (!particle.IsActive)
@@ -54,10 +54,10 @@ public class WaterSplashParticleSystem : ParticleSystem<WaterSplashParticleSyste
                 continue;
             }
 
-            flag = true;
+            hasActiveParticles = true;
             particle.Position += particle.Velocity * dt;
             particle.Velocity.Y += -10f * dt;
-            particle.Velocity *= num;
+            particle.Velocity *= velocityDamping;
             particle.Color *= MathUtils.Saturate(particle.TimeToLive);
             particle.TimeToLive -= dt;
             particle.TextureSlot = (int)(3.99f * particle.TimeToLive / particle.Duration);
@@ -74,13 +74,13 @@ public class WaterSplashParticleSystem : ParticleSystem<WaterSplashParticleSyste
                 Terrain.ToCell(particle.Position.Y),
                 Terrain.ToCell(particle.Position.Z)
             );
-            var num2 = Terrain.ExtractContents(cellValue);
-            if (num2 == 0)
+            var contents = Terrain.ExtractContents(cellValue);
+            if (contents == 0)
             {
                 continue;
             }
 
-            var block = _subsystemTerrain.Catalog.Blocks[num2];
+            var block = _subsystemTerrain.Catalog.Blocks[contents];
             if (block.Collidable)
             {
                 particle.IsActive = true;
@@ -95,18 +95,18 @@ public class WaterSplashParticleSystem : ParticleSystem<WaterSplashParticleSyste
                 }
 
                 particle.Velocity.Y = 0f;
-                var num3 = Vector2.Distance(
+                var distanceFromSplash = Vector2.Distance(
                     new Vector2(particle.Position.X, particle.Position.Z),
                     new Vector2(_position.X, _position.Z)
                 );
-                var num4 = 0.02f * MathUtils.Sin(2f * num3 + 10f * _time);
-                particle.Position.Y = MathUtils.Floor(particle.Position.Y) + levelHeight + num4;
+                var waveOffset = 0.02f * MathUtils.Sin(2f * distanceFromSplash + 10f * _time);
+                particle.Position.Y = MathUtils.Floor(particle.Position.Y) + levelHeight + waveOffset;
                 particle.TimeToLive -= 1f * dt;
                 particle.Size -= new Vector2(0.04f * dt);
             }
         }
 
-        return !flag;
+        return !hasActiveParticles;
     }
 
     public class Particle : Game.ParticleSystems.Particle

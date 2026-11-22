@@ -13,8 +13,8 @@ public class SubsystemFenceGateBlockBehavior : SubsystemBlockBehavior
     public bool OpenCloseGate(int x, int y, int z, bool open)
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
-        var num = Terrain.ExtractContents(cellValue);
-        if (WorldContentBinding.For(Project).Catalog.Blocks[num] is not FenceGateBlock)
+        var contents = Terrain.ExtractContents(cellValue);
+        if (WorldContentBinding.For(Project).Catalog.Blocks[contents] is not FenceGateBlock)
         {
             return false;
         }
@@ -37,9 +37,9 @@ public class SubsystemFenceGateBlockBehavior : SubsystemBlockBehavior
     private bool IsGateElectricallyConnected(int x, int y, int z)
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
-        var num = Terrain.ExtractContents(cellValue);
+        var contents = Terrain.ExtractContents(cellValue);
         var data = Terrain.ExtractData(cellValue);
-        if (WorldContentBinding.For(Project).Catalog.Blocks[num] is not FenceGateBlock)
+        if (WorldContentBinding.For(Project).Catalog.Blocks[contents] is not FenceGateBlock)
         {
             return false;
         }
@@ -52,9 +52,9 @@ public class SubsystemFenceGateBlockBehavior : SubsystemBlockBehavior
     {
         var cellFace = raycastResult.CellFace;
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
-        var num = Terrain.ExtractContents(cellValue);
+        var contents = Terrain.ExtractContents(cellValue);
         var data = Terrain.ExtractData(cellValue);
-        if (num != 166 && IsGateElectricallyConnected(cellFace.X, cellFace.Y, cellFace.Z))
+        if (contents != 166 && IsGateElectricallyConnected(cellFace.X, cellFace.Y, cellFace.Z))
         {
             return true;
         }

@@ -25,8 +25,8 @@ public class SnowBlock : CubeBlock
             return;
         }
 
-        var num = Random.Int(1, 3);
-        for (var i = 0; i < num; i++)
+        var dropCount = Random.Int(1, 3);
+        for (var i = 0; i < dropCount; i++)
         {
             dropValues.Add(
                 new BlockDropValue

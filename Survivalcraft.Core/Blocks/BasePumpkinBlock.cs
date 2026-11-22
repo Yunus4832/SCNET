@@ -19,16 +19,16 @@ public abstract class BasePumpkinBlock(bool isRotten) : Block
         var nodeAbsoluteTransform = pumpkinNode.AbsoluteTransform;
         for (var i = 0; i < 8; i++)
         {
-            var num = MathUtils.Lerp(0.2f, 1f, i / 7f);
-            var num2 = MathUtils.Min(0.3f * num, 0.7f * (1f - num));
+            var growthScale = MathUtils.Lerp(0.2f, 1f, i / 7f);
+            var centerOffset = MathUtils.Min(0.3f * growthScale, 0.7f * (1f - growthScale));
             blockPositionsBySize[i] = new CollisionGeometryBuilder();
             if (i >= 1)
             {
                 blockPositionsBySize[i].Append(
                     pumpkinNode.Primitives[0],
                     nodeAbsoluteTransform *
-                    Matrix.CreateScale(num) *
-                    Matrix.CreateTranslation(0.5f + num2, 0f, 0.5f + num2)
+                    Matrix.CreateScale(growthScale) *
+                    Matrix.CreateTranslation(0.5f + centerOffset, 0f, 0.5f + centerOffset)
                 );
             }
         }
@@ -38,17 +38,17 @@ public abstract class BasePumpkinBlock(bool isRotten) : Block
             var boundingBox = blockPositionsBySize[j].Count > 0
                 ? blockPositionsBySize[j].GetBounds()
                 : new BoundingBox(new Vector3(0.5f, 0f, 0.5f), new Vector3(0.5f, 0f, 0.5f));
-            var num3 = boundingBox.Max.X - boundingBox.Min.X;
-            if (num3 < 0.8f)
+            var boxWidth = boundingBox.Max.X - boundingBox.Min.X;
+            if (boxWidth < 0.8f)
             {
-                var num4 = (0.8f - num3) / 2f;
+                var padding = (0.8f - boxWidth) / 2f;
                 var min = boundingBox.Min;
                 var max = boundingBox.Max;
-                min.X -= num4;
-                min.Z -= num4;
-                max.X += num4;
+                min.X -= padding;
+                min.Z -= padding;
+                max.X += padding;
                 max.Y = 0.4f;
-                max.Z += num4;
+                max.Z += padding;
                 boundingBox.Min = min;
                 boundingBox.Max = max;
             }
@@ -146,8 +146,8 @@ public abstract class BasePumpkinBlock(bool isRotten) : Block
 
     public override int SetDamage(int value, int damage)
     {
-        var num = Terrain.ExtractData(value);
-        return Terrain.ReplaceData(value, (num & -17) | ((damage & 1) << 4));
+        var pumpkinData = Terrain.ExtractData(value);
+        return Terrain.ReplaceData(value, (pumpkinData & -17) | ((damage & 1) << 4));
     }
 
     public override int GetDamageDestructionValue(int value)

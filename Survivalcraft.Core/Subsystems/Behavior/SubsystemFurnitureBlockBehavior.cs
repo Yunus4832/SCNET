@@ -143,22 +143,22 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             return null;
         }
 
-        var num = 0;
+        var assignedDesignCount = 0;
         for (var i = 0; i < FurnitureDesigns.Length; i++)
         {
-            if (num >= list.Count)
+            if (assignedDesignCount >= list.Count)
             {
                 break;
             }
 
             if (FurnitureDesigns[i] == null)
             {
-                AddDesign(i, list[num]);
-                num++;
+                AddDesign(i, list[assignedDesignCount]);
+                assignedDesignCount++;
             }
         }
 
-        if (num != list.Count)
+        if (assignedDesignCount != list.Count)
         {
             throw new InvalidOperationException("public error.");
         }
@@ -221,7 +221,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 
         if (componentMiner.ComponentCharacter is not null)
         {
-            var num3 = AddPickable(componentMiner.ComponentCharacter, design);
+            var spawnedItemCount = AddPickable(componentMiner.ComponentCharacter, design);
             for (var i = 0; i < 3; i++)
             {
                 WorldRuntimeContext.For(Project).QueueTimeDelayedExecution(
@@ -230,7 +230,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                 );
             }
 
-            componentMiner.ComponentCreature.CharacterStats?.FurnitureItemsMade += num3;
+            componentMiner.ComponentCreature.CharacterStats?.FurnitureItemsMade += spawnedItemCount;
         }
 
         Log.Debug("创建家具：Index" + design.Index);
@@ -244,13 +244,13 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
             227,
             FurnitureBlock.SetDesignIndex(0, design.Index, design.ShadowStrengthFactor, design.IsLightEmitter)
         );
-        var num3 = MathUtils.Clamp(design.Resolution, 4, 8);
+        var itemCount = MathUtils.Clamp(design.Resolution, 4, 8);
         var matrix = componentMiner.ComponentCreature.ComponentBody.Matrix;
         var position = matrix.Translation + 1f * matrix.Forward + 1f * Vector3.UnitY;
-        _subsystemPickables.AddPickable(value, num3, position, null, null);
+        _subsystemPickables.AddPickable(value, itemCount, position, null, null);
         componentMiner.DamageActiveTool(1);
         componentMiner.Poke(false);
-        return num3;
+        return itemCount;
     }
 
     public void SwitchToNextState(int x, int y, int z, bool playSound)
@@ -260,10 +260,10 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
         {
             new(x, y, z)
         };
-        var num = 0;
-        while (num < list.Count && num < 4096)
+        var visitedCount = 0;
+        while (visitedCount < list.Count && visitedCount < 4096)
         {
-            var item = list[num++];
+            var item = list[visitedCount++];
             if (!hashSet.Add(item))
             {
                 continue;
@@ -367,14 +367,14 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
 
     public void MoveFurnitureSet(FurnitureSet furnitureSet, int move)
     {
-        var num = _furnitureSets.IndexOf(furnitureSet);
-        if (num < 0)
+        var setIndex = _furnitureSets.IndexOf(furnitureSet);
+        if (setIndex < 0)
         {
             return;
         }
 
-        _furnitureSets.RemoveAt(num);
-        _furnitureSets.Insert(MathUtils.Clamp(num + move, 0, _furnitureSets.Count), furnitureSet);
+        _furnitureSets.RemoveAt(setIndex);
+        _furnitureSets.Insert(MathUtils.Clamp(setIndex + move, 0, _furnitureSets.Count), furnitureSet);
     }
 
     public void AddToFurnitureSet(FurnitureDesign design, FurnitureSet furnitureSet)
@@ -511,11 +511,11 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                 ImportedFrom = value3
             };
             _furnitureSets.Add(furnitureSet);
-            foreach (var num in array)
+            foreach (var designIndex in array)
             {
-                if (num >= 0 && num < FurnitureDesigns.Length && FurnitureDesigns[num] != null)
+                if (designIndex >= 0 && designIndex < FurnitureDesigns.Length && FurnitureDesigns[designIndex] != null)
                 {
-                    FurnitureDesigns[num]!.FurnitureSet = furnitureSet;
+                    FurnitureDesigns[designIndex]!.FurnitureSet = furnitureSet;
                 }
             }
         }
@@ -532,11 +532,11 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
         SaveFurnitureDesigns(valuesDictionary2, FurnitureDesigns.Where(d => d != null).ToArray());
         var valuesDictionary3 = new ValuesDictionary();
         valuesDictionary.SetValue("FurnitureSets", valuesDictionary3);
-        var num = 0;
+        var entryIndex = 0;
         foreach (var furnitureSet in FurnitureSets)
         {
             var valuesDictionary4 = new ValuesDictionary();
-            valuesDictionary3.SetValue(num.ToString(CultureInfo.InvariantCulture), valuesDictionary4);
+            valuesDictionary3.SetValue(entryIndex.ToString(CultureInfo.InvariantCulture), valuesDictionary4);
             valuesDictionary4.SetValue("Name", furnitureSet.Name);
             if (!string.IsNullOrEmpty(furnitureSet.ImportedFrom))
             {
@@ -549,7 +549,7 @@ public class SubsystemFurnitureBlockBehavior : SubsystemBlockBehavior
                     select d.Index).ToArray()
             );
             valuesDictionary4.SetValue("Indices", value);
-            num++;
+            entryIndex++;
         }
     }
 

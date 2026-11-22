@@ -261,12 +261,12 @@ public class ComponentSteedBehavior : ComponentBehavior, IUpdateable
 
         if (_subsystemTime.PeriodicGameTimeEvent(0.25, 0.0))
         {
-            var num = new Vector2(
+            var horizontalImpactSpeed = new Vector2(
                 _componentCreature.ComponentBody.CollisionVelocityChange.X,
                 _componentCreature.ComponentBody.CollisionVelocityChange.Z
             ).Length();
             if (_speedLevel == 0 ||
-                num < 0.1f ||
+                horizontalImpactSpeed < 0.1f ||
                 _componentCreature.ComponentBody.Velocity.Length() >
                 MathUtils.Abs(0.5f * _speed * _componentCreature.ComponentLocomotion.WalkSpeed))
             {

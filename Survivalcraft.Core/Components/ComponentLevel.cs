@@ -101,27 +101,27 @@ public class ComponentLevel : Component, IUpdateable
 
     public float CalculateStrengthFactor(ICollection<Factor> factors)
     {
-        var num = _componentCharacter.CharacterData.CharacterSex == CharacterSex.Female ? 0.8f : 1f;
-        var num2 = 1f * num;
+        var sexFactor = _componentCharacter.CharacterData.CharacterSex == CharacterSex.Female ? 0.8f : 1f;
+        var baseStrength = 1f * sexFactor;
         Factor item;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num,
+                Value = sexFactor,
                 Description = LocalizedText.Literal(_componentCharacter.CharacterData.CharacterSex.ToString())
             };
             factors.Add(item);
         }
 
         var level = _componentCharacter.CharacterData.Level;
-        var num3 = 1f + 0.05f * MathUtils.Floor(MathUtils.Clamp(level, 1f, 21f) - 1f);
-        var num4 = num2 * num3;
+        var levelFactor = 1f + 0.05f * MathUtils.Floor(MathUtils.Clamp(level, 1f, 21f) - 1f);
+        var leveledStrength = baseStrength * levelFactor;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num3,
+                Value = levelFactor,
                 Description = new LocalizedText(Name, "2", string.Empty),
                 DescriptionArguments = [MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture)]
             };
@@ -129,27 +129,27 @@ public class ComponentLevel : Component, IUpdateable
         }
 
         var stamina = _componentCharacter.ComponentVitalStats.Stamina;
-        var num5 = MathUtils.Lerp(0.5f, 1f, MathUtils.Saturate(4f * stamina)) *
-                   MathUtils.Lerp(0.9f, 1f, MathUtils.Saturate(stamina));
-        var num6 = num4 * num5;
+        var staminaFactor = MathUtils.Lerp(0.5f, 1f, MathUtils.Saturate(4f * stamina)) *
+                            MathUtils.Lerp(0.9f, 1f, MathUtils.Saturate(stamina));
+        var restedStrength = leveledStrength * staminaFactor;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num5,
+                Value = staminaFactor,
                 Description = new LocalizedText(Name, "3", string.Empty),
                 DescriptionArguments = [$"{stamina * 100f:0}"]
             };
             factors.Add(item);
         }
 
-        var num7 = _componentCharacter.ComponentSickness.IsSick ? 0.75f : 1f;
-        var num8 = num6 * num7;
+        var sicknessFactor = _componentCharacter.ComponentSickness.IsSick ? 0.75f : 1f;
+        var sicknessAdjustedStrength = restedStrength * sicknessFactor;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num7,
+                Value = sicknessFactor,
                 Description = _componentCharacter.ComponentSickness.IsSick
                     ? new LocalizedText(Name, "4", string.Empty)
                     : new LocalizedText(Name, "5", string.Empty)
@@ -157,13 +157,13 @@ public class ComponentLevel : Component, IUpdateable
             factors.Add(item);
         }
 
-        float num9 = !_componentCharacter.ComponentSickness.IsPuking ? 1 : 0;
-        var num10 = num8 * num9;
+        float vomitingFactor = !_componentCharacter.ComponentSickness.IsPuking ? 1 : 0;
+        var vomitingAdjustedStrength = sicknessAdjustedStrength * vomitingFactor;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num9,
+                Value = vomitingFactor,
                 Description = _componentCharacter.ComponentSickness.IsPuking
                     ? new LocalizedText(Name, "6", string.Empty)
                     : new LocalizedText(Name, "7", string.Empty)
@@ -171,13 +171,13 @@ public class ComponentLevel : Component, IUpdateable
             factors.Add(item);
         }
 
-        var num11 = _componentCharacter.ComponentFlu.HasFlu ? 0.75f : 1f;
-        var num12 = num10 * num11;
+        var fluFactor = _componentCharacter.ComponentFlu.HasFlu ? 0.75f : 1f;
+        var fluAdjustedStrength = vomitingAdjustedStrength * fluFactor;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num11,
+                Value = fluFactor,
                 Description = _componentCharacter.ComponentFlu.HasFlu
                     ? new LocalizedText(Name, "8", string.Empty)
                     : new LocalizedText(Name, "9", string.Empty)
@@ -185,13 +185,13 @@ public class ComponentLevel : Component, IUpdateable
             factors.Add(item);
         }
 
-        float num13 = !_componentCharacter.ComponentFlu.IsCoughing ? 1 : 0;
-        var num14 = num12 * num13;
+        float coughFactor = !_componentCharacter.ComponentFlu.IsCoughing ? 1 : 0;
+        var coughAdjustedStrength = fluAdjustedStrength * coughFactor;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num13,
+                Value = coughFactor,
                 Description = _componentCharacter.ComponentFlu.IsCoughing
                     ? new LocalizedText(Name, "10", string.Empty)
                     : new LocalizedText(Name, "11", string.Empty)
@@ -199,8 +199,8 @@ public class ComponentLevel : Component, IUpdateable
             factors.Add(item);
         }
 
-        var num15 = _subsystemGameInfo.WorldSettings.GameMode == GameMode.Harmless ? 1.25f : 1f;
-        var result = num14 * num15;
+        var modeFactor = _subsystemGameInfo.WorldSettings.GameMode == GameMode.Harmless ? 1.25f : 1f;
+        var result = coughAdjustedStrength * modeFactor;
 
         if (factors.Count <= 0)
         {
@@ -209,7 +209,7 @@ public class ComponentLevel : Component, IUpdateable
 
         item = new Factor
         {
-            Value = num15,
+            Value = modeFactor,
             Description = new LocalizedText(Name, "12", string.Empty),
             DescriptionArguments = [_subsystemGameInfo.WorldSettings.GameMode.ToString()]
         };
@@ -220,40 +220,40 @@ public class ComponentLevel : Component, IUpdateable
 
     public float CalculateResilienceFactor(ICollection<Factor> factors)
     {
-        var num = _componentCharacter.CharacterData.CharacterSex == CharacterSex.Female ? 0.8f : 1f;
-        var num2 = 1f * num;
+        var sexFactor = _componentCharacter.CharacterData.CharacterSex == CharacterSex.Female ? 0.8f : 1f;
+        var baseResilience = 1f * sexFactor;
         Factor item;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num,
+                Value = sexFactor,
                 Description = LocalizedText.Literal(_componentCharacter.CharacterData.CharacterSex.ToString())
             };
             factors.Add(item);
         }
 
         var level = _componentCharacter.CharacterData.Level;
-        var num3 = 1f + 0.05f * MathUtils.Floor(MathUtils.Clamp(level, 1f, 21f) - 1f);
-        var num4 = num2 * num3;
+        var levelFactor = 1f + 0.05f * MathUtils.Floor(MathUtils.Clamp(level, 1f, 21f) - 1f);
+        var leveledResilience = baseResilience * levelFactor;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num3,
+                Value = levelFactor,
                 Description = new LocalizedText(Name, "2", string.Empty),
                 DescriptionArguments = [MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture)]
             };
             factors.Add(item);
         }
 
-        var num5 = _componentCharacter.ComponentSickness.IsSick ? 0.75f : 1f;
-        var num6 = num4 * num5;
+        var sicknessFactor = _componentCharacter.ComponentSickness.IsSick ? 0.75f : 1f;
+        var sicknessAdjustedResilience = leveledResilience * sicknessFactor;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num5,
+                Value = sicknessFactor,
                 Description = _componentCharacter.ComponentSickness.IsSick
                     ? new LocalizedText(Name, "4", string.Empty)
                     : new LocalizedText(Name, "5", string.Empty)
@@ -261,13 +261,13 @@ public class ComponentLevel : Component, IUpdateable
             factors.Add(item);
         }
 
-        var num7 = _componentCharacter.ComponentFlu.HasFlu ? 0.75f : 1f;
-        var num8 = num6 * num7;
+        var fluFactor = _componentCharacter.ComponentFlu.HasFlu ? 0.75f : 1f;
+        var fluAdjustedResilience = sicknessAdjustedResilience * fluFactor;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num7,
+                Value = fluFactor,
                 Description = _componentCharacter.ComponentFlu.HasFlu
                     ? new LocalizedText(Name, "8", string.Empty)
                     : new LocalizedText(Name, "9", string.Empty)
@@ -275,7 +275,7 @@ public class ComponentLevel : Component, IUpdateable
             factors.Add(item);
         }
 
-        var num9 = _subsystemGameInfo.WorldSettings.GameMode switch
+        var modeFactor = _subsystemGameInfo.WorldSettings.GameMode switch
         {
             GameMode.Harmless => 1.5f,
             GameMode.Survival => 1.25f,
@@ -283,7 +283,7 @@ public class ComponentLevel : Component, IUpdateable
             _ => 1f
         };
 
-        var result = num8 * num9;
+        var result = fluAdjustedResilience * modeFactor;
 
         if (factors.Count <= 0)
         {
@@ -292,7 +292,7 @@ public class ComponentLevel : Component, IUpdateable
 
         item = new Factor
         {
-            Value = num9,
+            Value = modeFactor,
             Description = new LocalizedText(Name, "12", string.Empty),
             DescriptionArguments = [_subsystemGameInfo.WorldSettings.GameMode.ToString()]
         };
@@ -303,28 +303,28 @@ public class ComponentLevel : Component, IUpdateable
 
     public float CalculateSpeedFactor(ICollection<Factor> factors)
     {
-        var num = 1f;
-        var num2 = _componentCharacter.CharacterData.CharacterSex == CharacterSex.Female ? 1.03f : 1f;
-        num *= num2;
+        var speedFactor = 1f;
+        var sexFactor = _componentCharacter.CharacterData.CharacterSex == CharacterSex.Female ? 1.03f : 1f;
+        speedFactor *= sexFactor;
         Factor item;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num2,
+                Value = sexFactor,
                 Description = LocalizedText.Literal(_componentCharacter.CharacterData.CharacterSex.ToString())
             };
             factors.Add(item);
         }
 
         var level = _componentCharacter.CharacterData.Level;
-        var num3 = 1f + 0.02f * MathUtils.Floor(MathUtils.Clamp(level, 1f, 21f) - 1f);
-        num *= num3;
+        var levelFactor = 1f + 0.02f * MathUtils.Floor(MathUtils.Clamp(level, 1f, 21f) - 1f);
+        speedFactor *= levelFactor;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num3,
+                Value = levelFactor,
                 Description = new LocalizedText(Name, "2", string.Empty),
                 DescriptionArguments = [MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture)]
             };
@@ -352,29 +352,29 @@ public class ComponentLevel : Component, IUpdateable
             AddClothingFactor(clothe4, ref clothingFactor, factors);
         }
 
-        num *= clothingFactor;
+        speedFactor *= clothingFactor;
         var stamina = _componentCharacter.ComponentVitalStats.Stamina;
-        var num4 = MathUtils.Lerp(0.5f, 1f, MathUtils.Saturate(4f * stamina)) *
-                   MathUtils.Lerp(0.9f, 1f, MathUtils.Saturate(stamina));
-        num *= num4;
+        var staminaFactor = MathUtils.Lerp(0.5f, 1f, MathUtils.Saturate(4f * stamina)) *
+                            MathUtils.Lerp(0.9f, 1f, MathUtils.Saturate(stamina));
+        speedFactor *= staminaFactor;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num4,
+                Value = staminaFactor,
                 Description = new LocalizedText(Name, "3", string.Empty),
                 DescriptionArguments = [$"{stamina * 100f:0}"]
             };
             factors.Add(item);
         }
 
-        var num5 = _componentCharacter.ComponentSickness.IsSick ? 0.75f : 1f;
-        num *= num5;
+        var sicknessFactor = _componentCharacter.ComponentSickness.IsSick ? 0.75f : 1f;
+        speedFactor *= sicknessFactor;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num5,
+                Value = sicknessFactor,
                 Description = _componentCharacter.ComponentSickness.IsSick
                     ? new LocalizedText(Name, "4", string.Empty)
                     : new LocalizedText(Name, "5", string.Empty)
@@ -382,13 +382,13 @@ public class ComponentLevel : Component, IUpdateable
             factors.Add(item);
         }
 
-        float num6 = !_componentCharacter.ComponentSickness.IsPuking ? 1 : 0;
-        num *= num6;
+        float vomitingFactor = !_componentCharacter.ComponentSickness.IsPuking ? 1 : 0;
+        speedFactor *= vomitingFactor;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num6,
+                Value = vomitingFactor,
                 Description = _componentCharacter.ComponentSickness.IsPuking
                     ? new LocalizedText(Name, "6", string.Empty)
                     : new LocalizedText(Name, "7", string.Empty)
@@ -396,13 +396,13 @@ public class ComponentLevel : Component, IUpdateable
             factors.Add(item);
         }
 
-        var num7 = _componentCharacter.ComponentFlu.HasFlu ? 0.75f : 1f;
-        num *= num7;
+        var fluFactor = _componentCharacter.ComponentFlu.HasFlu ? 0.75f : 1f;
+        speedFactor *= fluFactor;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num7,
+                Value = fluFactor,
                 Description = _componentCharacter.ComponentFlu.HasFlu
                     ? new LocalizedText(Name, "8", string.Empty)
                     : new LocalizedText(Name, "9", string.Empty)
@@ -410,13 +410,13 @@ public class ComponentLevel : Component, IUpdateable
             factors.Add(item);
         }
 
-        float num8 = !_componentCharacter.ComponentFlu.IsCoughing ? 1 : 0;
-        num *= num8;
+        float coughFactor = !_componentCharacter.ComponentFlu.IsCoughing ? 1 : 0;
+        speedFactor *= coughFactor;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num8,
+                Value = coughFactor,
                 Description = _componentCharacter.ComponentFlu.IsCoughing
                     ? new LocalizedText(Name, "10", string.Empty)
                     : new LocalizedText(Name, "11", string.Empty)
@@ -424,46 +424,46 @@ public class ComponentLevel : Component, IUpdateable
             factors.Add(item);
         }
 
-        return num;
+        return speedFactor;
     }
 
     public float CalculateHungerFactor(ICollection<Factor> factors)
     {
-        var num = _componentCharacter.CharacterData.CharacterSex == CharacterSex.Female ? 0.7f : 1f;
-        var num2 = 1f * num;
+        var sexFactor = _componentCharacter.CharacterData.CharacterSex == CharacterSex.Female ? 0.7f : 1f;
+        var baseHunger = 1f * sexFactor;
         Factor item;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num,
+                Value = sexFactor,
                 Description = LocalizedText.Literal(_componentCharacter.CharacterData.CharacterSex.ToString())
             };
             factors.Add(item);
         }
 
         var level = _componentCharacter.CharacterData.Level;
-        var num3 = 1f - 0.01f * MathUtils.Floor(MathUtils.Clamp(level, 1f, 21f) - 1f);
-        var num4 = num2 * num3;
+        var levelFactor = 1f - 0.01f * MathUtils.Floor(MathUtils.Clamp(level, 1f, 21f) - 1f);
+        var leveledHunger = baseHunger * levelFactor;
         if (factors.Count > 0)
         {
             item = new Factor
             {
-                Value = num3,
+                Value = levelFactor,
                 Description = new LocalizedText(Name, "2", string.Empty),
                 DescriptionArguments = [MathUtils.Floor(level).ToString(CultureInfo.CurrentCulture)]
             };
             factors.Add(item);
         }
 
-        var num5 = _subsystemGameInfo.WorldSettings.GameMode switch
+        var modeFactor = _subsystemGameInfo.WorldSettings.GameMode switch
         {
             GameMode.Harmless => 0.66f,
             GameMode.Survival => 0.75f,
             GameMode.Creative => 0f,
             _ => 1f
         };
-        var result = num4 * num5;
+        var result = leveledHunger * modeFactor;
 
         if (factors.Count <= 0)
         {
@@ -472,7 +472,7 @@ public class ComponentLevel : Component, IUpdateable
 
         item = new Factor
         {
-            Value = num5,
+            Value = modeFactor,
             Description = new LocalizedText(Name, "12", string.Empty),
             DescriptionArguments = [_subsystemGameInfo.WorldSettings.GameMode.ToString()]
         };

@@ -70,29 +70,29 @@ public class ComponentHealth : Component, IUpdateable
                 NetworkSender.SendToObservers(Entity, EntityStatePackageBuilder.Capture(this));
             }
 
-            var num = 0f;
+            var healingRate = 0f;
             if (_componentCharacter != null)
             {
                 if (_subsystemGameInfo.WorldSettings.GameMode == GameMode.Harmless)
                 {
-                    num = 0.0166666675f;
+                    healingRate = 0.0166666675f;
                 }
                 else if (_componentCharacter.ComponentSleep.SleepFactor.CloseTo(1f) &&
                          _componentCharacter.ComponentVitalStats.Food > 0f)
                 {
-                    num = 0.00166666671f;
+                    healingRate = 0.00166666671f;
                 }
                 else if (_componentCharacter.ComponentVitalStats.Food > 0.5f)
                 {
-                    num = 0.00111111114f;
+                    healingRate = 0.00111111114f;
                 }
             }
             else
             {
-                num = 0.00111111114f;
+                healingRate = 0.00111111114f;
             }
 
-            Heal(_subsystemGameInfo.TotalElapsedGameTimeDelta * num);
+            Heal(_subsystemGameInfo.TotalElapsedGameTimeDelta * healingRate);
         }
 
         if (BreathingMode == BreathingMode.Air)
@@ -121,18 +121,18 @@ public class ComponentHealth : Component, IUpdateable
             Injure(2f * _componentCreature.ComponentBody.ImmersionFactor * dt, null, false, cause);
         }
 
-        var num3 = MathUtils.Abs(_componentCreature.ComponentBody.CollisionVelocityChange.Y);
-        if (!_wasStanding && num3 > FallResilience)
+        var verticalImpactSpeed = MathUtils.Abs(_componentCreature.ComponentBody.CollisionVelocityChange.Y);
+        if (!_wasStanding && verticalImpactSpeed > FallResilience)
         {
             //掉落伤害，这里需要客户端计算伤害同步到服务器
-            var num4 = MathUtils.Sqr(MathUtils.Max(num3 - FallResilience, 0f)) / 15f;
+            var fallDamage = MathUtils.Sqr(MathUtils.Max(verticalImpactSpeed - FallResilience, 0f)) / 15f;
             if (_componentCharacter != null)
             {
-                num4 /= _componentCharacter.ComponentLevel.ResilienceFactor;
+                fallDamage /= _componentCharacter.ComponentLevel.ResilienceFactor;
             }
 
             var cause = new LocalizedText(Name, "2", "2");
-            ApplyEnvironmentalDamage(num4, null, cause, ComponentHealthPackage.RequestInjureType.Fall);
+            ApplyEnvironmentalDamage(fallDamage, null, cause, ComponentHealthPackage.RequestInjureType.Fall);
         }
 
         _wasStanding = _componentCreature.ComponentBody.StandingOnValue.HasValue ||
@@ -143,20 +143,20 @@ public class ComponentHealth : Component, IUpdateable
             Injure(0.1f, null, true, new LocalizedText(Name, "3", "3"));
         }
 
-        var num5 = _subsystemTime.PeriodicGameTimeEvent(1.0, 0.0);
-        if (num5 && Air == 0f)
+        var isDamageTick = _subsystemTime.PeriodicGameTimeEvent(1.0, 0.0);
+        if (isDamageTick && Air == 0f)
         {
-            var num6 = 0.12f;
+            var suffocationDamage = 0.12f;
             if (_componentCharacter != null)
             {
-                num6 /= _componentCharacter.ComponentLevel.ResilienceFactor;
+                suffocationDamage /= _componentCharacter.ComponentLevel.ResilienceFactor;
             }
 
             //窒息伤害
-            Injure(num6, null, false, new LocalizedText(Name, "7", "7"));
+            Injure(suffocationDamage, null, false, new LocalizedText(Name, "7", "7"));
         }
 
-        if (num5 && (_componentOnFire.IsOnFire || _componentOnFire.TouchesFire))
+        if (isDamageTick && (_componentOnFire.IsOnFire || _componentOnFire.TouchesFire))
         {
             var amount = 1f / FireResilience;
             if (_componentCharacter != null)
@@ -172,7 +172,7 @@ public class ComponentHealth : Component, IUpdateable
             );
         }
 
-        if (num5 &&
+        if (isDamageTick &&
             CanStrand &&
             _componentCreature.ComponentBody.ImmersionFactor < 0.25f &&
             (_componentCreature.ComponentBody.StandingOnValue != 0 ||
@@ -382,9 +382,10 @@ public class ComponentHealth : Component, IUpdateable
                         componentCharacter.CharacterStats.AirCreatureKills++;
                     }
 
-                    var num = (int)MathUtils.Ceiling(_componentCreature.ComponentHealth.AttackResilience / 12f);
+                    var experienceDropCount =
+                        (int)MathUtils.Ceiling(_componentCreature.ComponentHealth.AttackResilience / 12f);
 
-                    for (var i = 0; i < num; i++)
+                    for (var i = 0; i < experienceDropCount; i++)
                     {
                         var vector = _random.Vector2(2.5f, 3.5f);
                         _subsystemPickables.AddPickable(

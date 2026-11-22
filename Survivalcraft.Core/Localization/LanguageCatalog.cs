@@ -252,7 +252,7 @@ public sealed class LanguageCatalog
         JsonArray? arr = null;
         foreach (var item in key)
         {
-            var flag = false;
+            var foundValue = false;
             if (arr != null)
             {
                 int.TryParse(item, out var p);
@@ -261,13 +261,13 @@ public sealed class LanguageCatalog
                 {
                     obj = jo;
                     arr = null;
-                    flag = true;
+                    foundValue = true;
                 }
                 else if (obj2 is JsonArray ja)
                 {
                     obj = null;
                     arr = ja;
-                    flag = true;
+                    foundValue = true;
                 }
                 else
                 {
@@ -286,13 +286,13 @@ public sealed class LanguageCatalog
                 {
                     obj = jo;
                     arr = null;
-                    flag = true;
+                    foundValue = true;
                 }
                 else if (obj2 is JsonArray ja)
                 {
                     obj = null;
                     arr = ja;
-                    flag = true;
+                    foundValue = true;
                 }
                 else
                 {
@@ -301,7 +301,7 @@ public sealed class LanguageCatalog
                 }
             }
 
-            if (!flag)
+            if (!foundValue)
             {
                 return item;
             }

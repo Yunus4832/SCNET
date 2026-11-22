@@ -25,9 +25,9 @@ public class DeathCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidg
             return;
         }
 
-        var vector2 = Matrix.CreateWorld(Vector3.Zero, vector - _bestPosition.Value, Vector3.UnitY)
+        var cameraRotation = Matrix.CreateWorld(Vector3.Zero, vector - _bestPosition.Value, Vector3.UnitY)
             .ToYawPitchRoll();
-        _vrDeltaYaw = vector2.X - VrManager.HmdMatrixYpr.X;
+        _vrDeltaYaw = cameraRotation.X - VrManager.HmdMatrixYpr.X;
     }
 
     public override void Update(float dt)
@@ -62,10 +62,10 @@ public class DeathCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidg
         {
             var x = 1f + (float)Math.PI * 2f * i / 36f;
             var v2 = Vector3.Normalize(new Vector3(MathUtils.Sin(x), 0.5f, MathUtils.Cos(x)));
-            var vector2 = targetPosition + v2 * distance;
+            var candidatePosition = targetPosition + v2 * distance;
             var terrainRaycastResult = GameWidget.SubsystemGameWidgets.SubsystemTerrain.Raycast(
                 targetPosition,
-                vector2,
+                candidatePosition,
                 false,
                 true,
                 (v, _) => !GameWidget.SubsystemGameWidgets.SubsystemTerrain.Catalog.Blocks[Terrain.ExtractContents(v)]
@@ -79,7 +79,7 @@ public class DeathCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidg
             }
             else
             {
-                zero = vector2;
+                zero = candidatePosition;
             }
 
             if (!vector.HasValue ||

@@ -36,18 +36,18 @@ public class FontBatch3D : BaseFontBatch
     {
         var scale = new Vector2(right.Length(), down.Length());
         var vector = CalculateTextOffset(text, 0, text.Length, anchor, scale, spacing);
-        var vector2 = position + vector.X * Vector3.Normalize(right) + vector.Y * Vector3.Normalize(down);
-        var v = vector2;
+        var textOrigin = position + vector.X * Vector3.Normalize(right) + vector.Y * Vector3.Normalize(down);
+        var v = textOrigin;
         right *= Font.Scale;
         down *= Font.Scale;
-        var num = 0;
+        var lineIndex = 0;
         foreach (var c in text)
         {
             switch (c)
             {
                 case '\n':
-                    num++;
-                    v = vector2 + num * (Font.GlyphHeight + Font.Spacing.Y + spacing.Y) * down;
+                    lineIndex++;
+                    v = textOrigin + lineIndex * (Font.GlyphHeight + Font.Spacing.Y + spacing.Y) * down;
                     continue;
                 case '\r':
                     continue;
@@ -65,9 +65,9 @@ public class FontBatch3D : BaseFontBatch
                 var v3 = down * (glyph.TexCoord2.Y - glyph.TexCoord1.Y) * Font.Texture.Height;
                 var v4 = right * glyph.Offset.X + down * glyph.Offset.Y;
                 var v5 = v + v4;
-                var vector3 = v5 + v2;
-                var vector4 = v5 + v3;
-                var vector5 = v5 + v2 + v3;
+                var topRight = v5 + v2;
+                var bottomLeft = v5 + v3;
+                var bottomRight = v5 + v2 + v3;
                 var count = TriangleVertices.Count;
                 TriangleVertices.Count += 4;
                 TriangleVertices.Array[count] = new VertexPositionColorTexture(
@@ -76,17 +76,17 @@ public class FontBatch3D : BaseFontBatch
                     new Vector2(glyph.TexCoord1.X, glyph.TexCoord1.Y)
                 );
                 TriangleVertices.Array[count + 1] = new VertexPositionColorTexture(
-                    new Vector3(vector3.X, vector3.Y, vector3.Z),
+                    new Vector3(topRight.X, topRight.Y, topRight.Z),
                     color,
                     new Vector2(glyph.TexCoord2.X, glyph.TexCoord1.Y)
                 );
                 TriangleVertices.Array[count + 2] = new VertexPositionColorTexture(
-                    new Vector3(vector5.X, vector5.Y, vector5.Z),
+                    new Vector3(bottomRight.X, bottomRight.Y, bottomRight.Z),
                     color,
                     new Vector2(glyph.TexCoord2.X, glyph.TexCoord2.Y)
                 );
                 TriangleVertices.Array[count + 3] = new VertexPositionColorTexture(
-                    new Vector3(vector4.X, vector4.Y, vector4.Z),
+                    new Vector3(bottomLeft.X, bottomLeft.Y, bottomLeft.Z),
                     color,
                     new Vector2(glyph.TexCoord1.X, glyph.TexCoord2.Y)
                 );

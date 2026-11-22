@@ -38,15 +38,15 @@ public class ComponentLoot : Component, IUpdateable
             return;
         }
 
-        var num = _componentCreature.Entity.FindComponent<ComponentOnFire>()?.IsOnFire ?? false;
+        var wasBurning = _componentCreature.Entity.FindComponent<ComponentOnFire>()?.IsOnFire ?? false;
         _lootDropped = true;
 
-        foreach (var item in num ? _lootOnFireList : _lootList)
+        foreach (var item in wasBurning ? _lootOnFireList : _lootList)
         {
             if (_random.Float(0f, 1f) < item.Probability)
             {
-                var num2 = _random.Int(item.MinCount, item.MaxCount);
-                for (var i = 0; i < num2; i++)
+                var dropCount = _random.Int(item.MinCount, item.MaxCount);
+                for (var i = 0; i < dropCount; i++)
                 {
                     var position = (_componentCreature.ComponentBody.BoundingBox.Min +
                                     _componentCreature.ComponentBody.BoundingBox.Max) /

@@ -16,8 +16,8 @@ public class SignElectricElement(
 
     public override bool Simulate()
     {
-        var flag = CalculateHighInputsCount() > 0;
-        if (flag &&
+        var inputHigh = CalculateHighInputsCount() > 0;
+        if (inputHigh &&
             _isMessageAllowed &&
             (!_lastMessageTime.HasValue ||
              SubsystemElectricity.SubsystemTime.GameTime - _lastMessageTime.Value > 0.5))
@@ -33,7 +33,7 @@ public class SignElectricElement(
             }
         }
 
-        if (!flag)
+        if (!inputHigh)
         {
             _isMessageAllowed = true;
         }

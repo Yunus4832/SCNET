@@ -296,11 +296,11 @@ public sealed class ComponentClothingPresentation : Component, IUpdateable
         {
             Display.RenderTarget = _innerClothedTexture;
             Display.Clear(new Vector4(Color.Transparent));
-            var num = 0;
+            var drawLayer = 0;
             var texturedBatch2D = PrimitivesRenderer.TexturedBatch(
                 skinTexture,
                 false,
-                num++,
+                drawLayer++,
                 DepthStencilState.None,
                 null,
                 BlendState.AlphaBlend,
@@ -331,7 +331,7 @@ public sealed class ComponentClothingPresentation : Component, IUpdateable
                             ))
                         .GetClothingTexture(clothingData.Index),
                         false,
-                        num++,
+                        drawLayer++,
                         DepthStencilState.None,
                         null,
                         BlendState.AlphaBlend,
@@ -354,7 +354,7 @@ public sealed class ComponentClothingPresentation : Component, IUpdateable
             PrimitivesRenderer.Flush();
             Display.RenderTarget = _outerClothedTexture;
             Display.Clear(new Vector4(Color.Transparent));
-            num = 0;
+            drawLayer = 0;
             innerSlotsOrder = _outerSlotsOrder;
             foreach (var slot2 in innerSlotsOrder)
             {
@@ -372,7 +372,7 @@ public sealed class ComponentClothingPresentation : Component, IUpdateable
                             ))
                         .GetClothingTexture(clothingData2.Index),
                         false,
-                        num++,
+                        drawLayer++,
                         DepthStencilState.None,
                         null,
                         BlendState.AlphaBlend,

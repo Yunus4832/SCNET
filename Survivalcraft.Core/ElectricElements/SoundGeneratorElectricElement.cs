@@ -23,10 +23,10 @@ public class SoundGeneratorElectricElement : RotatableElectricElement
     {
         if (!WorldRuntimeContext.For(SubsystemElectricity.Project).IsAuthority) { return false; }
 
-        var num = 0;
-        var num2 = 15;
-        var num3 = 2;
-        var num4 = 0;
+        var noteCode = 0;
+        var volumeLevel = 15;
+        var octave = 2;
+        var instrumentCode = 0;
         var rotation = Rotation;
         foreach (var connection in Connections)
         {
@@ -41,7 +41,7 @@ public class SoundGeneratorElectricElement : RotatableElectricElement
 
                 if (connectorDirection.Value is ElectricConnectorDirection.In or ElectricConnectorDirection.Bottom)
                 {
-                    num4 = (int)MathUtils.Round(
+                    instrumentCode = (int)MathUtils.Round(
                         15f *
                         connection.NeighborElectricElement.GetOutputVoltage(
                             connection
@@ -51,7 +51,7 @@ public class SoundGeneratorElectricElement : RotatableElectricElement
                 }
                 else if (connectorDirection.Value == ElectricConnectorDirection.Left)
                 {
-                    num = (int)MathUtils.Round(
+                    noteCode = (int)MathUtils.Round(
                         15f *
                         connection.NeighborElectricElement.GetOutputVoltage(
                             connection
@@ -61,7 +61,7 @@ public class SoundGeneratorElectricElement : RotatableElectricElement
                 }
                 else if (connectorDirection.Value == ElectricConnectorDirection.Right)
                 {
-                    num3 = (int)MathUtils.Round(
+                    octave = (int)MathUtils.Round(
                         15f *
                         connection.NeighborElectricElement.GetOutputVoltage(
                             connection
@@ -71,7 +71,7 @@ public class SoundGeneratorElectricElement : RotatableElectricElement
                 }
                 else if (connectorDirection.Value == ElectricConnectorDirection.Top)
                 {
-                    num2 = (int)MathUtils.Round(
+                    volumeLevel = (int)MathUtils.Round(
                         15f *
                         connection.NeighborElectricElement.GetOutputVoltage(
                             connection
@@ -83,71 +83,71 @@ public class SoundGeneratorElectricElement : RotatableElectricElement
         }
 
         if (_lastToneInput == 0 &&
-            num4 != 0 &&
-            num != 15 &&
+            instrumentCode != 0 &&
+            noteCode != 15 &&
             SubsystemElectricity.SubsystemTime.GameTime >= _playAllowedTime)
         {
             _playAllowedTime = SubsystemElectricity.SubsystemTime.GameTime + 0.079999998211860657;
-            var instrument = (SoundGeneratorInstrument)num4;
+            var instrument = (SoundGeneratorInstrument)instrumentCode;
             var sampleOctave = 0;
-            var num5 = 0f;
+            var pitchRatio = 0f;
             var hasSample = false;
             if (instrument == SoundGeneratorInstrument.Drums)
             {
-                num5 = 1f;
-                if (num >= 0 && num < 10)
+                pitchRatio = 1f;
+                if (noteCode >= 0 && noteCode < 10)
                 {
                     hasSample = true;
                 }
             }
             else if (SoundGeneratorNote.GetMaxSampleOctave(instrument) > 0)
             {
-                var num6 = 130.8125f * MathUtils.Pow(1.05946314f, num + 12 * num3);
-                var num7 = 0;
+                var targetFrequency = 130.8125f * MathUtils.Pow(1.05946314f, noteCode + 12 * octave);
+                var selectedOctave = 0;
                 for (var i = 4; i <= SoundGeneratorNote.GetMaxSampleOctave(instrument); i++)
                 {
-                    var num8 = num6 / (523.25f * MathUtils.Pow(2f, i - 5));
-                    if (num7 != 0 && (!(num8 >= 0.5f) || !(num8 < num5)))
+                    var candidatePitchRatio = targetFrequency / (523.25f * MathUtils.Pow(2f, i - 5));
+                    if (selectedOctave != 0 && (!(candidatePitchRatio >= 0.5f) || !(candidatePitchRatio < pitchRatio)))
                     {
                         continue;
                     }
 
-                    num7 = i;
-                    num5 = num8;
+                    selectedOctave = i;
+                    pitchRatio = candidatePitchRatio;
                 }
 
-                sampleOctave = num7;
+                sampleOctave = selectedOctave;
                 hasSample = true;
             }
 
-            if (num5 != 0f && hasSample)
+            if (pitchRatio != 0f && hasSample)
             {
                 var cellFace = CellFaces[0];
                 var position = new Vector3(cellFace.X, cellFace.Y, cellFace.Z);
-                var pitch = MathUtils.Clamp(MathUtils.Log(num5) / MathUtils.Log(2f), -1f, 1f);
+                var pitch = MathUtils.Clamp(MathUtils.Log(pitchRatio) / MathUtils.Log(2f), -1f, 1f);
                 var note = new SoundGeneratorNote(
                     cellFace.Point,
                     cellFace.Face,
                     instrument,
                     sampleOctave,
-                    num,
-                    num2,
+                    noteCode,
+                    volumeLevel,
                     pitch
                 );
                 if (!note.IsValid)
                 {
-                    _lastToneInput = num4;
+                    _lastToneInput = instrumentCode;
                     return false;
                 }
 
                 SubsystemElectricity.PublishSoundGeneratorNote(note);
-                var loudness = num2 < 8 ? 0.25f : 0.5f;
-                var range = MathUtils.Lerp(2f, 20f, num2 / 15f);
+                var loudness = volumeLevel < 8 ? 0.25f : 0.5f;
+                var range = MathUtils.Lerp(2f, 20f, volumeLevel / 15f);
                 _subsystemNoise.MakeNoise(position, loudness, range);
             }
         }
 
-        _lastToneInput = num4;
+        _lastToneInput = instrumentCode;
         return false;
     }
 }

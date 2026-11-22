@@ -68,14 +68,14 @@ public static partial class GamePad
             return result;
         }
 
-        var num = result.Length();
-        if (!(num > 0f))
+        var stickMagnitude = result.Length();
+        if (!(stickMagnitude > 0f))
         {
             return result;
         }
 
-        var num2 = ApplyDeadZone(num, deadZone);
-        result *= num2 / num;
+        var adjustedMagnitude = ApplyDeadZone(stickMagnitude, deadZone);
+        result *= adjustedMagnitude / stickMagnitude;
 
         return result;
     }
@@ -171,8 +171,8 @@ public static partial class GamePad
             return true;
         }
 
-        var num = states[gamePadIndex].ButtonsRepeat[(int)button];
-        return num != 0.0 && Time.FrameStartTime >= num;
+        var repeatTime = states[gamePadIndex].ButtonsRepeat[(int)button];
+        return repeatTime != 0.0 && Time.FrameStartTime >= repeatTime;
     }
 
     public static bool IsAnyModifierKeyHolding(int gamePadIndex, float threshold = 0.5f)

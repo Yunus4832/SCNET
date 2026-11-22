@@ -68,14 +68,14 @@ public static class InstancedModelsManager
                 var vertexData = MemoryMarshal.Cast<byte, SourceModelVertex>(meshPart.Vertices.Span).ToArray();
                 for (var j = meshPart.StartIndex; j < meshPart.StartIndex + meshPart.IndicesCount; j++)
                 {
-                    var num = indexData[j];
-                    if (dictionary.ContainsKey(num))
+                    var sourceVertexIndex = indexData[j];
+                    if (dictionary.ContainsKey(sourceVertexIndex))
                     {
                         continue;
                     }
 
-                    dictionary.Add(num, checked((ushort)dynamicArray.Count));
-                    var sourceModelVertex = vertexData[num];
+                    dictionary.Add(sourceVertexIndex, checked((ushort)dynamicArray.Count));
+                    var sourceModelVertex = vertexData[sourceVertexIndex];
                     var item = new InstancedVertex
                     {
                         X = sourceModelVertex.X,

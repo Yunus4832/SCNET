@@ -75,15 +75,15 @@ public class SubsystemBombBlockBehavior : SubsystemBlockBehavior, IUpdateable
             return;
         }
 
-        var num = Terrain.ExtractContents(projectile.Value);
-        if (!_subsystemBlockBehaviors.GetBlockBehaviors(num).Contains(this))
+        var contents = Terrain.ExtractContents(projectile.Value);
+        if (!_subsystemBlockBehaviors.GetBlockBehaviors(contents).Contains(this))
         {
             return;
         }
 
         _projectiles.Add(projectile, true);
         projectile.ProjectileStoppedAction = ProjectileStoppedAction.DoNothing;
-        var color = num == 228 ? new Color(255, 140, 192) : Color.White;
+        var color = contents == 228 ? new Color(255, 140, 192) : Color.White;
         _subsystemProjectiles.SetTrail(
             projectile,
             new ProjectileTrailDescription(

@@ -103,24 +103,24 @@ public class ScreenSpaceFireRenderer
         var corner2 = particle.Position + particle.Size / 2f;
         var textureSlot = particle.TextureSlot;
         var v = new Vector2(textureSlot % 3, textureSlot / 3);
-        var num = 0f;
-        var num2 = 1f;
-        var num3 = 0f;
-        var num4 = 1f;
+        var leftU = 0f;
+        var rightU = 1f;
+        var topV = 0f;
+        var bottomV = 1f;
         if (particle.FlipX)
         {
-            num = 1f - num;
-            num2 = 1f - num2;
+            leftU = 1f - leftU;
+            rightU = 1f - rightU;
         }
 
         if (particle.FlipY)
         {
-            num3 = 1f - num3;
-            num4 = 1f - num4;
+            topV = 1f - topV;
+            bottomV = 1f - bottomV;
         }
 
-        var texCoord = (v + new Vector2(num, num3)) * 0.333333343f;
-        var texCoord2 = (v + new Vector2(num2, num4)) * 0.333333343f;
+        var texCoord = (v + new Vector2(leftU, topV)) * 0.333333343f;
+        var texCoord2 = (v + new Vector2(rightU, bottomV)) * 0.333333343f;
         batch.QueueQuad(corner, corner2, depth, texCoord, texCoord2, color);
     }
 

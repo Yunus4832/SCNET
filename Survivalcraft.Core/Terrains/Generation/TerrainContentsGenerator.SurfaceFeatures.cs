@@ -15,57 +15,57 @@ public partial class TerrainContentsGenerator
         {
             for (var j = 0; j < 16; j++)
             {
-                var num = i + chunk.Origin.X;
-                var num2 = j + chunk.Origin.Y;
-                var num3 = SimplexNoise.OctavedNoise(
-                    num + temperatureOffset.X,
-                    num2 + temperatureOffset.Y,
+                var worldX = i + chunk.Origin.X;
+                var worldZ = j + chunk.Origin.Y;
+                var basinNoise = SimplexNoise.OctavedNoise(
+                    worldX + temperatureOffset.X,
+                    worldZ + temperatureOffset.Y,
                     0.001f / tgBiomeScaling,
                     2,
                     2.9f,
                     2f
                 );
-                var flag = num3 < 0.29; //代表着原本就是低洼地带
-                if (!flag)
+                var isLowland = basinNoise < 0.29; //代表着原本就是低洼地带
+                if (!isLowland)
                 {
                     continue;
                 }
 
-                var num4 = MathUtils.Pow((0.3f - num3 + 0.01f) * 125f, 2f) / 100f;
-                var flag2 = num4 > 1f;
-                if (flag2)
+                var depthFactor = MathUtils.Pow((0.3f - basinNoise + 0.01f) * 125f, 2f) / 100f;
+                var exceedsMaxDepth = depthFactor > 1f;
+                if (exceedsMaxDepth)
                 {
-                    num4 = 1f;
+                    depthFactor = 1f;
                 }
 
-                var num5 = (int)(num4 * 10f); //深度
-                var num6 = 0;
-                var num7 = 0;
-                var flag3 = false;
+                var carveDepth = (int)(depthFactor * 10f); //深度
+                var surfaceContents = 0;
+                var waterDepth = 0;
+                var foundSurface = false;
                 for (var k = 245; k > 0; k--)
                 {
                     var cellContentsFast = chunk.GetCellContentsFast(i, k, j);
-                    var flag4 = cellContentsFast != 0;
-                    if (!flag4)
+                    var isOccupied = cellContentsFast != 0;
+                    if (!isOccupied)
                     {
                         continue;
                     }
 
                     var l = 0;
-                    while (l < num5)
+                    while (l < carveDepth)
                     {
-                        var flag5 = chunk.GetCellContentsFast(i, k, j) == 18 && !flag3;
-                        if (flag5)
+                        var isSurfaceWater = chunk.GetCellContentsFast(i, k, j) == 18 && !foundSurface;
+                        if (isSurfaceWater)
                         {
-                            num7++;
+                            waterDepth++;
                         }
                         else
                         {
-                            var flag6 = !flag3;
-                            if (flag6)
+                            var needsSurfaceContents = !foundSurface;
+                            if (needsSurfaceContents)
                             {
-                                flag3 = true;
-                                num6 = chunk.GetCellContentsFast(i, k, j);
+                                foundSurface = true;
+                                surfaceContents = chunk.GetCellContentsFast(i, k, j);
                             }
                         }
 
@@ -74,11 +74,11 @@ public partial class TerrainContentsGenerator
                         k--;
                     }
 
-                    var flag7 = num7 > 1;
-                    if (flag7)
+                    var restoreWater = waterDepth > 1;
+                    if (restoreWater)
                     {
                         var m = 0;
-                        while (m < num7)
+                        while (m < waterDepth)
                         {
                             chunk.SetCellValueFast(i, k, j, 18);
                             m++;
@@ -86,10 +86,10 @@ public partial class TerrainContentsGenerator
                         }
                     }
 
-                    var flag8 = flag3;
-                    if (flag8)
+                    var restoreSurface = foundSurface;
+                    if (restoreSurface)
                     {
-                        chunk.SetCellValueFast(i, k, j, num6);
+                        chunk.SetCellValueFast(i, k, j, surfaceContents);
                     }
 
                     break;
@@ -105,10 +105,10 @@ public partial class TerrainContentsGenerator
         {
             for (var j = 0; j < 16; j++)
             {
-                var num = i + chunk.Origin.X;
-                var num2 = j + chunk.Origin.Y;
-                float num3 = 2 + (int)(4f * SimplexNoise.OctavedNoise(num, num2, 0.1f, 1, 1f, 1f));
-                for (var k = 0; k < num3; k++)
+                var worldX = i + chunk.Origin.X;
+                var worldZ = j + chunk.Origin.Y;
+                float bedrockThickness = 2 + (int)(4f * SimplexNoise.OctavedNoise(worldX, worldZ, 0.1f, 1, 1f, 1f));
+                for (var k = 0; k < bedrockThickness; k++)
                 {
                     chunk.SetCellValueFast(i, k, j, value);
                 }
@@ -124,65 +124,65 @@ public partial class TerrainContentsGenerator
         {
             for (var j = 0; j < 16; j++)
             {
-                var num = i + chunk.Origin.X;
-                var num2 = j + chunk.Origin.Y;
-                for (var num3 = 254; num3 >= 0; num3--)
+                var worldX = i + chunk.Origin.X;
+                var worldZ = j + chunk.Origin.Y;
+                for (var surfaceY = 254; surfaceY >= 0; surfaceY--)
                 {
-                    var cellValueFast = chunk.GetCellValueFast(i, num3, j);
-                    var num4 = Terrain.ExtractContents(cellValueFast);
-                    if (num4 != 0)
+                    var cellValueFast = chunk.GetCellValueFast(i, surfaceY, j);
+                    var contents = Terrain.ExtractContents(cellValueFast);
+                    if (contents != 0)
                     {
-                        if (!SubsystemWeather.IsPlaceFrozen(chunk.GetTemperatureFast(i, j), num3))
+                        if (!SubsystemWeather.IsPlaceFrozen(chunk.GetTemperatureFast(i, j), surfaceY))
                         {
                             break;
                         }
 
-                        if (_subsystemTerrain.Catalog.Blocks[num4] is WaterBlock)
+                        if (_subsystemTerrain.Catalog.Blocks[contents] is WaterBlock)
                         {
-                            if (CalculateOceanShoreDistance(num, num2) > -20f)
+                            if (CalculateOceanShoreDistance(worldX, worldZ) > -20f)
                             {
-                                float num5 = 1 +
-                                             (int)(2f *
-                                                   MathUtils.Sqr(
-                                                       SimplexNoise.OctavedNoise(
-                                                           num,
-                                                           num2,
-                                                           0.2f,
-                                                           1,
-                                                           2f,
-                                                           1f
-                                                       )
-                                                   ));
-                                for (var k = 0; k < num5; k++)
+                                float iceThickness = 1 +
+                                                     (int)(2f *
+                                                           MathUtils.Sqr(
+                                                               SimplexNoise.OctavedNoise(
+                                                                   worldX,
+                                                                   worldZ,
+                                                                   0.2f,
+                                                                   1,
+                                                                   2f,
+                                                                   1f
+                                                               )
+                                                           ));
+                                for (var k = 0; k < iceThickness; k++)
                                 {
-                                    if (num3 - k <= 0)
+                                    if (surfaceY - k <= 0)
                                     {
                                         continue;
                                     }
 
                                     if (!(_subsystemTerrain.Catalog.Blocks[
-                                            chunk.GetCellContentsFast(i, num3 - k, j)] is WaterBlock))
+                                            chunk.GetCellContentsFast(i, surfaceY - k, j)] is WaterBlock))
                                     {
                                         break;
                                     }
 
-                                    chunk.SetCellValueFast(i, num3 - k, j, 62);
+                                    chunk.SetCellValueFast(i, surfaceY - k, j, 62);
                                 }
 
-                                if (SubsystemWeather.ShaftHasSnowOnIce(num, num2))
+                                if (SubsystemWeather.ShaftHasSnowOnIce(worldX, worldZ))
                                 {
-                                    chunk.SetCellValueFast(i, num3 + 1, j, 61);
+                                    chunk.SetCellValueFast(i, surfaceY + 1, j, 61);
                                 }
                             }
                         }
                         else if (SubsystemSnowBlockBehavior.CanSupportSnow(_subsystemTerrain.Catalog, cellValueFast))
                         {
-                            chunk.SetCellValueFast(i, num3 + 1, j, 61);
+                            chunk.SetCellValueFast(i, surfaceY + 1, j, 61);
                         }
 
-                        if (num4 == 8)
+                        if (contents == 8)
                         {
-                            chunk.SetCellValueFast(i, num3, j, Terrain.MakeBlockValue(8, 1));
+                            chunk.SetCellValueFast(i, surfaceY, j, Terrain.MakeBlockValue(8, 1));
                         }
 
                         break;

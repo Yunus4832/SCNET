@@ -49,45 +49,45 @@ public sealed class SubsystemPickablesPresentation : Subsystem, IDrawable
         var totalElapsedGameTime = _subsystemGameInfo.TotalElapsedGameTime;
         _drawBlockEnvironmentData.SubsystemTerrain = _subsystemTerrain;
         var matrix = Matrix.CreateRotationY((float)MathUtils.Remainder(totalElapsedGameTime, 6.2831854820251465));
-        var num = MathUtils.Min(_subsystemSky.VisibilityRange, 30f);
+        var drawDistance = MathUtils.Min(_subsystemSky.VisibilityRange, 30f);
         foreach (var pickable in _pickables.Pickables)
         {
             var position = pickable.Position;
-            var num2 = Vector3.Dot(camera.ViewDirection, position - camera.ViewPosition);
-            if (!(num2 > -0.5f) || !(num2 < num))
+            var viewDepth = Vector3.Dot(camera.ViewDirection, position - camera.ViewPosition);
+            if (!(viewDepth > -0.5f) || !(viewDepth < drawDistance))
             {
                 continue;
             }
 
-            var num3 = Terrain.ExtractContents(pickable.Value);
-            var num4 = (float)(totalElapsedGameTime - pickable.CreationTime);
+            var contents = Terrain.ExtractContents(pickable.Value);
+            var itemAge = (float)(totalElapsedGameTime - pickable.CreationTime);
             if (!pickable.StuckMatrix.HasValue)
             {
-                position.Y += 0.25f * MathUtils.Saturate(3f * num4);
+                position.Y += 0.25f * MathUtils.Saturate(3f * itemAge);
             }
 
             var x = Terrain.ToCell(position.X);
-            var num5 = Terrain.ToCell(position.Y);
+            var cellY = Terrain.ToCell(position.Y);
             var z = Terrain.ToCell(position.Z);
             var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
             if (chunkAtCell is
                 {
                     HasContents: true
                 } &&
-                num5 is >= 0 and < 255 &&
+                cellY is >= 0 and < 255 &&
                 !IsInsidePredictedOpaqueBlock(
                     _subsystemTerrain.Terrain,
-                    new Point3(x, num5, z),
+                    new Point3(x, cellY, z),
                     _subsystemTerrain.Catalog
                 ))
             {
                 _drawBlockEnvironmentData.Humidity = _subsystemTerrain.Terrain.GetSeasonalHumidity(x, z);
                 _drawBlockEnvironmentData.Temperature = _subsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
-                                                        SubsystemWeather.GetTemperatureAdjustmentAtHeight(num5);
-                var f = MathUtils.Max(position.Y - num5 - 0.75f, 0f) / 0.25f;
+                                                        SubsystemWeather.GetTemperatureAdjustmentAtHeight(cellY);
+                var f = MathUtils.Max(position.Y - cellY - 0.75f, 0f) / 0.25f;
                 var light = MathUtils.Lerp(
-                    (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, num5, z) ?? 0),
-                    (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, num5 + 1, z) ?? 0),
+                    (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, cellY, z) ?? 0),
+                    (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, cellY + 1, z) ?? 0),
                     f
                 );
                 _lightSamples[pickable] = light;
@@ -104,7 +104,7 @@ public sealed class SubsystemPickablesPresentation : Subsystem, IDrawable
             if (pickable.StuckMatrix.HasValue)
             {
                 var matrix2 = pickable.StuckMatrix.Value;
-                _blockPresentations.Get(num3).DrawBlock(
+                _blockPresentations.Get(contents).DrawBlock(
                     PrimitivesRenderer3D,
                     pickable.Value,
                     Color.White,
@@ -115,8 +115,8 @@ public sealed class SubsystemPickablesPresentation : Subsystem, IDrawable
             }
             else
             {
-                matrix.Translation = position + new Vector3(0f, 0.04f * MathUtils.Sin(3f * num4), 0f);
-                _blockPresentations.Get(num3).DrawBlock(
+                matrix.Translation = position + new Vector3(0f, 0.04f * MathUtils.Sin(3f * itemAge), 0f);
+                _blockPresentations.Get(contents).DrawBlock(
                     PrimitivesRenderer3D,
                     pickable.Value,
                     Color.White,

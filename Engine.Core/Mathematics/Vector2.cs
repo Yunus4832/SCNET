@@ -41,7 +41,7 @@ public struct Vector2(float x, float y) : IEquatable<Vector2>
 
     public override bool Equals(object? obj)
     {
-        return obj is Vector2 vector2 && Equals(vector2);
+        return obj is Vector2 other && Equals(other);
     }
 
     public override int GetHashCode()
@@ -92,9 +92,9 @@ public struct Vector2(float x, float y) : IEquatable<Vector2>
 
     public static Vector2 Rotate(Vector2 v, float angle)
     {
-        var num = MathUtils.Cos(angle);
-        var num2 = MathUtils.Sin(angle);
-        return new Vector2(num * v.X + num2 * v.Y, (0f - num2) * v.X + num * v.Y);
+        var cosAngle = MathUtils.Cos(angle);
+        var sinAngle = MathUtils.Sin(angle);
+        return new Vector2(cosAngle * v.X + sinAngle * v.Y, (0f - sinAngle) * v.X + cosAngle * v.Y);
     }
 
     public float Length()
@@ -167,21 +167,21 @@ public struct Vector2(float x, float y) : IEquatable<Vector2>
 
     public static Vector2 Normalize(Vector2 v)
     {
-        var num = v.Length();
-        if (!(num > 0f))
+        var length = v.Length();
+        if (!(length > 0f))
         {
             return UnitX;
         }
 
-        return v / num;
+        return v / length;
     }
 
     public static Vector2 LimitLength(Vector2 v, float maxLength)
     {
-        var num = v.LengthSquared();
-        if (num > maxLength * maxLength)
+        var lengthSquared = v.LengthSquared();
+        if (lengthSquared > maxLength * maxLength)
         {
-            return v * (maxLength / MathUtils.Sqrt(num));
+            return v * (maxLength / MathUtils.Sqrt(lengthSquared));
         }
 
         return v;
@@ -189,18 +189,18 @@ public struct Vector2(float x, float y) : IEquatable<Vector2>
 
     public static float Angle(Vector2 v1, Vector2 v2)
     {
-        var num = MathUtils.Atan2(v1.Y, v1.X);
-        var num2 = MathUtils.Atan2(v2.Y, v2.X) - num;
-        if (num2 > (float)Math.PI)
+        var firstAngle = MathUtils.Atan2(v1.Y, v1.X);
+        var angleDifference = MathUtils.Atan2(v2.Y, v2.X) - firstAngle;
+        if (angleDifference > (float)Math.PI)
         {
-            num2 -= (float)Math.PI * 2f;
+            angleDifference -= (float)Math.PI * 2f;
         }
-        else if (num2 <= -(float)Math.PI)
+        else if (angleDifference <= -(float)Math.PI)
         {
-            num2 += (float)Math.PI * 2f;
+            angleDifference += (float)Math.PI * 2f;
         }
 
-        return num2;
+        return angleDifference;
     }
 
     public static Vector2 Transform(Vector2 v, Matrix m)
@@ -215,33 +215,33 @@ public struct Vector2(float x, float y) : IEquatable<Vector2>
 
     public static Vector2 Transform(Vector2 v, Quaternion q)
     {
-        var num = q.X + q.X;
-        var num2 = q.Y + q.Y;
-        var num3 = q.Z + q.Z;
-        var num4 = q.W * num3;
-        var num5 = q.X * num;
-        var num6 = q.X * num2;
-        var num7 = q.Y * num2;
-        var num8 = q.Z * num3;
+        var twiceX = q.X + q.X;
+        var twiceY = q.Y + q.Y;
+        var twiceZ = q.Z + q.Z;
+        var twiceWZ = q.W * twiceZ;
+        var twiceXX = q.X * twiceX;
+        var twiceXY = q.X * twiceY;
+        var twiceYY = q.Y * twiceY;
+        var twiceZZ = q.Z * twiceZ;
         return new Vector2(
-            v.X * (1f - num7 - num8) + v.Y * (num6 - num4),
-            v.X * (num6 + num4) + v.Y * (1f - num5 - num8)
+            v.X * (1f - twiceYY - twiceZZ) + v.Y * (twiceXY - twiceWZ),
+            v.X * (twiceXY + twiceWZ) + v.Y * (1f - twiceXX - twiceZZ)
         );
     }
 
     public static void Transform(ref Vector2 v, ref Quaternion q, out Vector2 result)
     {
-        var num = q.X + q.X;
-        var num2 = q.Y + q.Y;
-        var num3 = q.Z + q.Z;
-        var num4 = q.W * num3;
-        var num5 = q.X * num;
-        var num6 = q.X * num2;
-        var num7 = q.Y * num2;
-        var num8 = q.Z * num3;
+        var twiceX = q.X + q.X;
+        var twiceY = q.Y + q.Y;
+        var twiceZ = q.Z + q.Z;
+        var twiceWZ = q.W * twiceZ;
+        var twiceXX = q.X * twiceX;
+        var twiceXY = q.X * twiceY;
+        var twiceYY = q.Y * twiceY;
+        var twiceZZ = q.Z * twiceZ;
         result = new Vector2(
-            v.X * (1f - num7 - num8) + v.Y * (num6 - num4),
-            v.X * (num6 + num4) + v.Y * (1f - num5 - num8)
+            v.X * (1f - twiceYY - twiceZZ) + v.Y * (twiceXY - twiceWZ),
+            v.X * (twiceXY + twiceWZ) + v.Y * (1f - twiceXX - twiceZZ)
         );
     }
 
@@ -383,7 +383,7 @@ public struct Vector2(float x, float y) : IEquatable<Vector2>
 
     public static Vector2 operator /(Vector2 v, float d)
     {
-        var num = 1f / d;
-        return new Vector2(v.X * num, v.Y * num);
+        var inverseDivisor = 1f / d;
+        return new Vector2(v.X * inverseDivisor, v.Y * inverseDivisor);
     }
 }

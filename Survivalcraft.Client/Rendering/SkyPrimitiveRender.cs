@@ -16,11 +16,11 @@ public class SkyPrimitiveRender
         bool clearAfterFlush = true
     )
     {
-        var num = 0;
-        var num2 = baseTexturedBatch.TriangleIndices.Count;
-        while (num2 > 0)
+        var indexOffset = 0;
+        var remainingIndices = baseTexturedBatch.TriangleIndices.Count;
+        while (remainingIndices > 0)
         {
-            var num3 = MathUtils.Min(num2, 196605);
+            var batchIndexCount = MathUtils.Min(remainingIndices, 196605);
             Display.DrawUserIndexed(
                 PrimitiveType.TriangleList,
                 shader,
@@ -29,11 +29,11 @@ public class SkyPrimitiveRender
                 0,
                 baseTexturedBatch.TriangleVertices.Count,
                 baseTexturedBatch.TriangleIndices.Array,
-                num,
-                num3
+                indexOffset,
+                batchIndexCount
             );
-            num += num3;
-            num2 -= num3;
+            indexOffset += batchIndexCount;
+            remainingIndices -= batchIndexCount;
         }
 
         if (clearAfterFlush)

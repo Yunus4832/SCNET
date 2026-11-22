@@ -168,72 +168,77 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
             BlendState.AlphaBlend,
             SamplerState.PointClamp
         );
-        var num = Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(18).TextureSlot % 16;
-        var num2 = Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(18).TextureSlot / 16;
-        var num3 = 1.0 * _subsystemTime.GameTime;
-        var num4 = 1.0 * (_subsystemTime.GameTime - _subsystemTime.GameTimeDelta);
-        var num5 = MathUtils.Min((float)MathUtils.Remainder(num3, 2.0), 1f);
-        var num6 = MathUtils.Min((float)MathUtils.Remainder(num3 + 1.0, 2.0), 1f);
-        var b = (byte)(255f * num5);
-        var b2 = (byte)(255f * num6);
-        if (MathUtils.Remainder(num3, 2.0) >= 1.0 && MathUtils.Remainder(num4, 2.0) < 1.0)
+        var slotX = Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(18).TextureSlot % 16;
+        var slotY = Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(18).TextureSlot / 16;
+        var animationTime = 1.0 * _subsystemTime.GameTime;
+        var previousAnimationTime = 1.0 * (_subsystemTime.GameTime - _subsystemTime.GameTimeDelta);
+        var firstOpacity = MathUtils.Min((float)MathUtils.Remainder(animationTime, 2.0), 1f);
+        var secondOpacity = MathUtils.Min((float)MathUtils.Remainder(animationTime + 1.0, 2.0), 1f);
+        var b = (byte)(255f * firstOpacity);
+        var b2 = (byte)(255f * secondOpacity);
+        if (MathUtils.Remainder(animationTime, 2.0) >= 1.0 && MathUtils.Remainder(previousAnimationTime, 2.0) < 1.0)
         {
             _waterOrder = true;
             _waterOffset2 = new Vector2(_random.Float(0f, 1f), _random.Float(0f, 1f));
         }
-        else if (MathUtils.Remainder(num3 + 1.0, 2.0) >= 1.0 && MathUtils.Remainder(num4 + 1.0, 2.0) < 1.0)
+        else if (MathUtils.Remainder(animationTime + 1.0, 2.0) >= 1.0 &&
+                 MathUtils.Remainder(previousAnimationTime + 1.0, 2.0) < 1.0)
         {
             _waterOrder = false;
             _waterOffset1 = new Vector2(_random.Float(0f, 1f), _random.Float(0f, 1f));
         }
 
-        var tcOffset = new Vector2(num, num2) - (_waterOrder ? _waterOffset1 : _waterOffset2);
-        var tcOffset2 = new Vector2(num, num2) - (_waterOrder ? _waterOffset2 : _waterOffset1);
+        var tcOffset = new Vector2(slotX, slotY) - (_waterOrder ? _waterOffset1 : _waterOffset2);
+        var tcOffset2 = new Vector2(slotX, slotY) - (_waterOrder ? _waterOffset2 : _waterOffset1);
         var color = _waterOrder ? new Color(b, b, b, b) : new Color(b2, b2, b2, b2);
         var color2 = _waterOrder ? new Color(b2, b2, b2, b2) : new Color(b, b, b, b);
-        var num7 = MathUtils.Floor((float)MathUtils.Remainder(1.75 * _subsystemTime.GameTime, 1.0) * 16f) / 16f;
-        var num8 = 0f - num7 + 1f;
-        var num9 = MathUtils.Floor(
-                       (float)MathUtils.Remainder(1.75f / MathUtils.Sqrt(2f) * _subsystemTime.GameTime, 1.0) * 16f
-                   ) /
-                   16f;
-        var num10 = 0f - num9 + 1f;
+        var scrollOffset = MathUtils.Floor((float)MathUtils.Remainder(1.75 * _subsystemTime.GameTime, 1.0) * 16f) / 16f;
+        var reverseScrollOffset = 0f - scrollOffset + 1f;
+        var diagonalScrollOffset = MathUtils.Floor(
+                                       (float)MathUtils.Remainder(
+                                           1.75f / MathUtils.Sqrt(2f) * _subsystemTime.GameTime,
+                                           1.0
+                                       ) *
+                                       16f
+                                   ) /
+                                   16f;
+        var reverseDiagonalOffset = 0f - diagonalScrollOffset + 1f;
         var tc = new Vector2(0f, 0f);
         var tc2 = new Vector2(1f, 1f);
-        DrawBlocksTextureSlot(batch, num, num2, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num, num2, tc, tc2, tcOffset2, color2, textureWidth);
-        tc = new Vector2(num7, 0f);
-        tc2 = new Vector2(num7 + 1f, 1f);
-        DrawBlocksTextureSlot(batch, num - 1, num2, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num - 1, num2, tc, tc2, tcOffset2, color2, textureWidth);
-        tc = new Vector2(num8, 0f);
-        tc2 = new Vector2(num8 + 1f, 1f);
-        DrawBlocksTextureSlot(batch, num + 1, num2, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num + 1, num2, tc, tc2, tcOffset2, color2, textureWidth);
-        tc = new Vector2(0f, num7);
-        tc2 = new Vector2(1f, num7 + 1f);
-        DrawBlocksTextureSlot(batch, num, num2 - 1, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num, num2 - 1, tc, tc2, tcOffset2, color2, textureWidth);
-        tc = new Vector2(0f, num8);
-        tc2 = new Vector2(1f, num8 + 1f);
-        DrawBlocksTextureSlot(batch, num, num2 + 1, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num, num2 + 1, tc, tc2, tcOffset2, color2, textureWidth);
-        tc = new Vector2(num9, num10);
-        tc2 = new Vector2(num9 + 1f, num10 + 1f);
-        DrawBlocksTextureSlot(batch, num - 1, num2 + 1, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num - 1, num2 + 1, tc, tc2, tcOffset2, color2, textureWidth);
-        tc = new Vector2(num10, num10);
-        tc2 = new Vector2(num10 + 1f, num10 + 1f);
-        DrawBlocksTextureSlot(batch, num + 1, num2 + 1, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num + 1, num2 + 1, tc, tc2, tcOffset2, color2, textureWidth);
-        tc = new Vector2(num9, num9);
-        tc2 = new Vector2(num9 + 1f, num9 + 1f);
-        DrawBlocksTextureSlot(batch, num - 1, num2 - 1, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num - 1, num2 - 1, tc, tc2, tcOffset2, color2, textureWidth);
-        tc = new Vector2(num10, num9);
-        tc2 = new Vector2(num10 + 1f, num9 + 1f);
-        DrawBlocksTextureSlot(batch, num + 1, num2 - 1, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num + 1, num2 - 1, tc, tc2, tcOffset2, color2, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX, slotY, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX, slotY, tc, tc2, tcOffset2, color2, textureWidth);
+        tc = new Vector2(scrollOffset, 0f);
+        tc2 = new Vector2(scrollOffset + 1f, 1f);
+        DrawBlocksTextureSlot(batch, slotX - 1, slotY, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX - 1, slotY, tc, tc2, tcOffset2, color2, textureWidth);
+        tc = new Vector2(reverseScrollOffset, 0f);
+        tc2 = new Vector2(reverseScrollOffset + 1f, 1f);
+        DrawBlocksTextureSlot(batch, slotX + 1, slotY, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX + 1, slotY, tc, tc2, tcOffset2, color2, textureWidth);
+        tc = new Vector2(0f, scrollOffset);
+        tc2 = new Vector2(1f, scrollOffset + 1f);
+        DrawBlocksTextureSlot(batch, slotX, slotY - 1, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX, slotY - 1, tc, tc2, tcOffset2, color2, textureWidth);
+        tc = new Vector2(0f, reverseScrollOffset);
+        tc2 = new Vector2(1f, reverseScrollOffset + 1f);
+        DrawBlocksTextureSlot(batch, slotX, slotY + 1, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX, slotY + 1, tc, tc2, tcOffset2, color2, textureWidth);
+        tc = new Vector2(diagonalScrollOffset, reverseDiagonalOffset);
+        tc2 = new Vector2(diagonalScrollOffset + 1f, reverseDiagonalOffset + 1f);
+        DrawBlocksTextureSlot(batch, slotX - 1, slotY + 1, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX - 1, slotY + 1, tc, tc2, tcOffset2, color2, textureWidth);
+        tc = new Vector2(reverseDiagonalOffset, reverseDiagonalOffset);
+        tc2 = new Vector2(reverseDiagonalOffset + 1f, reverseDiagonalOffset + 1f);
+        DrawBlocksTextureSlot(batch, slotX + 1, slotY + 1, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX + 1, slotY + 1, tc, tc2, tcOffset2, color2, textureWidth);
+        tc = new Vector2(diagonalScrollOffset, diagonalScrollOffset);
+        tc2 = new Vector2(diagonalScrollOffset + 1f, diagonalScrollOffset + 1f);
+        DrawBlocksTextureSlot(batch, slotX - 1, slotY - 1, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX - 1, slotY - 1, tc, tc2, tcOffset2, color2, textureWidth);
+        tc = new Vector2(reverseDiagonalOffset, diagonalScrollOffset);
+        tc2 = new Vector2(reverseDiagonalOffset + 1f, diagonalScrollOffset + 1f);
+        DrawBlocksTextureSlot(batch, slotX + 1, slotY - 1, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX + 1, slotY - 1, tc, tc2, tcOffset2, color2, textureWidth);
     }
 
     public void AnimateMagmaBlocksTexture(int textureWidth)
@@ -247,75 +252,80 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
             BlendState.AlphaBlend,
             SamplerState.PointClamp
         );
-        var num = Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(92).TextureSlot % 16;
-        var num2 = Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(92).TextureSlot / 16;
-        var num3 = 0.5 * _subsystemTime.GameTime;
-        var num4 = 0.5 * (_subsystemTime.GameTime - _subsystemTime.GameTimeDelta);
-        var num5 = MathUtils.Min((float)MathUtils.Remainder(num3, 2.0), 1f);
-        var num6 = MathUtils.Min((float)MathUtils.Remainder(num3 + 1.0, 2.0), 1f);
-        var b = (byte)(255f * num5);
-        var b2 = (byte)(255f * num6);
-        if (MathUtils.Remainder(num3, 2.0) >= 1.0 && MathUtils.Remainder(num4, 2.0) < 1.0)
+        var slotX = Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(92).TextureSlot % 16;
+        var slotY = Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(92).TextureSlot / 16;
+        var animationTime = 0.5 * _subsystemTime.GameTime;
+        var previousAnimationTime = 0.5 * (_subsystemTime.GameTime - _subsystemTime.GameTimeDelta);
+        var firstOpacity = MathUtils.Min((float)MathUtils.Remainder(animationTime, 2.0), 1f);
+        var secondOpacity = MathUtils.Min((float)MathUtils.Remainder(animationTime + 1.0, 2.0), 1f);
+        var b = (byte)(255f * firstOpacity);
+        var b2 = (byte)(255f * secondOpacity);
+        if (MathUtils.Remainder(animationTime, 2.0) >= 1.0 && MathUtils.Remainder(previousAnimationTime, 2.0) < 1.0)
         {
             _magmaOrder = true;
             _magmaOffset2 = new Vector2(_random.Float(0f, 1f), _random.Float(0f, 1f));
         }
-        else if (MathUtils.Remainder(num3 + 1.0, 2.0) >= 1.0 && MathUtils.Remainder(num4 + 1.0, 2.0) < 1.0)
+        else if (MathUtils.Remainder(animationTime + 1.0, 2.0) >= 1.0 &&
+                 MathUtils.Remainder(previousAnimationTime + 1.0, 2.0) < 1.0)
         {
             _magmaOrder = false;
             _magmaOffset1 = new Vector2(_random.Float(0f, 1f), _random.Float(0f, 1f));
         }
 
-        var tcOffset = new Vector2(num, num2) - (_magmaOrder ? _magmaOffset1 : _magmaOffset2);
-        var tcOffset2 = new Vector2(num, num2) - (_magmaOrder ? _magmaOffset2 : _magmaOffset1);
+        var tcOffset = new Vector2(slotX, slotY) - (_magmaOrder ? _magmaOffset1 : _magmaOffset2);
+        var tcOffset2 = new Vector2(slotX, slotY) - (_magmaOrder ? _magmaOffset2 : _magmaOffset1);
         var color = _magmaOrder ? new Color(b, b, b, b) : new Color(b2, b2, b2, b2);
         var color2 = _magmaOrder ? new Color(b2, b2, b2, b2) : new Color(b, b, b, b);
-        var num7 = MathUtils.Floor(
-                       (float)MathUtils.Remainder(0.40000000596046448 * _subsystemTime.GameTime, 1.0) * 16f
-                   ) /
-                   16f;
-        var num8 = 0f - num7 + 1f;
-        var num9 = MathUtils.Floor(
-                       (float)MathUtils.Remainder(0.4f / MathUtils.Sqrt(2f) * _subsystemTime.GameTime, 1.0) * 16f
-                   ) /
-                   16f;
-        var num10 = 0f - num9 + 1f;
+        var scrollOffset = MathUtils.Floor(
+                               (float)MathUtils.Remainder(0.40000000596046448 * _subsystemTime.GameTime, 1.0) * 16f
+                           ) /
+                           16f;
+        var reverseScrollOffset = 0f - scrollOffset + 1f;
+        var diagonalScrollOffset = MathUtils.Floor(
+                                       (float)MathUtils.Remainder(
+                                           0.4f / MathUtils.Sqrt(2f) * _subsystemTime.GameTime,
+                                           1.0
+                                       ) *
+                                       16f
+                                   ) /
+                                   16f;
+        var reverseDiagonalOffset = 0f - diagonalScrollOffset + 1f;
         var tc = new Vector2(0f, 0f);
         var tc2 = new Vector2(1f, 1f);
-        DrawBlocksTextureSlot(batch, num, num2, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num, num2, tc, tc2, tcOffset2, color2, textureWidth);
-        tc = new Vector2(num7, 0f);
-        tc2 = new Vector2(num7 + 1f, 1f);
-        DrawBlocksTextureSlot(batch, num - 1, num2, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num - 1, num2, tc, tc2, tcOffset2, color2, textureWidth);
-        tc = new Vector2(num8, 0f);
-        tc2 = new Vector2(num8 + 1f, 1f);
-        DrawBlocksTextureSlot(batch, num + 1, num2, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num + 1, num2, tc, tc2, tcOffset2, color2, textureWidth);
-        tc = new Vector2(0f, num7);
-        tc2 = new Vector2(1f, num7 + 1f);
-        DrawBlocksTextureSlot(batch, num, num2 - 1, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num, num2 - 1, tc, tc2, tcOffset2, color2, textureWidth);
-        tc = new Vector2(0f, num8);
-        tc2 = new Vector2(1f, num8 + 1f);
-        DrawBlocksTextureSlot(batch, num, num2 + 1, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num, num2 + 1, tc, tc2, tcOffset2, color2, textureWidth);
-        tc = new Vector2(num9, num10);
-        tc2 = new Vector2(num9 + 1f, num10 + 1f);
-        DrawBlocksTextureSlot(batch, num - 1, num2 + 1, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num - 1, num2 + 1, tc, tc2, tcOffset2, color2, textureWidth);
-        tc = new Vector2(num10, num10);
-        tc2 = new Vector2(num10 + 1f, num10 + 1f);
-        DrawBlocksTextureSlot(batch, num + 1, num2 + 1, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num + 1, num2 + 1, tc, tc2, tcOffset2, color2, textureWidth);
-        tc = new Vector2(num9, num9);
-        tc2 = new Vector2(num9 + 1f, num9 + 1f);
-        DrawBlocksTextureSlot(batch, num - 1, num2 - 1, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num - 1, num2 - 1, tc, tc2, tcOffset2, color2, textureWidth);
-        tc = new Vector2(num10, num9);
-        tc2 = new Vector2(num10 + 1f, num9 + 1f);
-        DrawBlocksTextureSlot(batch, num + 1, num2 - 1, tc, tc2, tcOffset, color, textureWidth);
-        DrawBlocksTextureSlot(batch, num + 1, num2 - 1, tc, tc2, tcOffset2, color2, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX, slotY, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX, slotY, tc, tc2, tcOffset2, color2, textureWidth);
+        tc = new Vector2(scrollOffset, 0f);
+        tc2 = new Vector2(scrollOffset + 1f, 1f);
+        DrawBlocksTextureSlot(batch, slotX - 1, slotY, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX - 1, slotY, tc, tc2, tcOffset2, color2, textureWidth);
+        tc = new Vector2(reverseScrollOffset, 0f);
+        tc2 = new Vector2(reverseScrollOffset + 1f, 1f);
+        DrawBlocksTextureSlot(batch, slotX + 1, slotY, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX + 1, slotY, tc, tc2, tcOffset2, color2, textureWidth);
+        tc = new Vector2(0f, scrollOffset);
+        tc2 = new Vector2(1f, scrollOffset + 1f);
+        DrawBlocksTextureSlot(batch, slotX, slotY - 1, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX, slotY - 1, tc, tc2, tcOffset2, color2, textureWidth);
+        tc = new Vector2(0f, reverseScrollOffset);
+        tc2 = new Vector2(1f, reverseScrollOffset + 1f);
+        DrawBlocksTextureSlot(batch, slotX, slotY + 1, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX, slotY + 1, tc, tc2, tcOffset2, color2, textureWidth);
+        tc = new Vector2(diagonalScrollOffset, reverseDiagonalOffset);
+        tc2 = new Vector2(diagonalScrollOffset + 1f, reverseDiagonalOffset + 1f);
+        DrawBlocksTextureSlot(batch, slotX - 1, slotY + 1, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX - 1, slotY + 1, tc, tc2, tcOffset2, color2, textureWidth);
+        tc = new Vector2(reverseDiagonalOffset, reverseDiagonalOffset);
+        tc2 = new Vector2(reverseDiagonalOffset + 1f, reverseDiagonalOffset + 1f);
+        DrawBlocksTextureSlot(batch, slotX + 1, slotY + 1, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX + 1, slotY + 1, tc, tc2, tcOffset2, color2, textureWidth);
+        tc = new Vector2(diagonalScrollOffset, diagonalScrollOffset);
+        tc2 = new Vector2(diagonalScrollOffset + 1f, diagonalScrollOffset + 1f);
+        DrawBlocksTextureSlot(batch, slotX - 1, slotY - 1, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX - 1, slotY - 1, tc, tc2, tcOffset2, color2, textureWidth);
+        tc = new Vector2(reverseDiagonalOffset, diagonalScrollOffset);
+        tc2 = new Vector2(reverseDiagonalOffset + 1f, diagonalScrollOffset + 1f);
+        DrawBlocksTextureSlot(batch, slotX + 1, slotY - 1, tc, tc2, tcOffset, color, textureWidth);
+        DrawBlocksTextureSlot(batch, slotX + 1, slotY - 1, tc, tc2, tcOffset2, color2, textureWidth);
     }
 
     private Rectangle AnimateFireBlocksTexture(float dt, int textureWidth)
@@ -326,23 +336,23 @@ public class SubsystemAnimatedTextures : Subsystem, IUpdateable
         }
 
         var defaultTextureSlot = Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(104).TextureSlot;
-        float num = textureWidth / 16;
-        var num2 = defaultTextureSlot % 16;
-        var num3 = defaultTextureSlot / 16;
-        ScreenSpaceFireRenderer.ParticleSize = 1f * num;
-        ScreenSpaceFireRenderer.ParticleSpeed = 1.9f * num;
+        float tileSize = textureWidth / 16;
+        var slotX = defaultTextureSlot % 16;
+        var slotY = defaultTextureSlot / 16;
+        ScreenSpaceFireRenderer.ParticleSize = 1f * tileSize;
+        ScreenSpaceFireRenderer.ParticleSpeed = 1.9f * tileSize;
         ScreenSpaceFireRenderer.ParticlesPerSecond = 24f;
         ScreenSpaceFireRenderer.MinTimeToLive = float.PositiveInfinity;
         ScreenSpaceFireRenderer.MaxTimeToLive = float.PositiveInfinity;
         ScreenSpaceFireRenderer.ParticleAnimationOffset = 1f;
         ScreenSpaceFireRenderer.ParticleAnimationPeriod = 3f;
-        ScreenSpaceFireRenderer.Origin = new Vector2(num2, num3 + 3) * num +
+        ScreenSpaceFireRenderer.Origin = new Vector2(slotX, slotY + 3) * tileSize +
                                          new Vector2(0f, 0.5f * ScreenSpaceFireRenderer.ParticleSize);
-        ScreenSpaceFireRenderer.Width = num;
-        ScreenSpaceFireRenderer.CutoffPosition = num3 * num;
+        ScreenSpaceFireRenderer.Width = tileSize;
+        ScreenSpaceFireRenderer.CutoffPosition = slotY * tileSize;
         ScreenSpaceFireRenderer.Update(dt);
         ScreenSpaceFireRenderer.Draw(PrimitivesRenderer, 0f, Matrix.Identity, Color.White);
-        return new Rectangle((int)(num2 * num), (int)(num3 * num), (int)num, (int)(num * 3f));
+        return new Rectangle((int)(slotX * tileSize), (int)(slotY * tileSize), (int)tileSize, (int)(tileSize * 3f));
     }
 
     private void DrawBlocksTextureSlot(

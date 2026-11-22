@@ -121,12 +121,12 @@ public static class InventoryOperations
             sourceCount = MathUtils.Min(sourceCount, 1);
         }
 
-        var flag = false;
+        var handled = false;
         if (slotProcessCapacity > 0)
         {
             // 这个可能就是拖拽衣服到角色身上，还有拖拽箭到弓上的实现
-            var num6 = MathUtils.Min(sourceCount, slotProcessCapacity);
-            var processCount = sourceInventory.RemoveSlotItems(sourceSlotIndex, num6);
+            var requestedCount = MathUtils.Min(sourceCount, slotProcessCapacity);
+            var processCount = sourceInventory.RemoveSlotItems(sourceSlotIndex, requestedCount);
             targetInventory.ProcessSlotItems(
                 sourceInventory,
                 sourceSlotIndex,
@@ -146,7 +146,7 @@ public static class InventoryOperations
                 sourceInventory.AddSlotItems(sourceSlotIndex, processedValue, count);
             }
 
-            flag = true;
+            handled = true;
         }
         else
         {
@@ -160,12 +160,12 @@ public static class InventoryOperations
                     targetCount < slotCapacity:
                 {
                     // 这个应该跟上面的移动一样吧
-                    var num2 = MathUtils.Min(slotCapacity - targetCount, sourceCount);
-                    if (num2 > 0)
+                    var movedCount = MathUtils.Min(slotCapacity - targetCount, sourceCount);
+                    if (movedCount > 0)
                     {
-                        var count2 = sourceInventory.RemoveSlotItems(sourceSlotIndex, num2);
+                        var count2 = sourceInventory.RemoveSlotItems(sourceSlotIndex, movedCount);
                         targetInventory.AddSlotItems(targetSlotIndex, sourceValue, count2);
-                        flag = true;
+                        handled = true;
                     }
 
                     break;
@@ -178,12 +178,12 @@ public static class InventoryOperations
                     var count4 = sourceInventory.RemoveSlotItems(sourceSlotIndex, sourceCount);
                     targetInventory.AddSlotItems(targetSlotIndex, sourceValue, count4);
                     sourceInventory.AddSlotItems(sourceSlotIndex, targetValue, count3);
-                    flag = true;
+                    handled = true;
                     break;
                 }
             }
         }
 
-        return flag;
+        return handled;
     }
 }

@@ -171,12 +171,12 @@ public abstract class FenceGateBlockPresentation(
             var rotation = GetRotation(i);
             var open = GetOpen(i);
             var rightHanded = GetRightHanded(i);
-            float num = !rightHanded ? 1 : -1;
+            float hingeMirrorScale = !rightHanded ? 1 : -1;
             var identity = Matrix.Identity;
-            identity *= Matrix.CreateScale(0f - num, 1f, 1f);
-            identity *= Matrix.CreateTranslation((0.5f - Block.PivotDistance) * num, 0f, 0f) *
-                        Matrix.CreateRotationY(open ? num * (float)Math.PI / 2f : 0f) *
-                        Matrix.CreateTranslation((0f - (0.5f - Block.PivotDistance)) * num, 0f, 0f);
+            identity *= Matrix.CreateScale(0f - hingeMirrorScale, 1f, 1f);
+            identity *= Matrix.CreateTranslation((0.5f - Block.PivotDistance) * hingeMirrorScale, 0f, 0f) *
+                        Matrix.CreateRotationY(open ? hingeMirrorScale * (float)Math.PI / 2f : 0f) *
+                        Matrix.CreateTranslation((0f - (0.5f - Block.PivotDistance)) * hingeMirrorScale, 0f, 0f);
             identity *= Matrix.CreateTranslation(0f, 0f, 0f) *
                         Matrix.CreateRotationY(rotation * (float)Math.PI / 2f) *
                         Matrix.CreateTranslation(0.5f, 0f, 0.5f);

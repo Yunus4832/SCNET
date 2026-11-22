@@ -26,23 +26,23 @@ public class GravestoneBlockPresentation(GravestoneBlock block, BlockPresentatio
         int z
     )
     {
-        var num = Terrain.ExtractData(value);
-        if (num >= BlockMeshes.Length)
+        var meshIndex = Terrain.ExtractData(value);
+        if (meshIndex >= BlockMeshes.Length)
         {
             return;
         }
 
         var num2Value = y > 0 ? generator.Terrain.GetCellValueFast(x, y - 1, z) : 0;
-        var num2 = Terrain.ExtractContents(num2Value);
-        var num3 = Block.Catalog.Blocks[num2].GetBlockDigMethod(num2Value) != BlockDigMethod.Shovel;
-        var flag = num2 is 7 or 4 or 52;
-        var num4 = (int)(MathUtils.Hash((uint)(x + 172 * y + 18271 * z)) & 0xFFFF);
+        var groundContents = Terrain.ExtractContents(num2Value);
+        var hardGround = Block.Catalog.Blocks[groundContents].GetBlockDigMethod(num2Value) != BlockDigMethod.Shovel;
+        var sandyGround = groundContents is 7 or 4 or 52;
+        var positionHash = (int)(MathUtils.Hash((uint)(x + 172 * y + 18271 * z)) & 0xFFFF);
         var value2 = Matrix.Identity;
-        if (!num3)
+        if (!hardGround)
         {
-            var radians = 0.2f * (num4 % 16 / 7.5f - 1f);
-            var radians2 = 0.1f * ((num4 >> 4) % 16 / 7.5f - 1f);
-            value2 = GetRotation(num) != 0
+            var radians = 0.2f * (positionHash % 16 / 7.5f - 1f);
+            var radians2 = 0.1f * ((positionHash >> 4) % 16 / 7.5f - 1f);
+            value2 = GetRotation(meshIndex) != 0
                 ? Matrix.CreateTranslation(-0.5f, 0f, -0.5f) *
                   Matrix.CreateRotationZ(radians) *
                   Matrix.CreateRotationY(radians2) *
@@ -53,16 +53,16 @@ public class GravestoneBlockPresentation(GravestoneBlock block, BlockPresentatio
                   Matrix.CreateTranslation(0.5f, 0f, 0.5f);
         }
 
-        var f = num3 ? 0f : MathUtils.Sqr((num4 >> 8) % 16 / 15f);
+        var f = hardGround ? 0f : MathUtils.Sqr((positionHash >> 8) % 16 / 15f);
         generator.GenerateMeshVertices(
-            color: !flag
+            color: !sandyGround
                 ? Color.Lerp(Color.White, new Color(255, 233, 199), f)
                 : Color.Lerp(new Color(217, 206, 123), new Color(229, 206, 123), f),
             block: this,
             x: x,
             y: y,
             z: z,
-            blockMesh: BlockMeshes[num],
+            blockMesh: BlockMeshes[meshIndex],
             matrix: value2,
             subset: geometry.SubsetOpaque
         );
@@ -77,12 +77,12 @@ public class GravestoneBlockPresentation(GravestoneBlock block, BlockPresentatio
         DrawBlockEnvironmentData environmentData
     )
     {
-        var num = Terrain.ExtractData(value);
-        if (num < BlockMeshes.Length)
+        var meshIndex = Terrain.ExtractData(value);
+        if (meshIndex < BlockMeshes.Length)
         {
             BlocksManager.DrawMeshBlock(
                 primitivesRenderer,
-                StandaloneBlockMeshes[num],
+                StandaloneBlockMeshes[meshIndex],
                 color,
                 size,
                 ref matrix,
@@ -99,7 +99,7 @@ public class GravestoneBlockPresentation(GravestoneBlock block, BlockPresentatio
             var variant = GetVariant(i);
             var radians = GetRotation(i) == 0 ? 0f : (float)Math.PI / 2f;
             var name = "Grave" + (variant % 4 + 1).ToString(CultureInfo.InvariantCulture);
-            var num = variant >= 4;
+            var hasBase = variant >= 4;
             var modelNode = model.FindNode(name)!;
             var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(modelNode);
             BlockMeshes[i] = new BlockMesh();
@@ -122,7 +122,7 @@ public class GravestoneBlockPresentation(GravestoneBlock block, BlockPresentatio
                 false,
                 Color.White
             );
-            if (num)
+            if (hasBase)
             {
                 var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(model.FindNode("Plinth")!);
                 BlockMeshes[i].AppendModelPrimitive(

@@ -78,15 +78,15 @@ public class FurnitureDesignWidget : Widget
             var flatBatch3D = _primitivesRenderer3D.FlatBatch(1, DepthStencilState.DepthRead);
             for (var i = 0; i <= Design.Resolution; i++)
             {
-                var num = i / (float)Design.Resolution;
+                var gridFraction = i / (float)Design.Resolution;
                 var color = i % 2 == 0 ? new Color(56, 56, 56, 56) : new Color(28, 28, 28, 28);
                 color *= GlobalColorTransform;
-                flatBatch3D.QueueLine(new Vector3(num, 0f, 0f), new Vector3(num, 0f, 1f), color);
-                flatBatch3D.QueueLine(new Vector3(0f, 0f, num), new Vector3(1f, 0f, num), color);
-                flatBatch3D.QueueLine(new Vector3(0f, num, 0f), new Vector3(0f, num, 1f), color);
-                flatBatch3D.QueueLine(new Vector3(0f, 0f, num), new Vector3(0f, 1f, num), color);
-                flatBatch3D.QueueLine(new Vector3(0f, num, 1f), new Vector3(1f, num, 1f), color);
-                flatBatch3D.QueueLine(new Vector3(num, 0f, 1f), new Vector3(num, 1f, 1f), color);
+                flatBatch3D.QueueLine(new Vector3(gridFraction, 0f, 0f), new Vector3(gridFraction, 0f, 1f), color);
+                flatBatch3D.QueueLine(new Vector3(0f, 0f, gridFraction), new Vector3(1f, 0f, gridFraction), color);
+                flatBatch3D.QueueLine(new Vector3(0f, gridFraction, 0f), new Vector3(0f, gridFraction, 1f), color);
+                flatBatch3D.QueueLine(new Vector3(0f, 0f, gridFraction), new Vector3(0f, 1f, gridFraction), color);
+                flatBatch3D.QueueLine(new Vector3(0f, gridFraction, 1f), new Vector3(1f, gridFraction, 1f), color);
+                flatBatch3D.QueueLine(new Vector3(gridFraction, 0f, 1f), new Vector3(gridFraction, 1f, 1f), color);
             }
 
             var color2 = new Color(64, 64, 64, 255) * GlobalColorTransform;
@@ -133,10 +133,15 @@ public class FurnitureDesignWidget : Widget
             }
 
             var viewport2 = Display.Viewport;
-            var num2 = MathUtils.Min(ActualSize.X, ActualSize.Y);
+            var previewSize = MathUtils.Min(ActualSize.X, ActualSize.Y);
             var m4 = Matrix.CreateLookAt(position, new Vector3(0f, 0f, 0f), up);
             var m5 = Matrix.CreateOrthographic(2f, 2f, -10f, 10f);
-            var m6 = MatrixUtils.CreateScaleTranslation(num2, 0f - num2, ActualSize.X / 2f, ActualSize.Y / 2f) *
+            var m6 = MatrixUtils.CreateScaleTranslation(
+                         previewSize,
+                         0f - previewSize,
+                         ActualSize.X / 2f,
+                         ActualSize.Y / 2f
+                     ) *
                      GlobalTransform *
                      MatrixUtils.CreateScaleTranslation(2f / viewport2.Width, -2f / viewport2.Height, -1f, 1f);
             matrix = Matrix.CreateTranslation(-0.5f, -0.5f, -0.5f) * m4 * m5 * m6;
@@ -144,11 +149,11 @@ public class FurnitureDesignWidget : Widget
             var m7 = GlobalTransform;
             for (var j = 1; j < Design.Resolution; j++)
             {
-                var num3 = j / (float)Design.Resolution;
-                var v = new Vector2(ActualSize.X * num3, 0f);
-                var v2 = new Vector2(ActualSize.X * num3, ActualSize.Y);
-                var v3 = new Vector2(0f, ActualSize.Y * num3);
-                var v4 = new Vector2(ActualSize.X, ActualSize.Y * num3);
+                var gridFraction = j / (float)Design.Resolution;
+                var v = new Vector2(ActualSize.X * gridFraction, 0f);
+                var v2 = new Vector2(ActualSize.X * gridFraction, ActualSize.Y);
+                var v3 = new Vector2(0f, ActualSize.Y * gridFraction);
+                var v4 = new Vector2(ActualSize.X, ActualSize.Y * gridFraction);
                 Vector2.Transform(ref v, ref m7, out v);
                 Vector2.Transform(ref v2, ref m7, out v2);
                 Vector2.Transform(ref v3, ref m7, out v3);
@@ -171,8 +176,9 @@ public class FurnitureDesignWidget : Widget
             var globalColorTransform = GlobalColorTransform;
             if (Mode == ViewMode.Perspective)
             {
-                var num4 = LightingManager.LightIntensityByLightValueAndFace[15 + 16 * CellFace.OppositeFace(k)];
-                globalColorTransform *= new Color(num4, num4, num4);
+                var faceBrightness =
+                    LightingManager.LightIntensityByLightValueAndFace[15 + 16 * CellFace.OppositeFace(k)];
+                globalColorTransform *= new Color(faceBrightness, faceBrightness, faceBrightness);
             }
 
             BlocksManager.DrawMeshBlock(
@@ -214,15 +220,15 @@ public class FurnitureDesignWidget : Widget
             if (_dragStartPoint.HasValue)
             {
                 var vector = ScreenToWidget(Input.Press.Value) - ScreenToWidget(_dragStartPoint.Value);
-                Vector2 vector2 = default;
-                vector2.Y = -0.01f * vector.X;
-                vector2.X = 0.01f * vector.Y;
+                Vector2 rotationDelta = default;
+                rotationDelta.Y = -0.01f * vector.X;
+                rotationDelta.X = 0.01f * vector.Y;
                 if (Time.FrameDuration > 0f)
                 {
-                    _rotationSpeed = vector2 / Time.FrameDuration;
+                    _rotationSpeed = rotationDelta / Time.FrameDuration;
                 }
 
-                Rotate(vector2);
+                Rotate(rotationDelta);
                 _dragStartPoint = Input.Press;
             }
         }
@@ -242,13 +248,13 @@ public class FurnitureDesignWidget : Widget
 
     public void Rotate(Vector2 angles)
     {
-        var num = MathUtils.DegToRad(1f);
+        var poleMargin = MathUtils.DegToRad(1f);
         var axis = Vector3.Normalize(Vector3.Cross(_direction, Vector3.UnitY));
         _direction = Vector3.TransformNormal(_direction, Matrix.CreateRotationY(angles.Y));
-        var num2 = MathUtils.Acos(Vector3.Dot(_direction, Vector3.UnitY));
-        var num3 = MathUtils.Acos(Vector3.Dot(_direction, -Vector3.UnitY));
-        angles.X = MathUtils.Min(angles.X, num2 - num);
-        angles.X = MathUtils.Max(angles.X, 0f - (num3 - num));
+        var angleFromUp = MathUtils.Acos(Vector3.Dot(_direction, Vector3.UnitY));
+        var angleFromDown = MathUtils.Acos(Vector3.Dot(_direction, -Vector3.UnitY));
+        angles.X = MathUtils.Min(angles.X, angleFromUp - poleMargin);
+        angles.X = MathUtils.Max(angles.X, 0f - (angleFromDown - poleMargin));
         _direction = Vector3.TransformNormal(_direction, Matrix.CreateFromAxisAngle(axis, angles.X));
         _direction = Vector3.Normalize(_direction);
     }

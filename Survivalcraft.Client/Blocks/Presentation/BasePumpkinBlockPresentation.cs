@@ -93,13 +93,13 @@ public abstract class BasePumpkinBlockPresentation(BasePumpkinBlock block, Block
         if (DestructionDebrisScale <= 0f) { return null; }
 
         var size = BasePumpkinBlock.GetSize(Terrain.ExtractData(value));
-        var num = MathUtils.Lerp(0.2f, 1f, size / 7f);
+        var growthScale = MathUtils.Lerp(0.2f, 1f, size / 7f);
         var color = size == 7 ? Color.White : new Color(0, 128, 128);
         return new BlockDebrisParticleSystem(
             subsystemTerrain,
             position,
             1.5f * strength,
-            DestructionDebrisScale * num,
+            DestructionDebrisScale * growthScale,
             color,
             TextureSlot
         );
@@ -137,8 +137,8 @@ public abstract class BasePumpkinBlockPresentation(BasePumpkinBlock block, Block
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(pumpkinNode);
         for (var i = 0; i < 8; i++)
         {
-            var num = MathUtils.Lerp(0.2f, 1f, i / 7f);
-            var num2 = MathUtils.Min(0.3f * num, 0.7f * (1f - num));
+            var growthScale = MathUtils.Lerp(0.2f, 1f, i / 7f);
+            var centerOffset = MathUtils.Min(0.3f * growthScale, 0.7f * (1f - growthScale));
             Color color;
             if (Block.IsRotten)
             {
@@ -159,8 +159,8 @@ public abstract class BasePumpkinBlockPresentation(BasePumpkinBlock block, Block
                 BlockMeshesBySize[i].AppendModelPrimitive(
                     pumpkinNode.RequireMesh().Primitives[0],
                     nodeAbsoluteTransform *
-                    Matrix.CreateScale(num) *
-                    Matrix.CreateTranslation(0.5f + num2, 0f, 0.5f + num2),
+                    Matrix.CreateScale(growthScale) *
+                    Matrix.CreateTranslation(0.5f + centerOffset, 0f, 0.5f + centerOffset),
                     false,
                     false,
                     false,
@@ -177,7 +177,7 @@ public abstract class BasePumpkinBlockPresentation(BasePumpkinBlock block, Block
             StandaloneBlockMeshesBySize[i] = new BlockMesh();
             StandaloneBlockMeshesBySize[i].AppendModelPrimitive(
                 pumpkinNode.RequireMesh().Primitives[0],
-                nodeAbsoluteTransform * Matrix.CreateScale(num) * Matrix.CreateTranslation(0f, -0.23f, 0f),
+                nodeAbsoluteTransform * Matrix.CreateScale(growthScale) * Matrix.CreateTranslation(0f, -0.23f, 0f),
                 false,
                 false,
                 false,

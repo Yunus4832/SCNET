@@ -46,13 +46,13 @@ public class ToastWidget : CanvasWidget
         var realTime = Time.RealTime;
         if (!string.IsNullOrEmpty(_message))
         {
-            float num;
+            float opacity;
             if (_blinking)
             {
-                num = MathUtils.Saturate(1f * (float)(_messageStartTime + _duration - realTime));
+                opacity = MathUtils.Saturate(1f * (float)(_messageStartTime + _duration - realTime));
                 if (realTime - _messageStartTime < 0.417)
                 {
-                    num *= MathUtils.Lerp(
+                    opacity *= MathUtils.Lerp(
                         0.25f,
                         1f,
                         0.5f * (1f - MathUtils.Cos((float)Math.PI * 12f * (float)(realTime - _messageStartTime)))
@@ -61,7 +61,7 @@ public class ToastWidget : CanvasWidget
             }
             else
             {
-                num = MathUtils.Saturate(
+                opacity = MathUtils.Saturate(
                     MathUtils.Min(
                         3f * (float)(realTime - _messageStartTime),
                         1f * (float)(_messageStartTime + _duration - realTime)
@@ -69,7 +69,7 @@ public class ToastWidget : CanvasWidget
                 );
             }
 
-            _richTextWidget.ColorTransform = new Color(1f, 1f, 1f, num);
+            _richTextWidget.ColorTransform = new Color(1f, 1f, 1f, opacity);
             _richTextWidget.IsVisible = true;
             if (realTime - _messageStartTime > _duration)
             {

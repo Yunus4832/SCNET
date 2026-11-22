@@ -50,7 +50,7 @@ public class SubsystemUpdate : Subsystem
 
                 UpdatesPerTick = updates;
                 IsLastUpdateInTick = i == UpdatesPerTick - 1;
-                var flag = false;
+                var orderChanged = false;
                 foreach (var item in _toAddOrRemove)
                 {
                     if (item.Value)
@@ -73,7 +73,7 @@ public class SubsystemUpdate : Subsystem
                         _updatable.Remove(item.Key);
                     }
 
-                    flag = true;
+                    orderChanged = true;
                 }
 
                 _toAddOrRemove.Clear();
@@ -85,11 +85,11 @@ public class SubsystemUpdate : Subsystem
                         continue;
                     }
 
-                    flag = true;
+                    orderChanged = true;
                     updateable.Value.UpdateOrder = updateOrder;
                 }
 
-                if (flag)
+                if (orderChanged)
                 {
                     _sortedUpdatable.Clear();
                     foreach (var key in _updatable.Keys)
@@ -221,10 +221,10 @@ public class SubsystemUpdate : Subsystem
                 return 1;
             }
 
-            var num = u1.UpdateOrder - u2.UpdateOrder;
-            if (num != 0)
+            var orderDifference = u1.UpdateOrder - u2.UpdateOrder;
+            if (orderDifference != 0)
             {
-                return num;
+                return orderDifference;
             }
 
             return u1.GetHashCode() - u2.GetHashCode();

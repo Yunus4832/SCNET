@@ -18,8 +18,8 @@ public class CarpetBlock : CubeBlock
         while (i < 16)
         {
             yield return Terrain.MakeBlockValue(BlockIndex, i);
-            var num = i + 1;
-            i = num;
+            var nextColor = i + 1;
+            i = nextColor;
         }
     }
 
@@ -67,39 +67,39 @@ public class CarpetBlock : CubeBlock
             return null;
         }
 
-        var num = 0;
-        var num2 = 0;
-        var num3 = 0;
+        var paintValue = 0;
+        var removerValue = 0;
+        var carpetValue = 0;
         foreach (var item in list)
         {
             CraftingRecipeCatalog.DecodeIngredient(item, out var craftingId, out var data);
             if (craftingId == Catalog.Blocks[BlockIndex].CraftingId)
             {
-                num3 = Terrain.MakeBlockValue(BlockIndex, data ?? 0);
+                carpetValue = Terrain.MakeBlockValue(BlockIndex, data ?? 0);
             }
             else if (craftingId == Catalog.Blocks[129].CraftingId)
             {
-                num = Terrain.MakeBlockValue(129, data ?? 0);
+                paintValue = Terrain.MakeBlockValue(129, data ?? 0);
             }
             else if (craftingId == Catalog.Blocks[128].CraftingId)
             {
-                num2 = Terrain.MakeBlockValue(128, data ?? 0);
+                removerValue = Terrain.MakeBlockValue(128, data ?? 0);
             }
         }
 
-        if (num != 0 && num3 != 0)
+        if (paintValue != 0 && carpetValue != 0)
         {
-            var num4 = Terrain.ExtractData(num3);
-            var color = PaintBucketBlock.GetColor(Terrain.ExtractData(num));
-            var damage = Catalog.Blocks[129].GetDamage(num);
+            var originalColor = Terrain.ExtractData(carpetValue);
+            var color = PaintBucketBlock.GetColor(Terrain.ExtractData(paintValue));
+            var damage = Catalog.Blocks[129].GetDamage(paintValue);
             var block = Catalog.Blocks[129];
-            var num5 = PaintBucketBlock.CombineColors(num4, color);
-            if (num5 != num4)
+            var mixedColor = PaintBucketBlock.CombineColors(originalColor, color);
+            if (mixedColor != originalColor)
             {
                 return new CraftingRecipe
                 {
                     ResultCount = 1,
-                    ResultValue = Terrain.MakeBlockValue(BlockIndex, num5),
+                    ResultValue = Terrain.MakeBlockValue(BlockIndex, mixedColor),
                     RemainsCount = 1,
                     RemainsValue = Catalog.DamageItem(
                         Terrain.MakeBlockValue(129, color),
@@ -113,15 +113,15 @@ public class CarpetBlock : CubeBlock
             }
         }
 
-        if (num2 == 0 || num3 == 0)
+        if (removerValue == 0 || carpetValue == 0)
         {
             return null;
         }
 
-        var num6 = Terrain.ExtractData(num3);
-        var damage2 = Catalog.Blocks[128].GetDamage(num2);
+        var carpetData = Terrain.ExtractData(carpetValue);
+        var damage2 = Catalog.Blocks[128].GetDamage(removerValue);
         var block2 = Catalog.Blocks[128];
-        if (num6 != 0)
+        if (carpetData != 0)
         {
             return new CraftingRecipe
             {

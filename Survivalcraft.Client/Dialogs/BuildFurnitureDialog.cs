@@ -93,15 +93,15 @@ public class BuildFurnitureDialog : Dialog
         _sourceDesign = sourceDesign;
         _renameSource = renameSource;
         _axis = 1;
-        var num = 0;
-        num += _catalog.Furniture.GetGeometry(_design, _paletteWorld).SubsetOpaqueByFace
+        var triangleCount = 0;
+        triangleCount += _catalog.Furniture.GetGeometry(_design, _paletteWorld).SubsetOpaqueByFace
             .Sum(b => b != null ? b.Indices.Count / 3 : 0);
-        num += _catalog.Furniture.GetGeometry(_design, _paletteWorld).SubsetAlphaTestByFace
+        triangleCount += _catalog.Furniture.GetGeometry(_design, _paletteWorld).SubsetAlphaTestByFace
             .Sum(b => b != null ? b.Indices.Count / 3 : 0);
-        _isValid = num <= 65535;
+        _isValid = triangleCount <= 65535;
         _statusLabel.Text = string.Format(
             Localization.ClientLanguage.Catalog.Get(_typeName, 1),
-            num,
+            triangleCount,
             65535,
             _isValid
                 ? Localization.ClientLanguage.Catalog.Get(_typeName, 2)
@@ -341,8 +341,8 @@ public class BuildFurnitureDialog : Dialog
             return false;
         }
 
-        var num = MathUtils.Max(_design.Box.Width, _design.Box.Height, _design.Box.Depth);
-        return resolution > num;
+        var largestDimension = MathUtils.Max(_design.Box.Width, _design.Box.Height, _design.Box.Depth);
+        return resolution > largestDimension;
     }
 
     public void DecreaseResolution()

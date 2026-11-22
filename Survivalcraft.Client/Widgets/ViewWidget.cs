@@ -118,16 +118,19 @@ public class ViewWidget : TouchInputWidget, IDragTargetWidget
 
     public void SetupScalingRenderTarget()
     {
-        var num = Configuration.ClientConfiguration.Preferences.ResolutionMode == ResolutionMode.Low ? 0.5f :
-            Configuration.ClientConfiguration.Preferences.ResolutionMode != ResolutionMode.Medium ? 1f : 0.75f;
-        var num2 = GlobalTransform.Right.Length();
-        var num3 = GlobalTransform.Up.Length();
-        var vector = new Vector2(ActualSize.X * num2, ActualSize.Y * num3);
+        var resolutionScale = Configuration.ClientConfiguration.Preferences.ResolutionMode == ResolutionMode.Low
+            ? 0.5f
+            : Configuration.ClientConfiguration.Preferences.ResolutionMode != ResolutionMode.Medium
+                ? 1f
+                : 0.75f;
+        var horizontalScale = GlobalTransform.Right.Length();
+        var verticalScale = GlobalTransform.Up.Length();
+        var vector = new Vector2(ActualSize.X * horizontalScale, ActualSize.Y * verticalScale);
         Point2 point = default;
-        point.X = (int)MathUtils.Round(vector.X * num);
-        point.Y = (int)MathUtils.Round(vector.Y * num);
+        point.X = (int)MathUtils.Round(vector.X * resolutionScale);
+        point.Y = (int)MathUtils.Round(vector.Y * resolutionScale);
         var point2 = point;
-        if ((num < 1f || GlobalColorTransform != Color.White) && point2.X > 0 && point2.Y > 0)
+        if ((resolutionScale < 1f || GlobalColorTransform != Color.White) && point2.X > 0 && point2.Y > 0)
         {
             if (_scalingRenderTarget == null ||
                 _scalingRenderTarget.Width != point2.X ||

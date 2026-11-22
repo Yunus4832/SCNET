@@ -43,60 +43,72 @@ public class SubsystemShadows : Subsystem, IDrawable
             return;
         }
 
-        var num = Vector3.DistanceSquared(camera.ViewPosition, shadowPosition);
-        if (!(num <= 1024f))
+        var distanceSquared = Vector3.DistanceSquared(camera.ViewPosition, shadowPosition);
+        if (!(distanceSquared <= 1024f))
         {
             return;
         }
 
-        var num2 = MathUtils.Sqrt(num);
-        var num3 = MathUtils.Saturate(4f * (1f - num2 / 32f));
-        num3 *= 1f - _subsystemSky.CalculateFog(camera.ViewPosition, shadowPosition);
-        if (num3 == 0f) { return; }
+        var cameraDistance = MathUtils.Sqrt(distanceSquared);
+        var distanceFade = MathUtils.Saturate(4f * (1f - cameraDistance / 32f));
+        distanceFade *= 1f - _subsystemSky.CalculateFog(camera.ViewPosition, shadowPosition);
+        if (distanceFade == 0f) { return; }
 
         var blocks = Modding.Blocks.WorldContentBinding.For(Project).Catalog.Blocks;
         var presentation = _blockPresentation.Catalog;
         var terrain = SubsystemTerrain.Terrain;
-        var num4 = shadowDiameter / 2f;
-        var num5 = Terrain.ToCell(shadowPosition.X - num4);
-        var num6 = Terrain.ToCell(shadowPosition.Z - num4);
-        var num7 = Terrain.ToCell(shadowPosition.X + num4);
-        var num8 = Terrain.ToCell(shadowPosition.Z + num4);
-        var num9 = MathUtils.Min(Terrain.ToCell(shadowPosition.Y), 255);
-        var num10 = MathUtils.Max(num9 - 2, 0);
-        for (var i = num5; i <= num7; i++)
+        var radius = shadowDiameter / 2f;
+        var minX = Terrain.ToCell(shadowPosition.X - radius);
+        var minZ = Terrain.ToCell(shadowPosition.Z - radius);
+        var maxX = Terrain.ToCell(shadowPosition.X + radius);
+        var maxZ = Terrain.ToCell(shadowPosition.Z + radius);
+        var topY = MathUtils.Min(Terrain.ToCell(shadowPosition.Y), 255);
+        var bottomY = MathUtils.Max(topY - 2, 0);
+        for (var i = minX; i <= maxX; i++)
         {
-            for (var j = num6; j <= num8; j++)
+            for (var j = minZ; j <= maxZ; j++)
             {
-                for (var num11 = num9; num11 >= num10; num11--)
+                for (var cellY = topY; cellY >= bottomY; cellY--)
                 {
-                    var cellValueFast = terrain.GetCellValueFast(i, num11, j);
-                    var num12 = Terrain.ExtractContents(cellValueFast);
-                    var shadowStrength = presentation.Get(num12).ObjectShadowStrength;
+                    var cellValueFast = terrain.GetCellValueFast(i, cellY, j);
+                    var contents = Terrain.ExtractContents(cellValueFast);
+                    var shadowStrength = presentation.Get(contents).ObjectShadowStrength;
                     if (shadowStrength > 0f)
                     {
                         var customCollisionBoxes =
-                            blocks[num12].GetCustomCollisionBoxes(SubsystemTerrain, cellValueFast);
+                            blocks[contents].GetCustomCollisionBoxes(SubsystemTerrain, cellValueFast);
                         foreach (var boundingBox in customCollisionBoxes)
                         {
-                            var num13 = boundingBox.Max.Y + num11;
-                            if (!(shadowPosition.Y - num13 > -0.5f))
+                            var surfaceY = boundingBox.Max.Y + cellY;
+                            if (!(shadowPosition.Y - surfaceY > -0.5f))
                             {
                                 continue;
                             }
 
-                            var num14 = camera.ViewPosition.Y - num13;
-                            if (!(num14 > 0f))
+                            var cameraHeight = camera.ViewPosition.Y - surfaceY;
+                            if (!(cameraHeight > 0f))
                             {
                                 continue;
                             }
 
-                            var num15 = MathUtils.Max(num14 * 0.01f, 0.005f);
-                            var num16 = MathUtils.Saturate(1f - (shadowPosition.Y - num13) / 2f);
-                            var p = new Vector3(boundingBox.Min.X + i, num13 + num15, boundingBox.Min.Z + j);
-                            var p2 = new Vector3(boundingBox.Max.X + i, num13 + num15, boundingBox.Min.Z + j);
-                            var p3 = new Vector3(boundingBox.Max.X + i, num13 + num15, boundingBox.Max.Z + j);
-                            var p4 = new Vector3(boundingBox.Min.X + i, num13 + num15, boundingBox.Max.Z + j);
+                            var surfaceOffset = MathUtils.Max(cameraHeight * 0.01f, 0.005f);
+                            var heightFade = MathUtils.Saturate(1f - (shadowPosition.Y - surfaceY) / 2f);
+                            var p = new Vector3(boundingBox.Min.X + i, surfaceY + surfaceOffset, boundingBox.Min.Z + j);
+                            var p2 = new Vector3(
+                                boundingBox.Max.X + i,
+                                surfaceY + surfaceOffset,
+                                boundingBox.Min.Z + j
+                            );
+                            var p3 = new Vector3(
+                                boundingBox.Max.X + i,
+                                surfaceY + surfaceOffset,
+                                boundingBox.Max.Z + j
+                            );
+                            var p4 = new Vector3(
+                                boundingBox.Min.X + i,
+                                surfaceY + surfaceOffset,
+                                boundingBox.Max.Z + j
+                            );
                             DrawShadowOverQuad(
                                 p,
                                 p2,
@@ -104,14 +116,14 @@ public class SubsystemShadows : Subsystem, IDrawable
                                 p4,
                                 shadowPosition,
                                 shadowDiameter,
-                                0.45f * shadowStrength * alpha * num3 * num16
+                                0.45f * shadowStrength * alpha * distanceFade * heightFade
                             );
                         }
 
                         break;
                     }
 
-                    if (num12 == 18)
+                    if (contents == 18)
                     {
                         break;
                     }

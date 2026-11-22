@@ -11,7 +11,7 @@ public struct FloatCurve(params Vector2[] points)
             return 0f;
         }
 
-        var num = -1;
+        var upperPointIndex = -1;
         for (var i = 0; i < Points.Length; i++)
         {
             if (!(Points[i].X > x))
@@ -19,22 +19,22 @@ public struct FloatCurve(params Vector2[] points)
                 continue;
             }
 
-            num = i;
+            upperPointIndex = i;
             break;
         }
 
-        if (num < 0)
+        if (upperPointIndex < 0)
         {
             return Points[^1].Y;
         }
 
-        if (num == 0)
+        if (upperPointIndex == 0)
         {
             return Points[0].Y;
         }
 
-        var vector = Points[num - 1];
-        var vector2 = Points[num];
-        return MathUtils.Lerp(vector.Y, vector2.Y, MathUtils.LinearStep(vector.X, vector2.X, x));
+        var vector = Points[upperPointIndex - 1];
+        var upperPoint = Points[upperPointIndex];
+        return MathUtils.Lerp(vector.Y, upperPoint.Y, MathUtils.LinearStep(vector.X, upperPoint.X, x));
     }
 }

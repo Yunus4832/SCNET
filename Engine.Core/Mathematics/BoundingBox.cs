@@ -180,35 +180,35 @@ public struct BoundingBox : IEquatable<BoundingBox>
             return true;
         }
 
-        var num = 0f;
+        var distanceSquared = 0f;
         if (sphere.Center.X - Min.X <= sphere.Radius)
         {
-            num += (sphere.Center.X - Min.X) * (sphere.Center.X - Min.X);
+            distanceSquared += (sphere.Center.X - Min.X) * (sphere.Center.X - Min.X);
         }
         else if (Max.X - sphere.Center.X <= sphere.Radius)
         {
-            num += (sphere.Center.X - Max.X) * (sphere.Center.X - Max.X);
+            distanceSquared += (sphere.Center.X - Max.X) * (sphere.Center.X - Max.X);
         }
 
         if (sphere.Center.Y - Min.Y <= sphere.Radius)
         {
-            num += (sphere.Center.Y - Min.Y) * (sphere.Center.Y - Min.Y);
+            distanceSquared += (sphere.Center.Y - Min.Y) * (sphere.Center.Y - Min.Y);
         }
         else if (Max.Y - sphere.Center.Y <= sphere.Radius)
         {
-            num += (sphere.Center.Y - Max.Y) * (sphere.Center.Y - Max.Y);
+            distanceSquared += (sphere.Center.Y - Max.Y) * (sphere.Center.Y - Max.Y);
         }
 
         if (sphere.Center.Z - Min.Z <= sphere.Radius)
         {
-            num += (sphere.Center.Z - Min.Z) * (sphere.Center.Z - Min.Z);
+            distanceSquared += (sphere.Center.Z - Min.Z) * (sphere.Center.Z - Min.Z);
         }
         else if (Max.Z - sphere.Center.Z <= sphere.Radius)
         {
-            num += (sphere.Center.Z - Max.Z) * (sphere.Center.Z - Max.Z);
+            distanceSquared += (sphere.Center.Z - Max.Z) * (sphere.Center.Z - Max.Z);
         }
 
-        if (num <= sphere.Radius * sphere.Radius)
+        if (distanceSquared <= sphere.Radius * sphere.Radius)
         {
             return true;
         }
@@ -244,10 +244,10 @@ public struct BoundingBox : IEquatable<BoundingBox>
 
     public static float Distance(BoundingBox b, Vector3 p)
     {
-        var num = MathUtils.Max(b.Min.X - p.X, 0f, p.X - b.Max.X);
-        var num2 = MathUtils.Max(b.Min.Y - p.Y, 0f, p.Y - b.Max.Y);
-        var num3 = MathUtils.Max(b.Min.Z - p.Z, 0f, p.Z - b.Max.Z);
-        return MathUtils.Sqrt(num * num + num2 * num2 + num3 * num3);
+        var distanceX = MathUtils.Max(b.Min.X - p.X, 0f, p.X - b.Max.X);
+        var distanceY = MathUtils.Max(b.Min.Y - p.Y, 0f, p.Y - b.Max.Y);
+        var distanceZ = MathUtils.Max(b.Min.Z - p.Z, 0f, p.Z - b.Max.Z);
+        return MathUtils.Sqrt(distanceX * distanceX + distanceY * distanceY + distanceZ * distanceZ);
     }
 
     public static BoundingBox Transform(BoundingBox b, Matrix m)

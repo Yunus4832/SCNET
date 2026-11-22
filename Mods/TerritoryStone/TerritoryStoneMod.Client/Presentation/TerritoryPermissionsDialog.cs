@@ -91,11 +91,11 @@ public sealed class TerritoryPermissionsDialog : Dialog
             var permissions = TerritoryPermission.None;
             if (_confirm.IsClicked)
             {
-                foreach (var (flag, checkbox) in _options)
+                foreach (var (permission, checkbox) in _options)
                 {
                     if (checkbox.IsEnabled && checkbox.IsChecked)
                     {
-                        permissions |= flag;
+                        permissions |= permission;
                     }
                 }
             }

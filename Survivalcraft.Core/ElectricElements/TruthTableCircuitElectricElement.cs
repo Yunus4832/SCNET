@@ -18,7 +18,7 @@ public class TruthTableCircuitElectricElement(
     public override bool Simulate()
     {
         var voltage = _voltage;
-        var num = 0;
+        var inputMask = 0;
         var rotation = Rotation;
         foreach (var connection in Connections)
         {
@@ -37,7 +37,7 @@ public class TruthTableCircuitElectricElement(
                             connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
                         ))
                     {
-                        num |= 1;
+                        inputMask |= 1;
                     }
                 }
                 else if (connectorDirection == ElectricConnectorDirection.Right)
@@ -46,7 +46,7 @@ public class TruthTableCircuitElectricElement(
                             connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
                         ))
                     {
-                        num |= 2;
+                        inputMask |= 2;
                     }
                 }
                 else if (connectorDirection == ElectricConnectorDirection.Bottom)
@@ -55,7 +55,7 @@ public class TruthTableCircuitElectricElement(
                             connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
                         ))
                     {
-                        num |= 4;
+                        inputMask |= 4;
                     }
                 }
                 else if (connectorDirection == ElectricConnectorDirection.Left &&
@@ -63,13 +63,13 @@ public class TruthTableCircuitElectricElement(
                              connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
                          ))
                 {
-                    num |= 8;
+                    inputMask |= 8;
                 }
             }
         }
 
         var blockData = _subsystemTruthTableCircuitBlockBehavior.GetBlockData(CellFaces[0].Point);
-        _voltage = blockData != null ? blockData.Data[num] / 15f : 0f;
+        _voltage = blockData != null ? blockData.Data[inputMask] / 15f : 0f;
         return _voltage.UncloseTo(voltage);
     }
 }

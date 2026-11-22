@@ -29,20 +29,20 @@ public class ComponentIntro : Component
 
     public static Vector2 FindOceanDirection(ITerrainEnvironment environment, Vector2 position)
     {
-        var num = float.MaxValue;
+        var closestShoreDistance = float.MaxValue;
         var result = Vector2.Zero;
         for (var i = 0; i < 36; i++)
         {
             var vector = Vector2.CreateFromAngle(i / 36f * 2f * (float)Math.PI);
-            var vector2 = position + 50f * vector;
-            var num2 = environment.CalculateOceanShoreDistance(vector2.X, vector2.Y);
-            if (!(num2 < num))
+            var samplePosition = position + 50f * vector;
+            var shoreDistance = environment.CalculateOceanShoreDistance(samplePosition.X, samplePosition.Y);
+            if (!(shoreDistance < closestShoreDistance))
             {
                 continue;
             }
 
             result = vector;
-            num = num2;
+            closestShoreDistance = shoreDistance;
         }
 
         return result;

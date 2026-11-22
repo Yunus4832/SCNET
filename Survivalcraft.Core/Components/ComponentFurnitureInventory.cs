@@ -167,9 +167,9 @@ public class ComponentFurnitureInventory : Component, IInventory
                 continue;
             }
 
-            var num = (from f in design.ListChain()
+            var lowestDesignIndex = (from f in design.ListChain()
                 select f.Index).Min();
-            if (design.Index != num)
+            if (design.Index != lowestDesignIndex)
             {
                 continue;
             }

@@ -67,9 +67,9 @@ public class ComponentCreatureModel : ComponentModel, IUpdateable
         DiffuseColor = Vector3.Lerp(Vector3.One, new Vector3(1f, 0f, 0f), _injuryColorFactor);
         if (Opacity.HasValue && Opacity.Value < 1f)
         {
-            var num = ComponentCreature.ComponentBody.ImmersionFactor >= 1f;
-            var flag = subsystemSky.ViewUnderWaterDepth > 0f;
-            RenderingMode = num == flag
+            var isCreatureSubmerged = ComponentCreature.ComponentBody.ImmersionFactor >= 1f;
+            var isCameraSubmerged = subsystemSky.ViewUnderWaterDepth > 0f;
+            RenderingMode = isCreatureSubmerged == isCameraSubmerged
                 ? ModelRenderingMode.TransparentAfterWater
                 : ModelRenderingMode.TransparentBeforeWater;
         }

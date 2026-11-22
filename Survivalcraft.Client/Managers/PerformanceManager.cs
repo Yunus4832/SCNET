@@ -97,19 +97,19 @@ public static class PerformanceManager
                 }
 
                 _longTermAverageFrameTime = (float)(_totalFrameTime / _frameCount);
-                float num = (int)MathUtils.Round(
+                float averageFrameMs = (int)MathUtils.Round(
                     MathUtils.Round(_totalFrameTime / _frameCount / 0.004999999888241291) *
                     0.004999999888241291 *
                     1000.0
                 );
-                float num2 =
+                float averageCpuMs =
                     (int)MathUtils.Round(
                         MathUtils.Round(_totalCpuFrameTime / _frameCount / 0.004999999888241291) *
                         0.004999999888241291 *
                         1000.0
                     );
                 Log.Information(
-                    $"PerformanceManager Measurement: frames={_frameCount}, avgFrameTime={num}ms, avgFrameCpuTime={num2}ms"
+                    $"PerformanceManager Measurement: frames={_frameCount}, avgFrameTime={averageFrameMs}ms, avgFrameCpuTime={averageCpuMs}ms"
                 );
             },
             Actions.Empty,
@@ -166,14 +166,14 @@ public static class PerformanceManager
         var viewport = Display.Viewport;
         if (Configuration.ClientConfiguration.Preferences.DisplayFpsRibbon)
         {
-            var num = viewport.Width / scale.X > 480f ? scale.X * 2f : scale.X;
-            var num2 = viewport.Height / -0.1f;
-            float num3 = viewport.Height - 1;
+            var barWidth = viewport.Width / scale.X > 480f ? scale.X * 2f : scale.X;
+            var secondsToPixels = viewport.Height / -0.1f;
+            float baselineY = viewport.Height - 1;
             var s = 0.5f;
-            var num4 = MathUtils.Max((int)(viewport.Width / num), 1);
-            if (_frameData.Length == 0 || _frameData.Length != num4)
+            var barCount = MathUtils.Max((int)(viewport.Width / barWidth), 1);
+            if (_frameData.Length == 0 || _frameData.Length != barCount)
             {
-                _frameData = new FrameData[num4];
+                _frameData = new FrameData[barCount];
                 _frameDataIndex = 0;
             }
 
@@ -186,29 +186,30 @@ public static class PerformanceManager
             var flatBatch2D = _primitivesRenderer.FlatBatch();
             var color = Color.Orange * s;
             var color2 = Color.Red * s;
-            for (var num5 = _frameData.Length - 1; num5 >= 0; num5--)
+            for (var barIndex = _frameData.Length - 1; barIndex >= 0; barIndex--)
             {
-                var num6 = (num5 - _frameData.Length + 1 + _frameDataIndex + _frameData.Length) % _frameData.Length;
-                var frameData = _frameData[num6];
-                var x = num5 * num;
-                var x2 = (num5 + 1) * num;
+                var frameIndex = (barIndex - _frameData.Length + 1 + _frameDataIndex + _frameData.Length) %
+                                 _frameData.Length;
+                var frameData = _frameData[frameIndex];
+                var x = barIndex * barWidth;
+                var x2 = (barIndex + 1) * barWidth;
                 flatBatch2D.QueueQuad(
-                    new Vector2(x, num3),
-                    new Vector2(x2, num3 + frameData.CpuTime * num2),
+                    new Vector2(x, baselineY),
+                    new Vector2(x2, baselineY + frameData.CpuTime * secondsToPixels),
                     0f,
                     color
                 );
                 flatBatch2D.QueueQuad(
-                    new Vector2(x, num3 + frameData.CpuTime * num2),
-                    new Vector2(x2, num3 + frameData.TotalTime * num2),
+                    new Vector2(x, baselineY + frameData.CpuTime * secondsToPixels),
+                    new Vector2(x2, baselineY + frameData.TotalTime * secondsToPixels),
                     0f,
                     color2
                 );
             }
 
             flatBatch2D.QueueLine(
-                new Vector2(0f, num3 + 0.0166666675f * num2),
-                new Vector2(viewport.Width, num3 + 0.0166666675f * num2),
+                new Vector2(0f, baselineY + 0.0166666675f * secondsToPixels),
+                new Vector2(viewport.Width, baselineY + 0.0166666675f * secondsToPixels),
                 0f,
                 Color.Green
             );

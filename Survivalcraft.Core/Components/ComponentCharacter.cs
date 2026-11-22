@@ -211,8 +211,8 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
                                          (playerInput.FlipLookY
                                              ? new Vector2(0f, -1f)
                                              : new Vector2(0f, 1f));
-        var num = Terrain.ExtractContents(ComponentMiner.ActiveBlockValue);
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var heldContents = Terrain.ExtractContents(ComponentMiner.ActiveBlockValue);
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[heldContents];
 
         if (_subsystemUpdate.IsLastUpdateInTick && WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.1f, 0.0))
         {
@@ -329,9 +329,9 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
         CurDigEventItem = default;
         CurInteractEventItem = default;
         CurAimEventItem = default;
-        var flag = false;
+        var actionHandled = false;
         if (playerInput.Interact.HasValue &&
-            !flag &&
+            !actionHandled &&
             _subsystemTime.GameTime - _lastActionTime > 0.33000001311302185)
         {
             CurInteractEventItem.InteractEvent = InteractionMessageKind.Use;
@@ -355,14 +355,14 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
                             CurInteractEventItem.PlacementCell = ComponentMiner.PlacementCell;
                             CurInteractEventItem.ExpectedValue = ComponentMiner.PlacementExpectedValue;
                             _subsystemTerrain.NotifyTerrainInteraction();
-                            flag = true;
+                            actionHandled = true;
                             _isAimBlocked = true;
                         }
                     }
                     else
                     {
                         _subsystemTerrain.NotifyTerrainInteraction();
-                        flag = true;
+                        actionHandled = true;
                         _isAimBlocked = true;
                     }
                 }
@@ -370,13 +370,13 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
             else
             {
                 _subsystemTerrain.NotifyTerrainInteraction();
-                flag = true;
+                actionHandled = true;
                 _isAimBlocked = true;
             }
         }
 
-        var num2 = _subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative ? 0.1f : 1.4f;
-        if (playerInput.Aim.HasValue && block.Aimable && _subsystemTime.GameTime - _lastActionTime > num2)
+        var aimCooldown = _subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative ? 0.1f : 1.4f;
+        if (playerInput.Aim.HasValue && block.Aimable && _subsystemTime.GameTime - _lastActionTime > aimCooldown)
         {
             if (!_isAimBlocked)
             {
@@ -421,10 +421,10 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
             }
         }
 
-        flag |= _aim.HasValue;
+        actionHandled |= _aim.HasValue;
 
         if (playerInput.Dig.HasValue &&
-            !flag &&
+            !actionHandled &&
             !_isDigBlocked &&
             _subsystemTime.GameTime - _lastActionTime > 0.33000001311302185)
         {
@@ -454,13 +454,15 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
 
         #region 玩家攻击事件
 
-        if (playerInput.Hit.HasValue && !flag && _subsystemTime.GameTime - _lastActionTime > 0.33000001311302185)
+        if (playerInput.Hit.HasValue &&
+            !actionHandled &&
+            _subsystemTime.GameTime - _lastActionTime > 0.33000001311302185)
         {
             var bodyRaycastResult =
                 ComponentMiner.Raycast<BodyRaycastResult>(playerInput.Hit.Value, RaycastMode.Interaction);
             if (bodyRaycastResult.HasValue)
             {
-                flag = true;
+                actionHandled = true;
                 _isDigBlocked = true;
                 if (Vector3.Distance(bodyRaycastResult.Value.HitPoint(), ComponentCreaturePose.EyePosition) <= 2f)
                 {
@@ -526,7 +528,7 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
             PublishAction(ComponentCharacterPackage.CharacterAction.AimEvent);
         }
 
-        if (!playerInput.PickBlockType.HasValue || flag)
+        if (!playerInput.PickBlockType.HasValue || actionHandled)
         {
             return;
         }
@@ -551,73 +553,73 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
 
         var value3 = terrainRaycastResult3.Value.Value;
         value3 = Terrain.NormalizeCellValue(value3);
-        var num4 = Terrain.ExtractContents(value3);
-        var block2 = WorldContentBinding.For(Project).Catalog.Blocks[num4];
-        var num5 = 0;
+        var pickedContents = Terrain.ExtractContents(value3);
+        var block2 = WorldContentBinding.For(Project).Catalog.Blocks[pickedContents];
+        var pickedValue = 0;
         var creativeValues = block2.GetCreativeValues();
         if (block2.GetCreativeValues().Contains(value3))
         {
-            num5 = value3;
+            pickedValue = value3;
         }
 
-        if (num5 == 0 && !block2.NonDuplicable)
+        if (pickedValue == 0 && !block2.NonDuplicable)
         {
             var list = new List<BlockDropValue>();
             block2.GetDropValues(_subsystemTerrain, value3, 0, int.MaxValue, list, out _);
             if (list.Count > 0 && list[0].Count > 0)
             {
-                num5 = list[0].Value;
+                pickedValue = list[0].Value;
             }
         }
 
-        if (num5 == 0)
+        if (pickedValue == 0)
         {
-            num5 = creativeValues.FirstOrDefault();
+            pickedValue = creativeValues.FirstOrDefault();
         }
 
-        if (num5 == 0)
+        if (pickedValue == 0)
         {
             return;
         }
 
-        var num6 = -1;
+        var targetSlot = -1;
         for (var i = 0; i < componentCreativeInventory.VisibleSlotsCount; i++)
         {
             var slotIndex = componentCreativeInventory.GetHotbarSlotIndex(i);
             if (slotIndex >= 0 &&
-                componentCreativeInventory.GetSlotCapacity(slotIndex, num5) > 0 &&
+                componentCreativeInventory.GetSlotCapacity(slotIndex, pickedValue) > 0 &&
                 componentCreativeInventory.GetSlotCount(slotIndex) > 0 &&
-                componentCreativeInventory.GetSlotValue(slotIndex) == num5)
+                componentCreativeInventory.GetSlotValue(slotIndex) == pickedValue)
             {
-                num6 = slotIndex;
+                targetSlot = slotIndex;
                 break;
             }
         }
 
-        if (num6 < 0)
+        if (targetSlot < 0)
         {
             for (var i = 0; i < componentCreativeInventory.VisibleSlotsCount; i++)
             {
                 var slotIndex = componentCreativeInventory.GetHotbarSlotIndex(i);
                 if (slotIndex >= 0 &&
-                    componentCreativeInventory.GetSlotCapacity(slotIndex, num5) > 0 &&
+                    componentCreativeInventory.GetSlotCapacity(slotIndex, pickedValue) > 0 &&
                     (componentCreativeInventory.GetSlotCount(slotIndex) == 0 ||
                      componentCreativeInventory.GetSlotValue(slotIndex) == 0))
                 {
-                    num6 = slotIndex;
+                    targetSlot = slotIndex;
                     break;
                 }
             }
         }
 
-        if (num6 < 0)
+        if (targetSlot < 0)
         {
-            num6 = componentCreativeInventory.ActiveSlotIndex;
+            targetSlot = componentCreativeInventory.ActiveSlotIndex;
         }
 
-        componentCreativeInventory.RemoveSlotItems(num6, int.MaxValue);
-        componentCreativeInventory.AddSlotItems(num6, num5, 1);
-        componentCreativeInventory.ActiveSlotIndex = num6;
+        componentCreativeInventory.RemoveSlotItems(targetSlot, int.MaxValue);
+        componentCreativeInventory.AddSlotItems(targetSlot, pickedValue, 1);
+        componentCreativeInventory.ActiveSlotIndex = targetSlot;
         CreativeBlockPicked?.Invoke(value3);
 
         #endregion
@@ -810,12 +812,12 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
         }
 
         var slotValue = inventory.GetSlotValue(inventory.ActiveSlotIndex);
-        var num3 = inventory.RemoveSlotItems(
+        var removedCount = inventory.RemoveSlotItems(
             count: inventory.GetSlotCount(inventory.ActiveSlotIndex),
             slotIndex: inventory.ActiveSlotIndex
         );
         var value2 = 8f * Matrix.CreateFromQuaternion(ComponentCreaturePose.EyeRotation).Forward;
-        if (slotValue == 0 || num3 == 0)
+        if (slotValue == 0 || removedCount == 0)
         {
             return;
         }
@@ -823,7 +825,7 @@ public class ComponentCharacter : ComponentCreature, IUpdateable
         var position = ComponentBody.Position +
                        new Vector3(0f, ComponentBody.BoxSize.Y * 0.66f, 0f) +
                        0.25f * ComponentBody.Matrix.Forward;
-        _subsystemPickables.AddPickable(slotValue, num3, position, value2, null);
+        _subsystemPickables.AddPickable(slotValue, removedCount, position, value2, null);
     }
 
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)

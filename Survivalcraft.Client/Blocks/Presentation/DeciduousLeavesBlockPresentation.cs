@@ -35,9 +35,9 @@ public abstract class DeciduousLeavesBlockPresentation(
 
         var data = Terrain.ExtractData(value);
         var data2 = Terrain.ExtractData(neighborValue);
-        var num = DeciduousLeavesBlock.GetSeason(data) == Season.Winter;
-        var flag = DeciduousLeavesBlock.GetSeason(data2) == Season.Winter;
-        return num != flag;
+        var isWinter = DeciduousLeavesBlock.GetSeason(data) == Season.Winter;
+        var neighborIsWinter = DeciduousLeavesBlock.GetSeason(data2) == Season.Winter;
+        return isWinter != neighborIsWinter;
     }
 
     public override string GetDisplayName(SubsystemTerrain? subsystemTerrain, int value)

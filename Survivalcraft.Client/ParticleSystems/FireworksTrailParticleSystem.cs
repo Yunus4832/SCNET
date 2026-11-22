@@ -22,15 +22,15 @@ public class FireworksTrailParticleSystem : ParticleSystem<FireworksTrailParticl
 
     public override bool Simulate(float dt)
     {
-        const float num = 120f;
-        _toGenerate += num * dt;
+        const float emissionRate = 120f;
+        _toGenerate += emissionRate * dt;
         _lastPosition ??= Position;
-        var flag = false;
+        var hasActiveParticles = false;
         foreach (var particle in Particles)
         {
             if (particle.IsActive)
             {
-                flag = true;
+                hasActiveParticles = true;
                 particle.Time += dt;
                 if (particle.Time <= particle.Duration)
                 {
@@ -59,7 +59,7 @@ public class FireworksTrailParticleSystem : ParticleSystem<FireworksTrailParticl
         _lastPosition = Position;
         if (IsStopped)
         {
-            return !flag;
+            return !hasActiveParticles;
         }
 
         return false;

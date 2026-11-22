@@ -193,41 +193,53 @@ public class SubsystemPathfinding : Subsystem
 
     public void SmoothPath(DynamicArray<Vector3> path, Vector3 boxSize)
     {
-        for (var num = path.Count - 2; num > 0; num--)
+        for (var waypointIndex = path.Count - 2; waypointIndex > 0; waypointIndex--)
         {
-            if (IsPassable(path.Array[num + 1], path.Array[num - 1], boxSize))
+            if (IsPassable(path.Array[waypointIndex + 1], path.Array[waypointIndex - 1], boxSize))
             {
-                path.RemoveAt(num);
+                path.RemoveAt(waypointIndex);
             }
         }
     }
 
     public bool IsPassable(Vector3 p1, Vector3 p2, Vector3 boxSize)
     {
-        var vector = new Vector3(p1.X, p1.Y + 0.5f, p1.Z);
-        var vector2 = new Vector3(p2.X, p2.Y + 0.5f, p2.Z);
-        var v = (0.5f * boxSize.X + 0.1f) * Vector3.Normalize(Vector3.Cross(Vector3.UnitY, vector2 - vector));
-        if (_subsystemTerrain.Raycast(vector, vector2, false, true, SmoothingRaycastFunction_Obstacle)
-            .HasValue)
-        {
-            return false;
-        }
-
-        if (_subsystemTerrain.Raycast(vector - v, vector2 - v, false, true, SmoothingRaycastFunction_Obstacle)
-            .HasValue)
-        {
-            return false;
-        }
-
-        if (_subsystemTerrain.Raycast(vector + v, vector2 + v, false, true, SmoothingRaycastFunction_Obstacle)
+        var rayStart = new Vector3(p1.X, p1.Y + 0.5f, p1.Z);
+        var rayEnd = new Vector3(p2.X, p2.Y + 0.5f, p2.Z);
+        var sideOffset = (0.5f * boxSize.X + 0.1f) * Vector3.Normalize(Vector3.Cross(Vector3.UnitY, rayEnd - rayStart));
+        if (_subsystemTerrain.Raycast(rayStart, rayEnd, false, true, SmoothingRaycastFunction_Obstacle)
             .HasValue)
         {
             return false;
         }
 
         if (_subsystemTerrain.Raycast(
-                vector + new Vector3(0f, -1f, 0f),
-                vector2 + new Vector3(0f, -1f, 0f),
+                rayStart - sideOffset,
+                rayEnd - sideOffset,
+                false,
+                true,
+                SmoothingRaycastFunction_Obstacle
+            )
+            .HasValue)
+        {
+            return false;
+        }
+
+        if (_subsystemTerrain.Raycast(
+                rayStart + sideOffset,
+                rayEnd + sideOffset,
+                false,
+                true,
+                SmoothingRaycastFunction_Obstacle
+            )
+            .HasValue)
+        {
+            return false;
+        }
+
+        if (_subsystemTerrain.Raycast(
+                rayStart + new Vector3(0f, -1f, 0f),
+                rayEnd + new Vector3(0f, -1f, 0f),
                 false,
                 false,
                 SmoothingRaycastFunction_Support
@@ -237,8 +249,8 @@ public class SubsystemPathfinding : Subsystem
         }
 
         if (_subsystemTerrain.Raycast(
-                vector + new Vector3(0f, -1f, 0f) - v,
-                vector2 + new Vector3(0f, -1f, 0f) - v,
+                rayStart + new Vector3(0f, -1f, 0f) - sideOffset,
+                rayEnd + new Vector3(0f, -1f, 0f) - sideOffset,
                 false,
                 false,
                 SmoothingRaycastFunction_Support
@@ -248,8 +260,8 @@ public class SubsystemPathfinding : Subsystem
         }
 
         if (_subsystemTerrain.Raycast(
-                vector + new Vector3(0f, -1f, 0f) + v,
-                vector2 + new Vector3(0f, -1f, 0f) + v,
+                rayStart + new Vector3(0f, -1f, 0f) + sideOffset,
+                rayEnd + new Vector3(0f, -1f, 0f) + sideOffset,
                 false,
                 false,
                 SmoothingRaycastFunction_Support
@@ -263,8 +275,8 @@ public class SubsystemPathfinding : Subsystem
 
     private bool SmoothingRaycastFunction_Obstacle(int value, float distance)
     {
-        var num = Terrain.ExtractContents(value);
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var contents = Terrain.ExtractContents(value);
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
         if (block.ShouldAvoid(value))
         {
             return true;
@@ -275,8 +287,8 @@ public class SubsystemPathfinding : Subsystem
 
     private bool SmoothingRaycastFunction_Support(int value, float distance)
     {
-        var num = Terrain.ExtractContents(value);
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var contents = Terrain.ExtractContents(value);
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
         if (block.ShouldAvoid(value))
         {
             return true;
@@ -362,14 +374,14 @@ public class SubsystemPathfinding : Subsystem
 
         public float Heuristic(Vector3 p1, Vector3 p2)
         {
-            var num = MathUtils.Abs(p1.X - p2.X);
-            var num2 = MathUtils.Abs(p1.Z - p2.Z);
-            if (num > num2)
+            var distanceX = MathUtils.Abs(p1.X - p2.X);
+            var distanceZ = MathUtils.Abs(p1.Z - p2.Z);
+            if (distanceX > distanceZ)
             {
-                return 1.41f * num2 + 1f * (num - num2);
+                return 1.41f * distanceZ + 1f * (distanceX - distanceZ);
             }
 
-            return 1.41f * num + 1f * (num2 - num);
+            return 1.41f * distanceX + 1f * (distanceZ - distanceX);
         }
 
         public bool IsGoal(Vector3 p)
@@ -379,14 +391,14 @@ public class SubsystemPathfinding : Subsystem
 
         private void AddNeighbor(DynamicArray<Vector3> neighbors, Vector3 p, int dx, int dz)
         {
-            var y = p.Y;
-            var num = p.Y;
-            var num2 = Terrain.ToCell(p.X) + dx;
-            var num3 = Terrain.ToCell(p.Y);
-            var num4 = Terrain.ToCell(p.Z) + dz;
-            var cellValue = SubsystemTerrain.Terrain.GetCellValue(num2, num3, num4);
-            var num5 = Terrain.ExtractContents(cellValue);
-            var block = SubsystemTerrain.Catalog.Blocks[num5];
+            var landingY = p.Y;
+            var clearanceY = p.Y;
+            var neighborX = Terrain.ToCell(p.X) + dx;
+            var cellY = Terrain.ToCell(p.Y);
+            var neighborZ = Terrain.ToCell(p.Z) + dz;
+            var cellValue = SubsystemTerrain.Terrain.GetCellValue(neighborX, cellY, neighborZ);
+            var neighborContents = Terrain.ExtractContents(cellValue);
+            var block = SubsystemTerrain.Catalog.Blocks[neighborContents];
             if (block.ShouldAvoid(cellValue))
             {
                 return;
@@ -400,17 +412,17 @@ public class SubsystemPathfinding : Subsystem
                     return;
                 }
 
-                y = num3 + blockWalkingHeight;
-                num = num3 + blockWalkingHeight;
+                landingY = cellY + blockWalkingHeight;
+                clearanceY = cellY + blockWalkingHeight;
             }
             else
             {
-                var flag = false;
-                for (var num6 = -1; num6 >= -4; num6--)
+                var foundSupport = false;
+                for (var dropOffsetY = -1; dropOffsetY >= -4; dropOffsetY--)
                 {
-                    var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(num2, num3 + num6, num4);
-                    var num7 = Terrain.ExtractContents(cellValue2);
-                    var block2 = SubsystemTerrain.Catalog.Blocks[num7];
+                    var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(neighborX, cellY + dropOffsetY, neighborZ);
+                    var supportContents = Terrain.ExtractContents(cellValue2);
+                    var block2 = SubsystemTerrain.Catalog.Blocks[supportContents];
                     if (block2.ShouldAvoid(cellValue2))
                     {
                         return;
@@ -421,27 +433,27 @@ public class SubsystemPathfinding : Subsystem
                         continue;
                     }
 
-                    y = num3 + num6 + 1;
-                    flag = true;
+                    landingY = cellY + dropOffsetY + 1;
+                    foundSupport = true;
                     break;
                 }
 
-                if (!flag)
+                if (!foundSupport)
                 {
                     return;
                 }
             }
 
-            var num8 = dx == 0 || dz == 0 ? 2 : 3;
-            var vector = new Vector3(p.X, num + 0.01f, p.Z);
-            var v = new Vector3(num2 + 0.5f, num + 0.01f, num4 + 0.5f);
-            var v2 = 1f / num8 * (v - vector);
-            for (var i = 1; i <= num8; i++)
+            var sampleCount = dx == 0 || dz == 0 ? 2 : 3;
+            var sweepStart = new Vector3(p.X, clearanceY + 0.01f, p.Z);
+            var sweepEnd = new Vector3(neighborX + 0.5f, clearanceY + 0.01f, neighborZ + 0.5f);
+            var sweepStep = 1f / sampleCount * (sweepEnd - sweepStart);
+            for (var i = 1; i <= sampleCount; i++)
             {
-                var v3 = vector + i * v2;
+                var samplePosition = sweepStart + i * sweepStep;
                 var box = new BoundingBox(
-                    v3 - new Vector3(Request.BoxSize.X / 2f + 0.01f, 0f, Request.BoxSize.Z / 2f + 0.01f),
-                    v3 +
+                    samplePosition - new Vector3(Request.BoxSize.X / 2f + 0.01f, 0f, Request.BoxSize.Z / 2f + 0.01f),
+                    samplePosition +
                     new Vector3(
                         Request.BoxSize.X / 2f - 0.01f,
                         Request.BoxSize.Y,
@@ -454,7 +466,7 @@ public class SubsystemPathfinding : Subsystem
                 }
             }
 
-            neighbors.Add(new Vector3(num2 + 0.5f, y, num4 + 0.5f));
+            neighbors.Add(new Vector3(neighborX + 0.5f, landingY, neighborZ + 0.5f));
         }
 
         public float GetBlockWalkingHeight(Block block, int value)
@@ -464,27 +476,27 @@ public class SubsystemPathfinding : Subsystem
                 return 0f;
             }
 
-            var num = 0f;
+            var walkingHeight = 0f;
             var customCollisionBoxes = block.GetCustomCollisionBoxes(SubsystemTerrain, value);
             foreach (var boundingBox in customCollisionBoxes)
             {
-                num = MathUtils.Max(num, boundingBox.Max.Y);
+                walkingHeight = MathUtils.Max(walkingHeight, boundingBox.Max.Y);
             }
 
-            return num;
+            return walkingHeight;
         }
 
         public bool IsBlocked(BoundingBox box)
         {
-            var num = Terrain.ToCell(box.Min.X);
-            var num2 = MathUtils.Max(Terrain.ToCell(box.Min.Y), 0);
-            var num3 = Terrain.ToCell(box.Min.Z);
-            var num4 = Terrain.ToCell(box.Max.X);
-            var num5 = MathUtils.Min(Terrain.ToCell(box.Max.Y), 255);
-            var num6 = Terrain.ToCell(box.Max.Z);
-            for (var i = num; i <= num4; i++)
+            var minX = Terrain.ToCell(box.Min.X);
+            var minY = MathUtils.Max(Terrain.ToCell(box.Min.Y), 0);
+            var minZ = Terrain.ToCell(box.Min.Z);
+            var maxX = Terrain.ToCell(box.Max.X);
+            var maxY = MathUtils.Min(Terrain.ToCell(box.Max.Y), 255);
+            var maxZ = Terrain.ToCell(box.Max.Z);
+            for (var i = minX; i <= maxX; i++)
             {
-                for (var j = num3; j <= num6; j++)
+                for (var j = minZ; j <= maxZ; j++)
                 {
                     var chunkAtCell = SubsystemTerrain.Terrain.GetChunkAtCell(i, j, false);
                     if (chunkAtCell == null)
@@ -492,15 +504,15 @@ public class SubsystemPathfinding : Subsystem
                         continue;
                     }
 
-                    var num7 = TerrainChunk.CalculateCellIndex(i & 0xF, num2, j & 0xF);
-                    var num8 = num2;
-                    while (num8 <= num5)
+                    var cellIndex = TerrainChunk.CalculateCellIndex(i & 0xF, minY, j & 0xF);
+                    var cellY = minY;
+                    while (cellY <= maxY)
                     {
-                        var cellValueFast = chunkAtCell.GetCellValueFast(num7);
-                        var num9 = Terrain.ExtractContents(cellValueFast);
-                        if (num9 != 0)
+                        var cellValueFast = chunkAtCell.GetCellValueFast(cellIndex);
+                        var contents = Terrain.ExtractContents(cellValueFast);
+                        if (contents != 0)
                         {
-                            var block = SubsystemTerrain.Catalog.Blocks[num9];
+                            var block = SubsystemTerrain.Catalog.Blocks[contents];
                             if (block.ShouldAvoid(cellValueFast))
                             {
                                 return true;
@@ -509,7 +521,7 @@ public class SubsystemPathfinding : Subsystem
                             if (block.Collidable &&
                                 (!Request.IgnoreDoors || (block is not DoorBlock && block is not TrapdoorBlock)))
                             {
-                                var v = new Vector3(i, num8, j);
+                                var v = new Vector3(i, cellY, j);
                                 var customCollisionBoxes =
                                     block.GetCustomCollisionBoxes(SubsystemTerrain, cellValueFast);
                                 foreach (var boundingBox in customCollisionBoxes)
@@ -522,8 +534,8 @@ public class SubsystemPathfinding : Subsystem
                             }
                         }
 
-                        num8++;
-                        num7++;
+                        cellY++;
+                        cellIndex++;
                     }
                 }
             }

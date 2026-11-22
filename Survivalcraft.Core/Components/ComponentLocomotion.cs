@@ -116,10 +116,10 @@ public class ComponentLocomotion : Component, IUpdateable
                 return;
             }
 
-            var num = field.Value.LengthSquared();
-            if (num > 1f)
+            var orderLengthSquared = field.Value.LengthSquared();
+            if (orderLengthSquared > 1f)
             {
-                field = field.Value / MathUtils.Sqrt(num);
+                field = field.Value / MathUtils.Sqrt(orderLengthSquared);
             }
         }
     }
@@ -140,10 +140,10 @@ public class ComponentLocomotion : Component, IUpdateable
                 return;
             }
 
-            var num = field.Value.LengthSquared();
-            if (num > 1f)
+            var orderLengthSquared = field.Value.LengthSquared();
+            if (orderLengthSquared > 1f)
             {
-                field = field.Value / MathUtils.Sqrt(num);
+                field = field.Value / MathUtils.Sqrt(orderLengthSquared);
             }
         }
     }
@@ -159,10 +159,10 @@ public class ComponentLocomotion : Component, IUpdateable
                 return;
             }
 
-            var num = field.Value.LengthSquared();
-            if (num > 1f)
+            var orderLengthSquared = field.Value.LengthSquared();
+            if (orderLengthSquared > 1f)
             {
-                field = field.Value / MathUtils.Sqrt(num);
+                field = field.Value / MathUtils.Sqrt(orderLengthSquared);
             }
         }
     }
@@ -326,8 +326,8 @@ public class ComponentLocomotion : Component, IUpdateable
             var y = Terrain.ToCell(position.Y + 0.2f);
             var z = Terrain.ToCell(position.Z);
             var cellValue = _subsystemTerrain.Terrain.GetCellValue(x2, y, z);
-            var num = Terrain.ExtractContents(cellValue);
-            var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+            var contents = Terrain.ExtractContents(cellValue);
+            var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
             if (LadderSpeed > 0f &&
                 !LadderValue.HasValue &&
                 block is LadderBlock &&
@@ -349,12 +349,12 @@ public class ComponentLocomotion : Component, IUpdateable
             }
 
             var rotation = _componentCreature.ComponentBody.Rotation;
-            var num2 = MathUtils.Atan2(
+            var yaw = MathUtils.Atan2(
                 2f * rotation.Y * rotation.W - 2f * rotation.X * rotation.Z,
                 1f - 2f * rotation.Y * rotation.Y - 2f * rotation.Z * rotation.Z
             );
-            num2 += (0f - TurnSpeed) * TurnOrder.X * dt;
-            _componentCreature.ComponentBody.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, num2);
+            yaw += (0f - TurnSpeed) * TurnOrder.X * dt;
+            _componentCreature.ComponentBody.Rotation = Quaternion.CreateFromAxisAngle(Vector3.UnitY, yaw);
             LookAngles += LookSpeed * LookOrder * dt;
             if (LadderValue.HasValue)
             {
@@ -459,8 +459,8 @@ public class ComponentLocomotion : Component, IUpdateable
                     _componentCharacter == null || _componentCharacter.UseLookDirectedCreativeFlight
                 );
                 var v3 = CreativeFlySpeed * (right * v.X + Vector3.UnitY * v.Y + v2 * v.Z);
-                var num = v == Vector3.Zero ? 5f : 3f;
-                velocity += MathUtils.Saturate(num * dt) * (v3 - velocity);
+                var flightResponse = v == Vector3.Zero ? 5f : 3f;
+                velocity += MathUtils.Saturate(flightResponse * dt) * (v3 - velocity);
                 _componentCreature.ComponentBody.IsGravityEnabled = false;
                 _componentCreature.ComponentBody.IsGroundDragEnabled = false;
                 _flying = true;
@@ -480,20 +480,20 @@ public class ComponentLocomotion : Component, IUpdateable
                     );
                 }
 
-                var num2 = WalkSpeed;
+                var walkSpeed = WalkSpeed;
                 if (_componentCreature.ComponentBody.ImmersionFactor > 0.2f)
                 {
-                    num2 *= 0.66f;
+                    walkSpeed *= 0.66f;
                 }
 
                 if (value.Y < 0f)
                 {
-                    num2 *= 0.6f;
+                    walkSpeed *= 0.6f;
                 }
 
                 if (_componentLevel != null)
                 {
-                    num2 *= _componentLevel.SpeedFactor;
+                    walkSpeed *= _componentLevel.SpeedFactor;
                 }
 
                 if (_componentMount != null)
@@ -502,33 +502,33 @@ public class ComponentLocomotion : Component, IUpdateable
                     var componentClothing = rider?.Entity.FindComponent<ComponentClothing>();
                     if (componentClothing != null)
                     {
-                        num2 *= componentClothing.SteedMovementSpeedFactor;
+                        walkSpeed *= componentClothing.SteedMovementSpeedFactor;
                     }
                 }
 
                 var v4 = value.X * Vector3.Normalize(new Vector3(right.X, 0f, right.Z)) +
                          value.Y * Vector3.Normalize(new Vector3(vector.X, 0f, vector.Z));
-                var vector2 = num2 * v4 + _componentCreature.ComponentBody.StandingOnVelocity;
-                float num4;
+                var targetWalkVelocity = walkSpeed * v4 + _componentCreature.ComponentBody.StandingOnVelocity;
+                float velocityBlend;
                 if (_componentCreature.ComponentBody.StandingOnValue.HasValue)
                 {
-                    var num3 = MathUtils.Max(
+                    var surfaceFriction = MathUtils.Max(
                         WorldContentBinding.For(Project).Catalog
                             .Blocks[Terrain.ExtractContents(_componentCreature.ComponentBody.StandingOnValue.Value)]
                             .FrictionFactor,
                         _minFrictionFactor
                     );
-                    num4 = MathUtils.Saturate(dt * 6f * AccelerationFactor * num3);
-                    if (num3 < 0.25f)
+                    velocityBlend = MathUtils.Saturate(dt * 6f * AccelerationFactor * surfaceFriction);
+                    if (surfaceFriction < 0.25f)
                     {
-                        SlipSpeed = num2 * value.Length();
+                        SlipSpeed = walkSpeed * value.Length();
                     }
 
                     _walking = true;
                 }
                 else
                 {
-                    num4 = MathUtils.Saturate(dt * 6f * AccelerationFactor * InAirWalkFactor);
+                    velocityBlend = MathUtils.Saturate(dt * 6f * AccelerationFactor * InAirWalkFactor);
                     if (_componentCreature.ComponentBody.ImmersionFactor > 0f)
                     {
                         _swimming = true;
@@ -539,23 +539,23 @@ public class ComponentLocomotion : Component, IUpdateable
                     }
                 }
 
-                velocity.X += num4 * (vector2.X - velocity.X);
-                velocity.Z += num4 * (vector2.Z - velocity.Z);
-                var vector3 = value.X * right + value.Y * vector;
+                velocity.X += velocityBlend * (targetWalkVelocity.X - velocity.X);
+                velocity.Z += velocityBlend * (targetWalkVelocity.Z - velocity.Z);
+                var walkDirection = value.X * right + value.Y * vector;
                 if (_componentLevel != null)
                 {
-                    vector3 *= _componentLevel.SpeedFactor;
+                    walkDirection *= _componentLevel.SpeedFactor;
                 }
 
                 velocity.Y += 10f *
                               AccelerationFactor *
-                              vector3.Y *
+                              walkDirection.Y *
                               _componentCreature.ComponentBody.ImmersionFactor *
                               dt;
                 _componentCreature.ComponentBody.IsGroundDragEnabled = false;
                 if (_componentCharacter != null &&
                     _componentCreature.ComponentBody is { StandingOnValue: not null, ImmersionFactor: < .1f } &&
-                    vector2.LengthSquared() / velocity.LengthSquared() > .99f &&
+                    targetWalkVelocity.LengthSquared() / velocity.LengthSquared() > .99f &&
                     WalkOrder.Value.LengthSquared() > .99f)
                 {
                     FootwearHintRequested?.Invoke();
@@ -576,15 +576,15 @@ public class ComponentLocomotion : Component, IUpdateable
         {
             var value4 = SwimOrder.Value;
             var v6 = SwimSpeed * value4;
-            var num5 = 2f;
+            var swimResponse = 2f;
             if (value4.LengthSquared() >= 0.99f)
             {
                 v6 *= MathUtils.Lerp(1f, 2f, _swimBurstRemaining);
-                num5 *= MathUtils.Lerp(1f, 4f, _swimBurstRemaining);
+                swimResponse *= MathUtils.Lerp(1f, 4f, _swimBurstRemaining);
                 _swimBurstRemaining -= dt;
             }
 
-            velocity += MathUtils.Saturate(num5 * AccelerationFactor * dt) * (v6 - velocity);
+            velocity += MathUtils.Saturate(swimResponse * AccelerationFactor * dt) * (v6 - velocity);
             _componentCreature.ComponentBody.IsGravityEnabled = MathUtils.Abs(value4.Y) <= 0.07f;
             _componentCreature.ComponentBody.IsWaterDragEnabled = false;
             _componentCreature.ComponentBody.IsGroundDragEnabled = false;
@@ -596,13 +596,13 @@ public class ComponentLocomotion : Component, IUpdateable
              _componentCreature.ComponentBody.ImmersionFactor > 0.5f) &&
             !_componentCreature.ComponentBody.IsSneaking)
         {
-            var num6 = JumpSpeed;
+            var jumpSpeed = JumpSpeed;
             if (_componentLevel != null)
             {
-                num6 *= 0.25f * (_componentLevel.SpeedFactor - 1f) + 1f;
+                jumpSpeed *= 0.25f * (_componentLevel.SpeedFactor - 1f) + 1f;
             }
 
-            velocity.Y = MathUtils.Min(velocity.Y + MathUtils.Saturate(JumpOrder) * num6, num6);
+            velocity.Y = MathUtils.Min(velocity.Y + MathUtils.Saturate(JumpOrder) * jumpSpeed, jumpSpeed);
             _jumping = true;
             FootstepRequested?.Invoke(2f);
             if (WorldRuntimeContext.For(Project).IsAuthority)
@@ -628,17 +628,17 @@ public class ComponentLocomotion : Component, IUpdateable
         _componentCreature.ComponentBody.IsGravityEnabled = false;
         var position = _componentCreature.ComponentBody.Position;
         var velocity = _componentCreature.ComponentBody.Velocity;
-        var num = Terrain.ExtractContents(value);
-        if (WorldContentBinding.For(Project).Catalog.Blocks[num] is LadderBlock)
+        var contents = Terrain.ExtractContents(value);
+        if (WorldContentBinding.For(Project).Catalog.Blocks[contents] is LadderBlock)
         {
             LadderValue = value;
             if (WalkOrder.HasValue)
             {
                 var value2 = WalkOrder.Value;
-                var num2 = LadderSpeed * value2.Y;
+                var targetClimbSpeed = LadderSpeed * value2.Y;
                 velocity.X = 5f * (MathUtils.Floor(position.X) + 0.5f - position.X);
                 velocity.Z = 5f * (MathUtils.Floor(position.Z) + 0.5f - position.Z);
-                velocity.Y += MathUtils.Saturate(20f * dt) * (num2 - velocity.Y);
+                velocity.Y += MathUtils.Saturate(20f * dt) * (targetClimbSpeed - velocity.Y);
                 _climbing = true;
             }
 

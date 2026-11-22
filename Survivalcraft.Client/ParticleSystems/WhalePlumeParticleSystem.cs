@@ -42,20 +42,20 @@ public class WhalePlumeParticleSystem : ParticleSystem<WhalePlumeParticleSystem.
             _toGenerate = 0f;
         }
 
-        var num = MathUtils.Pow(0.001f, dt);
-        var num2 = MathUtils.Lerp(4f, 10f, MathUtils.Saturate(2f * _time / _duration));
+        var velocityDamping = MathUtils.Pow(0.001f, dt);
+        var verticalLaunchSpeed = MathUtils.Lerp(4f, 10f, MathUtils.Saturate(2f * _time / _duration));
         var v = new Vector3(0f, 1f, 2f);
-        var flag = false;
+        var hasActiveParticles = false;
         foreach (var particle in Particles)
         {
             if (particle.IsActive)
             {
-                flag = true;
+                hasActiveParticles = true;
                 particle.Time += dt;
                 if (particle.Time <= particle.Duration)
                 {
                     particle.Position += particle.Velocity * dt;
-                    particle.Velocity *= num;
+                    particle.Velocity *= velocityDamping;
                     particle.Velocity += v * dt;
                     particle.TextureSlot = (int)MathUtils.Min(4f * particle.Time / particle.Duration * 1.2f, 3f);
                     particle.Size = new Vector2(_size) * MathUtils.Lerp(0.1f, 0.2f, particle.Time / particle.Duration);
@@ -81,7 +81,7 @@ public class WhalePlumeParticleSystem : ParticleSystem<WhalePlumeParticleSystem.
                                     _size *
                                     new Vector3(
                                         _random.Float(-1f, 1f),
-                                        num2 * _random.Float(0.3f, 1f),
+                                        verticalLaunchSpeed * _random.Float(0.3f, 1f),
                                         _random.Float(-1f, 1f)
                                     );
                 particle.Size = Vector2.Zero;
@@ -94,7 +94,7 @@ public class WhalePlumeParticleSystem : ParticleSystem<WhalePlumeParticleSystem.
         }
 
         _toGenerate = MathUtils.Remainder(_toGenerate, 1f);
-        return !flag && (_time >= _duration || IsStopped);
+        return !hasActiveParticles && (_time >= _duration || IsStopped);
     }
 
     public class Particle : Game.ParticleSystems.Particle

@@ -102,13 +102,13 @@ public class ComponentMiner : Component, IUpdateable
 
     public void Update(float dt)
     {
-        var num = _subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
+        var pokeRate = _subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
             ? 0.5f / _subsystemGameInfo.WorldSettings.CreativeDigTime
             : 4f;
         _lastPokingPhase = PokingPhase;
         if (DigCellFace.HasValue || PokingPhase > 0f)
         {
-            PokingPhase += num * _subsystemTime.GameTimeDelta;
+            PokingPhase += pokeRate * _subsystemTime.GameTimeDelta;
             if (PokingPhase > 1f)
             {
                 PokingPhase = DigCellFace.HasValue ? MathUtils.Remainder(PokingPhase, 1f) : 0f;
@@ -174,11 +174,11 @@ public class ComponentMiner : Component, IUpdateable
             _subsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z),
             raycastResult.Value
         );
-        var num = Terrain.ExtractContents(cellValue);
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var targetContents = Terrain.ExtractContents(cellValue);
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[targetContents];
         var activeBlockValue = ActiveBlockValue;
-        var num2 = Terrain.ExtractContents(activeBlockValue);
-        var block2 = WorldContentBinding.For(Project).Catalog.Blocks[num2];
+        var toolContents = Terrain.ExtractContents(activeBlockValue);
+        var block2 = WorldContentBinding.For(Project).Catalog.Blocks[toolContents];
         if (!DigCellFace.HasValue ||
             DigCellFace.Value.X != cellFace.X ||
             DigCellFace.Value.Y != cellFace.Y ||
@@ -198,8 +198,11 @@ public class ComponentMiner : Component, IUpdateable
             return false;
         }
 
-        var num3 = CalculateDigTime(cellValue, num2) * MathUtils.Max(diggingContext.DigTimeMultiplier, 0f);
-        _digProgress = num3 > 0f ? MathUtils.Saturate((float)(_subsystemTime.GameTime - _digStartTime) / num3) : 1f;
+        var digDuration = CalculateDigTime(cellValue, toolContents) *
+                          MathUtils.Max(diggingContext.DigTimeMultiplier, 0f);
+        _digProgress = digDuration > 0f
+            ? MathUtils.Saturate((float)(_subsystemTime.GameTime - _digStartTime) / digDuration)
+            : 1f;
         if (!CanUseTool(activeBlockValue))
         {
             _digProgress = 0f;
@@ -209,23 +212,23 @@ public class ComponentMiner : Component, IUpdateable
             }
         }
 
-        var flag = ComponentCharacter is { ContinuousDig: true } &&
-                   _subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative;
-        var flag2 = flag || (_lastPokingPhase <= 0.5f && PokingPhase > 0.5f);
+        var continuousCreativeDig = ComponentCharacter is { ContinuousDig: true } &&
+                                    _subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative;
+        var applyDigStroke = continuousCreativeDig || (_lastPokingPhase <= 0.5f && PokingPhase > 0.5f);
         if (ComponentCharacter is { CharacterData.IsLocalCharacter: false })
         {
-            flag2 = isEnd;
+            applyDigStroke = isEnd;
             _digProgress += 0.2f;
         }
 
         if (_subsystemGameInfo.WorldSettings.GameMode is GameMode.Survival or GameMode.Harmless &&
-            num3 >= 3f &&
+            digDuration >= 3f &&
             _digProgress > 0.5f)
         {
-            ToolHintRequested?.Invoke(cellValue, num3);
+            ToolHintRequested?.Invoke(cellValue, digDuration);
         }
 
-        if (!flag2)
+        if (!applyDigStroke)
         {
             return result;
         }
@@ -233,7 +236,7 @@ public class ComponentMiner : Component, IUpdateable
         if (_digProgress >= 1f)
         {
             DigCellFace = null;
-            if (flag)
+            if (continuousCreativeDig)
             {
                 Poke(true);
             }
@@ -322,7 +325,7 @@ public class ComponentMiner : Component, IUpdateable
         }
 
         value = placingContext.Value;
-        var num = Terrain.ExtractContents(value);
+        var placedContents = Terrain.ExtractContents(value);
         if (BlockAvailability.IsBlockDisabled(
                 WorldContentBinding.For(Project).Catalog,
                 _subsystemGameInfo.WorldSettings.DisableBlocks,
@@ -333,12 +336,12 @@ public class ComponentMiner : Component, IUpdateable
             return false;
         }
 
-        if (!WorldContentBinding.For(Project).Catalog.Blocks[num].Placeable)
+        if (!WorldContentBinding.For(Project).Catalog.Blocks[placedContents].Placeable)
         {
             return false;
         }
 
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[placedContents];
         var placementData = block.GetPlacementValue(
             _subsystemTerrain,
             Matrix.CreateFromQuaternion(ComponentCreature.ComponentCreaturePose.EyeRotation).Forward,
@@ -367,23 +370,23 @@ public class ComponentMiner : Component, IUpdateable
         }
 
         var point = CellFace.FaceToPoint3(placementData.CellFace.Face);
-        var num2 = placementData.CellFace.X + point.X;
-        var num3 = placementData.CellFace.Y + point.Y;
-        var num4 = placementData.CellFace.Z + point.Z;
-        var oldBlockId = _subsystemTerrain.Terrain.GetCellContents(num2, num3, num4);
+        var placementX = placementData.CellFace.X + point.X;
+        var placementY = placementData.CellFace.Y + point.Y;
+        var placementZ = placementData.CellFace.Z + point.Z;
+        var oldBlockId = _subsystemTerrain.Terrain.GetCellContents(placementX, placementY, placementZ);
         if (oldBlockId == 1)
         {
             return false;
         }
 
-        if (num3 is <= 0 or >= 256 ||
+        if (placementY is <= 0 or >= 256 ||
             (!IsBlockPlacingAllowed(ComponentCreature.ComponentBody) &&
              _subsystemGameInfo.WorldSettings.GameMode > GameMode.Survival))
         {
             return false;
         }
 
-        var flag = false;
+        var overlapsBody = false;
         if (block.Collidable)
         {
             var boundingBox = ComponentCreature.ComponentBody.BoundingBox;
@@ -394,24 +397,24 @@ public class ComponentMiner : Component, IUpdateable
             foreach (var box in customCollisionBoxes)
             {
                 var boxLocal = box;
-                boxLocal.Min += new Vector3(num2, num3, num4);
-                boxLocal.Max += new Vector3(num2, num3, num4);
+                boxLocal.Min += new Vector3(placementX, placementY, placementZ);
+                boxLocal.Max += new Vector3(placementX, placementY, placementZ);
                 if (!boundingBox.Intersection(boxLocal))
                 {
                     continue;
                 }
 
-                flag = true;
+                overlapsBody = true;
                 break;
             }
         }
 
-        if (flag)
+        if (overlapsBody)
         {
             return false;
         }
 
-        var blockPlacedContext = new BlockPlacedContext(this, num2, num3, num4, placementData, value);
+        var blockPlacedContext = new BlockPlacedContext(this, placementX, placementY, placementZ, placementData, value);
         WorldRuleHooks.For(Project).Invoke(blockPlacedContext);
         if (!WorldRuntimeContext.IsProjectActive(blockPlacedContext.Project)) { return false; }
 
@@ -426,14 +429,14 @@ public class ComponentMiner : Component, IUpdateable
         var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(Terrain.ExtractContents(placementData.Value));
         foreach (var behavior in blockBehaviors)
         {
-            behavior.OnBlockPlaced(this, num2, num3, num4, ref placementData, value);
+            behavior.OnBlockPlaced(this, placementX, placementY, placementZ, ref placementData, value);
         }
 
         if (!WorldRuntimeContext.For(Project).IsAuthority &&
             ComponentCharacter is { CharacterData.IsLocalCharacter: true })
         {
-            PlacementCell = new Point3(num2, num3, num4);
-            PlacementExpectedValue = _subsystemTerrain.Terrain.GetCellValue(num2, num3, num4);
+            PlacementCell = new Point3(placementX, placementY, placementZ);
+            PlacementExpectedValue = _subsystemTerrain.Terrain.GetCellValue(placementX, placementY, placementZ);
             PlacementRequestId = _subsystemTerrain.CellPrediction!.Begin(
                 PlacementCell,
                 PlacementExpectedValue,
@@ -442,7 +445,7 @@ public class ComponentMiner : Component, IUpdateable
             );
         }
 
-        _subsystemTerrain.DestroyCell(0, num2, num3, num4, placementData.Value, false, false, this);
+        _subsystemTerrain.DestroyCell(0, placementX, placementY, placementZ, placementData.Value, false, false, this);
 
         BlockPlaced?.Invoke(new Vector3(placementData.CellFace.X, placementData.CellFace.Y, placementData.CellFace.Z));
         Poke(false);
@@ -456,8 +459,8 @@ public class ComponentMiner : Component, IUpdateable
 
     public bool Use(Ray3 ray)
     {
-        var num = Terrain.ExtractContents(ActiveBlockValue);
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var heldContents = Terrain.ExtractContents(ActiveBlockValue);
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[heldContents];
 
         var useContext = new BlockUseContext(ray, this, ActiveBlockValue);
         WorldRuleHooks.For(Project).Invoke(useContext);
@@ -475,7 +478,7 @@ public class ComponentMiner : Component, IUpdateable
             return false;
         }
 
-        var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
+        var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(heldContents);
         if (!blockBehaviors.Any(behavior => behavior.OnUse(ray, this)) && !useContext.Handled)
         {
             return false;
@@ -568,13 +571,13 @@ public class ComponentMiner : Component, IUpdateable
             playerHitRate = 0.66f;
         }
 
-        var flag = _random.Bool(ComponentCharacter != null ? playerHitRate : creatureHitRate);
+        var hitSucceeded = _random.Bool(ComponentCharacter != null ? playerHitRate : creatureHitRate);
         if (ComponentCharacter != null)
         {
             damage *= ComponentCharacter.ComponentLevel.StrengthFactor;
         }
 
-        if (flag)
+        if (hitSucceeded)
         {
             AttackBody(componentBody, ComponentCreature, hitPoint, hitDirection, damage, true);
             DamageActiveTool(1);
@@ -599,7 +602,7 @@ public class ComponentMiner : Component, IUpdateable
         if (ComponentCreature.CharacterStats != null)
         {
             ComponentCreature.CharacterStats.MeleeAttacks++;
-            if (flag)
+            if (hitSucceeded)
             {
                 ComponentCreature.CharacterStats.MeleeHits++;
             }
@@ -621,8 +624,8 @@ public class ComponentMiner : Component, IUpdateable
 
     public bool Aim(Ray3 aim, AimState state)
     {
-        var num = Terrain.ExtractContents(ActiveBlockValue);
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var heldContents = Terrain.ExtractContents(ActiveBlockValue);
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[heldContents];
         if (!block.Aimable)
         {
             return false;
@@ -635,7 +638,7 @@ public class ComponentMiner : Component, IUpdateable
             return true;
         }
 
-        var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
+        var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(heldContents);
         return blockBehaviors.Any(behavior => behavior.OnAim(aim, this, state));
     }
 
@@ -699,20 +702,20 @@ public class ComponentMiner : Component, IUpdateable
             includePredictedBlocks: mode == RaycastMode.Digging &&
                                     ComponentCharacter is { CharacterData.IsLocalCharacter: true }
         );
-        var num = bodyRaycastResult?.Distance ?? float.PositiveInfinity;
-        var num2 = movingBlocksRaycastResult?.Distance ?? float.PositiveInfinity;
-        var num3 = terrainRaycastResult?.Distance ?? float.PositiveInfinity;
-        if (num < num2 && num < num3)
+        var bodyDistance = bodyRaycastResult?.Distance ?? float.PositiveInfinity;
+        var movingBlockDistance = movingBlocksRaycastResult?.Distance ?? float.PositiveInfinity;
+        var terrainDistance = terrainRaycastResult?.Distance ?? float.PositiveInfinity;
+        if (bodyDistance < movingBlockDistance && bodyDistance < terrainDistance)
         {
             return bodyRaycastResult!.Value;
         }
 
-        if (num2 < num && num2 < num3)
+        if (movingBlockDistance < bodyDistance && movingBlockDistance < terrainDistance)
         {
             return movingBlocksRaycastResult!.Value;
         }
 
-        if (num3 < num && num3 < num2)
+        if (terrainDistance < bodyDistance && terrainDistance < movingBlockDistance)
         {
             return terrainRaycastResult!.Value;
         }
@@ -758,15 +761,15 @@ public class ComponentMiner : Component, IUpdateable
             return;
         }
 
-        var num = WorldContentBinding.For(Project).Catalog
+        var damagedValue = WorldContentBinding.For(Project).Catalog
             .DamageItem(ActiveBlockValue, damageCount);
-        if (num != 0)
+        if (damagedValue != 0)
         {
             var slotCount = Inventory.GetSlotCount(Inventory.ActiveSlotIndex);
             Inventory.RemoveSlotItems(Inventory.ActiveSlotIndex, slotCount);
             if (Inventory.GetSlotCount(Inventory.ActiveSlotIndex) == 0)
             {
-                Inventory.AddSlotItems(Inventory.ActiveSlotIndex, num, slotCount);
+                Inventory.AddSlotItems(Inventory.ActiveSlotIndex, damagedValue, slotCount);
             }
         }
         else
@@ -816,7 +819,7 @@ public class ComponentMiner : Component, IUpdateable
             var componentHealth = target.Entity.FindComponent<ComponentHealth>();
             if (componentHealth != null)
             {
-                var num = attackPower / componentHealth.AttackResilience;
+                var healthDamage = attackPower / componentHealth.AttackResilience;
                 LocalizedText cause;
                 if (attacker != null)
                 {
@@ -842,8 +845,8 @@ public class ComponentMiner : Component, IUpdateable
                 }
 
                 var health = componentHealth.Health;
-                componentHealth.Injure(num, attacker, false, cause);
-                if (num > 0f)
+                componentHealth.Injure(healthDamage, attacker, false, cause);
+                if (healthDamage > 0f)
                 {
                     var actualDamage = (health - componentHealth.Health) * componentHealth.AttackResilience;
                     var position = hitPoint + 0.75f * hitDirection;
@@ -869,34 +872,35 @@ public class ComponentMiner : Component, IUpdateable
             var componentDamage = target.Entity.FindComponent<ComponentDamage>();
             if (componentDamage != null)
             {
-                var num3 = attackPower / componentDamage.AttackResilience;
-                componentDamage.Damage(num3, isAttack: true);
+                var durabilityDamage = attackPower / componentDamage.AttackResilience;
+                componentDamage.Damage(durabilityDamage, isAttack: true);
             }
         }
 
-        var num4 = 0f;
+        var impulseMagnitude = 0f;
         var x = 0f;
         var recalculate = false;
         if (isMeleeAttack && attacker != null)
         {
-            var num5 = attackPower >= 2f ? 1.25f : 1f;
-            var num6 = MathUtils.Pow(attacker.ComponentBody.Mass / target.Mass, 0.5f);
-            var x2 = num5 * num6;
-            num4 = 5.5f * MathUtils.Saturate(x2);
+            var attackStrengthFactor = attackPower >= 2f ? 1.25f : 1f;
+            var massRatioFactor = MathUtils.Pow(attacker.ComponentBody.Mass / target.Mass, 0.5f);
+            var x2 = attackStrengthFactor * massRatioFactor;
+            impulseMagnitude = 5.5f * MathUtils.Saturate(x2);
             x = 0.25f * MathUtils.Saturate(x2);
         }
         else if (attackPower > 0f)
         {
-            num4 = 2f;
+            impulseMagnitude = 2f;
             x = 0.2f;
         }
 
-        if (!(num4 > 0f))
+        if (!(impulseMagnitude > 0f))
         {
             return;
         }
 
-        var impulse = num4 * Vector3.Normalize(hitDirection + _random2.Vector3(0.1f) + 0.2f * Vector3.UnitY);
+        var impulse = impulseMagnitude *
+                      Vector3.Normalize(hitDirection + _random2.Vector3(0.1f) + 0.2f * Vector3.UnitY);
         target.ApplyImpulse(impulse);
         var componentLocomotion = target.Entity.FindComponent<ComponentLocomotion>();
         if (componentLocomotion == null)
@@ -986,7 +990,7 @@ public class ComponentMiner : Component, IUpdateable
 
         if (_subsystemGameInfo.WorldSettings.GameMode == GameMode.Adventure)
         {
-            var num = digMethod switch
+            var adventureDigPower = digMethod switch
             {
                 BlockDigMethod.Shovel when block.ShovelPower >= 2f => block.ShovelPower,
                 BlockDigMethod.Quarry when block.QuarryPower >= 2f => block.QuarryPower,
@@ -995,13 +999,15 @@ public class ComponentMiner : Component, IUpdateable
             };
             if (ComponentCharacter != null)
             {
-                num *= ComponentCharacter.ComponentLevel.StrengthFactor;
+                adventureDigPower *= ComponentCharacter.ComponentLevel.StrengthFactor;
             }
 
-            return !(num > 0f) ? float.PositiveInfinity : MathUtils.Max(digResilience / num, 0f);
+            return !(adventureDigPower > 0f)
+                ? float.PositiveInfinity
+                : MathUtils.Max(digResilience / adventureDigPower, 0f);
         }
 
-        var num2 = digMethod switch
+        var digPower = digMethod switch
         {
             BlockDigMethod.Shovel => block.ShovelPower,
             BlockDigMethod.Quarry => block.QuarryPower,
@@ -1010,10 +1016,10 @@ public class ComponentMiner : Component, IUpdateable
         };
         if (ComponentCharacter != null)
         {
-            num2 *= ComponentCharacter.ComponentLevel.StrengthFactor;
+            digPower *= ComponentCharacter.ComponentLevel.StrengthFactor;
         }
 
-        return !(num2 > 0f) ? float.PositiveInfinity : MathUtils.Max(digResilience / num2, 0f);
+        return !(digPower > 0f) ? float.PositiveInfinity : MathUtils.Max(digResilience / digPower, 0f);
     }
 
     private bool CanUseTool(int toolValue)
@@ -1037,7 +1043,7 @@ public class ComponentMiner : Component, IUpdateable
     public int FindBestInventoryToolForDigging(int digValue)
     {
         var result = 0;
-        var num = CalculateDigTime(digValue, 0);
+        var bestDigTime = CalculateDigTime(digValue, 0);
         foreach (var item in Entity.FindComponents<IInventory>())
         {
             if (item is null or ComponentCreativeInventory)
@@ -1053,13 +1059,13 @@ public class ComponentMiner : Component, IUpdateable
                     continue;
                 }
 
-                var num2 = CalculateDigTime(digValue, Terrain.ExtractContents(slotValue));
-                if (!(num2 < num))
+                var slotDigTime = CalculateDigTime(digValue, Terrain.ExtractContents(slotValue));
+                if (!(slotDigTime < bestDigTime))
                 {
                     continue;
                 }
 
-                num = num2;
+                bestDigTime = slotDigTime;
                 result = slotValue;
             }
         }

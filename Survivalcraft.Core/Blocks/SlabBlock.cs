@@ -42,12 +42,12 @@ public abstract class SlabBlock(int fullBlockIndex) : Block, IPaintableBlock
         TerrainRaycastResult raycastResult
     )
     {
-        var num = Terrain.ExtractContents(value);
+        var slabContents = Terrain.ExtractContents(value);
         var data = Terrain.ExtractData(value);
-        var num2 = Terrain.ExtractContents(raycastResult.Value);
+        var targetContents = Terrain.ExtractContents(raycastResult.Value);
         var data2 = Terrain.ExtractData(raycastResult.Value);
         BlockPlacementData result;
-        if (num2 == num &&
+        if (targetContents == slabContents &&
             ((GetIsTop(data2) && raycastResult.CellFace.Face == 5) ||
              (!GetIsTop(data2) && raycastResult.CellFace.Face == 4)))
         {
@@ -77,8 +77,8 @@ public abstract class SlabBlock(int fullBlockIndex) : Block, IPaintableBlock
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = GetIsTop(Terrain.ExtractData(value)) ? 1 : 0;
-        return CollisionBoxes[num];
+        var halfIndex = GetIsTop(Terrain.ExtractData(value)) ? 1 : 0;
+        return CollisionBoxes[halfIndex];
     }
 
     public override bool AllowsDestructionDebris(int oldValue, int newValue) =>
@@ -117,8 +117,8 @@ public abstract class SlabBlock(int fullBlockIndex) : Block, IPaintableBlock
         while (i < 16)
         {
             yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, i));
-            var num = i + 1;
-            i = num;
+            var nextColor = i + 1;
+            i = nextColor;
         }
     }
 

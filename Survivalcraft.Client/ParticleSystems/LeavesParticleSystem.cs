@@ -64,7 +64,7 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
     {
         var terrain = _subsystemTerrain.Terrain;
         var daylight = LightingManager.CaptureSkyLightValue(_subsystemTerrain);
-        var flag = false;
+        var hasActiveParticles = false;
         foreach (var particle in Particles)
         {
             if (!particle.IsActive)
@@ -79,62 +79,64 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
                 particle.Angle += particle.AngleSpeed * dt;
                 var v = Vector2.Rotate(Vector2.UnitX, particle.Rotation);
                 var vector = Vector2.Perpendicular(v);
-                var vector2 = Vector2.Rotate(Vector2.UnitY, particle.Angle);
-                particle.Right = particle.Size.X * new Vector3(v.X * vector2.X, v.Y, v.X * vector2.Y);
-                particle.Up = particle.Size.Y * new Vector3(vector.X * vector2.X, vector.Y, vector.X * vector2.Y);
-                var num = MathUtils.Saturate(4f * particle.Time);
-                particle.Position += 0.8f * particle.Speed * num * dt * new Vector3(0f, -1f, 0f);
+                var flutterDirection = Vector2.Rotate(Vector2.UnitY, particle.Angle);
+                particle.Right = particle.Size.X * new Vector3(v.X * flutterDirection.X, v.Y, v.X * flutterDirection.Y);
+                particle.Up = particle.Size.Y *
+                              new Vector3(vector.X * flutterDirection.X, vector.Y, vector.X * flutterDirection.Y);
+                var motionRamp = MathUtils.Saturate(4f * particle.Time);
+                particle.Position += 0.8f * particle.Speed * motionRamp * dt * new Vector3(0f, -1f, 0f);
                 particle.Position += 0.4f *
                                      particle.Speed *
-                                     num *
+                                     motionRamp *
                                      dt *
                                      MathUtils.Cos(particle.Phase) *
-                                     new Vector3(vector2.X, 0f, vector2.Y);
+                                     new Vector3(flutterDirection.X, 0f, flutterDirection.Y);
                 particle.Position += 0.3f *
                                      particle.Speed *
-                                     num *
+                                     motionRamp *
                                      dt *
                                      MathUtils.Cos(2f * particle.Phase) *
                                      new Vector3(0f, -1f, 0f);
             }
 
-            var num2 = Terrain.ToCell(particle.Position.X);
-            var num3 = Terrain.ToCell(particle.Position.Y);
-            var num4 = Terrain.ToCell(particle.Position.Z);
-            particle.Light = LightingManager.SampleSpatialLight(_subsystemTerrain, num2, num3, num4) ?? particle.Light;
+            var cellX = Terrain.ToCell(particle.Position.X);
+            var cellY = Terrain.ToCell(particle.Position.Y);
+            var cellZ = Terrain.ToCell(particle.Position.Z);
+            particle.Light = LightingManager.SampleSpatialLight(_subsystemTerrain, cellX, cellY, cellZ) ??
+                             particle.Light;
 
             particle.Color = Color.MultiplyColorOnlyNotSaturated(
                 particle.BaseColor,
                 LightingManager.GetBrightness(LightingManager.GetEffectiveLight(particle.Light, daylight))
             );
-            var num5 = MathUtils.Saturate(0.5f * (particle.EndTime - particle.Time));
+            var fadeFactor = MathUtils.Saturate(0.5f * (particle.EndTime - particle.Time));
             if (_fadeIn)
             {
-                num5 *= MathUtils.Saturate(1f * particle.Time);
+                fadeFactor *= MathUtils.Saturate(1f * particle.Time);
             }
 
-            particle.Color *= num5;
+            particle.Color *= fadeFactor;
             if (particle.BillboardingMode == ParticleBillboardingMode.None)
             {
-                var cellValue = terrain.GetCellValue(num2, num3, num4);
-                var num6 = Terrain.ExtractContents(cellValue);
-                var block = _subsystemTerrain.Catalog.Blocks[num6];
+                var cellValue = terrain.GetCellValue(cellX, cellY, cellZ);
+                var contents = Terrain.ExtractContents(cellValue);
+                var block = _subsystemTerrain.Catalog.Blocks[contents];
                 if (block is WaterBlock)
                 {
                     particle.EndTime = particle.Time;
                 }
                 else if (block.Collidable && !(block is LeavesBlock))
                 {
-                    const float num7 = 0.5f;
+                    const float rayStartOffset = 0.5f;
                     var ray = new Ray3(
-                        particle.Position - new Vector3(num2, num3, num4) + new Vector3(0f, num7, 0f),
+                        particle.Position - new Vector3(cellX, cellY, cellZ) + new Vector3(0f, rayStartOffset, 0f),
                         -Vector3.UnitY
                     );
-                    var num8 = block.Raycast(ray, _subsystemTerrain, cellValue, false, out _, out _);
-                    if (num8 is < num7 - 0f)
+                    var hitDistance = block.Raycast(ray, _subsystemTerrain, cellValue, false, out _, out _);
+                    if (hitDistance is < rayStartOffset - 0f)
                     {
                         particle.BillboardingMode = ParticleBillboardingMode.Horizontal;
-                        particle.Position = ray.Sample(num8.Value) + new Vector3(num2, num3 + 0.03f, num4);
+                        particle.Position = ray.Sample(hitDistance.Value) + new Vector3(cellX, cellY + 0.03f, cellZ);
                         particle.EndTime = particle.Time + 2f;
                     }
                 }
@@ -147,11 +149,11 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
             }
             else
             {
-                flag = true;
+                hasActiveParticles = true;
             }
         }
 
-        return !flag;
+        return !hasActiveParticles;
     }
 
     public class Particle : Game.ParticleSystems.Particle

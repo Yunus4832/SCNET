@@ -27,13 +27,13 @@ public static class Flac
                     throw new NotSupportedException("Underlying stream cannot be seeked.");
                 }
 
-                var num = value * ChannelsCount * 2;
-                if (num < 0 || num > BytesCount)
+                var byteOffset = value * ChannelsCount * 2;
+                if (byteOffset < 0 || byteOffset > BytesCount)
                 {
                     throw new InvalidOperationException("Invalid range.");
                 }
 
-                Reader.Position = num;
+                Reader.Position = byteOffset;
                 _soundPosition = value;
             }
         }
@@ -62,9 +62,9 @@ public static class Flac
                 throw new InvalidOperationException("Invalid range.");
             }
 
-            var num = Reader.Read(buffer, offset, (int)Math.Min(count, BytesCount - Position));
-            _soundPosition += num / 2 / ChannelsCount;
-            return num;
+            var bytesRead = Reader.Read(buffer, offset, (int)Math.Min(count, BytesCount - Position));
+            _soundPosition += bytesRead / 2 / ChannelsCount;
+            return bytesRead;
         }
 
         /// <summary>

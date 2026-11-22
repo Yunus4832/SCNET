@@ -21,11 +21,11 @@ public abstract class StreamingSource : IDisposable
     public void CopyTo(Stream stream)
     {
         var array = new byte[4096];
-        int num;
+        int bytesRead;
         do
         {
-            num = Read(array, 0, array.Length);
-            stream.Write(array, 0, num);
-        } while (num >= array.Length);
+            bytesRead = Read(array, 0, array.Length);
+            stream.Write(array, 0, bytesRead);
+        } while (bytesRead >= array.Length);
     }
 }

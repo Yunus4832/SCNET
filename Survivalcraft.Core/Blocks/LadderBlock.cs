@@ -49,9 +49,9 @@ public abstract class LadderBlock(string modelName, float offset) : Block
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = Terrain.ExtractData(value);
-        return num < CollisionBoxesByData.Length
-            ? CollisionBoxesByData[num]
+        var mountingFace = Terrain.ExtractData(value);
+        return mountingFace < CollisionBoxesByData.Length
+            ? CollisionBoxesByData[mountingFace]
             : base.GetCustomCollisionBoxes(terrain, value);
     }
 

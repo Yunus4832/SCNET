@@ -91,8 +91,13 @@ public class ComponentLayEggBehavior : ComponentBehavior, IUpdateable
             delegate
             {
                 var position2 = _componentCreature.ComponentBody.Position;
-                const float num = 5f;
-                var value3 = position2 + new Vector3(num * _random.Float(-1f, 1f), 0f, num * _random.Float(-1f, 1f));
+                const float searchRadius = 5f;
+                var value3 = position2 +
+                             new Vector3(
+                                 searchRadius * _random.Float(-1f, 1f),
+                                 0f,
+                                 searchRadius * _random.Float(-1f, 1f)
+                             );
                 value3.Y = _subsystemTerrain.Terrain.GetTopHeight(Terrain.ToCell(value3.X), Terrain.ToCell(value3.Z)) +
                            1;
                 _componentPathfinding.SetDestination(

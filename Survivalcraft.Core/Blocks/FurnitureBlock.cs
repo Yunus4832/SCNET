@@ -71,8 +71,8 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
             return null;
         }
 
-        var num = CellFace.OppositeFace(face < 4 ? (face - rotation + 4) % 4 : face);
-        if ((design.MountingFacesMask & (1 << num)) == 0 ||
+        var designFace = CellFace.OppositeFace(face < 4 ? (face - rotation + 4) % 4 : face);
+        if ((design.MountingFacesMask & (1 << designFace)) == 0 ||
             !SubsystemElectricity.GetConnectorDirection(face, 0, connectorFace).HasValue)
         {
             return null;
@@ -81,7 +81,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
         var point = CellFace.FaceToPoint3(face);
         var cellValue = terrain.Terrain.GetCellValue(x - point.X, y - point.Y, z - point.Z);
         if (Catalog.Blocks[Terrain.ExtractContents(cellValue)]
-            .IsFaceTransparent(terrain, CellFace.OppositeFace(num), cellValue))
+            .IsFaceTransparent(terrain, CellFace.OppositeFace(designFace), cellValue))
         {
             return null;
         }
@@ -213,8 +213,8 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
         }
 
         var mainValue = design.MainValue;
-        var num = Terrain.ExtractContents(mainValue);
-        return Catalog.Blocks[num].GetSoundMaterialName(subsystemTerrain, mainValue);
+        var mainContents = Terrain.ExtractContents(mainValue);
+        return Catalog.Blocks[mainContents].GetSoundMaterialName(subsystemTerrain, mainValue);
     }
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain subsystemTerrain, int value)
@@ -255,23 +255,31 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
         else
         {
             var forward = eyeForward;
-            var num = Vector3.Dot(forward, Vector3.UnitZ);
-            var num2 = Vector3.Dot(forward, Vector3.UnitX);
-            var num3 = Vector3.Dot(forward, -Vector3.UnitZ);
-            var num4 = Vector3.Dot(forward, -Vector3.UnitX);
-            if (num.CloseTo(MathUtils.Max(num, num2, num3, num4)))
+            var positiveZAlignment = Vector3.Dot(forward, Vector3.UnitZ);
+            var positiveXAlignment = Vector3.Dot(forward, Vector3.UnitX);
+            var negativeZAlignment = Vector3.Dot(forward, -Vector3.UnitZ);
+            var negativeXAlignment = Vector3.Dot(forward, -Vector3.UnitX);
+            if (positiveZAlignment.CloseTo(
+                    MathUtils.Max(positiveZAlignment, positiveXAlignment, negativeZAlignment, negativeXAlignment)
+                ))
             {
                 rotation = 0;
             }
-            else if (num2.CloseTo(MathUtils.Max(num, num2, num3, num4)))
+            else if (positiveXAlignment.CloseTo(
+                         MathUtils.Max(positiveZAlignment, positiveXAlignment, negativeZAlignment, negativeXAlignment)
+                     ))
             {
                 rotation = 1;
             }
-            else if (num3.CloseTo(MathUtils.Max(num, num2, num3, num4)))
+            else if (negativeZAlignment.CloseTo(
+                         MathUtils.Max(positiveZAlignment, positiveXAlignment, negativeZAlignment, negativeXAlignment)
+                     ))
             {
                 rotation = 2;
             }
-            else if (num4.CloseTo(MathUtils.Max(num, num2, num3, num4)))
+            else if (negativeXAlignment.CloseTo(
+                         MathUtils.Max(positiveZAlignment, positiveXAlignment, negativeZAlignment, negativeXAlignment)
+                     ))
             {
                 rotation = 3;
             }
@@ -318,9 +326,9 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
             return null;
         }
 
-        var num = 0;
-        var num2 = 0;
-        var num3 = 0;
+        var buttonCount = 0;
+        var switchCount = 0;
+        var wireCount = 0;
         var list = new List<FurnitureDesign>();
         foreach (var ingredient in ingredients)
         {
@@ -343,11 +351,11 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
             }
             else if (craftingId == Catalog.GetBlock(ResourceId.Parse("game:button")).CraftingId)
             {
-                num++;
+                buttonCount++;
             }
             else if (craftingId == Catalog.GetBlock(ResourceId.Parse("game:switch")).CraftingId)
             {
-                num2++;
+                switchCount++;
             }
             else
             {
@@ -356,11 +364,11 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
                     return null;
                 }
 
-                num3++;
+                wireCount++;
             }
         }
 
-        if (list.Count == 1 && num == 1 && num2 == 0 && num3 == 0)
+        if (list.Count == 1 && buttonCount == 1 && switchCount == 0 && wireCount == 0)
         {
             var furnitureDesign = list[0].Clone();
             furnitureDesign.InteractionMode = FurnitureInteractionMode.ElectricButton;
@@ -388,7 +396,7 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
             };
         }
 
-        if (list.Count == 2 && num == 0 && num2 == 1 && num3 == 0)
+        if (list.Count == 2 && buttonCount == 0 && switchCount == 1 && wireCount == 0)
         {
             var list2 = list.Select(d => d.Clone()).ToList();
             for (var j = 0; j < list2.Count; j++)
@@ -421,12 +429,12 @@ public class FurnitureBlock : Block, IPaintableBlock, IElectricElementBlock
             };
         }
 
-        if (list.Count >= 2 && num == 0 && num2 == 0 && num3 <= 1)
+        if (list.Count >= 2 && buttonCount == 0 && switchCount == 0 && wireCount <= 1)
         {
             var list3 = list.Select(d => d.Clone()).ToList();
             for (var k = 0; k < list3.Count; k++)
             {
-                list3[k].InteractionMode = num3 == 0
+                list3[k].InteractionMode = wireCount == 0
                     ? FurnitureInteractionMode.Multistate
                     : FurnitureInteractionMode.ConnectedMultistate;
                 list3[k].LinkedDesign = list3[(k + 1) % list3.Count];

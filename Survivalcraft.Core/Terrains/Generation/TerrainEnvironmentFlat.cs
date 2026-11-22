@@ -104,11 +104,11 @@ public class TerrainEnvironmentFlat : ITerrainEnvironment
                  );
         }
 
-        var vector = oceanCorner + new Vector2(x2, y);
-        var vector2 = oceanCorner +
-                      (islandSize ?? new Vector2(3.40282347E+38f)) +
-                      new Vector2(x3, y2);
-        return MathUtils.Min(x - vector.X, vector2.X - x, z - vector.Y, vector2.Y - z);
+        var minShore = oceanCorner + new Vector2(x2, y);
+        var maxShore = oceanCorner +
+                       (islandSize ?? new Vector2(3.40282347E+38f)) +
+                       new Vector2(x3, y2);
+        return MathUtils.Min(x - minShore.X, maxShore.X - x, z - minShore.Y, maxShore.Y - z);
     }
 
     public float CalculateMountainRangeFactor(float x, float z)

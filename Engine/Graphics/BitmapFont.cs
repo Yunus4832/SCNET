@@ -59,9 +59,9 @@ public class BitmapFont : IDisposable
             texture.Tag = null;
             var bitmapFont = new BitmapFont();
             var streamReader = new StreamReader(glyphsStream);
-            var num = int.Parse(streamReader.ReadLine() ?? string.Empty);
-            var array = new Glyph[num];
-            for (var i = 0; i < num; i++)
+            var glyphCount = int.Parse(streamReader.ReadLine() ?? string.Empty);
+            var array = new Glyph[glyphCount];
+            for (var i = 0; i < glyphCount; i++)
             {
                 var line = streamReader.ReadLine() ?? string.Empty;
                 var arr = line.Split([(char)0x20, (char)0x09], StringSplitOptions.None);
@@ -164,22 +164,22 @@ public class BitmapFont : IDisposable
     {
         scale *= Scale;
         spacing += Spacing.X;
-        var num = 0f;
+        var lineWidth = 0f;
         for (var i = start; i < start + length; i++)
         {
             var c = text[i];
             switch (c)
             {
                 case '\n':
-                    num = 0f;
+                    lineWidth = 0f;
                     continue;
                 case '\r':
                     continue;
             }
 
             var glyph = GetGlyph(c);
-            num += (glyph.Width + spacing) * scale;
-            if (num > width)
+            lineWidth += (glyph.Width + spacing) * scale;
+            if (lineWidth > width)
             {
                 return i - start;
             }
@@ -269,23 +269,23 @@ public class BitmapFont : IDisposable
             throw new InvalidOperationException("No glyphs found in BitmapFont image.");
         }
 
-        var num = int.MaxValue;
-        var num2 = int.MaxValue;
-        var num3 = int.MaxValue;
-        var num4 = int.MaxValue;
+        var leftMargin = int.MaxValue;
+        var topMargin = int.MaxValue;
+        var rightMargin = int.MaxValue;
+        var bottomMargin = int.MaxValue;
         for (var i = 0; i < list2.Count; i++)
         {
             if (list2[i].Width > 0 && list2[i].Height > 0)
             {
-                num = Math.Min(num, list2[i].Left - list[i].Left);
-                num2 = Math.Min(num2, list2[i].Top - list[i].Top);
-                num3 = Math.Min(num3, list[i].Right - list2[i].Right);
-                num4 = Math.Min(num4, list[i].Bottom - list2[i].Bottom);
+                leftMargin = Math.Min(leftMargin, list2[i].Left - list[i].Left);
+                topMargin = Math.Min(topMargin, list2[i].Top - list[i].Top);
+                rightMargin = Math.Min(rightMargin, list[i].Right - list2[i].Right);
+                bottomMargin = Math.Min(bottomMargin, list[i].Bottom - list2[i].Bottom);
             }
         }
 
-        int num5 = firstCode;
-        var num6 = 0f;
+        int glyphCode = firstCode;
+        var maxGlyphHeight = 0f;
         var list3 = new List<Glyph>();
         for (var j = 0; j < list2.Count; j++)
         {
@@ -297,8 +297,8 @@ public class BitmapFont : IDisposable
                 texCoord = new Vector2((list2[j].Left - 0.5f) / image.Width, (list2[j].Top - 0.5f) / image.Height);
                 texCoord2 = new Vector2((list2[j].Right + 0.5f) / image.Width, (list2[j].Bottom + 0.5f) / image.Height);
                 offset2 = new Vector2(
-                    list2[j].Left - list[j].Left - num - 0.5f,
-                    list2[j].Top - list[j].Top - num2 - 0.5f
+                    list2[j].Left - list[j].Left - leftMargin - 0.5f,
+                    list2[j].Top - list[j].Top - topMargin - 0.5f
                 );
             }
             else
@@ -309,10 +309,10 @@ public class BitmapFont : IDisposable
             }
 
             offset2 += offset;
-            float width = list[j].Width - num - num3;
-            num6 = MathUtils.Max(num6, list[j].Height - num2 - num4);
-            list3.Add(new Glyph((char)num5, texCoord, texCoord2, offset2, width));
-            num5++;
+            float width = list[j].Width - leftMargin - rightMargin;
+            maxGlyphHeight = MathUtils.Max(maxGlyphHeight, list[j].Height - topMargin - bottomMargin);
+            list3.Add(new Glyph((char)glyphCode, texCoord, texCoord2, offset2, width));
+            glyphCode++;
         }
 
         var image2 = new Image(image.Width, image.Height);
@@ -330,7 +330,7 @@ public class BitmapFont : IDisposable
 
         var image3 = createTexture ? null : image2;
         var bitmapFont = new BitmapFont();
-        bitmapFont.Initialize(texture, image3, list3, fallbackCode, num6, spacing, scale);
+        bitmapFont.Initialize(texture, image3, list3, fallbackCode, maxGlyphHeight, spacing, scale);
         return bitmapFont;
     }
 
@@ -371,8 +371,8 @@ public class BitmapFont : IDisposable
         var y = 1;
         while (y < image.Height)
         {
-            int num;
-            for (var x = 1; x < image.Width; x = num)
+            int nextX;
+            for (var x = 1; x < image.Width; x = nextX)
             {
                 if (image.GetPixel(x, y) != Color.Magenta &&
                     image.GetPixel(x - 1, y) == Color.Magenta &&
@@ -391,37 +391,37 @@ public class BitmapFont : IDisposable
                     yield return new Rectangle(x, y, i, j);
                 }
 
-                num = x + 1;
+                nextX = x + 1;
             }
 
-            num = y + 1;
-            y = num;
+            nextX = y + 1;
+            y = nextX;
         }
     }
 
     private static Rectangle CropGlyph(Image image, Rectangle rectangle)
     {
-        var num = int.MaxValue;
-        var num2 = int.MaxValue;
-        var num3 = int.MinValue;
-        var num4 = int.MinValue;
+        var minX = int.MaxValue;
+        var minY = int.MaxValue;
+        var maxX = int.MinValue;
+        var maxY = int.MinValue;
         for (var i = rectangle.Left; i < rectangle.Left + rectangle.Width; i++)
         {
             for (var j = rectangle.Top; j < rectangle.Top + rectangle.Height; j++)
             {
                 if (image.GetPixel(i, j).A != 0)
                 {
-                    num = MathUtils.Min(num, i);
-                    num2 = MathUtils.Min(num2, j);
-                    num3 = MathUtils.Max(num3, i);
-                    num4 = MathUtils.Max(num4, j);
+                    minX = MathUtils.Min(minX, i);
+                    minY = MathUtils.Min(minY, j);
+                    maxX = MathUtils.Max(maxX, i);
+                    maxY = MathUtils.Max(maxY, j);
                 }
             }
         }
 
-        return num == int.MaxValue
+        return minX == int.MaxValue
             ? new Rectangle(rectangle.Left, rectangle.Top, 0, 0)
-            : new Rectangle(num, num2, num3 - num + 1, num4 - num2 + 1);
+            : new Rectangle(minX, minY, maxX - minX + 1, maxY - minY + 1);
     }
 
     public class Glyph(char code, Vector2 texCoord1, Vector2 texCoord2, Vector2 offset, float width)

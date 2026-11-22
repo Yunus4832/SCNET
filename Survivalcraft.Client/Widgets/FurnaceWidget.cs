@@ -32,25 +32,25 @@ public class FurnaceWidget : CanvasWidget
         _resultSlot = Children.Find<InventorySlotWidget>("ResultSlot")!;
         _remainsSlot = Children.Find<InventorySlotWidget>("RemainsSlot")!;
         _fuelSlot = Children.Find<InventorySlotWidget>("FuelSlot")!;
-        var num = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
+        var backpackSlot = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
         for (var i = 0; i < _inventoryGrid.RowsCount; i++)
         {
             for (var j = 0; j < _inventoryGrid.ColumnsCount; j++)
             {
                 var inventorySlotWidget = new InventorySlotWidget();
-                inventorySlotWidget.AssignInventorySlot(inventory, num++);
+                inventorySlotWidget.AssignInventorySlot(inventory, backpackSlot++);
                 _inventoryGrid.Children.Add(inventorySlotWidget);
                 _inventoryGrid.SetWidgetCell(inventorySlotWidget, new Point2(j, i));
             }
         }
 
-        num = 0;
+        backpackSlot = 0;
         for (var k = 0; k < _furnaceGrid.RowsCount; k++)
         {
             for (var l = 0; l < _furnaceGrid.ColumnsCount; l++)
             {
                 var inventorySlotWidget2 = new InventorySlotWidget();
-                inventorySlotWidget2.AssignInventorySlot(componentFurnace, num++);
+                inventorySlotWidget2.AssignInventorySlot(componentFurnace, backpackSlot++);
                 _furnaceGrid.Children.Add(inventorySlotWidget2);
                 _furnaceGrid.SetWidgetCell(inventorySlotWidget2, new Point2(l, k));
             }

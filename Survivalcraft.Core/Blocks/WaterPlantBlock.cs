@@ -11,10 +11,10 @@ public abstract class WaterPlantBlock : WaterBlock
     {
         var point = raycastResult.CellFace.Point + CellFace.FaceToPoint3(raycastResult.CellFace.Face);
         var cellValue = subsystemTerrain.Terrain.GetCellValue(point.X, point.Y, point.Z);
-        var num = Terrain.ExtractContents(cellValue);
+        var supportContents = Terrain.ExtractContents(cellValue);
         var data = Terrain.ExtractData(cellValue);
         BlockPlacementData result;
-        if (Catalog.Blocks[num] is WaterBlock)
+        if (Catalog.Blocks[supportContents] is WaterBlock)
         {
             result = default;
             result.CellFace = raycastResult.CellFace;

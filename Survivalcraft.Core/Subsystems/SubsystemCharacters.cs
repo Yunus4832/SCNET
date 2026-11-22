@@ -181,16 +181,16 @@ public class SubsystemCharacters : Subsystem, IUpdateable
     public ComponentCharacter? FindNearestCharacter(Vector3 position)
     {
         ComponentCharacter? result = null;
-        var num = float.MaxValue;
+        var nearestDistanceSquared = float.MaxValue;
         foreach (var componentCharacter in ComponentCharacters)
         {
-            var num2 = Vector3.DistanceSquared(componentCharacter.ComponentBody.Position, position);
-            if (!(num2 < num))
+            var distanceSquared = Vector3.DistanceSquared(componentCharacter.ComponentBody.Position, position);
+            if (!(distanceSquared < nearestDistanceSquared))
             {
                 continue;
             }
 
-            num = num2;
+            nearestDistanceSquared = distanceSquared;
             result = componentCharacter;
         }
 
@@ -414,7 +414,7 @@ public class SubsystemCharacters : Subsystem, IUpdateable
     public override void Save(ValuesDictionary valuesDictionary)
     {
         var onlineCharactersListVd = new ValuesDictionary();
-        var num = 0;
+        var characterIndex = 0;
         foreach (var playersDatum in _characters)
         {
             if (Project.SendToClientMode && playersDatum.ControllerConnection == null)
@@ -424,7 +424,7 @@ public class SubsystemCharacters : Subsystem, IUpdateable
 
             var valuesDictionary3 = new ValuesDictionary();
             playersDatum.Save(valuesDictionary3);
-            onlineCharactersListVd.SetValue(num++.ToString(), valuesDictionary3);
+            onlineCharactersListVd.SetValue(characterIndex++.ToString(), valuesDictionary3);
         }
 
         valuesDictionary.SetValue("GlobalSpawnPosition", GlobalSpawnPosition);

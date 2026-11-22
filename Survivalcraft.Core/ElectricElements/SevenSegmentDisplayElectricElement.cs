@@ -67,16 +67,16 @@ public class SevenSegmentDisplayElectricElement(
         {
             var v = new Vector3(cellFace.X + 0.5f, cellFace.Y + 0.5f, cellFace.Z + 0.5f);
             var vector = CellFace.FaceToVector3(mountingFace);
-            var vector2 = mountingFace < 4 ? Vector3.UnitY : Vector3.UnitX;
-            var v2 = Vector3.Cross(vector, vector2);
+            var up = mountingFace < 4 ? Vector3.UnitY : Vector3.UnitX;
+            var v2 = Vector3.Cross(vector, up);
             _glowPoints[i] = _subsystemGlow.AddGlowPoint();
             _glowPoints[i].Position = v -
                                       0.4375f * CellFace.FaceToVector3(mountingFace) +
                                       _centers[i].X * 0.0625f * v2 +
-                                      _centers[i].Y * 0.0625f * vector2;
+                                      _centers[i].Y * 0.0625f * up;
             _glowPoints[i].Forward = vector;
             _glowPoints[i].Right = v2 * _sizes[i].X * 0.0625f;
-            _glowPoints[i].Up = vector2 * _sizes[i].Y * 0.0625f;
+            _glowPoints[i].Up = up * _sizes[i].Y * 0.0625f;
             _glowPoints[i].Color = Color.Transparent;
             _glowPoints[i].Size = 1.35f;
             _glowPoints[i].FarSize = 1.35f;
@@ -115,10 +115,10 @@ public class SevenSegmentDisplayElectricElement(
             return false;
         }
 
-        var num = (int)MathUtils.Round(_voltage * 15f);
+        var displayDigit = (int)MathUtils.Round(_voltage * 15f);
         for (var i = 0; i < 7; i++)
         {
-            _glowPoints[i].Color = (_patterns[num] & (1 << i)) != 0 ? _color : Color.Transparent;
+            _glowPoints[i].Color = (_patterns[displayDigit] & (1 << i)) != 0 ? _color : Color.Transparent;
         }
 
         return false;

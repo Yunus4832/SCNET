@@ -95,45 +95,45 @@ public class ComponentHumanModel : ComponentCreatureModel
             _lieDownFactorModel = MathUtils.Max(_lieDownFactorModel - 3f * dt, 0f);
         }
 
-        var flag = true;
-        var flag2 = true;
+        var settleWalkPose = true;
+        var resetFootsteps = true;
         var footstepsPhase = _footstepsPhase;
         if (ComponentCreature.ComponentLocomotion.LadderValue.HasValue)
         {
             _footstepsPhase += 1.5f * _walkAnimationSpeed * ComponentCreature.ComponentBody.Velocity.Length() * dt;
-            flag2 = false;
+            resetFootsteps = false;
         }
         else if (!ComponentCreature.ComponentLocomotion.IsCreativeFlyEnabled)
         {
-            var num = ComponentCreature.ComponentLocomotion.SlipSpeed ??
-                      (ComponentCreature.ComponentBody.Velocity.XZ -
-                       ComponentCreature.ComponentBody.StandingOnVelocity.XZ).Length();
-            if (num > 0.5f)
+            var walkSpeed = ComponentCreature.ComponentLocomotion.SlipSpeed ??
+                            (ComponentCreature.ComponentBody.Velocity.XZ -
+                             ComponentCreature.ComponentBody.StandingOnVelocity.XZ).Length();
+            if (walkSpeed > 0.5f)
             {
-                MovementAnimationPhase += num * dt * _walkAnimationSpeed;
-                _footstepsPhase += 1f * _walkAnimationSpeed * num * dt;
-                flag = false;
-                flag2 = false;
+                MovementAnimationPhase += walkSpeed * dt * _walkAnimationSpeed;
+                _footstepsPhase += 1f * _walkAnimationSpeed * walkSpeed * dt;
+                settleWalkPose = false;
+                resetFootsteps = false;
             }
         }
 
-        if (flag)
+        if (settleWalkPose)
         {
-            var num2 = 0.5f * MathUtils.Floor(2f * MovementAnimationPhase);
-            if (MovementAnimationPhase.UncloseTo(num2))
+            var halfStepStart = 0.5f * MathUtils.Floor(2f * MovementAnimationPhase);
+            if (MovementAnimationPhase.UncloseTo(halfStepStart))
             {
-                MovementAnimationPhase = MovementAnimationPhase - num2 > 0.25f
-                    ? MathUtils.Min(MovementAnimationPhase + 2f * dt, num2 + 0.5f)
-                    : MathUtils.Max(MovementAnimationPhase - 2f * dt, num2);
+                MovementAnimationPhase = MovementAnimationPhase - halfStepStart > 0.25f
+                    ? MathUtils.Min(MovementAnimationPhase + 2f * dt, halfStepStart + 0.5f)
+                    : MathUtils.Max(MovementAnimationPhase - 2f * dt, halfStepStart);
             }
         }
 
-        if (flag2)
+        if (resetFootsteps)
         {
             _footstepsPhase = 0f;
         }
 
-        var num3 = 0f;
+        var targetBob = 0f;
         var componentMount = _componentRider != null ? _componentRider.Mount : null;
         if (componentMount != null)
         {
@@ -141,7 +141,7 @@ public class ComponentHumanModel : ComponentCreatureModel
             if (componentCreatureModel != null)
             {
                 Bob = componentCreatureModel.Bob;
-                num3 = Bob;
+                targetBob = Bob;
             }
 
             _headingOffset = 0f;
@@ -149,21 +149,21 @@ public class ComponentHumanModel : ComponentCreatureModel
         else
         {
             var x = MathUtils.Sin((float)Math.PI * 2f * MovementAnimationPhase);
-            num3 = _walkBobHeight * MathUtils.Sqr(x);
-            var num4 = 0f;
+            targetBob = _walkBobHeight * MathUtils.Sqr(x);
+            var targetHeading = 0f;
             if (ComponentCreature.ComponentLocomotion.LastWalkOrder.HasValue &&
                 ComponentCreature.ComponentLocomotion.LastWalkOrder != Vector2.Zero)
             {
-                num4 = Vector2.Angle(Vector2.UnitY, ComponentCreature.ComponentLocomotion.LastWalkOrder.Value);
+                targetHeading = Vector2.Angle(Vector2.UnitY, ComponentCreature.ComponentLocomotion.LastWalkOrder.Value);
             }
 
-            _headingOffset += MathUtils.NormalizeAngle(num4 - _headingOffset) *
+            _headingOffset += MathUtils.NormalizeAngle(targetHeading - _headingOffset) *
                               MathUtils.Saturate(8f * subsystemTime.GameTimeDelta);
             _headingOffset = MathUtils.NormalizeAngle(_headingOffset);
         }
 
-        var num5 = MathUtils.Min(12f * subsystemTime.GameTimeDelta, 1f);
-        Bob += num5 * (num3 - Bob);
+        var bobBlend = MathUtils.Min(12f * subsystemTime.GameTimeDelta, 1f);
+        Bob += bobBlend * (targetBob - Bob);
         _punchFactor = creaturePose.LastAttackOrder
             ? MathUtils.Min(_punchFactor + 4f * dt, 1f)
             : MathUtils.Max(_punchFactor - 4f * dt, 0f);
@@ -206,8 +206,8 @@ public class ComponentHumanModel : ComponentCreatureModel
             }
         }
 
-        var num6 = MathUtils.Floor(_footstepsPhase);
-        if (_footstepsPhase > num6 && footstepsPhase <= num6)
+        var footstepBoundary = MathUtils.Floor(_footstepsPhase);
+        if (_footstepsPhase > footstepBoundary && footstepsPhase <= footstepBoundary)
         {
             if (runtime.HasPresentation &&
                 !ComponentCreature.Entity.FindComponent<ComponentCreatureSoundsPresentation>(true)!.PlayFootstepSound(
@@ -236,15 +236,15 @@ public class ComponentHumanModel : ComponentCreatureModel
         if (_lieDownFactorModel == 0f)
         {
             var componentMount = _componentRider != null ? _componentRider.Mount : null;
-            var num = MathUtils.Sin((float)Math.PI * 2f * MovementAnimationPhase);
+            var strideWave = MathUtils.Sin((float)Math.PI * 2f * MovementAnimationPhase);
             position.Y += Bob;
             vector.X += _headingOffset;
-            var num2 = (float)MathUtils.Remainder(
+            var idleNoiseTime = (float)MathUtils.Remainder(
                 0.75 * subsystemGameInfo.TotalElapsedGameTime + (GetHashCode() & 0xFFFF),
                 10000.0
             );
             var x = MathUtils.Clamp(
-                MathUtils.Lerp(-0.3f, 0.3f, SimplexNoise.Noise(1.02f * num2 - 100f)) +
+                MathUtils.Lerp(-0.3f, 0.3f, SimplexNoise.Noise(1.02f * idleNoiseTime - 100f)) +
                 ComponentCreature.ComponentLocomotion.LookAngles.X +
                 1f * ComponentCreature.ComponentLocomotion.LastTurnOrder.X +
                 _headingOffset,
@@ -252,119 +252,132 @@ public class ComponentHumanModel : ComponentCreatureModel
                 MathUtils.DegToRad(80f)
             );
             var y = MathUtils.Clamp(
-                MathUtils.Lerp(-0.3f, 0.3f, SimplexNoise.Noise(0.96f * num2 - 200f)) +
+                MathUtils.Lerp(-0.3f, 0.3f, SimplexNoise.Noise(0.96f * idleNoiseTime - 200f)) +
                 ComponentCreature.ComponentLocomotion.LookAngles.Y,
                 0f - MathUtils.DegToRad(45f),
                 MathUtils.DegToRad(45f)
             );
-            var num3 = 0f;
-            var y2 = 0f;
-            var x2 = 0f;
-            var y3 = 0f;
-            var num4 = 0f;
-            var num5 = 0f;
-            var num6 = 0f;
-            var num7 = 0f;
+            var firstLegPitch = 0f;
+            var firstLegYaw = 0f;
+            var secondLegPitch = 0f;
+            var secondLegYaw = 0f;
+            var leftHandPitch = 0f;
+            var leftHandYaw = 0f;
+            var rightHandPitch = 0f;
+            var rightHandYaw = 0f;
             if (componentMount != null)
             {
                 if (componentMount.Entity.ValuesDictionary.DatabaseObject.Name == "Boat")
                 {
                     position.Y -= 0.2f;
                     vector.X += (float)Math.PI;
-                    num4 = 0.4f;
-                    num6 = 0.4f;
-                    num5 = 0.2f;
-                    num7 = -0.2f;
-                    num3 = 1.1f;
-                    x2 = 1.1f;
-                    y2 = 0.2f;
-                    y3 = -0.2f;
+                    leftHandPitch = 0.4f;
+                    rightHandPitch = 0.4f;
+                    leftHandYaw = 0.2f;
+                    rightHandYaw = -0.2f;
+                    firstLegPitch = 1.1f;
+                    secondLegPitch = 1.1f;
+                    firstLegYaw = 0.2f;
+                    secondLegYaw = -0.2f;
                 }
                 else
                 {
-                    num4 = 0.5f;
-                    num6 = 0.5f;
-                    num5 = 0.15f;
-                    num7 = -0.15f;
-                    y2 = 0.55f;
-                    y3 = -0.55f;
+                    leftHandPitch = 0.5f;
+                    rightHandPitch = 0.5f;
+                    leftHandYaw = 0.15f;
+                    rightHandYaw = -0.15f;
+                    firstLegYaw = 0.55f;
+                    secondLegYaw = -0.55f;
                 }
             }
             else if (ComponentCreature.ComponentLocomotion.IsCreativeFlyEnabled)
             {
-                var num8 = ComponentCreature.ComponentLocomotion.LastWalkOrder.HasValue
+                var flightLegOffset = ComponentCreature.ComponentLocomotion.LastWalkOrder.HasValue
                     ? MathUtils.Min(0.03f * ComponentCreature.ComponentBody.Velocity.XZ.LengthSquared(), 0.5f)
                     : 0f;
-                num3 = -0.1f - num8;
-                x2 = num3;
-                y2 = MathUtils.Lerp(0f, 0.25f, SimplexNoise.Noise(1.07f * num2 + 400f));
-                y3 = 0f - MathUtils.Lerp(0f, 0.25f, SimplexNoise.Noise(0.93f * num2 + 500f));
+                firstLegPitch = -0.1f - flightLegOffset;
+                secondLegPitch = firstLegPitch;
+                firstLegYaw = MathUtils.Lerp(0f, 0.25f, SimplexNoise.Noise(1.07f * idleNoiseTime + 400f));
+                secondLegYaw = 0f - MathUtils.Lerp(0f, 0.25f, SimplexNoise.Noise(0.93f * idleNoiseTime + 500f));
             }
             else if (MovementAnimationPhase != 0f)
             {
-                num4 = -0.5f * num;
-                num6 = 0.5f * num;
-                num3 = _walkLegsAngle * num;
-                x2 = 0f - num3;
+                leftHandPitch = -0.5f * strideWave;
+                rightHandPitch = 0.5f * strideWave;
+                firstLegPitch = _walkLegsAngle * strideWave;
+                secondLegPitch = 0f - firstLegPitch;
             }
 
-            var num9 = 0f;
+            var toolSwingPitch = 0f;
             if (_componentMiner != null)
             {
-                var num10 = MathUtils.Sin(MathUtils.Sqrt(_componentMiner.PokingPhase) * (float)Math.PI);
-                num9 = _componentMiner.ActiveBlockValue == 0 ? 1f * num10 : 0.3f + 1f * num10;
+                var pokeWave = MathUtils.Sin(MathUtils.Sqrt(_componentMiner.PokingPhase) * (float)Math.PI);
+                toolSwingPitch = _componentMiner.ActiveBlockValue == 0 ? 1f * pokeWave : 0.3f + 1f * pokeWave;
             }
 
-            var num11 = creaturePose.AttackPhase != 0f
+            var punchPitch = creaturePose.AttackPhase != 0f
                 ? (0f - MathUtils.DegToRad(90f)) *
                   MathUtils.Sin((float)Math.PI * 2f * MathUtils.Sigmoid(creaturePose.AttackPhase, 4f))
                 : 0f;
-            var num12 = (_punchCounter & 1) == 0 ? num11 : 0f;
-            var num13 = (_punchCounter & 1) != 0 ? num11 : 0f;
-            var num14 = 0f;
-            var num15 = 0f;
-            var num16 = 0f;
-            var num17 = 0f;
+            var leftPunchPitch = (_punchCounter & 1) == 0 ? punchPitch : 0f;
+            var rightPunchPitch = (_punchCounter & 1) != 0 ? punchPitch : 0f;
+            var leftRowPitch = 0f;
+            var leftRowYaw = 0f;
+            var rightRowPitch = 0f;
+            var rightRowYaw = 0f;
             if (RowLeft || RowRight)
             {
-                var num18 = 0.6f * (float)MathUtils.Sin(6.91150426864624 * subsystemTime.GameTime);
-                var num19 = 0.2f + 0.2f * (float)MathUtils.Cos(6.91150426864624 * (subsystemTime.GameTime + 0.5));
+                var rowPitch = 0.6f * (float)MathUtils.Sin(6.91150426864624 * subsystemTime.GameTime);
+                var rowYaw = 0.2f + 0.2f * (float)MathUtils.Cos(6.91150426864624 * (subsystemTime.GameTime + 0.5));
                 if (RowLeft)
                 {
-                    num14 = num18;
-                    num15 = num19;
+                    leftRowPitch = rowPitch;
+                    leftRowYaw = rowYaw;
                 }
 
                 if (RowRight)
                 {
-                    num16 = num18;
-                    num17 = 0f - num19;
+                    rightRowPitch = rowPitch;
+                    rightRowYaw = 0f - rowYaw;
                 }
             }
 
-            var num20 = 0f;
-            var num21 = 0f;
-            var num22 = 0f;
-            var num23 = 0f;
+            var leftAimPitch = 0f;
+            var leftAimYaw = 0f;
+            var rightAimPitch = 0f;
+            var rightAimYaw = 0f;
             if (_aimHandAngle != 0f)
             {
-                num20 = 1.5f;
-                num21 = -0.7f;
-                num22 = _aimHandAngle * 1f;
-                num23 = 0f;
+                leftAimPitch = 1.5f;
+                leftAimYaw = -0.7f;
+                rightAimPitch = _aimHandAngle * 1f;
+                rightAimYaw = 0f;
             }
 
-            float num24 = !ComponentCreature.ComponentLocomotion.IsCreativeFlyEnabled ? 1 : 4;
-            num4 += MathUtils.Lerp(-0.1f, 0.1f, SimplexNoise.Noise(num2)) + num12 + num14 + num20;
-            num5 += MathUtils.Lerp(0f, num24 * 0.15f, SimplexNoise.Noise(1.1f * num2 + 100f)) + num15 + num21;
-            num6 += num9 + MathUtils.Lerp(-0.1f, 0.1f, SimplexNoise.Noise(0.9f * num2 + 200f)) + num13 + num16 + num22;
-            num7 += 0f - MathUtils.Lerp(0f, num24 * 0.15f, SimplexNoise.Noise(1.05f * num2 + 300f)) + num17 + num23;
+            float idleArmScale = !ComponentCreature.ComponentLocomotion.IsCreativeFlyEnabled ? 1 : 4;
+            leftHandPitch += MathUtils.Lerp(-0.1f, 0.1f, SimplexNoise.Noise(idleNoiseTime)) +
+                             leftPunchPitch +
+                             leftRowPitch +
+                             leftAimPitch;
+            leftHandYaw += MathUtils.Lerp(0f, idleArmScale * 0.15f, SimplexNoise.Noise(1.1f * idleNoiseTime + 100f)) +
+                           leftRowYaw +
+                           leftAimYaw;
+            rightHandPitch += toolSwingPitch +
+                              MathUtils.Lerp(-0.1f, 0.1f, SimplexNoise.Noise(0.9f * idleNoiseTime + 200f)) +
+                              rightPunchPitch +
+                              rightRowPitch +
+                              rightAimPitch;
+            rightHandYaw +=
+                0f -
+                MathUtils.Lerp(0f, idleArmScale * 0.15f, SimplexNoise.Noise(1.05f * idleNoiseTime + 300f)) +
+                rightRowYaw +
+                rightAimYaw;
             var s = MathUtils.Min(12f * subsystemTime.GameTimeDelta, 1f);
             _headAngles += s * (new Vector2(x, y) - _headAngles);
-            _handAngles1 += s * (new Vector2(num4, num5) - _handAngles1);
-            _handAngles2 += s * (new Vector2(num6, num7) - _handAngles2);
-            _legAngles1 += s * (new Vector2(num3, y2) - _legAngles1);
-            _legAngles2 += s * (new Vector2(x2, y3) - _legAngles2);
+            _handAngles1 += s * (new Vector2(leftHandPitch, leftHandYaw) - _handAngles1);
+            _handAngles2 += s * (new Vector2(rightHandPitch, rightHandYaw) - _handAngles2);
+            _legAngles1 += s * (new Vector2(firstLegPitch, firstLegYaw) - _legAngles1);
+            _legAngles2 += s * (new Vector2(secondLegPitch, secondLegYaw) - _legAngles2);
             if (ComponentCreature.ComponentBody.CrouchFactor == 1)
             {
                 _legAngles1 *= 0.5f;
@@ -406,37 +419,41 @@ public class ComponentHumanModel : ComponentCreatureModel
         }
         else
         {
-            var num25 = MathUtils.Max(DeathPhase, _lieDownFactorModel);
-            var num26 = 1f - num25;
+            var lieDownBlend = MathUtils.Max(DeathPhase, _lieDownFactorModel);
+            var uprightBlend = 1f - lieDownBlend;
             var position2 = position +
-                            num25 *
+                            lieDownBlend *
                             0.5f *
                             ComponentCreature.ComponentBody.BoxSize.Y *
                             Vector3.Normalize(
                                 ComponentCreature.ComponentBody.Matrix.Forward * new Vector3(1f, 0f, 1f)
                             ) +
-                            num25 * Vector3.UnitY * ComponentCreature.ComponentBody.BoxSize.Z * 0.1f;
+                            lieDownBlend * Vector3.UnitY * ComponentCreature.ComponentBody.BoxSize.Z * 0.1f;
             SetNodeTransform(
                 _bodyNode.Index,
-                Matrix.CreateFromYawPitchRoll(vector.X, (float)Math.PI / 2f * num25, 0f) *
+                Matrix.CreateFromYawPitchRoll(vector.X, (float)Math.PI / 2f * lieDownBlend, 0f) *
                 Matrix.CreateTranslation(position2)
             );
             SetNodeTransform(_headNode.Index, Matrix.Identity);
             SetNodeTransform(
                 _hand1Node.Index,
-                Matrix.CreateRotationY(_handAngles1.Y * num26) * Matrix.CreateRotationX(_handAngles1.X * num26)
+                Matrix.CreateRotationY(_handAngles1.Y * uprightBlend) *
+                Matrix.CreateRotationX(_handAngles1.X * uprightBlend)
             );
             SetNodeTransform(
                 _hand2Node.Index,
-                Matrix.CreateRotationY(_handAngles2.Y * num26) * Matrix.CreateRotationX(_handAngles2.X * num26)
+                Matrix.CreateRotationY(_handAngles2.Y * uprightBlend) *
+                Matrix.CreateRotationX(_handAngles2.X * uprightBlend)
             );
             SetNodeTransform(
                 _leg1Node.Index,
-                Matrix.CreateRotationY(_legAngles1.Y * num26) * Matrix.CreateRotationX(_legAngles1.X * num26)
+                Matrix.CreateRotationY(_legAngles1.Y * uprightBlend) *
+                Matrix.CreateRotationX(_legAngles1.X * uprightBlend)
             );
             SetNodeTransform(
                 _leg2Node.Index,
-                Matrix.CreateRotationY(_legAngles2.Y * num26) * Matrix.CreateRotationX(_legAngles2.X * num26)
+                Matrix.CreateRotationY(_legAngles2.Y * uprightBlend) *
+                Matrix.CreateRotationX(_legAngles2.X * uprightBlend)
             );
         }
 
@@ -449,8 +466,8 @@ public class ComponentHumanModel : ComponentCreatureModel
             _componentMiner != null &&
             _componentMiner.ActiveBlockValue != 0)
         {
-            var num = Terrain.ExtractContents(_componentMiner.ActiveBlockValue);
-            var block = Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(num);
+            var heldContents = Terrain.ExtractContents(_componentMiner.ActiveBlockValue);
+            var block = Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(heldContents);
             var m = AbsoluteNodeTransformsForCamera[_hand2Node.Index];
             m *= camera.InvertedViewMatrix;
             m.Right = Vector3.Normalize(m.Right);

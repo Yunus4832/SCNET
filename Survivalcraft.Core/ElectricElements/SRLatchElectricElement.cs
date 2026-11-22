@@ -15,10 +15,10 @@ public class SRLatchElectricElement : RotatableElectricElement
         CellFace cellFace
     ) : base(subsystemElectricity, cellFace)
     {
-        var num = subsystemElectricity.ReadPersistentVoltage(cellFace.Point);
-        if (num.HasValue)
+        var storedVoltage = subsystemElectricity.ReadPersistentVoltage(cellFace.Point);
+        if (storedVoltage.HasValue)
         {
-            _voltage = num.Value;
+            _voltage = storedVoltage.Value;
         }
     }
 
@@ -35,10 +35,10 @@ public class SRLatchElectricElement : RotatableElectricElement
         }
 
         var voltage = _voltage;
-        var flag = false;
-        var flag2 = false;
-        var flag3 = false;
-        var flag4 = false;
+        var setHigh = false;
+        var resetHigh = false;
+        var clockHigh = false;
+        var hasClockInput = false;
         var rotation = Rotation;
         foreach (var connection in Connections)
         {
@@ -53,67 +53,67 @@ public class SRLatchElectricElement : RotatableElectricElement
 
                 if (connectorDirection == ElectricConnectorDirection.Right)
                 {
-                    flag2 = IsSignalHigh(
+                    resetHigh = IsSignalHigh(
                         connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
                     );
                 }
                 else if (connectorDirection == ElectricConnectorDirection.Left)
                 {
-                    flag = IsSignalHigh(
+                    setHigh = IsSignalHigh(
                         connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
                     );
                 }
                 else if (connectorDirection == ElectricConnectorDirection.Bottom)
                 {
-                    flag3 = IsSignalHigh(
+                    clockHigh = IsSignalHigh(
                         connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
                     );
-                    flag4 = true;
+                    hasClockInput = true;
                 }
             }
         }
 
-        if (flag4)
+        if (hasClockInput)
         {
-            if (flag3 && _clockAllowed)
+            if (clockHigh && _clockAllowed)
             {
                 _clockAllowed = false;
-                if (flag && flag2)
+                if (setHigh && resetHigh)
                 {
                     _voltage = !IsSignalHigh(_voltage) ? 1 : 0;
                 }
-                else if (flag)
+                else if (setHigh)
                 {
                     _voltage = 1f;
                 }
-                else if (flag2)
+                else if (resetHigh)
                 {
                     _voltage = 0f;
                 }
             }
         }
-        else if (flag && _setAllowed)
+        else if (setHigh && _setAllowed)
         {
             _setAllowed = false;
             _voltage = 1f;
         }
-        else if (flag2 && _resetAllowed)
+        else if (resetHigh && _resetAllowed)
         {
             _resetAllowed = false;
             _voltage = 0f;
         }
 
-        if (!flag3)
+        if (!clockHigh)
         {
             _clockAllowed = true;
         }
 
-        if (!flag)
+        if (!setHigh)
         {
             _setAllowed = true;
         }
 
-        if (!flag2)
+        if (!resetHigh)
         {
             _resetAllowed = true;
         }

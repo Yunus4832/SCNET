@@ -22,8 +22,8 @@ public class SwitchBlockPresentation(SwitchBlock block, BlockPresentationCatalog
         int z
     )
     {
-        var num = Block.CalculateIndex(value);
-        if (num >= BlockMeshesByIndex.Length)
+        var meshIndex = Block.CalculateIndex(value);
+        if (meshIndex >= BlockMeshesByIndex.Length)
         {
             return;
         }
@@ -33,7 +33,7 @@ public class SwitchBlockPresentation(SwitchBlock block, BlockPresentationCatalog
             x,
             y,
             z,
-            BlockMeshesByIndex[num],
+            BlockMeshesByIndex[meshIndex],
             Color.White,
             null,
             geometry.SubsetOpaque
@@ -80,7 +80,7 @@ public class SwitchBlockPresentation(SwitchBlock block, BlockPresentationCatalog
         {
             for (var j = 0; j < 2; j++)
             {
-                var num = (i << 1) | j;
+                var meshIndex = (i << 1) | j;
                 var matrix = i >= 4
                     ? i != 4
                         ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
@@ -90,8 +90,8 @@ public class SwitchBlockPresentation(SwitchBlock block, BlockPresentationCatalog
                       Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
                       Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                 var matrix2 = Matrix.CreateRotationX(j == 0 ? MathUtils.DegToRad(30f) : MathUtils.DegToRad(-30f));
-                BlockMeshesByIndex[num] = new BlockMesh();
-                BlockMeshesByIndex[num].AppendModelPrimitive(
+                BlockMeshesByIndex[meshIndex] = new BlockMesh();
+                BlockMeshesByIndex[meshIndex].AppendModelPrimitive(
                     bodyNode.RequireMesh().Primitives[0],
                     nodeAbsoluteTransform * matrix,
                     false,
@@ -100,7 +100,7 @@ public class SwitchBlockPresentation(SwitchBlock block, BlockPresentationCatalog
                     false,
                     Color.White
                 );
-                BlockMeshesByIndex[num].AppendModelPrimitive(
+                BlockMeshesByIndex[meshIndex].AppendModelPrimitive(
                     leverNode.RequireMesh().Primitives[0],
                     nodeAbsoluteTransform2 * matrix2 * matrix,
                     false,

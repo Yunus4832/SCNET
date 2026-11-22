@@ -34,10 +34,10 @@ public class ExplosionParticleSystem : ParticleSystem<ExplosionParticleSystem.Pa
             {
                 for (var i = 0; i < 5; i++)
                 {
-                    var num = _random.Int(0, Particles.Length - 1);
-                    if (strength > Particles[num].Strength)
+                    var candidateIndex = _random.Int(0, Particles.Length - 1);
+                    if (strength > Particles[candidateIndex].Strength)
                     {
-                        value = Particles[num];
+                        value = Particles[candidateIndex];
                     }
                 }
             }

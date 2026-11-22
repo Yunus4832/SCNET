@@ -82,7 +82,7 @@ public class FurnitureDesign
         InteractionMode = valuesDictionary.GetValue<FurnitureInteractionMode>("InteractionMode");
         LoadTimeLinkedDesignIndex = valuesDictionary.GetValue("LinkedDesign", -1);
         var value2 = valuesDictionary.GetValue<string>("Values");
-        var num = 0;
+        var writeIndex = 0;
         var array = new int[value * value * value];
         var array2 = value2.Split([','], StringSplitOptions.RemoveEmptyEntries);
         foreach (var item in array2)
@@ -93,14 +93,14 @@ public class FurnitureDesign
                 throw new InvalidOperationException("Furniture value run must contain count and value.");
             }
 
-            var num2 = int.Parse(array3[0], CultureInfo.InvariantCulture);
-            var num3 = int.Parse(array3[1], CultureInfo.InvariantCulture);
-            var num4 = 0;
-            while (num4 < num2)
+            var runLength = int.Parse(array3[0], CultureInfo.InvariantCulture);
+            var runValue = int.Parse(array3[1], CultureInfo.InvariantCulture);
+            var runOffset = 0;
+            while (runOffset < runLength)
             {
-                array[num] = num3;
-                num4++;
-                num++;
+                array[writeIndex] = runValue;
+                runOffset++;
+                writeIndex++;
             }
         }
 
@@ -308,10 +308,10 @@ public class FurnitureDesign
         var array = new int[_values.Length];
         for (var i = 0; i < _values.Length; i++)
         {
-            var num = _values[i];
-            var num2 = Terrain.ExtractContents(num);
-            var paintableBlock = Catalog.Blocks[num2] as IPaintableBlock;
-            array[i] = paintableBlock?.Paint(null, num, color) ?? num;
+            var blockValue = _values[i];
+            var contents = Terrain.ExtractContents(blockValue);
+            var paintableBlock = Catalog.Blocks[contents] as IPaintableBlock;
+            array[i] = paintableBlock?.Paint(null, blockValue, color) ?? blockValue;
         }
 
         SetValues(Resolution, array);
@@ -362,17 +362,17 @@ public class FurnitureDesign
             {
                 for (var k = 0; k < Resolution; k++)
                 {
-                    var num = k + delta.X;
-                    var num2 = j + delta.Y;
-                    var num3 = i + delta.Z;
-                    if (num >= 0 &&
-                        num < Resolution &&
-                        num2 >= 0 &&
-                        num2 < Resolution &&
-                        num3 >= 0 &&
-                        num3 < Resolution)
+                    var targetX = k + delta.X;
+                    var targetY = j + delta.Y;
+                    var targetZ = i + delta.Z;
+                    if (targetX >= 0 &&
+                        targetX < Resolution &&
+                        targetY >= 0 &&
+                        targetY < Resolution &&
+                        targetZ >= 0 &&
+                        targetZ < Resolution)
                     {
-                        array[num + num2 * Resolution + num3 * Resolution * Resolution] =
+                        array[targetX + targetY * Resolution + targetZ * Resolution * Resolution] =
                             _values[k + j * Resolution + i * Resolution * Resolution];
                     }
                 }
@@ -462,28 +462,28 @@ public class FurnitureDesign
     public ValuesDictionary Save()
     {
         var stringBuilder = new StringBuilder();
-        var num = _values[0];
-        var num2 = 1;
+        var runValue = _values[0];
+        var runLength = 1;
         for (var i = 1; i < _values.Length; i++)
         {
-            if (_values[i] != num)
+            if (_values[i] != runValue)
             {
-                stringBuilder.Append(num2.ToString(CultureInfo.InvariantCulture));
+                stringBuilder.Append(runLength.ToString(CultureInfo.InvariantCulture));
                 stringBuilder.Append('*');
-                stringBuilder.Append(num.ToString(CultureInfo.InvariantCulture));
+                stringBuilder.Append(runValue.ToString(CultureInfo.InvariantCulture));
                 stringBuilder.Append(',');
-                num = _values[i];
-                num2 = 1;
+                runValue = _values[i];
+                runLength = 1;
             }
             else
             {
-                num2++;
+                runLength++;
             }
         }
 
-        stringBuilder.Append(num2.ToString(CultureInfo.InvariantCulture));
+        stringBuilder.Append(runLength.ToString(CultureInfo.InvariantCulture));
         stringBuilder.Append('*');
-        stringBuilder.Append(num.ToString(CultureInfo.InvariantCulture));
+        stringBuilder.Append(runValue.ToString(CultureInfo.InvariantCulture));
         stringBuilder.Append(',');
         var valuesDictionary = new ValuesDictionary();
         if (!string.IsNullOrEmpty(Name))
@@ -568,10 +568,10 @@ public class FurnitureDesign
             return list2;
         }
 
-        var num = list.IndexOf(furnitureDesign);
-        if (num >= 0)
+        var linkedIndex = list.IndexOf(furnitureDesign);
+        if (linkedIndex >= 0)
         {
-            list2[^1].LinkedDesign = list2[num];
+            list2[^1].LinkedDesign = list2[linkedIndex];
         }
 
         return list2;
@@ -612,19 +612,19 @@ public class FurnitureDesign
     public byte[] CreatePrecedingEmptySpacesArray()
     {
         var array = new byte[_values.Length];
-        var num = 0;
+        var cellIndex = 0;
         for (var i = 0; i < Resolution; i++)
         {
             for (var j = 0; j < Resolution; j++)
             {
-                var num2 = 0;
-                var num3 = 0;
-                while (num3 < Resolution)
+                var emptyRunLength = 0;
+                var x = 0;
+                while (x < Resolution)
                 {
-                    num2 = _values[num] == 0 ? num2 + 1 : 0;
-                    array[num] = (byte)num2;
-                    num3++;
-                    num++;
+                    emptyRunLength = _values[cellIndex] == 0 ? emptyRunLength + 1 : 0;
+                    array[cellIndex] = (byte)emptyRunLength;
+                    x++;
+                    cellIndex++;
                 }
             }
         }
@@ -634,51 +634,51 @@ public class FurnitureDesign
 
     public Box CalculateBox(Box box, byte[] precedingEmptySpaces)
     {
-        var num = int.MaxValue;
-        var num2 = int.MaxValue;
-        var num3 = int.MaxValue;
-        var num4 = int.MinValue;
-        var num5 = int.MinValue;
-        var num6 = int.MinValue;
+        var minX = int.MaxValue;
+        var minY = int.MaxValue;
+        var minZ = int.MaxValue;
+        var maxX = int.MinValue;
+        var maxY = int.MinValue;
+        var maxZ = int.MinValue;
         for (var i = box.Near; i < box.Far; i++)
         {
-            var num7 = Math.Min(num3, i);
-            var num8 = Math.Max(num6, i);
-            var num9 = box.Top;
-            var num10 = (num9 + i * Resolution) * Resolution;
-            while (num9 < box.Bottom)
+            var candidateMinZ = Math.Min(minZ, i);
+            var candidateMaxZ = Math.Max(maxZ, i);
+            var y = box.Top;
+            var rowStart = (y + i * Resolution) * Resolution;
+            while (y < box.Bottom)
             {
-                var num11 = box.Right - 1 - precedingEmptySpaces[num10 + box.Right - 1];
-                if (num11 >= box.Left)
+                var lastOccupiedX = box.Right - 1 - precedingEmptySpaces[rowStart + box.Right - 1];
+                if (lastOccupiedX >= box.Left)
                 {
-                    num4 = Math.Max(num4, num11);
-                    num2 = Math.Min(num2, num9);
-                    num5 = Math.Max(num5, num9);
-                    num3 = num7;
-                    num6 = num8;
-                    var num12 = num - 1;
-                    for (var j = box.Left; j <= num12; j++)
+                    maxX = Math.Max(maxX, lastOccupiedX);
+                    minY = Math.Min(minY, y);
+                    maxY = Math.Max(maxY, y);
+                    minZ = candidateMinZ;
+                    maxZ = candidateMaxZ;
+                    var searchEndX = minX - 1;
+                    for (var j = box.Left; j <= searchEndX; j++)
                     {
-                        if (_values[num10 + j] != 0)
+                        if (_values[rowStart + j] != 0)
                         {
-                            num = Math.Min(num, j);
+                            minX = Math.Min(minX, j);
                             break;
                         }
                     }
                 }
 
-                num9++;
-                num10 += Resolution;
+                y++;
+                rowStart += Resolution;
             }
         }
 
-        return new Box(num, num2, num3, num4 - num + 1, num5 - num2 + 1, num6 - num3 + 1);
+        return new Box(minX, minY, minZ, maxX - minX + 1, maxY - minY + 1, maxZ - minZ + 1);
     }
 
     private int CalculateShadowStrengthFactor()
     {
         var array = new float[Resolution * Resolution];
-        var num = 0;
+        var cellIndex = 0;
         for (var i = 0; i < Resolution; i++)
         {
             for (var j = 0; j < Resolution; j++)
@@ -686,7 +686,7 @@ public class FurnitureDesign
                 var x = (j + 1) / (float)Resolution;
                 for (var k = 0; k < Resolution; k++)
                 {
-                    if (!IsValueTransparent(_values[num++]))
+                    if (!IsValueTransparent(_values[cellIndex++]))
                     {
                         array[k + i * Resolution] = MathUtils.Max(array[k + i * Resolution], x);
                     }
@@ -694,15 +694,15 @@ public class FurnitureDesign
             }
         }
 
-        var num2 = 0f;
+        var averageHeight = 0f;
         for (var l = 0; l < Resolution * Resolution; l++)
         {
-            num2 += array[l];
+            averageHeight += array[l];
         }
 
-        num2 /= Resolution * Resolution;
-        var num3 = 1.5f;
-        return (int)MathUtils.Clamp(MathUtils.Round(num2 * 3f * num3), 0f, 3f);
+        averageHeight /= Resolution * Resolution;
+        var shadowScale = 1.5f;
+        return (int)MathUtils.Clamp(MathUtils.Round(averageHeight * 3f * shadowScale), 0f, 3f);
     }
 
     private BoundingBox[][] CreateCollisionAndInteractionBoxes()
@@ -735,18 +735,18 @@ public class FurnitureDesign
         var list2 = new List<BoundingBox>(list);
         while (true)
         {
-            var num = 0;
+            var mergeIndex = 0;
             int l;
             BoundingBox item;
             while (true)
             {
-                if (num < list2.Count)
+                if (mergeIndex < list2.Count)
                 {
                     for (l = 0; l < list2.Count; l++)
                     {
-                        if (num != l)
+                        if (mergeIndex != l)
                         {
-                            var b = list2[num];
+                            var b = list2[mergeIndex];
                             var b2 = list2[l];
                             item = BoundingBox.Union(b, b2);
                             var vector = item.Size();
@@ -759,23 +759,23 @@ public class FurnitureDesign
                         }
                     }
 
-                    num++;
+                    mergeIndex++;
                     continue;
                 }
 
-                var flag = false;
+                var hasLargeInteractionFace = false;
                 for (var n = 0; n < list2.Count; n++)
                 {
-                    var vector2 = list2[n].Size();
-                    flag |= vector2.X >= 0.6f && vector2.Y >= 0.6f;
-                    flag |= vector2.X >= 0.6f && vector2.Z >= 0.6f;
-                    flag |= vector2.Y >= 0.6f && vector2.Z >= 0.6f;
+                    var boxSize = list2[n].Size();
+                    hasLargeInteractionFace |= boxSize.X >= 0.6f && boxSize.Y >= 0.6f;
+                    hasLargeInteractionFace |= boxSize.X >= 0.6f && boxSize.Z >= 0.6f;
+                    hasLargeInteractionFace |= boxSize.Y >= 0.6f && boxSize.Z >= 0.6f;
                 }
 
-                var minSize = flag ? 0.0625f : 0.6f;
-                for (var num2 = 0; num2 < list2.Count; num2++)
+                var minSize = hasLargeInteractionFace ? 0.0625f : 0.6f;
+                for (var resizeIndex = 0; resizeIndex < list2.Count; resizeIndex++)
                 {
-                    var value = list2[num2];
+                    var value = list2[resizeIndex];
                     // 提取 Min 和 Max
                     var min = value.Min;
                     var max = value.Max;
@@ -789,22 +789,22 @@ public class FurnitureDesign
                     value.Max = max;
 
                     // 更新到列表
-                    list2[num2] = value;
+                    list2[resizeIndex] = value;
                 }
 
                 _interactionBoxesByRotation = new BoundingBox[4][];
-                for (var num3 = 0; num3 < 4; num3++)
+                for (var rotation = 0; rotation < 4; rotation++)
                 {
                     var m2 = Matrix.CreateTranslation(-0.5f, 0f, -0.5f) *
-                             Matrix.CreateRotationY(num3 * (float)Math.PI / 2f) *
+                             Matrix.CreateRotationY(rotation * (float)Math.PI / 2f) *
                              Matrix.CreateTranslation(0.5f, 0f, 0.5f);
-                    _interactionBoxesByRotation[num3] = new BoundingBox[list2.Count];
-                    for (var num4 = 0; num4 < list2.Count; num4++)
+                    _interactionBoxesByRotation[rotation] = new BoundingBox[list2.Count];
+                    for (var boxIndex = 0; boxIndex < list2.Count; boxIndex++)
                     {
-                        var v3 = Vector3.Transform(list2[num4].Min, m2);
-                        var v4 = Vector3.Transform(list2[num4].Max, m2);
+                        var v3 = Vector3.Transform(list2[boxIndex].Min, m2);
+                        var v4 = Vector3.Transform(list2[boxIndex].Max, m2);
                         var boundingBox2 = new BoundingBox(Vector3.Min(v3, v4), Vector3.Max(v3, v4));
-                        _interactionBoxesByRotation[num3][num4] = boundingBox2;
+                        _interactionBoxesByRotation[rotation][boxIndex] = boundingBox2;
                     }
                 }
 
@@ -813,8 +813,8 @@ public class FurnitureDesign
                 break;
             }
 
-            list2.RemoveAt(num);
-            list2.RemoveAt(num < l ? l - 1 : l);
+            list2.RemoveAt(mergeIndex);
+            list2.RemoveAt(mergeIndex < l ? l - 1 : l);
             list2.Add(item);
         }
     }
@@ -828,8 +828,8 @@ public class FurnitureDesign
             {
                 for (var k = 0; k < Resolution; k++)
                 {
-                    var num = Terrain.ExtractContents(_values[k + j * Resolution + i * Resolution * Resolution]);
-                    if (num != 31 && num != 17)
+                    var contents = Terrain.ExtractContents(_values[k + j * Resolution + i * Resolution * Resolution]);
+                    if (contents != 31 && contents != 17)
                     {
                         continue;
                     }
@@ -838,27 +838,27 @@ public class FurnitureDesign
                         new Vector3(k, j, i) / Resolution,
                         new Vector3(k + 1, j + 1, i + 1) / Resolution
                     );
-                    var num2 = -1;
+                    var clusterIndex = -1;
                     for (var l = 0; l < list.Count; l++)
                     {
                         var boundingBox2 = list[l];
                         var vector = boundingBox2.Size();
-                        var vector2 = boundingBox2.Center() - boundingBox.Center();
-                        vector2.X = MathUtils.Max(MathUtils.Abs(vector2.X) - vector.X / 2f, 0f);
-                        vector2.Y = MathUtils.Max(MathUtils.Abs(vector2.Y) - vector.Y / 2f, 0f);
-                        vector2.Z = MathUtils.Max(MathUtils.Abs(vector2.Z) - vector.Z / 2f, 0f);
-                        if (!(vector2.Length() < 0.15f))
+                        var distanceToBox = boundingBox2.Center() - boundingBox.Center();
+                        distanceToBox.X = MathUtils.Max(MathUtils.Abs(distanceToBox.X) - vector.X / 2f, 0f);
+                        distanceToBox.Y = MathUtils.Max(MathUtils.Abs(distanceToBox.Y) - vector.Y / 2f, 0f);
+                        distanceToBox.Z = MathUtils.Max(MathUtils.Abs(distanceToBox.Z) - vector.Z / 2f, 0f);
+                        if (!(distanceToBox.Length() < 0.15f))
                         {
                             continue;
                         }
 
-                        num2 = l;
+                        clusterIndex = l;
                         break;
                     }
 
-                    if (num2 >= 0)
+                    if (clusterIndex >= 0)
                     {
-                        list[num2] = BoundingBox.Union(list[num2], boundingBox);
+                        list[clusterIndex] = BoundingBox.Union(list[clusterIndex], boundingBox);
                     }
                     else if (list.Count < 4)
                     {
@@ -893,26 +893,26 @@ public class FurnitureDesign
         {
             for (var j = 0; j < Resolution; j++)
             {
-                for (var num = Resolution - 1; num >= 0; num--)
+                for (var y = Resolution - 1; y >= 0; y--)
                 {
-                    var num2 = _values[j + num * Resolution + i * Resolution * Resolution];
-                    if (num2 != 0)
+                    var blockValue = _values[j + y * Resolution + i * Resolution * Resolution];
+                    if (blockValue != 0)
                     {
-                        dictionary.TryGetValue(num2, out var value);
-                        dictionary[num2] = value + 1;
+                        dictionary.TryGetValue(blockValue, out var value);
+                        dictionary[blockValue] = value + 1;
                         break;
                     }
                 }
             }
         }
 
-        var num3 = 0;
+        var highestCount = 0;
         foreach (var item in dictionary)
         {
-            if (item.Value > num3)
+            if (item.Value > highestCount)
             {
                 _mainValue = item.Key;
-                num3 = item.Value;
+                highestCount = item.Value;
             }
         }
     }
@@ -926,9 +926,9 @@ public class FurnitureDesign
             for (var j = 0; j < Resolution; j++)
             {
                 var values = _values;
-                var num = i + j * Resolution;
+                var frontCellIndex = i + j * Resolution;
                 _ = Resolution;
-                var value = values[num + 0 * Resolution];
+                var value = values[frontCellIndex + 0 * Resolution];
                 var value2 = _values[i + j * Resolution + (Resolution - 1) * Resolution * Resolution];
                 if (IsValueTransparent(value))
                 {
@@ -981,9 +981,9 @@ public class FurnitureDesign
             for (var n = 0; n < Resolution; n++)
             {
                 var values2 = _values;
-                var num2 = m;
+                var bottomCellX = m;
                 _ = Resolution;
-                var value5 = values2[num2 + 0 + n * Resolution * Resolution];
+                var value5 = values2[bottomCellX + 0 + n * Resolution * Resolution];
                 var value6 = _values[m + (Resolution - 1) * Resolution + n * Resolution * Resolution];
                 if (IsValueTransparent(value5))
                 {
@@ -1008,7 +1008,7 @@ public class FurnitureDesign
 
     public Subdivision CreateBoundingBoxesHelper(Box box, int depth, byte[] precedingEmptySpaces)
     {
-        var num = 0;
+        var extraBoxPenalty = 0;
         Subdivision result = default;
         result.TotalVolume = box.Width * box.Height * box.Depth;
         result.MinVolume = result.TotalVolume;
@@ -1018,26 +1018,27 @@ public class FurnitureDesign
         };
         if (depth < 2)
         {
-            for (var num2 = box.Bottom - 1; num2 >= box.Top + 1; num2--)
+            for (var splitY = box.Bottom - 1; splitY >= box.Top + 1; splitY--)
             {
                 var box2 = CalculateBox(
-                    new Box(box.Left, box.Top, box.Near, box.Width, num2 - box.Top, box.Depth),
+                    new Box(box.Left, box.Top, box.Near, box.Width, splitY - box.Top, box.Depth),
                     precedingEmptySpaces
                 );
                 var box3 = CalculateBox(
-                    new Box(box.Left, num2, box.Near, box.Width, box.Bottom - num2, box.Depth),
+                    new Box(box.Left, splitY, box.Near, box.Width, box.Bottom - splitY, box.Depth),
                     precedingEmptySpaces
                 );
                 var subdivision = CreateBoundingBoxesHelper(box2, depth + 1, precedingEmptySpaces);
                 var subdivision2 = CreateBoundingBoxesHelper(box3, depth + 1, precedingEmptySpaces);
-                var num3 = subdivision.Boxes.Count + subdivision2.Boxes.Count;
-                var num4 = subdivision.TotalVolume + subdivision2.TotalVolume;
-                var num5 = MathUtils.Min(subdivision.MinVolume, subdivision2.MinVolume);
-                var num6 = num3 > result.Boxes.Count ? num4 + num : num4;
-                if (num6 < result.TotalVolume || (num6 == result.TotalVolume && num5 > result.MinVolume))
+                var boxCount = subdivision.Boxes.Count + subdivision2.Boxes.Count;
+                var combinedVolume = subdivision.TotalVolume + subdivision2.TotalVolume;
+                var smallestVolume = MathUtils.Min(subdivision.MinVolume, subdivision2.MinVolume);
+                var candidateCost = boxCount > result.Boxes.Count ? combinedVolume + extraBoxPenalty : combinedVolume;
+                if (candidateCost < result.TotalVolume ||
+                    (candidateCost == result.TotalVolume && smallestVolume > result.MinVolume))
                 {
-                    result.TotalVolume = num4;
-                    result.MinVolume = num5;
+                    result.TotalVolume = combinedVolume;
+                    result.MinVolume = smallestVolume;
                     result.Boxes = subdivision.Boxes;
                     result.Boxes.AddRange(subdivision2.Boxes);
                 }
@@ -1055,14 +1056,15 @@ public class FurnitureDesign
                 );
                 var subdivision3 = CreateBoundingBoxesHelper(box4, depth + 1, precedingEmptySpaces);
                 var subdivision4 = CreateBoundingBoxesHelper(box5, depth + 1, precedingEmptySpaces);
-                var num7 = subdivision3.Boxes.Count + subdivision4.Boxes.Count;
-                var num8 = subdivision3.TotalVolume + subdivision4.TotalVolume;
-                var num9 = MathUtils.Min(subdivision3.MinVolume, subdivision4.MinVolume);
-                var num10 = num7 > result.Boxes.Count ? num8 + num : num8;
-                if (num10 < result.TotalVolume || (num10 == result.TotalVolume && num9 > result.MinVolume))
+                var boxCount = subdivision3.Boxes.Count + subdivision4.Boxes.Count;
+                var combinedVolume = subdivision3.TotalVolume + subdivision4.TotalVolume;
+                var smallestVolume = MathUtils.Min(subdivision3.MinVolume, subdivision4.MinVolume);
+                var candidateCost = boxCount > result.Boxes.Count ? combinedVolume + extraBoxPenalty : combinedVolume;
+                if (candidateCost < result.TotalVolume ||
+                    (candidateCost == result.TotalVolume && smallestVolume > result.MinVolume))
                 {
-                    result.TotalVolume = num8;
-                    result.MinVolume = num9;
+                    result.TotalVolume = combinedVolume;
+                    result.MinVolume = smallestVolume;
                     result.Boxes = subdivision3.Boxes;
                     result.Boxes.AddRange(subdivision4.Boxes);
                 }
@@ -1080,14 +1082,15 @@ public class FurnitureDesign
                 );
                 var subdivision5 = CreateBoundingBoxesHelper(box6, depth + 1, precedingEmptySpaces);
                 var subdivision6 = CreateBoundingBoxesHelper(box7, depth + 1, precedingEmptySpaces);
-                var num11 = subdivision5.Boxes.Count + subdivision6.Boxes.Count;
-                var num12 = subdivision5.TotalVolume + subdivision6.TotalVolume;
-                var num13 = MathUtils.Min(subdivision5.MinVolume, subdivision6.MinVolume);
-                var num14 = num11 > result.Boxes.Count ? num12 + num : num12;
-                if (num14 < result.TotalVolume || (num14 == result.TotalVolume && num13 > result.MinVolume))
+                var boxCount = subdivision5.Boxes.Count + subdivision6.Boxes.Count;
+                var combinedVolume = subdivision5.TotalVolume + subdivision6.TotalVolume;
+                var smallestVolume = MathUtils.Min(subdivision5.MinVolume, subdivision6.MinVolume);
+                var candidateCost = boxCount > result.Boxes.Count ? combinedVolume + extraBoxPenalty : combinedVolume;
+                if (candidateCost < result.TotalVolume ||
+                    (candidateCost == result.TotalVolume && smallestVolume > result.MinVolume))
                 {
-                    result.TotalVolume = num12;
-                    result.MinVolume = num13;
+                    result.TotalVolume = combinedVolume;
+                    result.MinVolume = smallestVolume;
                     result.Boxes = subdivision5.Boxes;
                     result.Boxes.AddRange(subdivision6.Boxes);
                 }
@@ -1138,12 +1141,12 @@ public class FurnitureDesign
 
     public static void EnsureMinSize(ref float min, ref float max, float minSize)
     {
-        var num = max - min;
-        if (num < minSize)
+        var size = max - min;
+        if (size < minSize)
         {
-            var num2 = minSize - num;
-            min -= num2 / 2f;
-            max += num2 / 2f;
+            var missingSize = minSize - size;
+            min -= missingSize / 2f;
+            max += missingSize / 2f;
             if (min < 0f)
             {
                 max -= min;

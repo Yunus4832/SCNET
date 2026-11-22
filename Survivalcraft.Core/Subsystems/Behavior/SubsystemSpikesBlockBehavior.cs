@@ -16,8 +16,8 @@ public class SubsystemSpikesBlockBehavior : SubsystemBlockBehavior
     public bool RetractExtendSpikes(int x, int y, int z, bool extend)
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
-        var num = Terrain.ExtractContents(cellValue);
-        if (WorldContentBinding.For(Project).Catalog.Blocks[num] is not SpikedPlankBlock)
+        var contents = Terrain.ExtractContents(cellValue);
+        if (WorldContentBinding.For(Project).Catalog.Blocks[contents] is not SpikedPlankBlock)
         {
             return false;
         }

@@ -38,8 +38,8 @@ public class SubsystemGameInfo : Subsystem, IUpdateable
         _lastTotalElapsedGameTime = TotalElapsedGameTime;
         if (WorldSettings.AreSeasonsChanging && _subsystemTime.PeriodicGameTimeEvent(10.0, 5.0))
         {
-            var num = WorldSettings.YearDays * 1200f;
-            WorldSettings.TimeOfYear = IntervalUtils.Normalize(WorldSettings.TimeOfYear + 10f / num);
+            var yearDuration = WorldSettings.YearDays * 1200f;
+            WorldSettings.TimeOfYear = IntervalUtils.Normalize(WorldSettings.TimeOfYear + 10f / yearDuration);
         }
 
         //客户端禁用时间计算

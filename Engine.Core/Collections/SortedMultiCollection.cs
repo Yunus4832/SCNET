@@ -81,15 +81,15 @@ public class SortedMultiCollection<TKey, TValue> : IEnumerable<KeyValuePair<TKey
 
     public void Add(TKey key, TValue value)
     {
-        var num = Find(key);
-        if (num < 0)
+        var insertionIndex = Find(key);
+        if (insertionIndex < 0)
         {
-            num = ~num;
+            insertionIndex = ~insertionIndex;
         }
 
         EnsureCapacity(_count + 1);
-        Array.Copy(_array, num, _array, num + 1, _count - num);
-        _array[num] = new KeyValuePair<TKey, TValue>(key, value);
+        Array.Copy(_array, insertionIndex, _array, insertionIndex + 1, _count - insertionIndex);
+        _array[insertionIndex] = new KeyValuePair<TKey, TValue>(key, value);
         _count++;
         _version++;
     }
@@ -104,13 +104,13 @@ public class SortedMultiCollection<TKey, TValue> : IEnumerable<KeyValuePair<TKey
 
     public bool Remove(TKey key)
     {
-        var num = Find(key);
-        if (num < 0)
+        var itemIndex = Find(key);
+        if (itemIndex < 0)
         {
             return false;
         }
 
-        Array.Copy(_array, num + 1, _array, num, _count - num - 1);
+        Array.Copy(_array, itemIndex + 1, _array, itemIndex, _count - itemIndex - 1);
         _array[_count - 1] = default;
         _count--;
         _version++;
@@ -130,10 +130,10 @@ public class SortedMultiCollection<TKey, TValue> : IEnumerable<KeyValuePair<TKey
 
     public bool TryGetValue(TKey key, out TValue? value)
     {
-        var num = Find(key);
-        if (num >= 0)
+        var itemIndex = Find(key);
+        if (itemIndex >= 0)
         {
-            value = _array[num].Value;
+            value = _array[itemIndex].Value;
             return true;
         }
 
@@ -163,28 +163,28 @@ public class SortedMultiCollection<TKey, TValue> : IEnumerable<KeyValuePair<TKey
     {
         if (_count > 0)
         {
-            var num = 0;
-            var num2 = _count - 1;
-            while (num <= num2)
+            var low = 0;
+            var high = _count - 1;
+            while (low <= high)
             {
-                var num3 = (num + num2) >> 1;
-                var num4 = _comparer.Compare(_array[num3].Key, key);
-                if (num4 == 0)
+                var midpoint = (low + high) >> 1;
+                var comparison = _comparer.Compare(_array[midpoint].Key, key);
+                if (comparison == 0)
                 {
-                    return num3;
+                    return midpoint;
                 }
 
-                if (num4 < 0)
+                if (comparison < 0)
                 {
-                    num = num3 + 1;
+                    low = midpoint + 1;
                 }
                 else
                 {
-                    num2 = num3 - 1;
+                    high = midpoint - 1;
                 }
             }
 
-            return ~num;
+            return ~low;
         }
 
         return -1;

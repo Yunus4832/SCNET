@@ -62,16 +62,16 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         );
         _projectilesCount = 0;
         _generatedProjectiles.Clear();
-        var flag = false;
-        var num = 0;
-        while (num < _queuedExplosions.Count)
+        var playSound = false;
+        var queueIndex = 0;
+        while (queueIndex < _queuedExplosions.Count)
         {
-            var explosionData = _queuedExplosions[num];
+            var explosionData = _queuedExplosions[queueIndex];
             if (MathUtils.Abs(explosionData.X - x) <= 4 &&
                 MathUtils.Abs(explosionData.Y - y) <= 4 &&
                 MathUtils.Abs(explosionData.Z - z) <= 4)
             {
-                _queuedExplosions.RemoveAt(num);
+                _queuedExplosions.RemoveAt(queueIndex);
                 SimulateExplosion(
                     explosionData.X,
                     explosionData.Y,
@@ -80,15 +80,15 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                     explosionData.IsIncendiary,
                     explosionData.Miner
                 );
-                flag |= !explosionData.NoExplosionSound;
+                playSound |= !explosionData.NoExplosionSound;
             }
             else
             {
-                num++;
+                queueIndex++;
             }
         }
 
-        PostprocessExplosions(flag);
+        PostprocessExplosions(playSound);
         if (!ShowExplosionPressure)
         {
             _pressureByPoint = null!;
@@ -124,8 +124,8 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         CharacterData? miner = null
     )
     {
-        var num = Terrain.ExtractContents(value);
-        var obj = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var contents = Terrain.ExtractContents(value);
+        var obj = WorldContentBinding.For(Project).Catalog.Blocks[contents];
         var explosionPressure = obj.GetExplosionPressure(value);
         var explosionIncendiary = obj.GetExplosionIncendiary(value);
         if (!(explosionPressure > 0f))
@@ -190,67 +190,307 @@ public class SubsystemExplosions : Subsystem, IUpdateable
     )
     {
         var explosionPointValue = _subsystemTerrain.Terrain.GetCellValue(x, y, z);
-        var num = MathUtils.Max(0.13f * MathUtils.Pow(pressure, 0.5f), 1f);
+        var minimumPressure = MathUtils.Max(0.13f * MathUtils.Pow(pressure, 0.5f), 1f);
         _subsystemTerrain.ChangeCell(x, y, z, 0);
         var processed = new SparseSpatialArray<bool>(x, y, z, true);
         var list = new List<ProcessPoint>();
         var list2 = new List<ProcessPoint>();
         var list3 = new List<ProcessPoint>();
         TryAddPoint(x, y, z, -1, pressure, isIncendiary, list, processed, miner);
-        var num2 = 0;
-        var num3 = 0;
+        var processedCount = 0;
+        var iteration = 0;
         if (Terrain.ExtractContents(explosionPointValue) != 0)
         {
         }
 
         while (list.Count > 0 || list2.Count > 0)
         {
-            num2 += list.Count;
-            num3++;
-            var num4 = 5f * MathUtils.Max(num3 - 7, 0);
-            var num5 = pressure / (MathUtils.Pow(num2, 0.66f) + num4);
-            if (num5 >= num)
+            processedCount += list.Count;
+            iteration++;
+            var distancePenalty = 5f * MathUtils.Max(iteration - 7, 0);
+            var wavePressure = pressure / (MathUtils.Pow(processedCount, 0.66f) + distancePenalty);
+            if (wavePressure >= minimumPressure)
             {
                 foreach (var item in list)
                 {
-                    var num6 = _pressureByPoint.Get(item.X, item.Y, item.Z);
-                    var num7 = num5 + num6;
-                    _pressureByPoint.Set(item.X, item.Y, item.Z, num7);
+                    var previousPressure = _pressureByPoint.Get(item.X, item.Y, item.Z);
+                    var combinedPressure = wavePressure + previousPressure;
+                    _pressureByPoint.Set(item.X, item.Y, item.Z, combinedPressure);
                     if (item.Axis == 0)
                     {
-                        TryAddPoint(item.X - 1, item.Y, item.Z, 0, num7, isIncendiary, list3, processed, miner);
-                        TryAddPoint(item.X + 1, item.Y, item.Z, 0, num7, isIncendiary, list3, processed, miner);
-                        TryAddPoint(item.X, item.Y - 1, item.Z, -1, num7, isIncendiary, list2, processed, miner);
-                        TryAddPoint(item.X, item.Y + 1, item.Z, -1, num7, isIncendiary, list2, processed, miner);
-                        TryAddPoint(item.X, item.Y, item.Z - 1, -1, num7, isIncendiary, list2, processed, miner);
-                        TryAddPoint(item.X, item.Y, item.Z + 1, -1, num7, isIncendiary, list2, processed, miner);
+                        TryAddPoint(
+                            item.X - 1,
+                            item.Y,
+                            item.Z,
+                            0,
+                            combinedPressure,
+                            isIncendiary,
+                            list3,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X + 1,
+                            item.Y,
+                            item.Z,
+                            0,
+                            combinedPressure,
+                            isIncendiary,
+                            list3,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X,
+                            item.Y - 1,
+                            item.Z,
+                            -1,
+                            combinedPressure,
+                            isIncendiary,
+                            list2,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X,
+                            item.Y + 1,
+                            item.Z,
+                            -1,
+                            combinedPressure,
+                            isIncendiary,
+                            list2,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X,
+                            item.Y,
+                            item.Z - 1,
+                            -1,
+                            combinedPressure,
+                            isIncendiary,
+                            list2,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X,
+                            item.Y,
+                            item.Z + 1,
+                            -1,
+                            combinedPressure,
+                            isIncendiary,
+                            list2,
+                            processed,
+                            miner
+                        );
                     }
                     else if (item.Axis == 1)
                     {
-                        TryAddPoint(item.X - 1, item.Y, item.Z, -1, num7, isIncendiary, list2, processed, miner);
-                        TryAddPoint(item.X + 1, item.Y, item.Z, -1, num7, isIncendiary, list2, processed, miner);
-                        TryAddPoint(item.X, item.Y - 1, item.Z, 1, num7, isIncendiary, list3, processed, miner);
-                        TryAddPoint(item.X, item.Y + 1, item.Z, 1, num7, isIncendiary, list3, processed, miner);
-                        TryAddPoint(item.X, item.Y, item.Z - 1, -1, num7, isIncendiary, list2, processed, miner);
-                        TryAddPoint(item.X, item.Y, item.Z + 1, -1, num7, isIncendiary, list2, processed, miner);
+                        TryAddPoint(
+                            item.X - 1,
+                            item.Y,
+                            item.Z,
+                            -1,
+                            combinedPressure,
+                            isIncendiary,
+                            list2,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X + 1,
+                            item.Y,
+                            item.Z,
+                            -1,
+                            combinedPressure,
+                            isIncendiary,
+                            list2,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X,
+                            item.Y - 1,
+                            item.Z,
+                            1,
+                            combinedPressure,
+                            isIncendiary,
+                            list3,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X,
+                            item.Y + 1,
+                            item.Z,
+                            1,
+                            combinedPressure,
+                            isIncendiary,
+                            list3,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X,
+                            item.Y,
+                            item.Z - 1,
+                            -1,
+                            combinedPressure,
+                            isIncendiary,
+                            list2,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X,
+                            item.Y,
+                            item.Z + 1,
+                            -1,
+                            combinedPressure,
+                            isIncendiary,
+                            list2,
+                            processed,
+                            miner
+                        );
                     }
                     else if (item.Axis == 2)
                     {
-                        TryAddPoint(item.X - 1, item.Y, item.Z, -1, num7, isIncendiary, list2, processed, miner);
-                        TryAddPoint(item.X + 1, item.Y, item.Z, -1, num7, isIncendiary, list2, processed, miner);
-                        TryAddPoint(item.X, item.Y - 1, item.Z, -1, num7, isIncendiary, list2, processed, miner);
-                        TryAddPoint(item.X, item.Y + 1, item.Z, -1, num7, isIncendiary, list2, processed, miner);
-                        TryAddPoint(item.X, item.Y, item.Z - 1, 2, num7, isIncendiary, list3, processed, miner);
-                        TryAddPoint(item.X, item.Y, item.Z + 1, 2, num7, isIncendiary, list3, processed, miner);
+                        TryAddPoint(
+                            item.X - 1,
+                            item.Y,
+                            item.Z,
+                            -1,
+                            combinedPressure,
+                            isIncendiary,
+                            list2,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X + 1,
+                            item.Y,
+                            item.Z,
+                            -1,
+                            combinedPressure,
+                            isIncendiary,
+                            list2,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X,
+                            item.Y - 1,
+                            item.Z,
+                            -1,
+                            combinedPressure,
+                            isIncendiary,
+                            list2,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X,
+                            item.Y + 1,
+                            item.Z,
+                            -1,
+                            combinedPressure,
+                            isIncendiary,
+                            list2,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X,
+                            item.Y,
+                            item.Z - 1,
+                            2,
+                            combinedPressure,
+                            isIncendiary,
+                            list3,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X,
+                            item.Y,
+                            item.Z + 1,
+                            2,
+                            combinedPressure,
+                            isIncendiary,
+                            list3,
+                            processed,
+                            miner
+                        );
                     }
                     else
                     {
-                        TryAddPoint(item.X - 1, item.Y, item.Z, 0, num7, isIncendiary, list3, processed, miner);
-                        TryAddPoint(item.X + 1, item.Y, item.Z, 0, num7, isIncendiary, list3, processed, miner);
-                        TryAddPoint(item.X, item.Y - 1, item.Z, 1, num7, isIncendiary, list3, processed, miner);
-                        TryAddPoint(item.X, item.Y + 1, item.Z, 1, num7, isIncendiary, list3, processed, miner);
-                        TryAddPoint(item.X, item.Y, item.Z - 1, 2, num7, isIncendiary, list3, processed, miner);
-                        TryAddPoint(item.X, item.Y, item.Z + 1, 2, num7, isIncendiary, list3, processed, miner);
+                        TryAddPoint(
+                            item.X - 1,
+                            item.Y,
+                            item.Z,
+                            0,
+                            combinedPressure,
+                            isIncendiary,
+                            list3,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X + 1,
+                            item.Y,
+                            item.Z,
+                            0,
+                            combinedPressure,
+                            isIncendiary,
+                            list3,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X,
+                            item.Y - 1,
+                            item.Z,
+                            1,
+                            combinedPressure,
+                            isIncendiary,
+                            list3,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X,
+                            item.Y + 1,
+                            item.Z,
+                            1,
+                            combinedPressure,
+                            isIncendiary,
+                            list3,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X,
+                            item.Y,
+                            item.Z - 1,
+                            2,
+                            combinedPressure,
+                            isIncendiary,
+                            list3,
+                            processed,
+                            miner
+                        );
+                        TryAddPoint(
+                            item.X,
+                            item.Y,
+                            item.Z + 1,
+                            2,
+                            combinedPressure,
+                            isIncendiary,
+                            list3,
+                            processed,
+                            miner
+                        );
                     }
                 }
             }
@@ -292,26 +532,26 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         }
 
         var cellValue = _subsystemTerrain.Terrain.GetCellValue(x, y, z);
-        var num = Terrain.ExtractContents(cellValue);
-        if (num != 0)
+        var contents = Terrain.ExtractContents(cellValue);
+        if (contents != 0)
         {
-            var num2 = (int)(MathUtils.Hash((uint)(x + 913 * y + 217546 * z)) % 100u);
-            var num3 = MathUtils.Lerp(1f, 2f, num2 / 100f);
-            if (num2 % 8 == 0)
+            var variationSeed = (int)(MathUtils.Hash((uint)(x + 913 * y + 217546 * z)) % 100u);
+            var strengthVariation = MathUtils.Lerp(1f, 2f, variationSeed / 100f);
+            if (variationSeed % 8 == 0)
             {
-                num3 *= 3f;
+                strengthVariation *= 3f;
             }
 
-            var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
-            var num4 = _pressureByPoint.Get(x - 1, y, z) +
-                       _pressureByPoint.Get(x + 1, y, z) +
-                       _pressureByPoint.Get(x, y - 1, z) +
-                       _pressureByPoint.Get(x, y + 1, z) +
-                       _pressureByPoint.Get(x, y, z - 1) +
-                       _pressureByPoint.Get(x, y, z + 1);
-            var num5 = MathUtils.Max(block.ExplosionResilience * num3, 1f);
-            var num6 = num4 / num5;
-            if (num6 > 1f)
+            var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
+            var neighboringPressure = _pressureByPoint.Get(x - 1, y, z) +
+                                      _pressureByPoint.Get(x + 1, y, z) +
+                                      _pressureByPoint.Get(x, y - 1, z) +
+                                      _pressureByPoint.Get(x, y + 1, z) +
+                                      _pressureByPoint.Get(x, y, z - 1) +
+                                      _pressureByPoint.Get(x, y, z + 1);
+            var effectiveResilience = MathUtils.Max(block.ExplosionResilience * strengthVariation, 1f);
+            var pressureRatio = neighboringPressure / effectiveResilience;
+            if (pressureRatio > 1f)
             {
                 var newValue = Terrain.MakeBlockValue(0);
                 _subsystemTerrain.DestroyCell(
@@ -324,24 +564,24 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                     true,
                     characterData?.ComponentCharacter?.ComponentMiner
                 );
-                var flag = false;
-                var probability = num6 > 5f ? 0.95f : 0.75f;
+                var triggeredExplosion = false;
+                var probability = pressureRatio > 5f ? 0.95f : 0.75f;
                 if (SharedRandom.Bool(probability))
                 {
                     //爆炸方块
-                    flag = TryNetExplodeBlock(x, y, z, cellValue);
+                    triggeredExplosion = TryNetExplodeBlock(x, y, z, cellValue);
                 }
 
-                if (!flag)
+                if (!triggeredExplosion)
                 {
                     CalculateImpulseAndDamage(
                         new Vector3(x + 0.5f, y + 0.5f, z + 0.5f),
                         60f,
-                        2f * num4,
+                        2f * neighboringPressure,
                         out var impulse,
                         out _
                     );
-                    var flag2 = false;
+                    var usesFallbackDrop = false;
                     var list = new List<BlockDropValue>();
                     block.GetDropValues(_subsystemTerrain, cellValue, newValue, 0, list, out _);
                     if (list.Count == 0)
@@ -353,19 +593,19 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                                 Count = 1
                             }
                         );
-                        flag2 = true;
+                        usesFallbackDrop = true;
                     }
 
                     foreach (var item in list)
                     {
-                        var num7 = Terrain.ExtractContents(item.Value);
-                        var block2 = WorldContentBinding.For(Project).Catalog.Blocks[num7];
-                        if (!(WorldContentBinding.For(Project).Catalog.Blocks[num7] is FluidBlock))
+                        var dropContents = Terrain.ExtractContents(item.Value);
+                        var block2 = WorldContentBinding.For(Project).Catalog.Blocks[dropContents];
+                        if (!(WorldContentBinding.For(Project).Catalog.Blocks[dropContents] is FluidBlock))
                         {
-                            var num8 = _projectilesCount < 40 || block2.ExplosionKeepsPickable ? 1f :
+                            var spawnProbability = _projectilesCount < 40 || block2.ExplosionKeepsPickable ? 1f :
                                 _projectilesCount < 60 ? 0.5f :
                                 _projectilesCount >= 80 ? 0.125f : 0.25f;
-                            if (SharedRandom.Float(0f, 1f) < num8)
+                            if (SharedRandom.Float(0f, 1f) < spawnProbability)
                             {
                                 var velocity = impulse + SharedRandom.Vector3(0.05f * impulse.Length());
                                 if (_projectilesCount >= 1)
@@ -374,7 +614,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                                     velocity += SharedRandom.Vector3(0.2f * velocity.Length());
                                 }
 
-                                var num9 = flag2 ? 0f :
+                                var pickupProbability = usesFallbackDrop ? 0f :
                                     block2.ExplosionKeepsPickable ? 1f :
                                     MathUtils.Lerp(1f, 0f, _projectilesCount / 25f);
                                 //添加抛射物
@@ -387,23 +627,24 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                                 );
                                 if (projectile != null)
                                 {
-                                    projectile.ProjectileStoppedAction = !(SharedRandom.Float(0f, 1f) < num9)
-                                        ? ProjectileStoppedAction.Disappear
-                                        : ProjectileStoppedAction.TurnIntoPickable;
+                                    projectile.ProjectileStoppedAction =
+                                        !(SharedRandom.Float(0f, 1f) < pickupProbability)
+                                            ? ProjectileStoppedAction.Disappear
+                                            : ProjectileStoppedAction.TurnIntoPickable;
                                     if (SharedRandom.Float(0f, 1f) < 0.5f && _projectilesCount < 35)
                                     {
-                                        var num10 = num4 > 60f
+                                        var trailDuration = neighboringPressure > 60f
                                             ? SharedRandom.Float(3f, 7f)
                                             : SharedRandom.Float(1f, 3f);
                                         if (isIncendiary)
                                         {
-                                            num10 += 10f;
+                                            trailDuration += 10f;
                                         }
 
                                         _subsystemProjectiles.SetSmokeTrail(
                                             projectile,
                                             SharedRandom.Float(0.75f, 1.5f),
-                                            num10,
+                                            trailDuration,
                                             isIncendiary ? new Color(255, 140, 192) : Color.White
                                         );
 
@@ -427,7 +668,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                     z,
                     new SurroundingPressurePoint
                     {
-                        Pressure = num4,
+                        Pressure = neighboringPressure,
                         IsIncendiary = isIncendiary
                     }
                 );
@@ -454,13 +695,13 @@ public class SubsystemExplosions : Subsystem, IUpdateable
     {
         var pressures = _pressureByPoint.ToDictionary();
         var point = ExplosionAcoustics.SelectOrigin(pressures);
-        var num2 = 0f;
+        var totalPressure = 0f;
         foreach (var item in pressures)
         {
-            num2 += item.Value;
-            var num4 = 0.001f * MathUtils.Pow(num2, 0.5f);
-            var num5 = MathUtils.Saturate(item.Value / 15f - num4) * SharedRandom.Float(0.2f, 1f);
-            if (!(num5 > 0.1f))
+            totalPressure += item.Value;
+            var intensityPenalty = 0.001f * MathUtils.Pow(totalPressure, 0.5f);
+            var cellIntensity = MathUtils.Saturate(item.Value / 15f - intensityPenalty) * SharedRandom.Float(0.2f, 1f);
+            if (!(cellIntensity > 0.1f))
             {
                 continue;
             }
@@ -473,15 +714,15 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                     _explosionCells.Add(chunk, []);
                 }
 
-                _explosionCells[chunk].Add((item.Key, num5));
+                _explosionCells[chunk].Add((item.Key, cellIntensity));
             }
         }
 
         foreach (var item2 in _surroundingPressureByPoint.ToDictionary())
         {
             var cellValue = _subsystemTerrain.Terrain.GetCellValue(item2.Key.X, item2.Key.Y, item2.Key.Z);
-            var num6 = Terrain.ExtractContents(cellValue);
-            var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num6);
+            var contents = Terrain.ExtractContents(cellValue);
+            var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(contents);
             if (blockBehaviors.Length != 0)
             {
                 foreach (var behavior in blockBehaviors)
@@ -497,7 +738,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             }
 
             var probability = item2.Value.IsIncendiary ? 0.5f : 0.2f;
-            var block = WorldContentBinding.For(Project).Catalog.Blocks[num6];
+            var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
             //方块燃烧
             if (block.FireDuration > 0f &&
                 item2.Value.Pressure / block.ExplosionResilience > 0.2f &&
@@ -605,11 +846,11 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         if (point is not { } origin) { return; }
 
         var position = new Vector3(origin) + new Vector3(.5f);
-        var profile = ExplosionAcoustics.ForPressure(num2);
+        var profile = ExplosionAcoustics.ForPressure(totalPressure);
         if (profile.NoiseRadius > 0f) { _subsystemNoise.MakeNoise(position, 1f, profile.NoiseRadius); }
 
         // Preserve the authority's existing acoustic random draw independently of presentation availability.
-        var pitch = playExplosionSound && num2 > 0f
+        var pitch = playExplosionSound && totalPressure > 0f
             ? SharedRandom.Float(-profile.PitchVariation, profile.PitchVariation)
             : 0f;
         if (playExplosionSound)
@@ -621,7 +862,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             {
                 NetworkSender.Send(
                     Project,
-                    new ExplosionSoundPackage { Position = position, Level = num2, Pitch = pitch },
+                    new ExplosionSoundPackage { Position = position, Level = totalPressure, Pitch = pitch },
                     PackageAudience.To(observers)
                 );
             }
@@ -691,7 +932,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         var point = Terrain.ToCell(position);
         obstaclePressure ??= _pressureByPoint.Get(point.X, point.Y, point.Z);
 
-        var num = 0f;
+        var sampledPressure = 0f;
         var zero = Vector3.Zero;
         for (var i = -1; i <= 1; i++)
         {
@@ -699,25 +940,26 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             {
                 for (var k = -1; k <= 1; k++)
                 {
-                    var num2 = point.X + i;
-                    var num3 = point.Y + j;
-                    var num4 = point.Z + k;
-                    var num5 = _subsystemTerrain.Terrain.GetCellContents(num2, num3, num4) != 0
+                    var sampleX = point.X + i;
+                    var sampleY = point.Y + j;
+                    var sampleZ = point.Z + k;
+                    var samplePressure = _subsystemTerrain.Terrain.GetCellContents(sampleX, sampleY, sampleZ) != 0
                         ? obstaclePressure.Value
-                        : _pressureByPoint.Get(num2, num3, num4);
+                        : _pressureByPoint.Get(sampleX, sampleY, sampleZ);
                     if (i != 0 || j != 0 || k != 0)
                     {
-                        zero += num5 * Vector3.Normalize(new Vector3(point.X - num2, point.Y - num3, point.Z - num4));
+                        zero += samplePressure *
+                                Vector3.Normalize(new Vector3(point.X - sampleX, point.Y - sampleY, point.Z - sampleZ));
                     }
 
-                    num += num5;
+                    sampledPressure += samplePressure;
                 }
             }
         }
 
-        var num6 = MathUtils.Max(MathUtils.Pow(mass, 0.5f), 1f);
-        impulse = 5.5555553f * Vector3.Normalize(zero) * MathUtils.Sqrt(zero.Length()) / num6;
-        damage = 2.59259248f * MathUtils.Sqrt(num) / num6;
+        var massScale = MathUtils.Max(MathUtils.Pow(mass, 0.5f), 1f);
+        impulse = 5.5555553f * Vector3.Normalize(zero) * MathUtils.Sqrt(zero.Length()) / massScale;
+        damage = 2.59259248f * MathUtils.Sqrt(sampledPressure) / massScale;
     }
 
     public class SparseSpatialArray<T>(int centerX, int centerY, int centerZ, T outside)
@@ -750,18 +992,18 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                 return outside;
             }
 
-            var num = x >> 4;
-            var num2 = y >> 4;
-            var num3 = z >> 4;
-            var num4 = num + (num2 << 4) + (num3 << 4 << 4);
-            var array = _data[num4];
+            var chunkX = x >> 4;
+            var chunkY = y >> 4;
+            var chunkZ = z >> 4;
+            var chunkIndex = chunkX + (chunkY << 4) + (chunkZ << 4 << 4);
+            var array = _data[chunkIndex];
             if (array != null)
             {
-                var num5 = x & 0xF;
-                var num6 = y & 0xF;
-                var num7 = z & 0xF;
-                var num8 = num5 + (num6 << 4) + (num7 << 4 << 4);
-                return array[num8];
+                var localX = x & 0xF;
+                var localY = y & 0xF;
+                var localZ = z & 0xF;
+                var cellIndex = localX + (localY << 4) + (localZ << 4 << 4);
+                return array[cellIndex];
             }
 
             return default;
@@ -777,22 +1019,22 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                 return;
             }
 
-            var num = x >> 4;
-            var num2 = y >> 4;
-            var num3 = z >> 4;
-            var num4 = num + (num2 << 4) + (num3 << 4 << 4);
-            var array = _data[num4];
+            var chunkX = x >> 4;
+            var chunkY = y >> 4;
+            var chunkZ = z >> 4;
+            var chunkIndex = chunkX + (chunkY << 4) + (chunkZ << 4 << 4);
+            var array = _data[chunkIndex];
             if (array == null)
             {
                 array = new T[4096];
-                _data[num4] = array;
+                _data[chunkIndex] = array;
             }
 
-            var num5 = x & 0xF;
-            var num6 = y & 0xF;
-            var num7 = z & 0xF;
-            var num8 = num5 + (num6 << 4) + (num7 << 4 << 4);
-            array[num8] = value;
+            var localX = x & 0xF;
+            var localY = y & 0xF;
+            var localZ = z & 0xF;
+            var cellIndex = localX + (localY << 4) + (localZ << 4 << 4);
+            array[cellIndex] = value;
         }
 
         public void Clear()
@@ -814,17 +1056,20 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                     continue;
                 }
 
-                var num = _originX + ((i & 0xF) << 4);
-                var num2 = _originY + (((i >> 4) & 0xF) << 4);
-                var num3 = _originZ + (((i >> 8) & 0xF) << 4);
+                var chunkOriginX = _originX + ((i & 0xF) << 4);
+                var chunkOriginY = _originY + (((i >> 4) & 0xF) << 4);
+                var chunkOriginZ = _originZ + (((i >> 8) & 0xF) << 4);
                 for (var j = 0; j < array.Length; j++)
                 {
                     if (!Equals(array[j], default(T)))
                     {
-                        var num4 = j & 0xF;
-                        var num5 = (j >> 4) & 0xF;
-                        var num6 = (j >> 8) & 0xF;
-                        dictionary.Add(new Point3(num + num4, num2 + num5, num3 + num6), array[j]);
+                        var localX = j & 0xF;
+                        var localY = (j >> 4) & 0xF;
+                        var localZ = (j >> 8) & 0xF;
+                        dictionary.Add(
+                            new Point3(chunkOriginX + localX, chunkOriginY + localY, chunkOriginZ + localZ),
+                            array[j]
+                        );
                     }
                 }
             }

@@ -14,7 +14,7 @@ public class StackPanelWidget : ContainerWidget
     {
         _fixedSize = 0f;
         _fillCount = 0;
-        var num = 0f;
+        var crossAxisSize = 0f;
         foreach (var child in Children)
         {
             if (child.IsVisible)
@@ -36,7 +36,7 @@ public class StackPanelWidget : ContainerWidget
                         _fillCount++;
                     }
 
-                    num = MathUtils.Max(num, child.ParentDesiredSize.Y + 2f * child.Margin.Y);
+                    crossAxisSize = MathUtils.Max(crossAxisSize, child.ParentDesiredSize.Y + 2f * child.Margin.Y);
                 }
                 else
                 {
@@ -54,69 +54,73 @@ public class StackPanelWidget : ContainerWidget
                         _fillCount++;
                     }
 
-                    num = MathUtils.Max(num, child.ParentDesiredSize.X + 2f * child.Margin.X);
+                    crossAxisSize = MathUtils.Max(crossAxisSize, child.ParentDesiredSize.X + 2f * child.Margin.X);
                 }
             }
         }
 
         if (Direction == LayoutDirection.Horizontal)
         {
-            DesiredSize = _fillCount == 0 ? new Vector2(_fixedSize, num) : new Vector2(float.PositiveInfinity, num);
+            DesiredSize = _fillCount == 0
+                ? new Vector2(_fixedSize, crossAxisSize)
+                : new Vector2(float.PositiveInfinity, crossAxisSize);
         }
         else
         {
-            DesiredSize = _fillCount == 0 ? new Vector2(num, _fixedSize) : new Vector2(num, float.PositiveInfinity);
+            DesiredSize = _fillCount == 0
+                ? new Vector2(crossAxisSize, _fixedSize)
+                : new Vector2(crossAxisSize, float.PositiveInfinity);
         }
     }
 
     public override void ArrangeOverride()
     {
-        var num = 0f;
+        var offset = 0f;
         foreach (var child in Children)
         {
             if (child.IsVisible)
             {
                 if (Direction == LayoutDirection.Horizontal)
                 {
-                    var num2 = child.ParentDesiredSize.X.CloseTo(float.PositiveInfinity)
+                    var childWidth = child.ParentDesiredSize.X.CloseTo(float.PositiveInfinity)
                         ? _fillCount > 0 ? MathUtils.Max(ActualSize.X - _fixedSize, 0f) / _fillCount : 0f
                         : child.ParentDesiredSize.X + 2f * child.Margin.X;
                     Vector2 c;
                     Vector2 c2;
                     if (!IsInverted)
                     {
-                        c = new Vector2(num, 0f);
-                        c2 = new Vector2(num + num2, ActualSize.Y);
+                        c = new Vector2(offset, 0f);
+                        c2 = new Vector2(offset + childWidth, ActualSize.Y);
                     }
                     else
                     {
-                        c = new Vector2(ActualSize.X - (num + num2), 0f);
-                        c2 = new Vector2(ActualSize.X - num, ActualSize.Y);
+                        c = new Vector2(ActualSize.X - (offset + childWidth), 0f);
+                        c2 = new Vector2(ActualSize.X - offset, ActualSize.Y);
                     }
 
                     ArrangeChildWidgetInCell(c, c2, child);
-                    num += num2;
+                    offset += childWidth;
                 }
                 else
                 {
-                    var num3 = child.ParentDesiredSize.Y.CloseTo(float.PositiveInfinity)
+                    var childHeight = child.ParentDesiredSize.Y.CloseTo(float.PositiveInfinity)
                         ? _fillCount > 0 ? MathUtils.Max(ActualSize.Y - _fixedSize, 0f) / _fillCount : 0f
                         : child.ParentDesiredSize.Y + 2f * child.Margin.Y;
                     Vector2 c3;
                     Vector2 c4;
                     if (!IsInverted)
                     {
-                        c3 = new Vector2(0f, num);
-                        c4 = new Vector2(ActualSize.X, num + num3);
+                        c3 = new Vector2(0f, offset);
+                        c4 = new Vector2(ActualSize.X, offset + childHeight);
                     }
                     else
                     {
-                        c3 = new Vector2(0f, ActualSize.Y - (num + num3));
-                        c4 = new Vector2(ActualSize.X, ActualSize.Y - num);
+                        c3 = new Vector2(0f, ActualSize.Y - (offset + childHeight));
+                        c4 = new Vector2(ActualSize.X, ActualSize.Y - offset);
                     }
 
                     ArrangeChildWidgetInCell(c3, c4, child);
-                    num += num3;
+                    offset += childHeight;
                 }
             }
         }

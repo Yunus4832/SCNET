@@ -19,8 +19,8 @@ public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior
                 delegate(int newVoltageLevel)
                 {
                     var data2 = SwitchBlock.SetVoltageLevel(data, newVoltageLevel);
-                    var num = Terrain.ReplaceData(value, data2);
-                    if (num != value)
+                    var updatedValue = Terrain.ReplaceData(value, data2);
+                    if (updatedValue != value)
                     {
                         var p = new EditableBlockValuePackage
                         {
@@ -45,8 +45,8 @@ public class SubsystemSwitchBlockBehavior : SubsystemBlockBehavior
                 voltageLevel,
                 delegate(int newVoltageLevel)
                 {
-                    var num = SwitchBlock.SetVoltageLevel(data, newVoltageLevel);
-                    if (num == data)
+                    var updatedData = SwitchBlock.SetVoltageLevel(data, newVoltageLevel);
+                    if (updatedData == data)
                     {
                         return;
                     }

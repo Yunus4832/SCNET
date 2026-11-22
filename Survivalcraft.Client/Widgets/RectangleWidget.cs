@@ -185,8 +185,8 @@ public class RectangleWidget : Widget
         var flatBatch2D = dc.PrimitivesRenderer2D.FlatBatch(1, depthStencilState);
         var vector = Vector2.Normalize(GlobalTransform.Right.XY);
         var v5 = -Vector2.Normalize(GlobalTransform.Up.XY);
-        var num = (int)MathUtils.Max(MathUtils.Round(OutlineThickness * GlobalTransform.Right.Length()), 1f);
-        for (var i = 0; i < num; i++)
+        var outlinePixels = (int)MathUtils.Max(MathUtils.Round(OutlineThickness * GlobalTransform.Right.Length()), 1f);
+        for (var i = 0; i < outlinePixels; i++)
         {
             flatBatch2D.QueueLine(result, result2, Depth, color2);
             flatBatch2D.QueueLine(result2, result3, Depth, color2);

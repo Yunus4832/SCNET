@@ -22,15 +22,15 @@ public class TorchBlockPresentation(TorchBlock block, BlockPresentationCatalog c
         int z
     )
     {
-        var num = Terrain.ExtractData(value);
-        if (num < BlockMeshesByVariant.Length)
+        var mountingFace = Terrain.ExtractData(value);
+        if (mountingFace < BlockMeshesByVariant.Length)
         {
             generator.GenerateMeshVertices(
                 this,
                 x,
                 y,
                 z,
-                BlockMeshesByVariant[num],
+                BlockMeshesByVariant[mountingFace],
                 Color.White,
                 null,
                 geometry.SubsetOpaque

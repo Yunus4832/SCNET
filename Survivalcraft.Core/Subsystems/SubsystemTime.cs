@@ -42,13 +42,13 @@ public class SubsystemTime : Subsystem
             : MathUtils.Min(FixedTimeStep.Value * _gameTimeFactor, 0.1f);
 
         GameTime += GameTimeDelta;
-        var num = 0;
-        while (num < _delayedExecutionsRequests.Count)
+        var requestIndex = 0;
+        while (requestIndex < _delayedExecutionsRequests.Count)
         {
-            var delayedExecutionRequest = _delayedExecutionsRequests[num];
+            var delayedExecutionRequest = _delayedExecutionsRequests[requestIndex];
             if (delayedExecutionRequest.GameTime >= 0.0 && GameTime >= delayedExecutionRequest.GameTime)
             {
-                _delayedExecutionsRequests.RemoveAt(num);
+                _delayedExecutionsRequests.RemoveAt(requestIndex);
                 delayedExecutionRequest.Action();
                 if (Project.IsDisposed || runtime.IsClosed)
                 {
@@ -57,7 +57,7 @@ public class SubsystemTime : Subsystem
             }
             else
             {
-                num++;
+                requestIndex++;
             }
         }
 
@@ -91,11 +91,11 @@ public class SubsystemTime : Subsystem
 
     public bool PeriodicGameTimeEvent(double period, double offset)
     {
-        var num = GameTime - offset;
-        var num2 = MathUtils.Floor(num / period) * period;
-        if (num >= num2)
+        var offsetTime = GameTime - offset;
+        var periodStart = MathUtils.Floor(offsetTime / period) * period;
+        if (offsetTime >= periodStart)
         {
-            return num - GameTimeDelta < num2;
+            return offsetTime - GameTimeDelta < periodStart;
         }
 
         return false;

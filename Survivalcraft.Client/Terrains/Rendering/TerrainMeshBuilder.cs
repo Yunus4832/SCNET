@@ -376,22 +376,22 @@ internal sealed class TerrainMeshBuilder(
                 var x3 = i & 0xF;
                 var z = j & 0xF;
                 var shaftValueFast = chunkAtCell.GetShaftValueFast(x3, z);
-                var num6 = Terrain.ExtractBottomHeight(shaftValueFast);
-                var num7 = Terrain.ExtractTopHeight(shaftValueFast);
-                var num8 = MathUtils.Max(x, num6 - 1);
-                var num9 = MathUtils.Min(x2, num7 + 2);
-                var num10 = TerrainChunk.CalculateCellIndex(x3, num8, z);
-                var num11 = num10 + num9 - num8;
-                while (num10 < num11)
+                var bottomHeight = Terrain.ExtractBottomHeight(shaftValueFast);
+                var topHeight = Terrain.ExtractTopHeight(shaftValueFast);
+                var startY = MathUtils.Max(x, bottomHeight - 1);
+                var endY = MathUtils.Min(x2, topHeight + 2);
+                var startIndex = TerrainChunk.CalculateCellIndex(x3, startY, z);
+                var endIndex = startIndex + endY - startY;
+                while (startIndex < endIndex)
                 {
-                    geometry = 31 * geometry + chunkAtCell.GetCellValueForGeometry(num10);
-                    num10++;
+                    geometry = 31 * geometry + chunkAtCell.GetCellValueForGeometry(startIndex);
+                    startIndex++;
                 }
 
                 geometry = 31 * geometry + Terrain.ExtractTemperature(shaftValueFast);
                 geometry = 31 * geometry + Terrain.ExtractHumidity(shaftValueFast);
-                geometry = 31 * geometry + num8;
-                geometry = 31 * geometry + num9;
+                geometry = 31 * geometry + startY;
+                geometry = 31 * geometry + endY;
             }
         }
 

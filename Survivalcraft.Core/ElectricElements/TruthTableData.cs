@@ -38,13 +38,13 @@ public class TruthTableData : IEditableItemData
     {
         for (var i = 0; i < 16; i++)
         {
-            var num = i < data.Length ? _hexChars.IndexOf(char.ToUpperInvariant(data[i])) : 0;
-            if (num < 0)
+            var hexDigit = i < data.Length ? _hexChars.IndexOf(char.ToUpperInvariant(data[i])) : 0;
+            if (hexDigit < 0)
             {
-                num = 0;
+                hexDigit = 0;
             }
 
-            Data[i] = (byte)num;
+            Data[i] = (byte)hexDigit;
         }
     }
 

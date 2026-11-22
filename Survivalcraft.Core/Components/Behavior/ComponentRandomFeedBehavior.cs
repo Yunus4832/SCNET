@@ -106,10 +106,10 @@ public class ComponentRandomFeedBehavior : ComponentBehavior, IUpdateable
                 {
                     var position = _componentCreature.ComponentBody.Position;
                     var forward = _componentCreature.ComponentBody.Matrix.Forward;
-                    var num4 = _random.Float(0f, 1f) < 0.2f ? 5f : 1.5f;
+                    var moveDistance = _random.Float(0f, 1f) < 0.2f ? 5f : 1.5f;
                     value = position +
-                            num4 * forward +
-                            0.5f * num4 * new Vector3(_random.Float(-1f, 1f), 0f, _random.Float(-1f, 1f));
+                            moveDistance * forward +
+                            0.5f * moveDistance * new Vector3(_random.Float(-1f, 1f), 0f, _random.Float(-1f, 1f));
                 }
 
                 value.Y = _subsystemTerrain.Terrain.GetTopHeight(Terrain.ToCell(value.X), Terrain.ToCell(value.Z)) + 1;
@@ -128,12 +128,12 @@ public class ComponentRandomFeedBehavior : ComponentBehavior, IUpdateable
             {
                 if (!_componentPathfinding.Destination.HasValue)
                 {
-                    var num3 = _random.Float(0f, 1f);
-                    if (num3 < 0.33f)
+                    var transitionRoll = _random.Float(0f, 1f);
+                    if (transitionRoll < 0.33f)
                     {
                         stateMachine.TransitionTo("Inactive");
                     }
-                    else if (num3 < 0.66f)
+                    else if (transitionRoll < 0.66f)
                     {
                         stateMachine.TransitionTo("LookAround");
                     }
@@ -158,13 +158,13 @@ public class ComponentRandomFeedBehavior : ComponentBehavior, IUpdateable
                 _waitTime -= _subsystemTime.GameTimeDelta;
                 if (_waitTime <= 0f)
                 {
-                    var num2 = _random.Float(0f, 1f);
-                    if (num2 < 0.25f)
+                    var transitionRoll = _random.Float(0f, 1f);
+                    if (transitionRoll < 0.25f)
                     {
                         stateMachine.TransitionTo("Inactive");
                     }
 
-                    switch (num2)
+                    switch (transitionRoll)
                     {
                         case < 0.5f:
                             stateMachine.TransitionTo(string.Empty);
@@ -218,13 +218,13 @@ public class ComponentRandomFeedBehavior : ComponentBehavior, IUpdateable
                 {
                     if (_autoFeed)
                     {
-                        var num = _random.Float(0f, 1f);
-                        if (num < 0.33f)
+                        var transitionRoll = _random.Float(0f, 1f);
+                        if (transitionRoll < 0.33f)
                         {
                             stateMachine.TransitionTo("Inactive");
                         }
 
-                        stateMachine.TransitionTo(num < 0.66f ? "Move" : "LookAround");
+                        stateMachine.TransitionTo(transitionRoll < 0.66f ? "Move" : "LookAround");
                     }
                     else
                     {

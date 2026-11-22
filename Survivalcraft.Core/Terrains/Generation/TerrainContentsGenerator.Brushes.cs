@@ -121,9 +121,9 @@ public partial class TerrainContentsGenerator
                         distanceFromCenter / curBaseSize
                     ) +
                     random.Int(0, 1);
-                var num81 = 1 +
-                            (int)MathUtils.Lerp(verticalOffset, 0f, distanceFromCenter / curBaseSize) +
-                            random.Int(0, 1);
+                var magmaDepth = 1 +
+                                 (int)MathUtils.Lerp(verticalOffset, 0f, distanceFromCenter / curBaseSize) +
+                                 random.Int(0, 1);
                 magmaPocketBrush.AddBox(
                     (int)MathUtils.Floor(horizontalPosition.X),
                     0,
@@ -135,10 +135,10 @@ public partial class TerrainContentsGenerator
                 );
                 magmaPocketBrush.AddBox(
                     (int)MathUtils.Floor(horizontalPosition.X),
-                    -num81,
+                    -magmaDepth,
                     (int)MathUtils.Floor(horizontalPosition.Y),
                     horizontalSize,
-                    num81,
+                    magmaDepth,
                     horizontalSize,
                     92
                 );

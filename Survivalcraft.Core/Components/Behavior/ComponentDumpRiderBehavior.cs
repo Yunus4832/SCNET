@@ -229,8 +229,8 @@ public class ComponentDumpRiderBehavior : ComponentBehavior, IUpdateable
 
     public void TransitionToRandomDumpingBehavior()
     {
-        var num = _random.Float(0f, 1f);
-        switch (num)
+        var behaviorRoll = _random.Float(0f, 1f);
+        switch (behaviorRoll)
         {
             case < 0.5f:
                 stateMachine.TransitionTo("WildJumping");

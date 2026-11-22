@@ -27,10 +27,10 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public void Update(float dt)
     {
-        var num = 0;
+        var processedCount = 0;
         while (true)
         {
-            if (num >= 10)
+            if (processedCount >= 10)
             {
                 return;
             }
@@ -41,7 +41,7 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
             }
 
             MatureSapling(_enumerator.Current);
-            num++;
+            processedCount++;
         }
 
         _enumerator = _saplings.Values.GetEnumerator();
@@ -58,7 +58,7 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public override void OnBlockAdded(int value, int oldValue, int x, int y, int z)
     {
-        var num = _subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
+        var growthDelay = _subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative
             ? _random.Float(8f, 12f)
             : _random.Float(480f, 600f);
         AddSapling(
@@ -66,7 +66,7 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
             {
                 Point = new Point3(x, y, z),
                 Type = (TreeType)Terrain.ExtractData(value),
-                MatureTime = _subsystemGameInfo.TotalElapsedGameTime + num
+                MatureTime = _subsystemGameInfo.TotalElapsedGameTime + growthDelay
             }
         );
     }
@@ -91,10 +91,10 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
     {
         var valuesDictionary2 = new ValuesDictionary();
         valuesDictionary.SetValue("Saplings", valuesDictionary2);
-        var num = 0;
+        var entryIndex = 0;
         foreach (var value in _saplings.Values)
         {
-            valuesDictionary2.SetValue(num++.ToString(CultureInfo.InvariantCulture), SaveSaplingData(value));
+            valuesDictionary2.SetValue(entryIndex++.ToString(CultureInfo.InvariantCulture), SaveSaplingData(value));
         }
     }
 
@@ -150,7 +150,7 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
             {
                 if (light >= 9)
                 {
-                    var flag = false;
+                    var hasNearbyWater = false;
                     for (var i = x - 1; i <= x + 1; i++)
                     {
                         for (var j = z - 1; j <= z + 1; j++)
@@ -162,31 +162,37 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
                                 continue;
                             }
 
-                            flag = true;
+                            hasNearbyWater = true;
                             break;
                         }
                     }
 
-                    float num;
+                    float growthChance;
                     if (_subsystemGameInfo.WorldSettings.GameMode == GameMode.Creative)
                     {
-                        num = 1f;
+                        growthChance = 1f;
                     }
                     else
                     {
-                        var num2 = SubsystemTerrain.Terrain.GetTemperature(x, z) +
-                                   SubsystemWeather.GetTemperatureAdjustmentAtHeight(y);
-                        var num3 = SubsystemTerrain.Terrain.GetHumidity(x, z);
-                        if (flag)
+                        var temperature = SubsystemTerrain.Terrain.GetTemperature(x, z) +
+                                          SubsystemWeather.GetTemperatureAdjustmentAtHeight(y);
+                        var humidity = SubsystemTerrain.Terrain.GetHumidity(x, z);
+                        if (hasNearbyWater)
                         {
-                            num2 = (num2 + 10) / 2;
-                            num3 = MathUtils.Max(num3, 12);
+                            temperature = (temperature + 10) / 2;
+                            humidity = MathUtils.Max(humidity, 12);
                         }
 
-                        num = 2f * PlantsManager.CalculateTreeProbability(saplingData.Type, num2, num3, y);
+                        growthChance = 2f *
+                                       PlantsManager.CalculateTreeProbability(
+                                           saplingData.Type,
+                                           temperature,
+                                           humidity,
+                                           y
+                                       );
                     }
 
-                    if (_random.Bool(num))
+                    if (_random.Bool(growthChance))
                     {
                         SubsystemTerrain.ChangeCell(x, y, z, Terrain.MakeBlockValue(0, 0));
                         if (!GrowTree(x, y, z, saplingData.Type))
@@ -221,7 +227,7 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
         for (var i = 0; i < 20; i++)
         {
             var terrainBrush = treeBrushes[_random.Int(0, treeBrushes.Count - 1)];
-            var flag = true;
+            var hasClearance = true;
             var cells = terrainBrush.Cells;
             foreach (var cell in cells)
             {
@@ -237,11 +243,11 @@ public class SubsystemSaplingBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     continue;
                 }
 
-                flag = false;
+                hasClearance = false;
                 break;
             }
 
-            if (!flag)
+            if (!hasClearance)
             {
                 continue;
             }

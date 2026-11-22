@@ -94,7 +94,7 @@ public class FurnitureSetItemWidget : CanvasWidget, IDragTargetWidget
 
     private int CountFurnitureDesigns()
     {
-        var num = 0;
+        var designCount = 0;
         for (var i = 0; i < _furnitureInventoryPanel.ComponentFurnitureInventory.SlotsCount; i++)
         {
             var slotValue = _furnitureInventoryPanel.ComponentFurnitureInventory.GetSlotValue(i);
@@ -107,10 +107,10 @@ public class FurnitureSetItemWidget : CanvasWidget, IDragTargetWidget
             var design = _furnitureInventoryPanel.SubsystemFurnitureBlockBehavior.GetDesign(designIndex);
             if (design != null && design.FurnitureSet == _furnitureSet)
             {
-                num++;
+                designCount++;
             }
         }
 
-        return num;
+        return designCount;
     }
 }

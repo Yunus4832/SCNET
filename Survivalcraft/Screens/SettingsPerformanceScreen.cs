@@ -179,8 +179,9 @@ public class SettingsPerformanceScreen : Screen
             return;
         }
 
-        var flag = Configuration.ClientConfiguration.Preferences.VisibilityRange > 128;
-        if (Configuration.ClientConfiguration.Preferences.VisibilityRange > _enterVisibilityRange && flag)
+        var usesExtendedVisibility = Configuration.ClientConfiguration.Preferences.VisibilityRange > 128;
+        if (Configuration.ClientConfiguration.Preferences.VisibilityRange > _enterVisibilityRange &&
+            usesExtendedVisibility)
         {
             DialogsManager.ShowDialog(
                 null,

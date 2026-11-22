@@ -12,7 +12,7 @@ public class PressurePlateBlock : MountedElectricElementBlock
         {
             for (var j = 0; j < 6; j++)
             {
-                var num2 = SetMountingFace(SetMaterial(0, i), j);
+                var meshIndex = SetMountingFace(SetMaterial(0, i), j);
                 var matrix = j >= 4
                     ? j != 4
                         ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
@@ -22,25 +22,25 @@ public class PressurePlateBlock : MountedElectricElementBlock
                       Matrix.CreateRotationY(j * (float)Math.PI / 2f) *
                       Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                 var vector = Vector3.Transform(new Vector3(-0.5f, 0f, -0.5f), matrix);
-                var vector2 = Vector3.Transform(new Vector3(0.5f, 0.0625f, 0.5f), matrix);
+                var transformedCorner = Vector3.Transform(new Vector3(0.5f, 0.0625f, 0.5f), matrix);
                 vector.X = MathUtils.Round(vector.X * 100f) / 100f;
                 vector.Y = MathUtils.Round(vector.Y * 100f) / 100f;
                 vector.Z = MathUtils.Round(vector.Z * 100f) / 100f;
-                vector2.X = MathUtils.Round(vector2.X * 100f) / 100f;
-                vector2.Y = MathUtils.Round(vector2.Y * 100f) / 100f;
-                vector2.Z = MathUtils.Round(vector2.Z * 100f) / 100f;
-                boxes[num2] =
+                transformedCorner.X = MathUtils.Round(transformedCorner.X * 100f) / 100f;
+                transformedCorner.Y = MathUtils.Round(transformedCorner.Y * 100f) / 100f;
+                transformedCorner.Z = MathUtils.Round(transformedCorner.Z * 100f) / 100f;
+                boxes[meshIndex] =
                 [
                     new BoundingBox(
                         new Vector3(
-                            MathUtils.Min(vector.X, vector2.X),
-                            MathUtils.Min(vector.Y, vector2.Y),
-                            MathUtils.Min(vector.Z, vector2.Z)
+                            MathUtils.Min(vector.X, transformedCorner.X),
+                            MathUtils.Min(vector.Y, transformedCorner.Y),
+                            MathUtils.Min(vector.Z, transformedCorner.Z)
                         ),
                         new Vector3(
-                            MathUtils.Max(vector.X, vector2.X),
-                            MathUtils.Max(vector.Y, vector2.Y),
-                            MathUtils.Max(vector.Z, vector2.Z)
+                            MathUtils.Max(vector.X, transformedCorner.X),
+                            MathUtils.Max(vector.Y, transformedCorner.Y),
+                            MathUtils.Max(vector.Z, transformedCorner.Z)
                         )
                     )
                 ];
@@ -95,8 +95,8 @@ public class PressurePlateBlock : MountedElectricElementBlock
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = Terrain.ExtractData(value);
-        return num >= CollisionBoxesByData.Length ? [] : CollisionBoxesByData[num];
+        var meshIndex = Terrain.ExtractData(value);
+        return meshIndex >= CollisionBoxesByData.Length ? [] : CollisionBoxesByData[meshIndex];
     }
 
     public override bool IsFaceTransparent(SubsystemTerrain subsystemTerrain, int face, int value)

@@ -201,19 +201,19 @@ public class TerrainRenderer : IDisposable
     {
         get
         {
-            var num = 0L;
+            var gpuBytes = 0L;
             var allocatedChunks = _subsystemTerrain.Terrain.AllocatedChunks;
             foreach (var terrainChunk in allocatedChunks)
             {
                 foreach (var buffer in _presentation.ChunkPresentations.Get(terrainChunk).Buffers)
                 {
-                    num += buffer.VertexBuffer.GetGpuMemoryUsage();
-                    num += buffer.LightingBuffer?.GetGpuMemoryUsage() ?? 0;
-                    num += buffer.IndexBuffer.GetGpuMemoryUsage();
+                    gpuBytes += buffer.VertexBuffer.GetGpuMemoryUsage();
+                    gpuBytes += buffer.LightingBuffer?.GetGpuMemoryUsage() ?? 0;
+                    gpuBytes += buffer.IndexBuffer.GetGpuMemoryUsage();
                 }
             }
 
-            return $"{num / 1024 / 1024:0.0}MB";
+            return $"{gpuBytes / 1024 / 1024:0.0}MB";
         }
     }
 
@@ -617,7 +617,7 @@ public class TerrainRenderer : IDisposable
     internal void PrepareView(Camera camera)
     {
         var xZ = camera.ViewPosition.XZ;
-        var num = MathUtils.Sqr(_subsystemSky.VisibilityRange);
+        var visibilityRangeSquared = MathUtils.Sqr(_subsystemSky.VisibilityRange);
         var viewFrustum = camera.ViewFrustum;
         _chunksToDraw.Clear();
         _drawableChunks.Clear();
@@ -633,7 +633,7 @@ public class TerrainRenderer : IDisposable
 
             _drawableChunks.Add(chunk.Coords);
             presentation.DrawDistanceSquared = Vector2.DistanceSquared(xZ, chunk.Center);
-            if (NetworkTerrainPolicy.GetChunkDistanceSquared(chunk.Center, xZ) <= num &&
+            if (NetworkTerrainPolicy.GetChunkDistanceSquared(chunk.Center, xZ) <= visibilityRangeSquared &&
                 viewFrustum.Intersection(chunk.BoundingBox))
             {
                 _chunksToDraw.Add(chunk);
@@ -678,28 +678,28 @@ public class TerrainRenderer : IDisposable
         _subsystemSky.BindAtmosphere(_opaqueShader, camera);
         foreach (var terrainChunk in _chunksToDraw)
         {
-            var num3 = 16;
+            var subsetMask = 16;
             if (viewPosition.Z > terrainChunk.BoundingBox.Min.Z)
             {
-                num3 |= 1;
+                subsetMask |= 1;
             }
 
             if (viewPosition.X > terrainChunk.BoundingBox.Min.X)
             {
-                num3 |= 2;
+                subsetMask |= 2;
             }
 
             if (viewPosition.Z < terrainChunk.BoundingBox.Max.Z)
             {
-                num3 |= 4;
+                subsetMask |= 4;
             }
 
             if (viewPosition.X < terrainChunk.BoundingBox.Max.X)
             {
-                num3 |= 8;
+                subsetMask |= 8;
             }
 
-            DrawTerrainChunkGeometrySubsets(_opaqueShader, terrainChunk, num3);
+            DrawTerrainChunkGeometrySubsets(_opaqueShader, terrainChunk, subsetMask);
             ChunksDrawn++;
         }
     }
@@ -926,18 +926,18 @@ public class TerrainRenderer : IDisposable
     {
         foreach (var (key, geometry) in list)
         {
-            var num = 0;
+            var rangeStart = 0;
             var geometryItemsCount = 7 * TerrainChunk.SlicesCount;
-            while (num < geometryItemsCount)
+            while (rangeStart < geometryItemsCount)
             {
-                var num2 = 0;
-                var num3 = 0;
+                var vertexCount = 0;
+                var indexCount = 0;
                 int i;
-                for (i = num; i < geometryItemsCount; i++)
+                for (i = rangeStart; i < geometryItemsCount; i++)
                 {
-                    var num4 = i / TerrainChunk.SlicesCount;
-                    var num5 = i % TerrainChunk.SlicesCount;
-                    var terrainGeometrySubset = geometry[num5].Subsets[num4];
+                    var subsetIndex = i / TerrainChunk.SlicesCount;
+                    var sliceIndex = i % TerrainChunk.SlicesCount;
+                    var terrainGeometrySubset = geometry[sliceIndex].Subsets[subsetIndex];
                     if (vertexTransform != null)
                     {
                         var tmpList = new DynamicArray<TerrainVertex>();
@@ -950,46 +950,51 @@ public class TerrainRenderer : IDisposable
                         terrainGeometrySubset.Vertices = tmpList;
                     }
 
-                    if (num2 + terrainGeometrySubset.Vertices.Count > 65535 && i > num)
+                    if (vertexCount + terrainGeometrySubset.Vertices.Count > 65535 && i > rangeStart)
                     {
                         break;
                     }
 
-                    num2 += terrainGeometrySubset.Vertices.Count;
-                    num3 += terrainGeometrySubset.Indices.Count;
+                    vertexCount += terrainGeometrySubset.Vertices.Count;
+                    indexCount += terrainGeometrySubset.Indices.Count;
                 }
 
-                if (num2 > 0 && num3 > 0)
+                if (vertexCount > 0 && indexCount > 0)
                 {
                     var buffer = new TerrainChunkGeometry.Buffer
                     {
-                        IndexBuffer = new IndexBuffer(IndexFormat.ThirtyTwoBits, num3),
+                        IndexBuffer = new IndexBuffer(IndexFormat.ThirtyTwoBits, indexCount),
                         Texture = key,
-                        VertexRange = (num, i),
+                        VertexRange = (rangeStart, i),
                         VertexBuffer = new VertexBuffer(
                             separateLighting
                                 ? TerrainGeometryVertex.VertexDeclaration
                                 : TerrainVertex.VertexDeclaration,
-                            num2
+                            vertexCount
                         )
                     };
                     buffers.Add(buffer);
                     if (separateLighting)
                     {
-                        buffer.LightingBuffer = new VertexBuffer(TerrainLightResponse.VertexDeclaration, num2);
-                        UploadTerrainVertexStreams(geometry, buffer.VertexBuffer, buffer.LightingBuffer, (num, i));
+                        buffer.LightingBuffer = new VertexBuffer(TerrainLightResponse.VertexDeclaration, vertexCount);
+                        UploadTerrainVertexStreams(
+                            geometry,
+                            buffer.VertexBuffer,
+                            buffer.LightingBuffer,
+                            (rangeStart, i)
+                        );
                     }
 
-                    var num6 = 0;
-                    var num7 = 0;
-                    for (var j = num; j < i; j++)
+                    var vertexOffset = 0;
+                    var indexOffset = 0;
+                    for (var j = rangeStart; j < i; j++)
                     {
-                        var num8 = j / TerrainChunk.SlicesCount;
-                        var num9 = j % TerrainChunk.SlicesCount;
-                        var terrainGeometrySubset2 = geometry[num9].Subsets[num8];
-                        if (num9 == 0 || j == num)
+                        var subsetIndex = j / TerrainChunk.SlicesCount;
+                        var sliceIndex = j % TerrainChunk.SlicesCount;
+                        var terrainGeometrySubset2 = geometry[sliceIndex].Subsets[subsetIndex];
+                        if (sliceIndex == 0 || j == rangeStart)
                         {
-                            buffer.SubsetIndexBufferStarts[num8] = num7;
+                            buffer.SubsetIndexBufferStarts[subsetIndex] = indexOffset;
                         }
 
                         if (terrainGeometrySubset2.Indices.Count > 0)
@@ -998,11 +1003,11 @@ public class TerrainRenderer : IDisposable
                             ShiftIndices(
                                 terrainGeometrySubset2.Indices.Array,
                                 _tmpIndices.Array,
-                                num6,
+                                vertexOffset,
                                 terrainGeometrySubset2.Indices.Count
                             );
-                            buffer.IndexBuffer.SetData(_tmpIndices.Array, 0, _tmpIndices.Count, num7);
-                            num7 += _tmpIndices.Count;
+                            buffer.IndexBuffer.SetData(_tmpIndices.Array, 0, _tmpIndices.Count, indexOffset);
+                            indexOffset += _tmpIndices.Count;
                         }
 
                         if (terrainGeometrySubset2.Vertices.Count > 0)
@@ -1013,21 +1018,21 @@ public class TerrainRenderer : IDisposable
                                     terrainGeometrySubset2.Vertices.Array,
                                     0,
                                     terrainGeometrySubset2.Vertices.Count,
-                                    num6
+                                    vertexOffset
                                 );
                             }
 
-                            num6 += terrainGeometrySubset2.Vertices.Count;
+                            vertexOffset += terrainGeometrySubset2.Vertices.Count;
                         }
 
-                        if (num9 == TerrainChunk.SlicesCount - 1 || j == i - 1)
+                        if (sliceIndex == TerrainChunk.SlicesCount - 1 || j == i - 1)
                         {
-                            buffer.SubsetIndexBufferEnds[num8] = num7;
+                            buffer.SubsetIndexBufferEnds[subsetIndex] = indexOffset;
                         }
                     }
                 }
 
-                num = i;
+                rangeStart = i;
             }
         }
     }
@@ -1106,8 +1111,8 @@ public class TerrainRenderer : IDisposable
     {
         foreach (var buffer in _presentation.ChunkPresentations.Get(chunk).Buffers)
         {
-            var num = 2147483647;
-            var num2 = 0;
+            var firstIndex = 2147483647;
+            var endIndex = 0;
             for (var i = 0; i < 8; i++)
             {
                 if (i < 7 && (subsetsMask & (1 << i)) != 0)
@@ -1117,16 +1122,16 @@ public class TerrainRenderer : IDisposable
                         continue;
                     }
 
-                    if (num == 2147483647)
+                    if (firstIndex == 2147483647)
                     {
-                        num = buffer.SubsetIndexBufferStarts[i];
+                        firstIndex = buffer.SubsetIndexBufferStarts[i];
                     }
 
-                    num2 = buffer.SubsetIndexBufferEnds[i];
+                    endIndex = buffer.SubsetIndexBufferEnds[i];
                 }
                 else
                 {
-                    if (num2 > num)
+                    if (endIndex > firstIndex)
                     {
                         if (applyTexture)
                         {
@@ -1138,15 +1143,15 @@ public class TerrainRenderer : IDisposable
                             shader,
                             buffer.VertexBuffer,
                             buffer.IndexBuffer,
-                            num,
-                            num2 - num,
+                            firstIndex,
+                            endIndex - firstIndex,
                             buffer.LightingBuffer
                         );
-                        ChunkTrianglesDrawn += (num2 - num) / 3;
+                        ChunkTrianglesDrawn += (endIndex - firstIndex) / 3;
                         ChunkDrawCalls++;
                     }
 
-                    num = 2147483647;
+                    firstIndex = 2147483647;
                 }
             }
         }

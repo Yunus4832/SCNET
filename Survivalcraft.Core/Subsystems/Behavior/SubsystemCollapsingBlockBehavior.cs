@@ -152,15 +152,15 @@ public class SubsystemCollapsingBlockBehavior : SubsystemBlockBehavior
 
     private bool IsCollapseSupportBlock(int value)
     {
-        var num = Terrain.ExtractContents(value);
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var contents = Terrain.ExtractContents(value);
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
         return block.IsCollapseSupportBlock(SubsystemTerrain, value);
     }
 
     private bool IsCollapseDestructibleBlock(int value)
     {
-        var num = Terrain.ExtractContents(value);
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var contents = Terrain.ExtractContents(value);
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
         return block.IsCollapseDestructibleBlock(value);
     }
 }

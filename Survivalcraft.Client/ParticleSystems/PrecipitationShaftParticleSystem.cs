@@ -115,8 +115,8 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
                 Point.Y + 0.5f - activeCamera.ViewPosition.Z + 0.7f * v.Y
             )
         );
-        var num = Vector2.Dot(v, v2);
-        _isVisible = num > 0.5f;
+        var viewAlignment = Vector2.Dot(v, v2);
+        _isVisible = viewAlignment > 0.5f;
         if (_isVisible)
         {
             if (_needsInitialize)
@@ -126,46 +126,47 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
             }
 
             var y = activeCamera.ViewPosition.Y;
-            var num2 = y - 5f;
-            var num3 = y + 5f;
-            float num4;
-            float num5;
+            var minViewY = y - 5f;
+            var maxViewY = y + 5f;
+            float fillMinY;
+            float fillMaxY;
             if (_lastViewY.HasValue)
             {
                 if (y < _lastViewY.Value)
                 {
-                    num4 = num2;
-                    num5 = _lastViewY.Value - 5f;
+                    fillMinY = minViewY;
+                    fillMaxY = _lastViewY.Value - 5f;
                 }
                 else
                 {
-                    num4 = _lastViewY.Value + 5f;
-                    num5 = num3;
+                    fillMinY = _lastViewY.Value + 5f;
+                    fillMaxY = maxViewY;
                 }
             }
             else
             {
-                num4 = num2;
-                num5 = num3;
+                fillMinY = minViewY;
+                fillMaxY = maxViewY;
             }
 
-            var num6 = (num5 - num4) / 10f * _particles.Length * _intensity;
-            var num7 = (int)num6 + (_random.Float(0f, 1f) < num6 - (int)num6 ? 1 : 0);
+            var expectedFillCount = (fillMaxY - fillMinY) / 10f * _particles.Length * _intensity;
+            var remainingFillCount = (int)expectedFillCount +
+                                     (_random.Float(0f, 1f) < expectedFillCount - (int)expectedFillCount ? 1 : 0);
             _lastViewY = y;
             _toCreate += _particles.Length * _intensity / 10f * _averageSpeed * dt;
             _isEmpty = true;
-            var num8 = _precipitationType == PrecipitationType.Rain ? 0f : 0.03f;
+            var impactOffset = _precipitationType == PrecipitationType.Rain ? 0f : 0.03f;
             foreach (var particle in _particles)
             {
                 if (particle.IsActive)
                 {
-                    if (particle.YLimit == 0f && particle.Position.Y <= _yLimit + num8)
+                    if (particle.YLimit == 0f && particle.Position.Y <= _yLimit + impactOffset)
                     {
                         RaycastParticle(particle);
                     }
 
-                    var flag = particle.YLimit != 0f && particle.Position.Y <= particle.YLimit + num8;
-                    if (!flag && particle.Position.Y >= num2 && particle.Position.Y <= num3)
+                    var hitSurface = particle.YLimit != 0f && particle.Position.Y <= particle.YLimit + impactOffset;
+                    if (!hitSurface && particle.Position.Y >= minViewY && particle.Position.Y <= maxViewY)
                     {
                         particle.Position.Y -= particle.Speed * dt;
                         _isEmpty = false;
@@ -173,7 +174,7 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
                     }
 
                     particle.IsActive = false;
-                    if (!particle.GenerateSplash || !flag)
+                    if (!particle.GenerateSplash || !hitSurface)
                     {
                         continue;
                     }
@@ -182,7 +183,7 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
                     {
                         _presentation.RainSplashParticleSystem.AddSplash(
                             _topmostValue,
-                            new Vector3(particle.Position.X, particle.YLimit + num8, particle.Position.Z),
+                            new Vector3(particle.Position.X, particle.YLimit + impactOffset, particle.Position.Z),
                             _presentation.RainColor
                         );
                     }
@@ -191,26 +192,26 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
                     {
                         _presentation.SnowSplashParticleSystem.AddSplash(
                             _topmostValue,
-                            new Vector3(particle.Position.X, particle.YLimit + num8, particle.Position.Z),
+                            new Vector3(particle.Position.X, particle.YLimit + impactOffset, particle.Position.Z),
                             _size,
                             _presentation.SnowColor,
                             particle.TextureSlot
                         );
                     }
                 }
-                else if (num7 > 0)
+                else if (remainingFillCount > 0)
                 {
                     particle.Position.X = Point.X + _random.Float(0f, 1f);
-                    particle.Position.Y = _random.Float(num4, num5);
+                    particle.Position.Y = _random.Float(fillMinY, fillMaxY);
                     particle.Position.Z = Point.Y + _random.Float(0f, 1f);
                     particle.IsActive = particle.Position.Y >= _yLimit;
                     particle.YLimit = 0f;
-                    num7--;
+                    remainingFillCount--;
                 }
                 else if (_toCreate >= 1f)
                 {
                     particle.Position.X = Point.X + _random.Float(0f, 1f);
-                    particle.Position.Y = _random.Float(num3 - _averageSpeed * dt, num3);
+                    particle.Position.Y = _random.Float(maxViewY - _averageSpeed * dt, maxViewY);
                     particle.Position.Z = Point.Y + _random.Float(0f, 1f);
                     particle.IsActive = particle.Position.Y >= _yLimit;
                     particle.YLimit = 0f;
@@ -249,19 +250,19 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
             BlendState.AlphaBlend,
             SamplerState.PointClamp
         );
-        var num = camera.ViewPosition.Y + 5f;
+        var maxViewY = camera.ViewPosition.Y + 5f;
         var viewDirection = camera.ViewDirection;
         var vector = Vector3.Normalize(Vector3.Cross(viewDirection, Vector3.UnitY));
         var v = _precipitationType == PrecipitationType.Rain
             ? Vector3.UnitY
             : Vector3.Normalize(Vector3.Cross(viewDirection, vector));
-        var vector2 = vector * _size.X;
-        var vector3 = v * _size.Y;
+        var horizontalExtent = vector * _size.X;
+        var verticalExtent = v * _size.Y;
         if (_precipitationType == PrecipitationType.Rain)
         {
-            var v2 = -vector2 - vector3;
-            var v3 = vector2 - vector3;
-            var v4 = vector3;
+            var v2 = -horizontalExtent - verticalExtent;
+            var v3 = horizontalExtent - verticalExtent;
+            var v4 = verticalExtent;
             foreach (var particle in _particles)
             {
                 if (!particle.IsActive)
@@ -272,17 +273,17 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
                 var p = particle.Position + v2;
                 var p2 = particle.Position + v3;
                 var p3 = particle.Position + v4;
-                var color = _presentation.RainColor * MathUtils.Min(0.6f * (num - particle.Position.Y), 1f);
+                var color = _presentation.RainColor * MathUtils.Min(0.6f * (maxViewY - particle.Position.Y), 1f);
                 _batch.QueueTriangle(p, p2, p3, particle.TexCoord1, particle.TexCoord2, particle.TexCoord3, color);
             }
 
             return;
         }
 
-        var v5 = -vector2 - vector3;
-        var v6 = vector2 - vector3;
-        var v7 = vector2 + vector3;
-        var v8 = -vector2 + vector3;
+        var v5 = -horizontalExtent - verticalExtent;
+        var v6 = horizontalExtent - verticalExtent;
+        var v7 = horizontalExtent + verticalExtent;
+        var v8 = -horizontalExtent + verticalExtent;
         foreach (var particle2 in _particles)
         {
             if (!particle2.IsActive)
@@ -294,7 +295,7 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
             var p5 = particle2.Position + v6;
             var p6 = particle2.Position + v7;
             var p7 = particle2.Position + v8;
-            var color2 = _presentation.SnowColor * MathUtils.Min(0.6f * (num - particle2.Position.Y), 1f);
+            var color2 = _presentation.SnowColor * MathUtils.Min(0.6f * (maxViewY - particle2.Position.Y), 1f);
             _batch.QueueQuad(
                 p4,
                 p5,
@@ -323,10 +324,10 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
             new Vector3(particle.Position.X - Point.X, 1f, particle.Position.Z - Point.Y),
             -Vector3.UnitY
         );
-        var num = block.Raycast(ray, _subsystemWeather.SubsystemTerrain, _topmostValue, false, out _, out _);
-        if (num.HasValue)
+        var hitDistance = block.Raycast(ray, _subsystemWeather.SubsystemTerrain, _topmostValue, false, out _, out _);
+        if (hitDistance.HasValue)
         {
-            particle.YLimit -= num.Value;
+            particle.YLimit -= hitDistance.Value;
             return;
         }
 
@@ -348,9 +349,9 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
         {
             case PrecipitationType.Rain:
             {
-                var num4 = 8f;
-                var num5 = 12f;
-                _averageSpeed = (num4 + num5) / 2f;
+                var minFallSpeed = 8f;
+                var maxFallSpeed = 12f;
+                _averageSpeed = (minFallSpeed + maxFallSpeed) / 2f;
                 _size = new Vector2(0.02f, 0.15f);
                 Texture = ContentManager.Get<Texture2D>("Textures/RainParticle");
                 foreach (var obj in _particles)
@@ -359,29 +360,29 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
                     obj.TexCoord1 = new Vector2(0f, 1f);
                     obj.TexCoord2 = new Vector2(1f, 1f);
                     obj.TexCoord3 = new Vector2(0.5f, 0f);
-                    obj.Speed = _random.Float(num4, num5);
+                    obj.Speed = _random.Float(minFallSpeed, maxFallSpeed);
                 }
 
                 break;
             }
             case PrecipitationType.Snow:
             {
-                var num = 0.25f;
-                var num2 = 0.5f;
-                var num3 = 3f;
-                _averageSpeed = (num2 + num3) / 2f;
+                var textureTileSize = 0.25f;
+                var minFallSpeed = 0.5f;
+                var maxFallSpeed = 3f;
+                _averageSpeed = (minFallSpeed + maxFallSpeed) / 2f;
                 _size = new Vector2(0.07f, 0.07f);
                 Texture = ContentManager.Get<Texture2D>("Textures/SnowParticle");
                 foreach (var particle in _particles)
                 {
                     particle.IsActive = false;
                     particle.TextureSlot = (byte)_random.Int(0, 15);
-                    var v = new Vector2(particle.TextureSlot % 4, particle.TextureSlot / 4) * num;
+                    var v = new Vector2(particle.TextureSlot % 4, particle.TextureSlot / 4) * textureTileSize;
                     particle.TexCoord1 = v + new Vector2(0f, 0f);
-                    particle.TexCoord2 = v + new Vector2(num, 0f);
-                    particle.TexCoord3 = v + new Vector2(num, num);
-                    particle.TexCoord4 = v + new Vector2(0f, num);
-                    particle.Speed = _random.Float(num2, num3);
+                    particle.TexCoord2 = v + new Vector2(textureTileSize, 0f);
+                    particle.TexCoord3 = v + new Vector2(textureTileSize, textureTileSize);
+                    particle.TexCoord4 = v + new Vector2(0f, textureTileSize);
+                    particle.Speed = _random.Float(minFallSpeed, maxFallSpeed);
                 }
 
                 break;

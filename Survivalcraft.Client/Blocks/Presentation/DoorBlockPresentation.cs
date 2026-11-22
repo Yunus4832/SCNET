@@ -24,28 +24,28 @@ public abstract class DoorBlockPresentation(DoorBlock block, BlockPresentationCa
         int z
     )
     {
-        var num = Terrain.ExtractData(value);
-        if (IsBottomPart(generator.Terrain, Block.Catalog, x, y, z) && num < BlockMeshesByData.Length)
+        var blockData = Terrain.ExtractData(value);
+        if (IsBottomPart(generator.Terrain, Block.Catalog, x, y, z) && blockData < BlockMeshesByData.Length)
         {
             generator.GenerateMeshVertices(
                 this,
                 x,
                 y,
                 z,
-                BlockMeshesByData[num],
+                BlockMeshesByData[blockData],
                 Color.White,
                 null,
                 geometry.SubsetAlphaTest
             );
         }
 
-        var centerOffset = GetRightHanded(num) ? new Vector2(-0.45f, 0f) : new Vector2(0.45f, 0f);
+        var centerOffset = GetRightHanded(blockData) ? new Vector2(-0.45f, 0f) : new Vector2(0.45f, 0f);
         generator.GenerateWireVertices(
             value,
             x,
             y,
             z,
-            GetHingeFace(num),
+            GetHingeFace(blockData),
             0.01f,
             centerOffset,
             geometry.SubsetOpaque
@@ -97,13 +97,13 @@ public abstract class DoorBlockPresentation(DoorBlock block, BlockPresentationCa
             var rotation = GetRotation(i);
             var open = GetOpen(i);
             var rightHanded = GetRightHanded(i);
-            float num = !rightHanded ? 1 : -1;
+            float hingeMirrorScale = !rightHanded ? 1 : -1;
             BlockMeshesByData[i] = new BlockMesh();
             var identity = Matrix.Identity;
-            identity *= Matrix.CreateScale(0f - num, 1f, 1f);
-            identity *= Matrix.CreateTranslation((0.5f - Block.PivotDistance) * num, 0f, 0f) *
-                        Matrix.CreateRotationY(open ? num * (float)Math.PI / 2f : 0f) *
-                        Matrix.CreateTranslation((0f - (0.5f - Block.PivotDistance)) * num, 0f, 0f);
+            identity *= Matrix.CreateScale(0f - hingeMirrorScale, 1f, 1f);
+            identity *= Matrix.CreateTranslation((0.5f - Block.PivotDistance) * hingeMirrorScale, 0f, 0f) *
+                        Matrix.CreateRotationY(open ? hingeMirrorScale * (float)Math.PI / 2f : 0f) *
+                        Matrix.CreateTranslation((0f - (0.5f - Block.PivotDistance)) * hingeMirrorScale, 0f, 0f);
             identity *= Matrix.CreateTranslation(0f, 0f, 0.5f - Block.PivotDistance) *
                         Matrix.CreateRotationY(rotation * (float)Math.PI / 2f) *
                         Matrix.CreateTranslation(0.5f, 0f, 0.5f);

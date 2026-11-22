@@ -36,7 +36,7 @@ public class LedBlock : MountedElectricElementBlock
         {
             for (var j = 0; j < 6; j++)
             {
-                var num = SetMountingFace(SetColor(0, i), j);
+                var blockData = SetMountingFace(SetColor(0, i), j);
                 var m2 = j >= 4
                     ? j != 4
                         ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
@@ -45,10 +45,10 @@ public class LedBlock : MountedElectricElementBlock
                       Matrix.CreateTranslation(0f, 0f, -0.5f) *
                       Matrix.CreateRotationY(j * (float)Math.PI / 2f) *
                       Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-                blockPositionsByData[num] = new CollisionGeometryBuilder();
-                blockPositionsByData[num].Append(ledNode.Primitives[0], nodeAbsoluteTransform * m2);
-                blockPositionsByData[num].Append(ledBulbNode.Primitives[0], nodeAbsoluteTransform2 * m2);
-                CollisionBoxesByData[num] = [blockPositionsByData[num].GetBounds()];
+                blockPositionsByData[blockData] = new CollisionGeometryBuilder();
+                blockPositionsByData[blockData].Append(ledNode.Primitives[0], nodeAbsoluteTransform * m2);
+                blockPositionsByData[blockData].Append(ledBulbNode.Primitives[0], nodeAbsoluteTransform2 * m2);
+                CollisionBoxesByData[blockData] = [blockPositionsByData[blockData].GetBounds()];
             }
         }
     }
@@ -74,8 +74,8 @@ public class LedBlock : MountedElectricElementBlock
             craftingRecipe.Ingredients[7] = "copperingot";
             craftingRecipe.Ingredients[8] = "copperingot";
             yield return craftingRecipe;
-            var num = color + 1;
-            color = num;
+            var nextColor = color + 1;
+            color = nextColor;
         }
     }
 
@@ -91,8 +91,8 @@ public class LedBlock : MountedElectricElementBlock
         while (i < 8)
         {
             yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, i));
-            var num = i + 1;
-            i = num;
+            var nextColor = i + 1;
+            i = nextColor;
         }
     }
 
@@ -133,8 +133,8 @@ public class LedBlock : MountedElectricElementBlock
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = Terrain.ExtractData(value);
-        return num >= CollisionBoxesByData.Length ? [] : CollisionBoxesByData[num];
+        var blockData = Terrain.ExtractData(value);
+        return blockData >= CollisionBoxesByData.Length ? [] : CollisionBoxesByData[blockData];
     }
 
 

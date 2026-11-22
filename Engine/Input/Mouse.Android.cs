@@ -124,9 +124,9 @@ public static partial class Mouse
         {
             case MotionEventActions.Move:
             {
-                for (var num = e.HistorySize - 1; num >= 0; num--)
+                for (var historyIndex = e.HistorySize - 1; historyIndex >= 0; historyIndex--)
                 {
-                    _queuedMouseMovement += new Vector2(e.GetHistoricalX(num), e.GetHistoricalY(num));
+                    _queuedMouseMovement += new Vector2(e.GetHistoricalX(historyIndex), e.GetHistoricalY(historyIndex));
                 }
 
                 MousePosition = Point2.Round(e.GetX(), e.GetY());
@@ -147,9 +147,9 @@ public static partial class Mouse
                 ); break;
             case MotionEventActions.PointerIdShift:
             {
-                for (var num2 = e.HistorySize - 1; num2 >= 0; num2--)
+                for (var historyIndex = e.HistorySize - 1; historyIndex >= 0; historyIndex--)
                 {
-                    _queuedMouseWheelMovement += MathUtils.Sign(e.GetHistoricalAxisValue(Axis.Vscroll, num2));
+                    _queuedMouseWheelMovement += MathUtils.Sign(e.GetHistoricalAxisValue(Axis.Vscroll, historyIndex));
                 }
 
                 _queuedMouseWheelMovement += MathUtils.Sign(e.GetAxisValue(Axis.Vscroll));

@@ -14,8 +14,8 @@ public class PumpkinSoupBucketBlock : BucketBlock
         var isDead = 0;
         while (isDead <= 1)
         {
-            int num;
-            for (var rot = 0; rot <= 1; rot = num)
+            int nextVariant;
+            for (var rot = 0; rot <= 1; rot = nextVariant)
             {
                 var craftingRecipe = new CraftingRecipe
                 {
@@ -34,11 +34,11 @@ public class PumpkinSoupBucketBlock : BucketBlock
                     "pumpkin:" + Terrain.ExtractData(value).ToString(CultureInfo.InvariantCulture);
                 craftingRecipe.Ingredients[1] = "waterbucket";
                 yield return craftingRecipe;
-                num = rot + 1;
+                nextVariant = rot + 1;
             }
 
-            num = isDead + 1;
-            isDead = num;
+            nextVariant = isDead + 1;
+            isDead = nextVariant;
         }
     }
 }

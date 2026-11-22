@@ -48,20 +48,20 @@ public class SmokeTrailParticleSystem : ParticleSystem<SmokeTrailParticleSystem.
             IsStopped = true;
         }
 
-        var num = MathUtils.Clamp(50f / _size, 10f, 40f);
-        _toGenerate += num * dt;
-        var num2 = MathUtils.Pow(0.1f, dt);
-        var flag = false;
+        var emissionRate = MathUtils.Clamp(50f / _size, 10f, 40f);
+        _toGenerate += emissionRate * dt;
+        var velocityDamping = MathUtils.Pow(0.1f, dt);
+        var hasActiveParticles = false;
         foreach (var particle in Particles)
         {
             if (particle.IsActive)
             {
-                flag = true;
+                hasActiveParticles = true;
                 particle.Time += dt;
                 if (particle.Time <= particle.Duration)
                 {
                     particle.Position += particle.Velocity * dt;
-                    particle.Velocity *= num2;
+                    particle.Velocity *= velocityDamping;
                     particle.Velocity.Y += 10f * dt;
                     particle.TextureSlot =
                         (int)MathUtils.Min(
@@ -84,7 +84,7 @@ public class SmokeTrailParticleSystem : ParticleSystem<SmokeTrailParticleSystem.
                 particle.Velocity = 0.2f * v;
                 particle.Time = 0f;
                 particle.Size = new Vector2(0.15f * _size);
-                particle.Duration = Particles.Length / num * _random.Float(0.8f, 1.05f);
+                particle.Duration = Particles.Length / emissionRate * _random.Float(0.8f, 1.05f);
                 particle.FlipX = _random.Bool();
                 particle.FlipY = _random.Bool();
                 _toGenerate -= 1f;
@@ -93,7 +93,7 @@ public class SmokeTrailParticleSystem : ParticleSystem<SmokeTrailParticleSystem.
 
         if (IsStopped)
         {
-            return !flag;
+            return !hasActiveParticles;
         }
 
         return false;

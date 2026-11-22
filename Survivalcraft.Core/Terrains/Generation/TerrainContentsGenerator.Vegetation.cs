@@ -14,34 +14,34 @@ public partial class TerrainContentsGenerator
         {
             for (var j = 0; j < 16; j++)
             {
-                for (var num = 254; num >= 0; num--)
+                for (var surfaceY = 254; surfaceY >= 0; surfaceY--)
                 {
-                    var cellValueFast = chunk.GetCellValueFast(i, num, j);
-                    var num2 = Terrain.ExtractContents(cellValueFast);
-                    if (num2 == 0)
+                    var cellValueFast = chunk.GetCellValueFast(i, surfaceY, j);
+                    var groundContents = Terrain.ExtractContents(cellValueFast);
+                    if (groundContents == 0)
                     {
                         continue;
                     }
 
-                    if (!(_subsystemTerrain.Catalog.Blocks[num2] is FluidBlock))
+                    if (!(_subsystemTerrain.Catalog.Blocks[groundContents] is FluidBlock))
                     {
                         var temperatureFast = chunk.GetTemperatureFast(i, j);
                         var humidityFast = chunk.GetHumidityFast(i, j);
-                        var num3 = PlantsManager.GenerateRandomPlantValue(
+                        var plantValue = PlantsManager.GenerateRandomPlantValue(
                             random,
                             cellValueFast,
                             temperatureFast,
                             humidityFast,
-                            num + 1
+                            surfaceY + 1
                         );
-                        if (num3 != 0)
+                        if (plantValue != 0)
                         {
-                            chunk.SetCellValueFast(i, num + 1, j, num3);
+                            chunk.SetCellValueFast(i, surfaceY + 1, j, plantValue);
                         }
 
-                        if (num2 == 2)
+                        if (groundContents == 2)
                         {
-                            chunk.SetCellValueFast(i, num, j, Terrain.MakeBlockValue(8, 0));
+                            chunk.SetCellValueFast(i, surfaceY, j, Terrain.MakeBlockValue(8, 0));
                         }
                     }
 
@@ -68,82 +68,82 @@ public partial class TerrainContentsGenerator
                     continue;
                 }
 
-                var num = chunk.Origin.X + i;
-                var num2 = chunk.Origin.Y + j;
+                var worldX = chunk.Origin.X + i;
+                var worldZ = chunk.Origin.Y + j;
                 var temperatureFast = chunk.GetTemperatureFast(i, j);
-                if (CalculateOceanShoreDistance(num, num2) > 10f)
+                if (CalculateOceanShoreDistance(worldX, worldZ) > 10f)
                 {
                     continue;
                 }
 
-                var num3 = 0;
-                for (var num4 = 254; num4 >= 0; num4--)
+                var waterDepth = 0;
+                for (var cellY = 254; cellY >= 0; cellY--)
                 {
-                    if (Terrain.ExtractContents(chunk.GetCellValueFast(i, num4, j)) == 18)
+                    if (Terrain.ExtractContents(chunk.GetCellValueFast(i, cellY, j)) == 18)
                     {
-                        num3++;
+                        waterDepth++;
                         var face = random.Int(0, 5);
                         var point = CellFace.FaceToPoint3(face);
                         if (i + point.X < 0 ||
                             i + point.X >= 16 ||
-                            num4 + point.Y < 0 ||
-                            num4 + point.Y >= 254 ||
+                            cellY + point.Y < 0 ||
+                            cellY + point.Y >= 254 ||
                             j + point.Z < 0 ||
                             j + point.Z >= 16)
                         {
                             continue;
                         }
 
-                        var cellValueFast = chunk.GetCellValueFast(i + point.X, num4 + point.Y, j + point.Z);
+                        var cellValueFast = chunk.GetCellValueFast(i + point.X, cellY + point.Y, j + point.Z);
                         if (!_subsystemBottomSuckerBlockBehavior.IsSupport(cellValueFast, CellFace.OppositeFace(face)))
                         {
                             continue;
                         }
 
-                        var num5 = 0;
-                        var num6 = 0.6f;
-                        var num7 = 0.4f;
+                        var creatureContents = 0;
+                        var seaUrchinChance = 0.6f;
+                        var starfishChance = 0.4f;
                         if (temperatureFast < 8)
                         {
-                            num6 = 0.9f;
-                            num7 = 0.1f;
+                            seaUrchinChance = 0.9f;
+                            starfishChance = 0.1f;
                         }
 
-                        if (num3 > 6)
+                        if (waterDepth > 6)
                         {
-                            num6 *= 0.25f;
+                            seaUrchinChance *= 0.25f;
                         }
 
-                        if (num3 > 12)
+                        if (waterDepth > 12)
                         {
-                            num7 *= 0.5f;
+                            starfishChance *= 0.5f;
                         }
 
-                        if (num3 < 4)
+                        if (waterDepth < 4)
                         {
-                            num7 *= 0.5f;
+                            starfishChance *= 0.5f;
                         }
 
-                        if (num4 < 45)
+                        if (cellY < 45)
                         {
-                            num6 *= 0.1f;
-                            num7 *= 0.1f;
+                            seaUrchinChance *= 0.1f;
+                            starfishChance *= 0.1f;
                         }
 
-                        var num8 = random.Float(0f, 1f);
-                        num8 -= num6;
-                        if (num5 == 0 && num8 < 0f)
+                        var remainingRoll = random.Float(0f, 1f);
+                        remainingRoll -= seaUrchinChance;
+                        if (creatureContents == 0 && remainingRoll < 0f)
                         {
-                            num5 = 226;
+                            creatureContents = 226;
                         }
 
-                        num8 -= num7;
-                        if (num5 == 0 && num8 < 0f)
+                        remainingRoll -= starfishChance;
+                        if (creatureContents == 0 && remainingRoll < 0f)
                         {
-                            num5 = 229;
+                            creatureContents = 229;
                         }
 
-                        if (num5 == 0)
+                        if (creatureContents == 0)
                         {
                             continue;
                         }
@@ -153,12 +153,12 @@ public partial class TerrainContentsGenerator
                             BottomSuckerBlock.SetSubvariant(0, face2),
                             CellFace.OppositeFace(face)
                         );
-                        var value = Terrain.MakeBlockValue(num5, data);
-                        chunk.SetCellValueFast(i, num4, j, value);
+                        var value = Terrain.MakeBlockValue(creatureContents, data);
+                        chunk.SetCellValueFast(i, cellY, j, value);
                     }
                     else
                     {
-                        num3 = 0;
+                        waterDepth = 0;
                     }
                 }
             }
@@ -180,13 +180,13 @@ public partial class TerrainContentsGenerator
             return;
         }
 
-        var num = random.Int(0, MathUtils.Max(1, 1));
-        for (var i = 0; i < num; i++)
+        var patchCount = random.Int(0, MathUtils.Max(1, 1));
+        for (var i = 0; i < patchCount; i++)
         {
-            var num2 = random.Int(3, 12);
-            var num3 = random.Int(3, 12);
-            var humidityFast = chunk.GetHumidityFast(num2, num3);
-            var temperatureFast = chunk.GetTemperatureFast(num2, num3);
+            var centerX = random.Int(3, 12);
+            var centerZ = random.Int(3, 12);
+            var humidityFast = chunk.GetHumidityFast(centerX, centerZ);
+            var temperatureFast = chunk.GetTemperatureFast(centerX, centerZ);
             if (humidityFast >= 6 || temperatureFast <= 8)
             {
                 continue;
@@ -194,23 +194,23 @@ public partial class TerrainContentsGenerator
 
             for (var j = 0; j < 8; j++)
             {
-                var num4 = num2 + random.Int(-2, 2);
-                var num5 = num3 + random.Int(-2, 2);
-                for (var num6 = 251; num6 >= 0; num6--)
+                var localX = centerX + random.Int(-2, 2);
+                var localZ = centerZ + random.Int(-2, 2);
+                for (var groundY = 251; groundY >= 0; groundY--)
                 {
-                    switch (Terrain.ExtractContents(chunk.GetCellValueFast(num4, num6, num5)))
+                    switch (Terrain.ExtractContents(chunk.GetCellValueFast(localX, groundY, localZ)))
                     {
                         case 7:
                         {
-                            for (var k = num6 + 1;
-                                 k <= num6 + 3 &&
-                                 chunk.GetCellContentsFast(num4 + 1, k, num5) == 0 &&
-                                 chunk.GetCellContentsFast(num4 - 1, k, num5) == 0 &&
-                                 chunk.GetCellContentsFast(num4, k, num5 + 1) == 0 &&
-                                 chunk.GetCellContentsFast(num4, k, num5 - 1) == 0;
+                            for (var k = groundY + 1;
+                                 k <= groundY + 3 &&
+                                 chunk.GetCellContentsFast(localX + 1, k, localZ) == 0 &&
+                                 chunk.GetCellContentsFast(localX - 1, k, localZ) == 0 &&
+                                 chunk.GetCellContentsFast(localX, k, localZ + 1) == 0 &&
+                                 chunk.GetCellContentsFast(localX, k, localZ - 1) == 0;
                                  k++)
                             {
-                                chunk.SetCellValueFast(num4, k, num5, Terrain.MakeBlockValue(127));
+                                chunk.SetCellValueFast(localX, k, localZ, Terrain.MakeBlockValue(127));
                             }
 
                             break;
@@ -240,13 +240,13 @@ public partial class TerrainContentsGenerator
             return;
         }
 
-        var num = random.Int(0, MathUtils.Max(1, 1));
-        for (var i = 0; i < num; i++)
+        var patchCount = random.Int(0, MathUtils.Max(1, 1));
+        for (var i = 0; i < patchCount; i++)
         {
-            var num2 = random.Int(1, 14);
-            var num3 = random.Int(1, 14);
-            var humidityFast = chunk.GetHumidityFast(num2, num3);
-            var temperatureFast = chunk.GetTemperatureFast(num2, num3);
+            var centerX = random.Int(1, 14);
+            var centerZ = random.Int(1, 14);
+            var humidityFast = chunk.GetHumidityFast(centerX, centerZ);
+            var temperatureFast = chunk.GetTemperatureFast(centerX, centerZ);
             if (humidityFast < 10 || temperatureFast <= 6)
             {
                 continue;
@@ -254,16 +254,16 @@ public partial class TerrainContentsGenerator
 
             for (var j = 0; j < 5; j++)
             {
-                var x2 = num2 + random.Int(-1, 1);
-                var z = num3 + random.Int(-1, 1);
-                for (var num4 = 254; num4 >= 0; num4--)
+                var x2 = centerX + random.Int(-1, 1);
+                var z = centerZ + random.Int(-1, 1);
+                for (var groundY = 254; groundY >= 0; groundY--)
                 {
-                    switch (Terrain.ExtractContents(chunk.GetCellValueFast(x2, num4, z)))
+                    switch (Terrain.ExtractContents(chunk.GetCellValueFast(x2, groundY, z)))
                     {
                         case 8:
                             chunk.SetCellValueFast(
                                 x2,
-                                num4 + 1,
+                                groundY + 1,
                                 z,
                                 random.Bool(0.25f) ? Terrain.MakeBlockValue(244) : Terrain.MakeBlockValue(131)
                             );
@@ -288,81 +288,83 @@ public partial class TerrainContentsGenerator
         var x = chunk.Coords.X;
         var y = chunk.Coords.Y;
         var random = new Random(0);
-        var num = 0f;
+        var patchDensity = 0f;
         for (var i = 0; i < 9; i++)
         {
-            var num2 = i % 3 - 1;
-            var num3 = i / 3 - 1;
-            random.Seed(seed + x + num2 + 850 * (y + num3));
+            var neighborOffsetX = i % 3 - 1;
+            var neighborOffsetZ = i / 3 - 1;
+            random.Seed(seed + x + neighborOffsetX + 850 * (y + neighborOffsetZ));
             if (!random.Bool(0.2f))
             {
                 continue;
             }
 
-            num = MathUtils.Max(num, 0.025f);
+            patchDensity = MathUtils.Max(patchDensity, 0.025f);
             if (i == 4)
             {
-                num = MathUtils.Max(num, 0.1f);
+                patchDensity = MathUtils.Max(patchDensity, 0.1f);
             }
         }
 
-        if (num == 0f)
+        if (patchDensity == 0f)
         {
             return;
         }
 
         random.Seed(seed + x + 850 * y);
-        var num4 = random.Int(0, MathUtils.Max((int)(256f * num), 1));
-        for (var j = 0; j < num4; j++)
+        var patchCount = random.Int(0, MathUtils.Max((int)(256f * patchDensity), 1));
+        for (var j = 0; j < patchCount; j++)
         {
-            var num5 = random.Int(2, 13);
-            var num6 = random.Int(2, 13);
-            var num7 = num5 + chunk.Origin.X;
-            var num8 = num6 + chunk.Origin.Y;
-            var num9 = random.Int(10, 26);
-            var num10 = 6;
-            var flag = true;
-            if (CalculateOceanShoreDistance(num7, num8) > 5f)
+            var centerX = random.Int(2, 13);
+            var centerZ = random.Int(2, 13);
+            var worldX = centerX + chunk.Origin.X;
+            var worldZ = centerZ + chunk.Origin.Y;
+            var plantAttempts = random.Int(10, 26);
+            var maxWaterDepth = 6;
+            var nearShore = true;
+            if (CalculateOceanShoreDistance(worldX, worldZ) > 5f)
             {
-                num10 = 4;
-                flag = false;
+                maxWaterDepth = 4;
+                nearShore = false;
             }
 
-            if (num9 <= 0)
+            if (plantAttempts <= 0)
             {
                 continue;
             }
 
-            for (var k = 0; k < num9; k++)
+            for (var k = 0; k < plantAttempts; k++)
             {
-                var x2 = num5 + random.Int(-2, 2);
-                var z = num6 + random.Int(-2, 2);
-                var num11 = 0;
-                for (var num12 = 254; num12 >= 0; num12--)
+                var localX = centerX + random.Int(-2, 2);
+                var localZ = centerZ + random.Int(-2, 2);
+                var waterDepth = 0;
+                for (var cellY = 254; cellY >= 0; cellY--)
                 {
-                    var num13 = Terrain.ExtractContents(chunk.GetCellValueFast(x2, num12, z));
-                    var block = _subsystemTerrain.Catalog.Blocks[num13];
-                    if (num13 == 0)
+                    var contents = Terrain.ExtractContents(chunk.GetCellValueFast(localX, cellY, localZ));
+                    var block = _subsystemTerrain.Catalog.Blocks[contents];
+                    if (contents == 0)
                     {
                         continue;
                     }
 
                     if (block is not WaterBlock)
                     {
-                        if (num13 is 2 or 7 or 72 && num11 >= 2)
+                        if (contents is 2 or 7 or 72 && waterDepth >= 2)
                         {
-                            var num14 = flag ? random.Int(num11 - 2, num11 - 1) : random.Int(num11 - 1, num11);
-                            for (var l = 0; l < num14; l++)
+                            var kelpHeight = nearShore
+                                ? random.Int(waterDepth - 2, waterDepth - 1)
+                                : random.Int(waterDepth - 1, waterDepth);
+                            for (var l = 0; l < kelpHeight; l++)
                             {
-                                chunk.SetCellValueFast(x2, num12 + 1 + l, z, Terrain.MakeBlockValue(232));
+                                chunk.SetCellValueFast(localX, cellY + 1 + l, localZ, Terrain.MakeBlockValue(232));
                             }
                         }
 
                         break;
                     }
 
-                    num11++;
-                    if (num11 > num10)
+                    waterDepth++;
+                    if (waterDepth > maxWaterDepth)
                     {
                         break;
                     }
@@ -383,38 +385,40 @@ public partial class TerrainContentsGenerator
         var random = new Random(seed + x + 378 * y);
         for (var i = 0; i < 6; i++)
         {
-            var num = random.Int(1, 14);
-            var num2 = random.Int(1, 14);
-            var num3 = chunk.Origin.X + num;
-            var num4 = chunk.Origin.Y + num2;
-            var flag = CalculateOceanShoreDistance(num3, num4) < 10f;
-            var num5 = random.Int(1, 3);
-            for (var j = 0; j < num5; j++)
+            var centerX = random.Int(1, 14);
+            var centerZ = random.Int(1, 14);
+            var worldX = chunk.Origin.X + centerX;
+            var worldZ = chunk.Origin.Y + centerZ;
+            var nearShore = CalculateOceanShoreDistance(worldX, worldZ) < 10f;
+            var plantAttempts = random.Int(1, 3);
+            for (var j = 0; j < plantAttempts; j++)
             {
-                var x2 = num + random.Int(-1, 1);
-                var z = num2 + random.Int(-1, 1);
-                var num6 = 0;
-                for (var num7 = 254; num7 >= 0; num7--)
+                var localX = centerX + random.Int(-1, 1);
+                var localZ = centerZ + random.Int(-1, 1);
+                var waterDepth = 0;
+                for (var cellY = 254; cellY >= 0; cellY--)
                 {
-                    var num8 = Terrain.ExtractContents(chunk.GetCellValueFast(x2, num7, z));
-                    switch (num8)
+                    var contents = Terrain.ExtractContents(chunk.GetCellValueFast(localX, cellY, localZ));
+                    switch (contents)
                     {
                         case 18:
-                            num6++;
-                            if (num6 <= 16)
+                            waterDepth++;
+                            if (waterDepth <= 16)
                             {
                                 continue;
                             }
 
                             break;
                         default:
-                            if (num6 > 1 && num8 is 2 or 7 or 72 or 3)
+                            if (waterDepth > 1 && contents is 2 or 7 or 72 or 3)
                             {
-                                var x3 = !random.Bool(0.1f) ? 1 : 2;
-                                x3 = flag ? MathUtils.Min(x3, num6 - 1) : MathUtils.Min(x3, num6);
-                                for (var k = 0; k < x3; k++)
+                                var plantHeight = !random.Bool(0.1f) ? 1 : 2;
+                                plantHeight = nearShore
+                                    ? MathUtils.Min(plantHeight, waterDepth - 1)
+                                    : MathUtils.Min(plantHeight, waterDepth);
+                                for (var k = 0; k < plantHeight; k++)
                                 {
-                                    chunk.SetCellValueFast(x2, num7 + 1 + k, z, Terrain.MakeBlockValue(233));
+                                    chunk.SetCellValueFast(localX, cellY + 1 + k, localZ, Terrain.MakeBlockValue(233));
                                 }
                             }
 
@@ -437,25 +441,25 @@ public partial class TerrainContentsGenerator
         }
 
         var random = new Random(seed + chunk.Coords.X + 2191 * chunk.Coords.Y);
-        var num = random.Int(0, MathUtils.Max(12, 1));
-        for (var i = 0; i < num; i++)
+        var patchCount = random.Int(0, MathUtils.Max(12, 1));
+        for (var i = 0; i < patchCount; i++)
         {
-            var num2 = random.Int(4, 11);
-            var num3 = random.Int(4, 11);
-            var humidityFast = chunk.GetHumidityFast(num2, num3);
-            var temperatureFast = chunk.GetTemperatureFast(num2, num3);
+            var centerX = random.Int(4, 11);
+            var centerZ = random.Int(4, 11);
+            var humidityFast = chunk.GetHumidityFast(centerX, centerZ);
+            var temperatureFast = chunk.GetTemperatureFast(centerX, centerZ);
             if (humidityFast < 10 || temperatureFast < 10)
             {
                 continue;
             }
 
-            var num4 = chunk.CalculateTopmostCellHeight(num2, num3);
+            var topY = chunk.CalculateTopmostCellHeight(centerX, centerZ);
             for (var j = 0; j < 100; j++)
             {
-                var num5 = num2 + random.Int(-3, 3);
-                var num6 = MathUtils.Clamp(num4 + random.Int(-12, 1), 1, 255);
-                var num7 = num3 + random.Int(-3, 3);
-                switch (Terrain.ExtractContents(chunk.GetCellValueFast(num5, num6, num7)))
+                var supportX = centerX + random.Int(-3, 3);
+                var supportY = MathUtils.Clamp(topY + random.Int(-12, 1), 1, 255);
+                var supportZ = centerZ + random.Int(-3, 3);
+                switch (Terrain.ExtractContents(chunk.GetCellValueFast(supportX, supportY, supportZ)))
                 {
                     case 2:
                     case 3:
@@ -465,43 +469,44 @@ public partial class TerrainContentsGenerator
                     case 66:
                     case 67:
                     {
-                        var num8 = random.Int(0, 3);
+                        var firstFace = random.Int(0, 3);
                         for (var k = 0; k < 4; k++)
                         {
-                            var face = (k + num8) % 4;
+                            var face = (k + firstFace) % 4;
                             var point = CellFace.FaceToPoint3(face);
-                            if (chunk.GetCellContentsFast(num5 + point.X, num6, num7 + point.Z) != 0)
+                            if (chunk.GetCellContentsFast(supportX + point.X, supportY, supportZ + point.Z) != 0)
                             {
                                 continue;
                             }
 
-                            var num9 = num6 - 1;
-                            while (num9 >= 1 &&
-                                   chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) == 0 &&
-                                   chunk.GetCellContentsFast(num5, num9, num7) != 0)
+                            var ivyY = supportY - 1;
+                            while (ivyY >= 1 &&
+                                   chunk.GetCellContentsFast(supportX + point.X, ivyY, supportZ + point.Z) == 0 &&
+                                   chunk.GetCellContentsFast(supportX, ivyY, supportZ) != 0)
                             {
-                                num9--;
+                                ivyY--;
                             }
 
-                            if (chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) != 0)
+                            if (chunk.GetCellContentsFast(supportX + point.X, ivyY, supportZ + point.Z) != 0)
                             {
                                 break;
                             }
 
-                            num9++;
+                            ivyY++;
                             var value = Terrain.MakeBlockValue(
                                 197,
                                 IvyBlock.SetFace(0, CellFace.OppositeFace(face))
                             );
-                            while (num9 >= 1 && chunk.GetCellContentsFast(num5 + point.X, num9, num7 + point.Z) == 0)
+                            while (ivyY >= 1 &&
+                                   chunk.GetCellContentsFast(supportX + point.X, ivyY, supportZ + point.Z) == 0)
                             {
-                                chunk.SetCellValueFast(num5 + point.X, num9, num7 + point.Z, value);
-                                if (IvyBlock.IsGrowthStopCell(num5 + point.X, num9, num7 + point.Z))
+                                chunk.SetCellValueFast(supportX + point.X, ivyY, supportZ + point.Z, value);
+                                if (IvyBlock.IsGrowthStopCell(supportX + point.X, ivyY, supportZ + point.Z))
                                 {
                                     break;
                                 }
 
-                                num9--;
+                                ivyY--;
                             }
 
                             break;

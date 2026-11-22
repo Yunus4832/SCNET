@@ -98,20 +98,20 @@ public struct EntityReference
 
     public static EntityReference FromId(Component? component, EntityToIdMap entityToIdMap)
     {
-        var num = entityToIdMap.FindId(component?.Entity);
+        var entityId = entityToIdMap.FindId(component?.Entity);
         EntityReference result = default;
         result._referenceType = ReferenceType.ByEntityId;
-        result._entityReference = num.ToString(CultureInfo.InvariantCulture);
+        result._entityReference = entityId.ToString(CultureInfo.InvariantCulture);
         result._componentReference = component != null ? component.ValuesDictionary.DatabaseObject.Name : string.Empty;
         return result;
     }
 
     public static EntityReference FromId(Entity entity, EntityToIdMap entityToIdMap)
     {
-        var num = entityToIdMap.FindId(entity);
+        var entityId = entityToIdMap.FindId(entity);
         EntityReference result = default;
         result._referenceType = ReferenceType.ByEntityId;
-        result._entityReference = num.ToString(CultureInfo.InvariantCulture);
+        result._entityReference = entityId.ToString(CultureInfo.InvariantCulture);
         result._componentReference = string.Empty;
         return result;
     }

@@ -34,10 +34,10 @@ public class ComponentCattleDriveBehavior : ComponentBehavior, IUpdateable, INoi
 
         var v = _componentCreature.ComponentBody.Position - sourcePosition;
         _driveVector += Vector3.Normalize(v) * MathUtils.Max(8f - 0.25f * v.Length(), 1f);
-        var num = 12f + _random.Float(0f, 3f);
-        if (_driveVector.Length() > num)
+        var maxDriveStrength = 12f + _random.Float(0f, 3f);
+        if (_driveVector.Length() > maxDriveStrength)
         {
-            _driveVector = num * Vector3.Normalize(_driveVector);
+            _driveVector = maxDriveStrength * Vector3.Normalize(_driveVector);
         }
     }
 
@@ -123,16 +123,16 @@ public class ComponentCattleDriveBehavior : ComponentBehavior, IUpdateable, INoi
 
     public void FadeDriveVector()
     {
-        var num = _driveVector.Length();
-        if (num > 0.1f)
+        var driveStrength = _driveVector.Length();
+        if (driveStrength > 0.1f)
         {
-            _driveVector -= _subsystemTime.GameTimeDelta * _driveVector / num;
+            _driveVector -= _subsystemTime.GameTimeDelta * _driveVector / driveStrength;
         }
     }
 
     public Vector3 CalculateDriveDirectionAndSpeed()
     {
-        var num = 1;
+        var herdMemberCount = 1;
         var position = _componentCreature.ComponentBody.Position;
         var v = position;
         var driveVector = _driveVector;
@@ -159,11 +159,11 @@ public class ComponentCattleDriveBehavior : ComponentBehavior, IUpdateable, INoi
 
             v += position2;
             driveVector += componentCattleDriveBehavior._driveVector;
-            num++;
+            herdMemberCount++;
         }
 
-        v /= num;
-        driveVector /= num;
+        v /= herdMemberCount;
+        driveVector /= herdMemberCount;
         var v2 = v - position;
         var s = MathUtils.Max(1.5f * v2.Length() - 3f, 0f);
         return 0.33f * _driveVector + 0.66f * driveVector + s * Vector3.Normalize(v2);

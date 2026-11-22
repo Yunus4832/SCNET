@@ -29,8 +29,8 @@ public class SubsystemRakeBlockBehavior : SubsystemBlockBehavior
                 terrainRaycastResult.Value.CellFace.Y,
                 terrainRaycastResult.Value.CellFace.Z
             );
-            var num = Terrain.ExtractContents(cellValue);
-            switch (num)
+            var contents = Terrain.ExtractContents(cellValue);
+            switch (contents)
             {
                 case 2:
                 {

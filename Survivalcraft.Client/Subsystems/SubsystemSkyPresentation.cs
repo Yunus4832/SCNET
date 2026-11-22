@@ -181,13 +181,13 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
         VisibilityRange = Configuration.ClientConfiguration.Preferences.VisibilityRange;
         if (!_lightningStrikePosition.HasValue) { return; }
 
-        var num9 = MathUtils.Lerp(
+        var flashFadeDuration = MathUtils.Lerp(
             0.3f,
             0.75f,
             0.5f * (float)MathUtils.Sin(MathUtils.Remainder(1.0 * _subsystemTime.GameTime, 6.2831854820251465)) +
             0.5f
         );
-        _lightningStrikeBrightness -= _subsystemTime.GameTimeDelta / num9;
+        _lightningStrikeBrightness -= _subsystemTime.GameTimeDelta / flashFadeDuration;
         if (_lightningStrikeBrightness <= 0f)
         {
             _lightningStrikePosition = null;
@@ -199,25 +199,25 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
     {
         _lightningStrikePosition = targetPosition;
         _lightningStrikeBrightness = 1f;
-        var num = float.MaxValue;
+        var nearestListenerDistance = float.MaxValue;
         foreach (var listenerPosition in _subsystemAudio.ListenerPositions)
         {
-            var num2 = Vector2.Distance(
+            var listenerDistance = Vector2.Distance(
                 new Vector2(listenerPosition.X, listenerPosition.Z),
                 new Vector2(targetPosition.X, targetPosition.Z)
             );
-            if (num2 < num)
+            if (listenerDistance < nearestListenerDistance)
             {
-                num = num2;
+                nearestListenerDistance = listenerDistance;
             }
         }
 
-        var delay = _subsystemAudio.CalculateDelay(num);
-        if (num < 40f)
+        var delay = _subsystemAudio.CalculateDelay(nearestListenerDistance);
+        if (nearestListenerDistance < 40f)
         {
             _subsystemAudio.PlayRandomSound("Audio/ThunderNear", 1f, _random.Float(-0.2f, 0.2f), 0f, delay);
         }
-        else if (num < 200f)
+        else if (nearestListenerDistance < 200f)
         {
             _subsystemAudio.PlayRandomSound("Audio/ThunderFar", 0.8f, _random.Float(-0.2f, 0.2f), 0f, delay);
         }
@@ -258,15 +258,15 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
                 var temperature = _subsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
                                   SubsystemWeather.GetTemperatureAdjustmentAtHeight(y);
                 var c = BlockColorsMap.WaterColorsMap.Lookup(temperature, seasonalHumidity);
-                var num = MathUtils.Lerp(1f, 0.5f, seasonalHumidity / 15f);
-                var num2 = MathUtils.Lerp(1f, 0.2f, MathUtils.Saturate(0.075f * (ViewUnderWaterDepth - 2f)));
-                var num3 = MathUtils.Lerp(0.33f, 1f, _sky.SkyLightIntensity);
+                var humidityFactor = MathUtils.Lerp(1f, 0.5f, seasonalHumidity / 15f);
+                var depthFactor = MathUtils.Lerp(1f, 0.2f, MathUtils.Saturate(0.075f * (ViewUnderWaterDepth - 2f)));
+                var daylightFactor = MathUtils.Lerp(0.33f, 1f, _sky.SkyLightIntensity);
                 ViewHazeStart = 10f;
-                ViewHazeDensity = MathUtils.Lerp(0.25f, 0.1f, num * num2 * num3);
+                ViewHazeDensity = MathUtils.Lerp(0.25f, 0.1f, humidityFactor * depthFactor * daylightFactor);
                 ViewFogDensity = 0f;
                 ViewFogBottom = 0f;
                 ViewFogTop = 1f;
-                _viewFogColor = Color.MultiplyColorOnly(c, 0.66f * num2 * num3); //在水中的视图雾颜色
+                _viewFogColor = Color.MultiplyColorOnly(c, 0.66f * depthFactor * daylightFactor); //在水中的视图雾颜色
                 VisibilityRangeYMultiplier = 1f;
                 _viewIsSkyVisible = false;
             }
@@ -284,19 +284,19 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
             else
             {
                 _fogSeedRandom.Seed(_subsystemWeather.FogSeed);
-                var num4 = _fogSeedRandom.Bool(0.66f)
+                var initialFogBottom = _fogSeedRandom.Bool(0.66f)
                     ? _fogSeedRandom.Float(62f, 82f)
                     : _fogSeedRandom.Float(62f, 180f);
-                var x2 = MathUtils.Clamp(num4 + _fogSeedRandom.Float(-20f, 20f), 62f, 180f);
-                var num5 = _fogSeedRandom.Bool(0.66f)
+                var finalFogBottom = MathUtils.Clamp(initialFogBottom + _fogSeedRandom.Float(-20f, 20f), 62f, 180f);
+                var fogThickness = _fogSeedRandom.Bool(0.66f)
                     ? _fogSeedRandom.Float(12f, 22f)
                     : _fogSeedRandom.Float(12f, 80f);
-                ViewFogBottom = MathUtils.Lerp(num4, x2, _subsystemWeather.FogProgress);
+                ViewFogBottom = MathUtils.Lerp(initialFogBottom, finalFogBottom, _subsystemWeather.FogProgress);
 
-                ViewFogTop = ViewFogBottom + num5;
+                ViewFogTop = ViewFogBottom + fogThickness;
                 ViewFogDensity = MathUtils.Pow(_subsystemWeather.FogIntensity, 2f) *
                                  _fogSeedRandom.Float(0.04f, 0.1f);
-                const float num6 = 256f;
+                const float verticalVisibilityRange = 256f;
                 var seasonalTemperature =
                     _subsystemTerrain.Terrain.GetSeasonalTemperature(
                         Terrain.ToCell(viewPosition.X),
@@ -337,7 +337,7 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
                     seasonalTemperature
                 );
                 _viewFogColor = Color.Lerp(c3, c2, CalculateSkyFog(camera.ViewPosition));
-                VisibilityRangeYMultiplier = VisibilityRange / num6;
+                VisibilityRangeYMultiplier = VisibilityRange / verticalVisibilityRange;
                 _viewIsSkyVisible = true;
             }
 
@@ -591,7 +591,7 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
         var precipitationIntensity = _subsystemWeather.PrecipitationIntensity;
         var timeOfDay = _subsystemTimeOfDay.TimeOfDay;
         var seasonalTemperature = _subsystemTerrain.Terrain.GetSeasonalTemperature(x, z);
-        var flag = true;
+        var needsVertexUpdate = true;
         if (value.LastUpdateTimeOfDay.HasValue &&
             !(MathUtils.Abs(timeOfDay - value.LastUpdateTimeOfDay.Value) > 0.0005f) &&
             value.LastUpdatePrecipitationIntensity.HasValue &&
@@ -608,11 +608,11 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
                 value.LastUpdateTemperature.HasValue &&
                 !(MathUtils.Abs(ViewFogDensity - value.LastUpdateFogDensity!.Value) > 0.002f))
             {
-                flag = false;
+                needsVertexUpdate = false;
             }
         }
 
-        if (flag)
+        if (needsVertexUpdate)
         {
             value.LastUpdateTimeOfDay = timeOfDay;
             value.LastUpdatePrecipitationIntensity = precipitationIntensity;
@@ -624,11 +624,11 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
 
         Display.DepthStencilState = DepthStencilState.DepthRead;
         Display.RasterizerState = RasterizerState.CullNoneScissor;
-        var num = CalculateSkyFog(camera.ViewPosition);
+        var fogFactor = CalculateSkyFog(camera.ViewPosition);
         Display.BlendState = BlendState.Opaque;
         _shaderFlat.Transforms.World[0] = Matrix.CreateTranslation(camera.ViewPosition) * camera.ViewProjectionMatrix;
-        _shaderFlat.Color = new Vector4(1f - num);
-        _shaderFlat.AdditiveColor = num * new Vector4(ViewFogColor);
+        _shaderFlat.Color = new Vector4(1f - fogFactor);
+        _shaderFlat.AdditiveColor = fogFactor * new Vector4(ViewFogColor);
         Display.DrawIndexed(
             PrimitiveType.TriangleList,
             _shaderFlat,
@@ -656,9 +656,10 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
 
         Display.DepthStencilState = DepthStencilState.DepthRead;
         Display.RasterizerState = RasterizerState.CullNoneScissor;
-        var num = MathUtils.Sqr((1f - _sky.CalculateLightIntensity(timeOfDay)) * (1f - precipitationIntensity));
-        num *= 1f - CalculateSkyFog(camera.ViewPosition);
-        if (!(num > 0.01f))
+        var starBrightness =
+            MathUtils.Sqr((1f - _sky.CalculateLightIntensity(timeOfDay)) * (1f - precipitationIntensity));
+        starBrightness *= 1f - CalculateSkyFog(camera.ViewPosition);
+        if (!(starBrightness > 0.01f))
         {
             return;
         }
@@ -669,7 +670,7 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
                                                Matrix.CreateTranslation(camera.ViewPosition) *
                                                camera.ViewProjectionMatrix;
 
-        _shaderTextured.Color = new Vector4(num);
+        _shaderTextured.Color = new Vector4(starBrightness);
         _shaderTextured.Texture = ContentManager.Get<Texture2D>("Textures/Star");
         _shaderTextured.SamplerState = SamplerState.LinearClamp;
         Display.DrawIndexed(
@@ -688,22 +689,22 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
         var timeOfDay = _subsystemTimeOfDay.TimeOfDay;
         var f = MathUtils.Max(CalculateDawnGlowIntensity(timeOfDay), CalculateDuskGlowIntensity(timeOfDay));
         //float num = 2f * timeOfDay * (float)Math.PI;
-        var num = (float)Math.PI * 2f * (timeOfDay - _subsystemTimeOfDay.Midday);
-        var angle = num + (float)Math.PI;
-        var num2 = MathUtils.Lerp(90f, 160f, f);
-        var num3 = MathUtils.Lerp(60f, 80f, f);
-        var color = Color.Lerp(new Color(255, 255, 255), new Color(255, 255, 160), f);
-        var white = Color.White;
-        white *= 1f - _sky.SkyLightIntensity;
-        color *= MathUtils.Lerp(1f, 0f, precipitationIntensity);
-        white *= MathUtils.Lerp(1f, 0f, precipitationIntensity);
-        var color2 = color * 0.6f * MathUtils.Lerp(1f, 0f, precipitationIntensity);
-        var color3 = color * 0.2f * MathUtils.Lerp(1f, 0f, precipitationIntensity);
+        var sunAngle = (float)Math.PI * 2f * (timeOfDay - _subsystemTimeOfDay.Midday);
+        var moonAngle = sunAngle + (float)Math.PI;
+        var sunRadius = MathUtils.Lerp(90f, 160f, f);
+        var moonRadius = MathUtils.Lerp(60f, 80f, f);
+        var sunColor = Color.Lerp(new Color(255, 255, 255), new Color(255, 255, 160), f);
+        var moonColor = Color.White;
+        moonColor *= 1f - _sky.SkyLightIntensity;
+        sunColor *= MathUtils.Lerp(1f, 0f, precipitationIntensity);
+        moonColor *= MathUtils.Lerp(1f, 0f, precipitationIntensity);
+        var sunGlowColor = sunColor * 0.6f * MathUtils.Lerp(1f, 0f, precipitationIntensity);
+        var moonGlowColor = sunColor * 0.2f * MathUtils.Lerp(1f, 0f, precipitationIntensity);
 
         // Vertical component of the unit direction used by QueueCelestialBody.
-        var sunHeight = MathUtils.Cos(num) * MathUtils.Cos(CalculateSeasonAngle());
-        color *= MathUtils.SmoothStep(_sunDiscFadeEndHeight, _sunFadeStartHeight, sunHeight);
-        color2 *= MathUtils.SmoothStep(_sunGlowFadeEndHeight, _sunFadeStartHeight, sunHeight);
+        var sunHeight = MathUtils.Cos(sunAngle) * MathUtils.Cos(CalculateSeasonAngle());
+        sunColor *= MathUtils.SmoothStep(_sunDiscFadeEndHeight, _sunFadeStartHeight, sunHeight);
+        sunGlowColor *= MathUtils.SmoothStep(_sunGlowFadeEndHeight, _sunFadeStartHeight, sunHeight);
         var batch = PrimitivesRenderer3D.TexturedBatch(
             _glowTexture,
             false,
@@ -728,10 +729,10 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
             null,
             BlendState.AlphaBlend
         );
-        QueueCelestialBody(batch, camera.ViewPosition, color2, 900f, 3.5f * num2, num);
-        QueueCelestialBody(batch, camera.ViewPosition, color3, 900f, 3.5f * num3, angle);
-        QueueCelestialBody(batch2, camera.ViewPosition, color, 900f, num2, num);
-        QueueCelestialBody(batch3, camera.ViewPosition, white, 900f, num3, angle);
+        QueueCelestialBody(batch, camera.ViewPosition, sunGlowColor, 900f, 3.5f * sunRadius, sunAngle);
+        QueueCelestialBody(batch, camera.ViewPosition, moonGlowColor, 900f, 3.5f * moonRadius, moonAngle);
+        QueueCelestialBody(batch2, camera.ViewPosition, sunColor, 900f, sunRadius, sunAngle);
+        QueueCelestialBody(batch3, camera.ViewPosition, moonColor, 900f, moonRadius, moonAngle);
     }
 
     public void DrawLightning(Camera camera)
@@ -747,41 +748,45 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
         var unitY = Vector3.UnitY;
         var v = Vector3.Normalize(Vector3.Cross(camera.ViewDirection, unitY));
         var viewport = Display.Viewport;
-        var num = Vector4.Transform(new Vector4(value, 1f), camera.ViewProjectionMatrix).W *
-                  2f /
-                  (viewport.Width * camera.ProjectionMatrix.M11);
+        var worldUnitsPerPixel = Vector4.Transform(new Vector4(value, 1f), camera.ViewProjectionMatrix).W *
+                                 2f /
+                                 (viewport.Width * camera.ProjectionMatrix.M11);
         for (var i = 0; i < (int)(_lightningStrikeBrightness * 30f); i++)
         {
-            var s = _random.NormalFloat(0f, 1f * num);
-            var s2 = _random.NormalFloat(0f, 1f * num);
+            var s = _random.NormalFloat(0f, 1f * worldUnitsPerPixel);
+            var s2 = _random.NormalFloat(0f, 1f * worldUnitsPerPixel);
             var v2 = s * v + s2 * unitY;
-            var num2 = 260f;
-            while (num2 > value.Y)
+            var currentY = 260f;
+            while (currentY > value.Y)
             {
-                var num3 = MathUtils.Hash(
+                var segmentHash = MathUtils.Hash(
                     (uint)(_lightningStrikePosition.Value.X +
                            100f * _lightningStrikePosition.Value.Z +
-                           200f * num2)
+                           200f * currentY)
                 );
-                var num4 = MathUtils.Lerp(4f, 10f, (float)(double)(num3 & 0xFF) / 255f);
-                float s3 = (num3 & 1) == 0 ? 1 : -1;
-                var s4 = MathUtils.Lerp(0.05f, 0.2f, (float)(double)((num3 >> 8) & 0xFF) / 255f);
-                var num5 = num2;
-                var num6 = num5 - num4 * MathUtils.Lerp(0.45f, 0.55f, (float)(double)((num3 >> 16) & 0xFF) / 255f);
-                var num7 = num5 - num4 * MathUtils.Lerp(0.45f, 0.55f, (float)(double)((num3 >> 24) & 0xFF) / 255f);
-                var num8 = num5 - num4;
-                var p = new Vector3(value.X, num5, value.Z) + v2;
-                var vector = new Vector3(value.X, num6, value.Z) + v2 - num4 * v * s3 * s4;
-                var vector2 = new Vector3(value.X, num7, value.Z) + v2 + num4 * v * s3 * s4;
-                var p2 = new Vector3(value.X, num8, value.Z) + v2;
-                var color = color0 * 0.2f * MathUtils.Saturate((260f - num5) * 0.2f);
-                var color2 = color0 * 0.2f * MathUtils.Saturate((260f - num6) * 0.2f);
-                var color3 = color0 * 0.2f * MathUtils.Saturate((260f - num7) * 0.2f);
-                var color4 = color0 * 0.2f * MathUtils.Saturate((260f - num8) * 0.2f);
-                flatBatch3D.QueueLine(p, vector, color, color2);
-                flatBatch3D.QueueLine(vector, vector2, color2, color3);
-                flatBatch3D.QueueLine(vector2, p2, color3, color4);
-                num2 -= num4;
+                var segmentHeight = MathUtils.Lerp(4f, 10f, (float)(double)(segmentHash & 0xFF) / 255f);
+                float s3 = (segmentHash & 1) == 0 ? 1 : -1;
+                var s4 = MathUtils.Lerp(0.05f, 0.2f, (float)(double)((segmentHash >> 8) & 0xFF) / 255f);
+                var topY = currentY;
+                var firstBendY = topY -
+                                 segmentHeight *
+                                 MathUtils.Lerp(0.45f, 0.55f, (float)(double)((segmentHash >> 16) & 0xFF) / 255f);
+                var secondBendY = topY -
+                                  segmentHeight *
+                                  MathUtils.Lerp(0.45f, 0.55f, (float)(double)((segmentHash >> 24) & 0xFF) / 255f);
+                var bottomY = topY - segmentHeight;
+                var p = new Vector3(value.X, topY, value.Z) + v2;
+                var firstBend = new Vector3(value.X, firstBendY, value.Z) + v2 - segmentHeight * v * s3 * s4;
+                var secondBend = new Vector3(value.X, secondBendY, value.Z) + v2 + segmentHeight * v * s3 * s4;
+                var p2 = new Vector3(value.X, bottomY, value.Z) + v2;
+                var color = color0 * 0.2f * MathUtils.Saturate((260f - topY) * 0.2f);
+                var color2 = color0 * 0.2f * MathUtils.Saturate((260f - firstBendY) * 0.2f);
+                var color3 = color0 * 0.2f * MathUtils.Saturate((260f - secondBendY) * 0.2f);
+                var color4 = color0 * 0.2f * MathUtils.Saturate((260f - bottomY) * 0.2f);
+                flatBatch3D.QueueLine(p, firstBend, color, color2);
+                flatBatch3D.QueueLine(firstBend, secondBend, color2, color3);
+                flatBatch3D.QueueLine(secondBend, p2, color3, color4);
+                currentY -= segmentHeight;
             }
         }
     }
@@ -795,10 +800,11 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
 
         var f = CalculateHazeFactor(); //new 大部分原来的降水参数都被替换成了雾气因素
 
-        var num = MathUtils.Lerp(0.03f, 1f, MathUtils.Sqr(_sky.SkyLightIntensity)) * MathUtils.Lerp(1f, 0.2f, f);
+        var cloudBrightness = MathUtils.Lerp(0.03f, 1f, MathUtils.Sqr(_sky.SkyLightIntensity)) *
+                              MathUtils.Lerp(1f, 0.2f, f);
         var f2 = CalculateSkyFog(camera.ViewPosition);
-        _cloudsLayerColors[0] = Color.Lerp(Color.White * (num * 0.75f), ViewFogColor, f2); //
-        _cloudsLayerColors[1] = Color.Lerp(Color.White * (num * 0.66f), ViewFogColor, f2); //
+        _cloudsLayerColors[0] = Color.Lerp(Color.White * (cloudBrightness * 0.75f), ViewFogColor, f2); //
+        _cloudsLayerColors[1] = Color.Lerp(Color.White * (cloudBrightness * 0.66f), ViewFogColor, f2); //
 
         _cloudsLayerColors[2] = ViewFogColor;
         _cloudsLayerColors[3] = Color.Transparent;
@@ -831,42 +837,44 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
         {
             for (var j = 0; j < 7; j++)
             {
-                var num2 = j - 3;
-                var num3 = i - 3;
-                var num4 = MathUtils.Max(MathUtils.Abs(num2), MathUtils.Abs(num3));
-                var num5 = _cloudsLayerRadii[num4];
-                var num6 = num4 > 0 ? num5 / MathUtils.Sqrt(num2 * num2 + num3 * num3) : 0f;
-                var num7 = num2 * num6;
-                var num8 = num3 * num6;
-                var y = MathUtils.Lerp(600f, 60f, num5 * num5);
-                var position = new Vector3(viewPosition.X + num7 * 1900f, y, viewPosition.Z + num8 * 1900f);
+                var gridOffsetX = j - 3;
+                var gridOffsetZ = i - 3;
+                var ringIndex = MathUtils.Max(MathUtils.Abs(gridOffsetX), MathUtils.Abs(gridOffsetZ));
+                var ringRadius = _cloudsLayerRadii[ringIndex];
+                var radialScale = ringIndex > 0
+                    ? ringRadius / MathUtils.Sqrt(gridOffsetX * gridOffsetX + gridOffsetZ * gridOffsetZ)
+                    : 0f;
+                var cloudX = gridOffsetX * radialScale;
+                var cloudZ = gridOffsetZ * radialScale;
+                var y = MathUtils.Lerp(600f, 60f, ringRadius * ringRadius);
+                var position = new Vector3(viewPosition.X + cloudX * 1900f, y, viewPosition.Z + cloudZ * 1900f);
                 var texCoord = new Vector2(position.X, position.Z) / 1900f * 1.75f - v;
-                var color = _cloudsLayerColors[num4];
+                var color = _cloudsLayerColors[ringIndex];
                 texturedBatch3D.TriangleVertices.Array[vertexIndex++] =
                     new VertexPositionColorTexture(position, color, texCoord);
                 if (j > 0 && i > 0)
                 {
-                    var num9 = (ushort)(vertexStart + j + i * 7);
-                    var num10 = (ushort)(vertexStart + (j - 1) + i * 7);
-                    var num11 = (ushort)(vertexStart + (j - 1) + (i - 1) * 7);
-                    var num12 = (ushort)(vertexStart + j + (i - 1) * 7);
-                    if ((num2 <= 0 && num3 <= 0) || (num2 > 0 && num3 > 0))
+                    var currentIndex = (ushort)(vertexStart + j + i * 7);
+                    var leftIndex = (ushort)(vertexStart + (j - 1) + i * 7);
+                    var upperLeftIndex = (ushort)(vertexStart + (j - 1) + (i - 1) * 7);
+                    var upperIndex = (ushort)(vertexStart + j + (i - 1) * 7);
+                    if ((gridOffsetX <= 0 && gridOffsetZ <= 0) || (gridOffsetX > 0 && gridOffsetZ > 0))
                     {
-                        texturedBatch3D.TriangleIndices.Array[index++] = num9;
-                        texturedBatch3D.TriangleIndices.Array[index++] = num10;
-                        texturedBatch3D.TriangleIndices.Array[index++] = num11;
-                        texturedBatch3D.TriangleIndices.Array[index++] = num11;
-                        texturedBatch3D.TriangleIndices.Array[index++] = num12;
-                        texturedBatch3D.TriangleIndices.Array[index++] = num9;
+                        texturedBatch3D.TriangleIndices.Array[index++] = currentIndex;
+                        texturedBatch3D.TriangleIndices.Array[index++] = leftIndex;
+                        texturedBatch3D.TriangleIndices.Array[index++] = upperLeftIndex;
+                        texturedBatch3D.TriangleIndices.Array[index++] = upperLeftIndex;
+                        texturedBatch3D.TriangleIndices.Array[index++] = upperIndex;
+                        texturedBatch3D.TriangleIndices.Array[index++] = currentIndex;
                     }
                     else
                     {
-                        texturedBatch3D.TriangleIndices.Array[index++] = num9;
-                        texturedBatch3D.TriangleIndices.Array[index++] = num10;
-                        texturedBatch3D.TriangleIndices.Array[index++] = num12;
-                        texturedBatch3D.TriangleIndices.Array[index++] = num10;
-                        texturedBatch3D.TriangleIndices.Array[index++] = num11;
-                        texturedBatch3D.TriangleIndices.Array[index++] = num12;
+                        texturedBatch3D.TriangleIndices.Array[index++] = currentIndex;
+                        texturedBatch3D.TriangleIndices.Array[index++] = leftIndex;
+                        texturedBatch3D.TriangleIndices.Array[index++] = upperIndex;
+                        texturedBatch3D.TriangleIndices.Array[index++] = leftIndex;
+                        texturedBatch3D.TriangleIndices.Array[index++] = upperLeftIndex;
+                        texturedBatch3D.TriangleIndices.Array[index++] = upperIndex;
                     }
                 }
             }
@@ -1018,11 +1026,11 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
             v4 = Vector3.Max(new Vector3(_lightningStrikeBrightness), v4);
         }
 
-        var num = MathUtils.Lerp(CalculateDawnGlowIntensity(timeOfDay), 0f, f0);
-        var num2 = MathUtils.Lerp(CalculateDuskGlowIntensity(timeOfDay), 0f, f0);
+        var dawnGlow = MathUtils.Lerp(CalculateDawnGlowIntensity(timeOfDay), 0f, f0);
+        var duskGlow = MathUtils.Lerp(CalculateDuskGlowIntensity(timeOfDay), 0f, f0);
         var f2 = MathUtils.Saturate((direction.Y - 0.1f) / 0.4f);
-        var s2 = num * MathUtils.Sqr(MathUtils.Saturate(0f - vector.X));
-        var s3 = num2 * MathUtils.Sqr(MathUtils.Saturate(vector.X));
+        var s2 = dawnGlow * MathUtils.Sqr(MathUtils.Saturate(0f - vector.X));
+        var s3 = duskGlow * MathUtils.Sqr(MathUtils.Saturate(vector.X));
         var color = new Color(Vector3.Lerp(v5 + v6 * s2 + v7 * s3, v4, f2));
         return color;
     }
@@ -1034,14 +1042,14 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
             var x = (float)Math.PI / 2f * MathUtils.Sqr(i / 7f);
             for (var j = 0; j < 16; j++)
             {
-                var num = j + i * 16;
+                var vertexIndex = j + i * 16;
                 var x2 = (float)Math.PI * 2f * j / 16f;
-                var num2 = 1800f * MathUtils.Cos(x);
-                skyDome.Vertices[num].Position.X = num2 * MathUtils.Sin(x2);
-                skyDome.Vertices[num].Position.Z = num2 * MathUtils.Cos(x2);
-                skyDome.Vertices[num].Position.Y = 1800f * MathUtils.Sin(x) - (i == 0 ? 450f : 0f);
-                skyDome.Vertices[num].Color = CalculateSkyColor(
-                    skyDome.Vertices[num].Position,
+                var ringRadius = 1800f * MathUtils.Cos(x);
+                skyDome.Vertices[vertexIndex].Position.X = ringRadius * MathUtils.Sin(x2);
+                skyDome.Vertices[vertexIndex].Position.Z = ringRadius * MathUtils.Cos(x2);
+                skyDome.Vertices[vertexIndex].Position.Y = 1800f * MathUtils.Sin(x) - (i == 0 ? 450f : 0f);
+                skyDome.Vertices[vertexIndex].Color = CalculateSkyColor(
+                    skyDome.Vertices[vertexIndex].Position,
                     timeOfDay,
                     precipitationIntensity,
                     temperature
@@ -1054,29 +1062,29 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
 
     public void FillSkyIndexBuffer(SkyDome skyDome)
     {
-        var num = 0;
+        var indexOffset = 0;
         for (var i = 0; i < 7; i++)
         {
             for (var j = 0; j < 16; j++)
             {
-                var num2 = j;
-                var num3 = (j + 1) % 16;
-                var num4 = i;
-                var num5 = i + 1;
-                skyDome.Indices[num++] = (ushort)(num2 + num4 * 16);
-                skyDome.Indices[num++] = (ushort)(num3 + num4 * 16);
-                skyDome.Indices[num++] = (ushort)(num3 + num5 * 16);
-                skyDome.Indices[num++] = (ushort)(num3 + num5 * 16);
-                skyDome.Indices[num++] = (ushort)(num2 + num5 * 16);
-                skyDome.Indices[num++] = (ushort)(num2 + num4 * 16);
+                var longitude = j;
+                var nextLongitude = (j + 1) % 16;
+                var latitude = i;
+                var nextLatitude = i + 1;
+                skyDome.Indices[indexOffset++] = (ushort)(longitude + latitude * 16);
+                skyDome.Indices[indexOffset++] = (ushort)(nextLongitude + latitude * 16);
+                skyDome.Indices[indexOffset++] = (ushort)(nextLongitude + nextLatitude * 16);
+                skyDome.Indices[indexOffset++] = (ushort)(nextLongitude + nextLatitude * 16);
+                skyDome.Indices[indexOffset++] = (ushort)(longitude + nextLatitude * 16);
+                skyDome.Indices[indexOffset++] = (ushort)(longitude + latitude * 16);
             }
         }
 
         for (var k = 2; k < 16; k++)
         {
-            skyDome.Indices[num++] = 0;
-            skyDome.Indices[num++] = (ushort)(k - 1);
-            skyDome.Indices[num++] = (ushort)k;
+            skyDome.Indices[indexOffset++] = 0;
+            skyDome.Indices[indexOffset++] = (ushort)(k - 1);
+            skyDome.Indices[indexOffset++] = (ushort)k;
         }
 
         skyDome.IndexBuffer?.SetData(skyDome.Indices, 0, skyDome.Indices.Length);
@@ -1095,16 +1103,16 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
             } while (v.LengthSquared() > 1f);
 
             v = Vector3.Normalize(v);
-            var num = 9f * random.NormalFloat(1f, 0.1f);
+            var starHalfSize = 9f * random.NormalFloat(1f, 0.1f);
             var w = MathUtils.Saturate(random.NormalFloat(0.6f, 0.4f));
             var color = new Color(new Vector4(random.Float(0.6f, 1f) * w, 0.7f * w, random.Float(0.8f, 1f) * w, w));
-            var vector = 900f * v;
-            var vector2 = Vector3.Normalize(Vector3.Cross(v.X > v.Y ? Vector3.UnitY : Vector3.UnitX, v));
-            var vector3 = Vector3.Normalize(Vector3.Cross(vector2, v));
-            var position = vector + num * (-vector2 - vector3);
-            var position2 = vector + num * (vector2 - vector3);
-            var position3 = vector + num * (vector2 + vector3);
-            var position4 = vector + num * (-vector2 + vector3);
+            var starCenter = 900f * v;
+            var tangent = Vector3.Normalize(Vector3.Cross(v.X > v.Y ? Vector3.UnitY : Vector3.UnitX, v));
+            var bitangent = Vector3.Normalize(Vector3.Cross(tangent, v));
+            var position = starCenter + starHalfSize * (-tangent - bitangent);
+            var position2 = starCenter + starHalfSize * (tangent - bitangent);
+            var position3 = starCenter + starHalfSize * (tangent + bitangent);
+            var position4 = starCenter + starHalfSize * (-tangent + bitangent);
             array[i * 4] = new StarVertex
             {
                 Position = position,
@@ -1148,25 +1156,35 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
 
     public float CalculateDawnGlowIntensity(float timeOfDay)
     {
-        var num = MathUtils.Lerp(0.1f, 0.75f, MathUtils.LinearStep(-0.05f, 0.15f, CalculateWinterDistance()));
+        var seasonalIntensity = MathUtils.Lerp(
+            0.1f,
+            0.75f,
+            MathUtils.LinearStep(-0.05f, 0.15f, CalculateWinterDistance())
+        );
         var middawn = _subsystemTimeOfDay.MidDawn;
-        var num2 = 1f * _subsystemTimeOfDay.DawnInterval;
-        return num * MathUtils.Max(1f - IntervalUtils.Distance(timeOfDay, middawn) / num2 * 2f, 0f);
+        var dawnDuration = 1f * _subsystemTimeOfDay.DawnInterval;
+        return seasonalIntensity *
+               MathUtils.Max(1f - IntervalUtils.Distance(timeOfDay, middawn) / dawnDuration * 2f, 0f);
     }
 
     private float CalculateWinterDistance()
     {
         var t = IntervalUtils.Midpoint(SeasonCalendar.WinterStart, SeasonCalendar.SpringStart);
-        var num = IntervalUtils.Interval(SeasonCalendar.WinterStart, SeasonCalendar.SpringStart);
-        return IntervalUtils.Distance(_subsystemGameInfo.WorldSettings.TimeOfYear, t) - 0.5f * num;
+        var winterDuration = IntervalUtils.Interval(SeasonCalendar.WinterStart, SeasonCalendar.SpringStart);
+        return IntervalUtils.Distance(_subsystemGameInfo.WorldSettings.TimeOfYear, t) - 0.5f * winterDuration;
     }
 
     public float CalculateDuskGlowIntensity(float timeOfDay)
     {
-        var num = MathUtils.Lerp(0.2f, 1f, MathUtils.LinearStep(-0.05f, 0.15f, CalculateWinterDistance()));
+        var seasonalIntensity = MathUtils.Lerp(
+            0.2f,
+            1f,
+            MathUtils.LinearStep(-0.05f, 0.15f, CalculateWinterDistance())
+        );
         var middusk = _subsystemTimeOfDay.MidDusk;
-        var num2 = 1f * _subsystemTimeOfDay.DuskInterval;
-        return num * MathUtils.Max(1f - IntervalUtils.Distance(timeOfDay, middusk) / num2 * 2f, 0f);
+        var duskDuration = 1f * _subsystemTimeOfDay.DuskInterval;
+        return seasonalIntensity *
+               MathUtils.Max(1f - IntervalUtils.Distance(timeOfDay, middusk) / duskDuration * 2f, 0f);
     }
 
     public struct SkyVertex

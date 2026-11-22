@@ -22,15 +22,15 @@ public abstract class LadderBlockPresentation(LadderBlock block, BlockPresentati
         int z
     )
     {
-        var num = Terrain.ExtractData(value);
-        if (num < BlockMeshesByData.Length)
+        var mountingFace = Terrain.ExtractData(value);
+        if (mountingFace < BlockMeshesByData.Length)
         {
             generator.GenerateMeshVertices(
                 this,
                 x,
                 y,
                 z,
-                BlockMeshesByData[num],
+                BlockMeshesByData[mountingFace],
                 Color.White,
                 null,
                 geometry.SubsetOpaque

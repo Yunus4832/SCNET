@@ -21,14 +21,14 @@ public class RyeBlock : CrossBlock
         out bool showDebris
     )
     {
-        var num = 0;
+        var seedCount = 0;
         var data = 0;
         var data2 = Terrain.ExtractData(oldValue);
         var size = GetSize(data2);
         var isWild = GetIsWild(data2);
         if (isWild)
         {
-            num = size > 2 && Random.Float(0f, 1f) < 0.33f ? 1 : 0;
+            seedCount = size > 2 && Random.Float(0f, 1f) < 0.33f ? 1 : 0;
             data = 4;
         }
         else
@@ -36,15 +36,15 @@ public class RyeBlock : CrossBlock
             switch (size)
             {
                 case 5:
-                    num = 1;
+                    seedCount = 1;
                     data = 4;
                     break;
                 case 6:
-                    num = Random.Int(1, 2);
+                    seedCount = Random.Int(1, 2);
                     data = 4;
                     break;
                 case 7:
-                    num = Random.Int(1, 3);
+                    seedCount = Random.Int(1, 3);
                     data = 5;
                     break;
             }
@@ -52,7 +52,7 @@ public class RyeBlock : CrossBlock
 
         showDebris = true;
         BlockDropValue item;
-        for (var i = 0; i < num; i++)
+        for (var i = 0; i < seedCount; i++)
         {
             item = new BlockDropValue
             {

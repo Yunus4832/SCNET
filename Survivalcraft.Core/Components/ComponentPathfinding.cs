@@ -74,9 +74,9 @@ public class ComponentPathfinding : Component, IUpdateable
             return;
         }
 
-        var num = _random.Float(0.08f, 0.12f);
-        _nextUpdateTime = _subsystemTime.GameTime + num;
-        _pathfindingCongestion = MathUtils.Max(_pathfindingCongestion - 20f * num, 0f);
+        var updateInterval = _random.Float(0.08f, 0.12f);
+        _nextUpdateTime = _subsystemTime.GameTime + updateInterval;
+        _pathfindingCongestion = MathUtils.Max(_pathfindingCongestion - 20f * updateInterval, 0f);
         _stateMachine.Update();
     }
 
@@ -281,9 +281,13 @@ public class ComponentPathfinding : Component, IUpdateable
                 }
                 else
                 {
-                    var num = Vector3.DistanceSquared(_componentCreature.ComponentBody.Position, Destination.Value);
+                    var distanceToDestinationSquared = Vector3.DistanceSquared(
+                        _componentCreature.ComponentBody.Position,
+                        Destination.Value
+                    );
                     if (_lastPathfindingDestination is not null &&
-                        Vector3.DistanceSquared(_lastPathfindingDestination.Value, Destination.Value) > num)
+                        Vector3.DistanceSquared(_lastPathfindingDestination.Value, Destination.Value) >
+                        distanceToDestinationSquared)
                     {
                         _stateMachine.TransitionTo("MovingDirect");
                     }

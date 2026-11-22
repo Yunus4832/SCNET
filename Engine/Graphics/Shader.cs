@@ -342,10 +342,10 @@ public class Shader : GraphicsResource
             );
             var uniformLocation = GLWrapper.GL.GetUniformLocation(uProgram, name);
             var shaderParameterType = GLWrapper.TranslateActiveUniformType(type2);
-            var num = name.IndexOf('[');
-            if (num >= 0)
+            var arraySuffixStart = name.IndexOf('[');
+            if (arraySuffixStart >= 0)
             {
-                name = name.Remove(num, name.Length - num);
+                name = name.Remove(arraySuffixStart, name.Length - arraySuffixStart);
             }
 
             var shaderParameter = new ShaderParameter(this, name, shaderParameterType, size2)

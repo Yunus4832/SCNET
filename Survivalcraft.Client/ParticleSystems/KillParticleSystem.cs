@@ -38,8 +38,8 @@ public class KillParticleSystem : ParticleSystem<KillParticleSystem.Particle>
     public override bool Simulate(float dt)
     {
         dt = MathUtils.Clamp(dt, 0f, 0.1f);
-        var num = MathUtils.Pow(0.1f, dt);
-        var flag = false;
+        var velocityDamping = MathUtils.Pow(0.1f, dt);
+        var hasActiveParticles = false;
         foreach (var particle in Particles)
         {
             if (!particle.IsActive)
@@ -47,13 +47,13 @@ public class KillParticleSystem : ParticleSystem<KillParticleSystem.Particle>
                 continue;
             }
 
-            flag = true;
+            hasActiveParticles = true;
             particle.TimeToLive -= dt;
             if (particle.TimeToLive > 0f)
             {
                 _ = particle.Position += particle.Velocity * dt;
                 particle.Velocity.Y += 1f * dt;
-                particle.Velocity *= num;
+                particle.Velocity *= velocityDamping;
                 particle.TextureSlot = (int)(3.99f * MathUtils.Saturate(2f - particle.TimeToLive));
             }
             else
@@ -62,7 +62,7 @@ public class KillParticleSystem : ParticleSystem<KillParticleSystem.Particle>
             }
         }
 
-        return !flag;
+        return !hasActiveParticles;
     }
 
     public class Particle : Game.ParticleSystems.Particle

@@ -31,22 +31,23 @@ public class PukeParticleSystem : ParticleSystem<PukeParticleSystem.Particle>
         var white = Color.White;
         white.A = 255;
         dt = MathUtils.Clamp(dt, 0f, 0.1f);
-        var num5 = MathUtils.Pow(0.03f, dt);
+        var velocityDamping = MathUtils.Pow(0.03f, dt);
         _duration += dt;
         if (_duration > 3.5f)
         {
             IsStopped = true;
         }
 
-        var num6 = MathUtils.Saturate(1.3f * SimplexNoise.Noise(3f * _duration + GetHashCode() % 100) - 0.3f);
-        var num7 = 30f * num6;
-        _toGenerate += num7 * dt;
-        var flag = false;
+        var emissionIntensity =
+            MathUtils.Saturate(1.3f * SimplexNoise.Noise(3f * _duration + GetHashCode() % 100) - 0.3f);
+        var emissionRate = 30f * emissionIntensity;
+        _toGenerate += emissionRate * dt;
+        var hasActiveParticles = false;
         foreach (var particle in Particles)
         {
             if (particle.IsActive)
             {
-                flag = true;
+                hasActiveParticles = true;
                 particle.TimeToLive -= dt;
                 if (particle.TimeToLive > 0f)
                 {
@@ -82,7 +83,7 @@ public class PukeParticleSystem : ParticleSystem<PukeParticleSystem.Particle>
 
                     particle.Position = vector;
                     particle.Velocity.Y += -9.81f * dt;
-                    particle.Velocity *= num5;
+                    particle.Velocity *= velocityDamping;
                     particle.Color *= MathUtils.Saturate(particle.TimeToLive);
                     particle.TextureSlot = (int)(8.99f * MathUtils.Saturate(3f - particle.TimeToLive));
                 }
@@ -97,7 +98,8 @@ public class PukeParticleSystem : ParticleSystem<PukeParticleSystem.Particle>
                 particle.IsActive = true;
                 particle.Position = Position + 0.05f * v;
                 particle.Color = Color.MultiplyColorOnly(white, _random.Float(0.7f, 1f));
-                particle.Velocity = MathUtils.Lerp(1f, 2.5f, num6) * Vector3.Normalize(Direction + 0.25f * v);
+                particle.Velocity = MathUtils.Lerp(1f, 2.5f, emissionIntensity) *
+                                    Vector3.Normalize(Direction + 0.25f * v);
                 particle.TimeToLive = 3f;
                 particle.Size = new Vector2(0.1f);
                 particle.FlipX = _random.Bool();
@@ -108,7 +110,7 @@ public class PukeParticleSystem : ParticleSystem<PukeParticleSystem.Particle>
 
         if (IsStopped)
         {
-            return !flag;
+            return !hasActiveParticles;
         }
 
         return false;

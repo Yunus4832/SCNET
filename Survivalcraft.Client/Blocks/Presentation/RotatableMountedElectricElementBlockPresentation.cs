@@ -44,8 +44,8 @@ public abstract class RotatableMountedElectricElementBlockPresentation(
         int z
     )
     {
-        var num = Terrain.ExtractData(value) & 0x1F;
-        generator.GenerateMeshVertices(this, x, y, z, BlockMeshes[num], Color.White, null, geometry.SubsetOpaque);
+        var meshIndex = Terrain.ExtractData(value) & 0x1F;
+        generator.GenerateMeshVertices(this, x, y, z, BlockMeshes[meshIndex], Color.White, null, geometry.SubsetOpaque);
         generator.GenerateWireVertices(
             value,
             x,
@@ -69,34 +69,34 @@ public abstract class RotatableMountedElectricElementBlockPresentation(
         for (var i = 0; i < 6; i++)
         {
             float radians;
-            bool flag;
+            bool mountedOnHorizontalFace;
             switch (i)
             {
                 case < 4:
                     radians = i * (float)Math.PI / 2f;
-                    flag = false;
+                    mountedOnHorizontalFace = false;
                     break;
                 case 4:
                     radians = -(float)Math.PI / 2f;
-                    flag = true;
+                    mountedOnHorizontalFace = true;
                     break;
                 default:
                     radians = (float)Math.PI / 2f;
-                    flag = true;
+                    mountedOnHorizontalFace = true;
                     break;
             }
 
             for (var j = 0; j < 4; j++)
             {
                 var radians2 = -j * (float)Math.PI / 2f;
-                var num = (i << 2) + j;
+                var meshIndex = (i << 2) + j;
                 var m = Matrix.CreateRotationX((float)Math.PI / 2f) *
                         Matrix.CreateRotationZ(radians2) *
                         Matrix.CreateTranslation(0f, 0f, -0.5f) *
-                        (flag ? Matrix.CreateRotationX(radians) : Matrix.CreateRotationY(radians)) *
+                        (mountedOnHorizontalFace ? Matrix.CreateRotationX(radians) : Matrix.CreateRotationY(radians)) *
                         Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-                BlockMeshes[num] = new BlockMesh();
-                BlockMeshes[num].AppendModelPrimitive(
+                BlockMeshes[meshIndex] = new BlockMesh();
+                BlockMeshes[meshIndex].AppendModelPrimitive(
                     modelNode.RequireMesh().Primitives[0],
                     nodeAbsoluteTransform * m,
                     false,

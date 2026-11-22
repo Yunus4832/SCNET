@@ -84,9 +84,9 @@ public class ClothingBlock : Block
 
     public override int SetDamage(int value, int damage)
     {
-        var num = Terrain.ExtractData(value);
-        num = (num & -3841) | ((damage & 0xF) << 8);
-        return Terrain.ReplaceData(value, num);
+        var blockData = Terrain.ExtractData(value);
+        blockData = (blockData & -3841) | ((damage & 0xF) << 8);
+        return Terrain.ReplaceData(value, blockData);
     }
 
     public override bool GetCanWear(int value)
@@ -96,10 +96,10 @@ public class ClothingBlock : Block
 
     public override ClothingData GetClothingData(int data)
     {
-        var num = GetClothingIndex(data);
-        if (num >= 0 && num < _clothingData.Count && _clothingData[num] is not null)
+        var clothingIndex = GetClothingIndex(data);
+        if (clothingIndex >= 0 && clothingIndex < _clothingData.Count && _clothingData[clothingIndex] is not null)
         {
-            return _clothingData[num]!;
+            return _clothingData[clothingIndex]!;
         }
 
         for (var i = 0; i < _clothingData.Count; i++)
@@ -109,11 +109,11 @@ public class ClothingBlock : Block
                 continue;
             }
 
-            Log.Warning($"Invalid clothing index {num}, fallback to {i}.");
+            Log.Warning($"Invalid clothing index {clothingIndex}, fallback to {i}.");
             return _clothingData[i]!;
         }
 
-        throw new InvalidOperationException($"No clothing data available. Requested index={num}.");
+        throw new InvalidOperationException($"No clothing data available. Requested index={clothingIndex}.");
     }
 
     public override IEnumerable<int> GetCreativeValues()
@@ -132,8 +132,8 @@ public class ClothingBlock : Block
             {
                 var data = SetClothingColor(SetClothingIndex(0, clothingData.Index), color);
                 yield return Terrain.MakeBlockValue(BlockIndex, data);
-                var num = color + 1;
-                color = num;
+                var nextColor = color + 1;
+                color = nextColor;
             }
         }
     }
@@ -153,35 +153,35 @@ public class ClothingBlock : Block
         var list = ingredients.Where(i => !string.IsNullOrEmpty(i)).ToList();
         if (list.Count == 2)
         {
-            var num = 0;
-            var num2 = 0;
-            var num3 = 0;
+            var paintValue = 0;
+            var removerValue = 0;
+            var clothingValue = 0;
             foreach (var item in list)
             {
                 CraftingRecipeCatalog.DecodeIngredient(item, out var craftingId, out var data);
                 if (craftingId == Catalog.Blocks[BlockIndex].CraftingId)
                 {
-                    num3 = Terrain.MakeBlockValue(BlockIndex, data ?? 0);
+                    clothingValue = Terrain.MakeBlockValue(BlockIndex, data ?? 0);
                 }
                 else if (craftingId == Catalog.Blocks[129].CraftingId)
                 {
-                    num = Terrain.MakeBlockValue(129, data ?? 0);
+                    paintValue = Terrain.MakeBlockValue(129, data ?? 0);
                 }
                 else if (craftingId == Catalog.Blocks[128].CraftingId)
                 {
-                    num2 = Terrain.MakeBlockValue(128, data ?? 0);
+                    removerValue = Terrain.MakeBlockValue(128, data ?? 0);
                 }
             }
 
-            if (num != 0 && num3 != 0)
+            if (paintValue != 0 && clothingValue != 0)
             {
-                var data2 = Terrain.ExtractData(num3);
+                var data2 = Terrain.ExtractData(clothingValue);
                 var clothingColor = GetClothingColor(data2);
                 var clothingIndex = GetClothingIndex(data2);
                 var canBeDyed = GetClothingData(data2).CanBeDyed;
-                var damage = Catalog.Blocks[BlockIndex].GetDamage(num3);
-                var color = PaintBucketBlock.GetColor(Terrain.ExtractData(num));
-                var damage2 = Catalog.Blocks[129].GetDamage(num);
+                var damage = Catalog.Blocks[BlockIndex].GetDamage(clothingValue);
+                var color = PaintBucketBlock.GetColor(Terrain.ExtractData(paintValue));
+                var damage2 = Catalog.Blocks[129].GetDamage(paintValue);
                 var block = Catalog.Blocks[129];
                 var block2 = Catalog.Blocks[BlockIndex];
                 if (!canBeDyed)
@@ -189,8 +189,8 @@ public class ClothingBlock : Block
                     return null;
                 }
 
-                var num4 = PaintBucketBlock.CombineColors(clothingColor, color);
-                if (num4 != clothingColor)
+                var mixedColor = PaintBucketBlock.CombineColors(clothingColor, color);
+                if (mixedColor != clothingColor)
                 {
                     return new CraftingRecipe
                     {
@@ -199,7 +199,7 @@ public class ClothingBlock : Block
                             block2.SetDamage(
                                 Terrain.MakeBlockValue(
                                     BlockIndex,
-                                    SetClothingIndex(SetClothingColor(0, num4), clothingIndex)
+                                    SetClothingIndex(SetClothingColor(0, mixedColor), clothingIndex)
                                 ),
                                 damage
                             ),
@@ -216,14 +216,14 @@ public class ClothingBlock : Block
                 }
             }
 
-            if (num2 != 0 && num3 != 0)
+            if (removerValue != 0 && clothingValue != 0)
             {
-                var data3 = Terrain.ExtractData(num3);
+                var data3 = Terrain.ExtractData(clothingValue);
                 var clothingColor2 = GetClothingColor(data3);
                 var clothingIndex2 = GetClothingIndex(data3);
                 var canBeDyed2 = GetClothingData(data3).CanBeDyed;
-                var damage3 = Catalog.Blocks[BlockIndex].GetDamage(num3);
-                var damage4 = Catalog.Blocks[128].GetDamage(num2);
+                var damage3 = Catalog.Blocks[BlockIndex].GetDamage(clothingValue);
+                var damage4 = Catalog.Blocks[128].GetDamage(removerValue);
                 var block3 = Catalog.Blocks[128];
                 var block4 = Catalog.Blocks[BlockIndex];
                 if (!canBeDyed2)

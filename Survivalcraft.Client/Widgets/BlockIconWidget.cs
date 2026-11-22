@@ -75,9 +75,9 @@ public class BlockIconWidget : Widget
                 .AnimatedBlocksTexture
             : BlocksTexturesManager.DefaultBlocksTexture;
         var viewport = Display.Viewport;
-        var num = MathUtils.Min(ActualSize.X, ActualSize.Y) * Scale;
+        var iconSize = MathUtils.Min(ActualSize.X, ActualSize.Y) * Scale;
         var m = Matrix.CreateOrthographic(3.6f, 3.6f, -10f - 1f * Depth, 10f - 1f * Depth);
-        var m2 = MatrixUtils.CreateScaleTranslation(num, 0f - num, ActualSize.X / 2f, ActualSize.Y / 2f) *
+        var m2 = MatrixUtils.CreateScaleTranslation(iconSize, 0f - iconSize, ActualSize.X / 2f, ActualSize.Y / 2f) *
                  GlobalTransform *
                  MatrixUtils.CreateScaleTranslation(2f / viewport.Width, -2f / viewport.Height, -1f, 1f);
         DrawBlockEnvironmentData.DrawBlockMode = DrawBlockMode.Ui;

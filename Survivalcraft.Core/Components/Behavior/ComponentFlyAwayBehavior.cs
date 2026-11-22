@@ -163,26 +163,26 @@ public class ComponentFlyAwayBehavior : ComponentBehavior, IUpdateable, INoiseLi
     public Vector3 FindSafePlace()
     {
         var position = _componentCreature.ComponentBody.Position;
-        var num = float.NegativeInfinity;
+        var bestScore = float.NegativeInfinity;
         var result = position;
         for (var i = 0; i < 20; i++)
         {
-            var num2 = Terrain.ToCell(position.X + _random.Float(-20f, 20f));
-            var num3 = Terrain.ToCell(position.Z + _random.Float(-20f, 20f));
-            for (var num4 = 255; num4 >= 0; num4--)
+            var sampleX = Terrain.ToCell(position.X + _random.Float(-20f, 20f));
+            var sampleZ = Terrain.ToCell(position.Z + _random.Float(-20f, 20f));
+            for (var sampleY = 255; sampleY >= 0; sampleY--)
             {
-                var cellContents = _subsystemTerrain.Terrain.GetCellContents(num2, num4, num3);
+                var cellContents = _subsystemTerrain.Terrain.GetCellContents(sampleX, sampleY, sampleZ);
                 if (!WorldContentBinding.For(Project).Catalog.Blocks[cellContents].Collidable &&
                     cellContents != 18)
                 {
                     continue;
                 }
 
-                var vector = new Vector3(num2 + 0.5f, num4 + 1.1f, num3 + 0.5f);
-                var num5 = ScoreSafePlace(position, vector, null);
-                if (num5 > num)
+                var vector = new Vector3(sampleX + 0.5f, sampleY + 1.1f, sampleZ + 0.5f);
+                var candidateScore = ScoreSafePlace(position, vector, null);
+                if (candidateScore > bestScore)
                 {
-                    num = num5;
+                    bestScore = candidateScore;
                     result = vector;
                 }
 
@@ -195,7 +195,7 @@ public class ComponentFlyAwayBehavior : ComponentBehavior, IUpdateable, INoiseLi
 
     public float ScoreSafePlace(Vector3 currentPosition, Vector3 safePosition, Vector3? lookDirection)
     {
-        var num = 16f;
+        var threatClearance = 16f;
         var position = _componentCreature.ComponentBody.Position;
         _componentBodies.Clear();
         _subsystemBodies.FindBodiesAroundPoint(new Vector2(position.X, position.Z), 16f, _componentBodies);
@@ -219,16 +219,16 @@ public class ComponentFlyAwayBehavior : ComponentBehavior, IUpdateable, INoiseLi
                 v *= 2f;
             }
 
-            num = MathUtils.Min(num, v.Length());
+            threatClearance = MathUtils.Min(threatClearance, v.Length());
         }
 
-        var num2 = Vector3.Distance(currentPosition, safePosition);
-        if (num2 < 8f)
+        var travelDistance = Vector3.Distance(currentPosition, safePosition);
+        if (travelDistance < 8f)
         {
-            return num * 0.5f;
+            return threatClearance * 0.5f;
         }
 
-        return num * MathUtils.Lerp(1f, 0.75f, MathUtils.Saturate(num2 / 20f));
+        return threatClearance * MathUtils.Lerp(1f, 0.75f, MathUtils.Saturate(travelDistance / 20f));
     }
 
     public bool IsPredator(Entity entity)

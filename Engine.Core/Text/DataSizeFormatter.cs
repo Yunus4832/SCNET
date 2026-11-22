@@ -13,23 +13,23 @@ public static class DataSizeFormatter
 
         if (bytes < 1048576)
         {
-            var num = bytes / 1024f;
-            return string.Format(PrepareFormatString(num, "kB"), num);
+            var kibibytes = bytes / 1024f;
+            return string.Format(PrepareFormatString(kibibytes, "kB"), kibibytes);
         }
 
         if (bytes < 1073741824)
         {
-            var num2 = bytes / 1024f / 1024f;
-            return string.Format(PrepareFormatString(num2, "MB"), num2);
+            var mebibytes = bytes / 1024f / 1024f;
+            return string.Format(PrepareFormatString(mebibytes, "MB"), mebibytes);
         }
 
-        var num3 = bytes / 1024f / 1024f / 1024f;
-        return string.Format(PrepareFormatString(num3, "GB"), num3);
+        var gibibytes = bytes / 1024f / 1024f / 1024f;
+        return string.Format(PrepareFormatString(gibibytes, "GB"), gibibytes);
     }
 
     private static string PrepareFormatString(float value, string unit)
     {
-        var num = (int)(MathUtils.Log10(value) + 1f);
-        return "{0:F" + MathUtils.Max(3 - num, 0) + "}" + unit;
+        var integerDigits = (int)(MathUtils.Log10(value) + 1f);
+        return "{0:F" + MathUtils.Max(3 - integerDigits, 0) + "}" + unit;
     }
 }

@@ -156,19 +156,19 @@ public class GameMenuDialog : Dialog
             ClientApplication.Content.Seasons.GetTimeOfYearColor(subsystemGameInfo.WorldSettings.TimeOfYear)
         );
 
-        var num = 0;
+        var designCount = 0;
         for (var i = 0; i < FurnitureDesign.MaxDesign; i++)
         {
             if (subsystemFurnitureBlockBehavior.GetDesign(i) != null)
             {
-                num++;
+                designCount++;
             }
         }
 
         AddStat(
             stackPanelWidget,
             Localization.ClientLanguage.Catalog.Get(_typeName, 14),
-            $"{num}/{FurnitureDesign.MaxDesign}"
+            $"{designCount}/{FurnitureDesign.MaxDesign}"
         );
         stackPanelWidget.Children.Add(
             new LabelWidget

@@ -20,27 +20,27 @@ public class PistonElectricElement(
 
     public override bool Simulate()
     {
-        var num = 0f;
+        var inputVoltage = 0f;
         foreach (var connection in Connections)
         {
             if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0)
             {
-                num = MathUtils.Max(
-                    num,
+                inputVoltage = MathUtils.Max(
+                    inputVoltage,
                     connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
                 );
             }
         }
 
-        var num2 = MathUtils.Max((int)(num * 15.999f) - 7, 0);
-        if (num2 == _lastLength)
+        var extensionLength = MathUtils.Max((int)(inputVoltage * 15.999f) - 7, 0);
+        if (extensionLength == _lastLength)
         {
             return false;
         }
 
-        _lastLength = num2;
+        _lastLength = extensionLength;
         SubsystemElectricity.Project.FindSubsystem<SubsystemPistonBlockBehavior>(true)!
-            .AdjustPiston(CellFaces[0].Point, num2);
+            .AdjustPiston(CellFaces[0].Point, extensionLength);
 
         return false;
     }

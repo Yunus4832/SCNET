@@ -72,20 +72,22 @@ public abstract class FluidBlockPresentation(FluidBlock block, BlockPresentation
             var cellValueFast7 = ReadNeighbor(x, z + 1);
             var cellValueFast8 = ReadNeighbor(x + 1, z + 1);
             var h = Block.CalculateNeighborHeight(cellValueFast);
-            var num = Block.CalculateNeighborHeight(cellValueFast2);
+            var negativeZHeight = Block.CalculateNeighborHeight(cellValueFast2);
             var h2 = Block.CalculateNeighborHeight(cellValueFast3);
-            var num2 = Block.CalculateNeighborHeight(cellValueFast4);
-            var num3 = Block.CalculateNeighborHeight(cellValueFast5);
+            var negativeXHeight = Block.CalculateNeighborHeight(cellValueFast4);
+            var positiveXHeight = Block.CalculateNeighborHeight(cellValueFast5);
             var h3 = Block.CalculateNeighborHeight(cellValueFast6);
-            var num4 = Block.CalculateNeighborHeight(cellValueFast7);
+            var positiveZHeight = Block.CalculateNeighborHeight(cellValueFast7);
             var h4 = Block.CalculateNeighborHeight(cellValueFast8);
             var levelHeight = Block.GetLevelHeight(FluidBlock.GetLevel(data));
-            var height = FluidBlock.CalculateFluidVertexHeight(h, num, num2, levelHeight);
-            var height2 = FluidBlock.CalculateFluidVertexHeight(num, h2, levelHeight, num3);
-            var height3 = FluidBlock.CalculateFluidVertexHeight(levelHeight, num3, num4, h4);
-            var height4 = FluidBlock.CalculateFluidVertexHeight(num2, levelHeight, h3, num4);
-            var x2 = FluidBlock.ZeroSubst(num3, levelHeight) - FluidBlock.ZeroSubst(num2, levelHeight);
-            var x3 = FluidBlock.ZeroSubst(num4, levelHeight) - FluidBlock.ZeroSubst(num, levelHeight);
+            var height = FluidBlock.CalculateFluidVertexHeight(h, negativeZHeight, negativeXHeight, levelHeight);
+            var height2 = FluidBlock.CalculateFluidVertexHeight(negativeZHeight, h2, levelHeight, positiveXHeight);
+            var height3 = FluidBlock.CalculateFluidVertexHeight(levelHeight, positiveXHeight, positiveZHeight, h4);
+            var height4 = FluidBlock.CalculateFluidVertexHeight(negativeXHeight, levelHeight, h3, positiveZHeight);
+            var x2 = FluidBlock.ZeroSubst(positiveXHeight, levelHeight) -
+                     FluidBlock.ZeroSubst(negativeXHeight, levelHeight);
+            var x3 = FluidBlock.ZeroSubst(positiveZHeight, levelHeight) -
+                     FluidBlock.ZeroSubst(negativeZHeight, levelHeight);
             var overrideTopTextureSlot = TextureSlot - (int)MathUtils.Sign(x2) - 16 * (int)MathUtils.Sign(x3);
             generator.GenerateCubeVertices(
                 this,

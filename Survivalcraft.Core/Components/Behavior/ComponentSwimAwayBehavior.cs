@@ -107,34 +107,36 @@ public class ComponentSwimAwayBehavior : ComponentBehavior, IUpdateable
                      (_componentCreature.ComponentBody.BoundingBox.Min +
                       _componentCreature.ComponentBody.BoundingBox.Max);
         var herdPosition = _componentHerdBehavior?.FindHerdCenter();
-        var num = float.NegativeInfinity;
+        var bestScore = float.NegativeInfinity;
         var result = vector;
         for (var i = 0; i < 40; i++)
         {
-            var vector2 = _random.Vector2(1f, 1f);
+            var horizontalDirection = _random.Vector2(1f, 1f);
             var y = 0.4f * _random.Float(-1f, 1f);
-            var v = Vector3.Normalize(new Vector3(vector2.X, y, vector2.Y));
-            var vector3 = vector + _random.Float(10f, 20f) * v;
+            var v = Vector3.Normalize(new Vector3(horizontalDirection.X, y, horizontalDirection.Y));
+            var probeEnd = vector + _random.Float(10f, 20f) * v;
             var terrainRaycastResult = _subsystemTerrain.Raycast(
                 vector,
-                vector3,
+                probeEnd,
                 false,
                 false,
                 delegate(int value, float d)
                 {
-                    var num3 = Terrain.ExtractContents(value);
-                    return !(WorldContentBinding.For(Project).Catalog.Blocks[num3] is WaterBlock);
+                    var contents = Terrain.ExtractContents(value);
+                    return !(WorldContentBinding.For(Project).Catalog.Blocks[contents] is WaterBlock);
                 }
             );
-            var vector4 = terrainRaycastResult.HasValue ? vector + v * terrainRaycastResult.Value.Distance : vector3;
-            var num2 = ScoreSafePlace(vector, vector4, herdPosition);
-            if (!(num2 > num))
+            var candidatePosition = terrainRaycastResult.HasValue
+                ? vector + v * terrainRaycastResult.Value.Distance
+                : probeEnd;
+            var candidateScore = ScoreSafePlace(vector, candidatePosition, herdPosition);
+            if (!(candidateScore > bestScore))
             {
                 continue;
             }
 
-            num = num2;
-            result = vector4;
+            bestScore = candidateScore;
+            result = candidatePosition;
         }
 
         return result;
@@ -143,21 +145,21 @@ public class ComponentSwimAwayBehavior : ComponentBehavior, IUpdateable
     public float ScoreSafePlace(Vector3 currentPosition, Vector3 safePosition, Vector3? herdPosition)
     {
         var vector = new Vector2(currentPosition.X, currentPosition.Z);
-        var vector2 = new Vector2(safePosition.X, safePosition.Z);
-        var vector3 = herdPosition.HasValue
+        var candidateXZ = new Vector2(safePosition.X, safePosition.Z);
+        var herdXZ = herdPosition.HasValue
             ? new Vector2?(new Vector2(herdPosition.Value.X, herdPosition.Value.Z))
             : null;
-        var s = new Segment2(vector, vector2);
-        var num = vector3.HasValue ? Segment2.Distance(s, vector3.Value) : 0f;
+        var s = new Segment2(vector, candidateXZ);
+        var pathDistanceFromHerd = herdXZ.HasValue ? Segment2.Distance(s, herdXZ.Value) : 0f;
         if (_attacker == null)
         {
-            return 1.5f * Vector2.Distance(vector, vector2) - num;
+            return 1.5f * Vector2.Distance(vector, candidateXZ) - pathDistanceFromHerd;
         }
 
         var position = _attacker.Position;
-        var vector4 = new Vector2(position.X, position.Z);
-        var num2 = Vector2.Distance(vector4, vector2);
-        var num3 = Segment2.Distance(s, vector4);
-        return num2 + 1.5f * num3 - num;
+        var attackerXZ = new Vector2(position.X, position.Z);
+        var distanceFromAttacker = Vector2.Distance(attackerXZ, candidateXZ);
+        var pathDistanceFromAttacker = Segment2.Distance(s, attackerXZ);
+        return distanceFromAttacker + 1.5f * pathDistanceFromAttacker - pathDistanceFromHerd;
     }
 }

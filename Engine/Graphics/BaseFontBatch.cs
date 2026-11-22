@@ -70,11 +70,11 @@ public abstract class BaseFontBatch : BaseBatch
     {
         if (TriangleIndices.Count > 0)
         {
-            var num = 0;
-            var num2 = TriangleIndices.Count;
-            while (num2 > 0)
+            var indexOffset = 0;
+            var remainingIndices = TriangleIndices.Count;
+            while (remainingIndices > 0)
             {
-                var num3 = MathUtils.Min(num2, 196605);
+                var indexCount = MathUtils.Min(remainingIndices, 196605);
                 Display.DrawUserIndexed(
                     PrimitiveType.TriangleList,
                     shader,
@@ -83,11 +83,11 @@ public abstract class BaseFontBatch : BaseBatch
                     0,
                     TriangleVertices.Count,
                     TriangleIndices.Array,
-                    num,
-                    num3
+                    indexOffset,
+                    indexCount
                 );
-                num += num3;
-                num2 -= num3;
+                indexOffset += indexCount;
+                remainingIndices -= indexCount;
             }
         }
 
@@ -101,11 +101,11 @@ public abstract class BaseFontBatch : BaseBatch
     {
         if (TriangleIndices.Count > 0)
         {
-            var num = 0;
-            var num2 = TriangleIndices.Count;
-            while (num2 > 0)
+            var indexOffset = 0;
+            var remainingIndices = TriangleIndices.Count;
+            while (remainingIndices > 0)
             {
-                var num3 = Math.Min(num2, 196605);
+                var indexCount = Math.Min(remainingIndices, 196605);
                 Display.DrawUserIndexed(
                     PrimitiveType.TriangleList,
                     shader,
@@ -114,11 +114,11 @@ public abstract class BaseFontBatch : BaseBatch
                     0,
                     TriangleVertices.Count,
                     TriangleIndices.Array,
-                    num,
-                    num3
+                    indexOffset,
+                    indexCount
                 );
-                num += num3;
-                num2 -= num3;
+                indexOffset += indexCount;
+                remainingIndices -= indexCount;
             }
         }
 

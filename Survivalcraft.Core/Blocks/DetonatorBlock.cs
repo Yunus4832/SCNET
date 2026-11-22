@@ -52,8 +52,8 @@ public class DetonatorBlock : MountedElectricElementBlock
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = Terrain.ExtractData(value);
-        return num >= CollisionBoxesByData.Length ? [] : CollisionBoxesByData[num];
+        var mountingData = Terrain.ExtractData(value);
+        return mountingData >= CollisionBoxesByData.Length ? [] : CollisionBoxesByData[mountingData];
     }
 
 

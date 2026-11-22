@@ -47,15 +47,15 @@ public static partial class Keyboard
 
     public static bool IsKeyDownRepeat(Key key)
     {
-        var num = _keysDownRepeatArray[(int)key];
-        if (num < 0.0)
+        var repeatTime = _keysDownRepeatArray[(int)key];
+        if (repeatTime < 0.0)
         {
             return true;
         }
 
-        if (num != 0.0)
+        if (repeatTime != 0.0)
         {
-            return Time.FrameStartTime >= num;
+            return Time.FrameStartTime >= repeatTime;
         }
 
         return false;

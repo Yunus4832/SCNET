@@ -177,24 +177,24 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num97 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var humidity26 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var temperature38 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num98 = Terrain.ExtractContents(
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    var topHeight3 = _subsystemTerrain.Terrain.GetTopHeight(point.X, point.Z);
-                    return humidity26 > 8 &&
-                           temperature38 > 4 &&
-                           num97 > 30f &&
-                           point.Y >= topHeight3 &&
-                           (WorldContentBinding.For(Project).Catalog.Blocks[num98] is LeavesBlock ||
-                            num98 == 18 ||
-                            num98 == 8 ||
-                            num98 == 2)
+                    var topHeight = _subsystemTerrain.Terrain.GetTopHeight(point.X, point.Z);
+                    return humidity > 8 &&
+                           temperature > 4 &&
+                           shoreDistance > 30f &&
+                           point.Y >= topHeight &&
+                           (WorldContentBinding.For(Project).Catalog.Blocks[groundContents] is LeavesBlock ||
+                            groundContents == 18 ||
+                            groundContents == 8 ||
+                            groundContents == 2)
                         ? 2.5f
                         : 0f;
                 },
@@ -206,24 +206,24 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num95 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature37 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var humidity25 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num96 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    var topHeight2 = _subsystemTerrain.Terrain.GetTopHeight(point.X, point.Z);
-                    return (humidity25 <= 8 || temperature37 <= 4) &&
-                           num95 > 30f &&
-                           point.Y >= topHeight2 &&
-                           (WorldContentBinding.For(Project).Catalog.Blocks[num96] is LeavesBlock ||
-                            num96 == 62 ||
-                            num96 == 8 ||
-                            num96 == 2 ||
-                            num96 == 7)
+                    var topHeight = _subsystemTerrain.Terrain.GetTopHeight(point.X, point.Z);
+                    return (humidity <= 8 || temperature <= 4) &&
+                           shoreDistance > 30f &&
+                           point.Y >= topHeight &&
+                           (WorldContentBinding.For(Project).Catalog.Blocks[groundContents] is LeavesBlock ||
+                            groundContents == 62 ||
+                            groundContents == 8 ||
+                            groundContents == 2 ||
+                            groundContents == 7)
                         ? 2.5f
                         : 0f;
                 },
@@ -235,17 +235,17 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num93 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var num94 = Terrain.ExtractContents(
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
                     var topHeight = _subsystemTerrain.Terrain.GetTopHeight(point.X, point.Z);
-                    return num93 is > -100f and < 40f &&
+                    return shoreDistance is > -100f and < 40f &&
                            point.Y >= topHeight &&
-                           num94 is 18 or 7 or 6 or 62
+                           groundContents is 18 or 7 or 6 or 62
                         ? 2.5f
                         : 0f;
                 },
@@ -257,15 +257,20 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num91 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var humidity24 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num92 = Terrain.ExtractContents(
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num91 > 20f && humidity24 > 8 && point.Y < 80 && (num92 == 8 || num92 == 2) ? 0.25f : 0f;
+                    return shoreDistance > 20f &&
+                           humidity > 8 &&
+                           point.Y < 80 &&
+                           (groundContents == 8 || groundContents == 2)
+                        ? 0.25f
+                        : 0f;
                 },
                 SpawnFunction = (creatureType, point) => SpawnCreatures(creatureType, "Wildboar", point, 1).Count
             }
@@ -275,31 +280,31 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num89 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var humidity23 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var temperature36 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num90 = Terrain.ExtractContents(
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num89 > 20f &&
-                           humidity23 > 4 &&
-                           temperature36 >= 8 &&
+                    return shoreDistance > 20f &&
+                           humidity > 4 &&
+                           temperature >= 8 &&
                            point.Y < 70 &&
-                           (num90 == 8 || num90 == 2)
+                           (groundContents == 8 || groundContents == 2)
                         ? 0.05f
                         : 0f;
                 },
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
                 {
-                    var num87 = _random.Int(3, 5);
-                    var num88 = MathUtils.Min(_random.Int(1, 3), num87);
-                    var count2 = num87 - num88;
+                    var herdSize = _random.Int(3, 5);
+                    var bullCount = MathUtils.Min(_random.Int(1, 3), herdSize);
+                    var cowCount = herdSize - bullCount;
                     return 0 +
-                           SpawnCreatures(creatureType, "Bull_Brown", point, num88).Count +
-                           SpawnCreatures(creatureType, "Cow_Brown", point, count2).Count;
+                           SpawnCreatures(creatureType, "Bull_Brown", point, bullCount).Count +
+                           SpawnCreatures(creatureType, "Cow_Brown", point, cowCount).Count;
                 }
             }
         );
@@ -308,31 +313,31 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num85 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var humidity22 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var temperature35 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num86 = Terrain.ExtractContents(
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num85 > 20f &&
-                           humidity22 > 4 &&
-                           temperature35 < 8 &&
+                    return shoreDistance > 20f &&
+                           humidity > 4 &&
+                           temperature < 8 &&
                            point.Y < 70 &&
-                           (num86 == 8 || num86 == 2)
+                           (groundContents == 8 || groundContents == 2)
                         ? 0.05f
                         : 0f;
                 },
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
                 {
-                    var num83 = _random.Int(3, 5);
-                    var num84 = MathUtils.Min(_random.Int(1, 3), num83);
-                    var count = num83 - num84;
+                    var herdSize = _random.Int(3, 5);
+                    var bullCount = MathUtils.Min(_random.Int(1, 3), herdSize);
+                    var cowCount = herdSize - bullCount;
                     return 0 +
-                           SpawnCreatures(creatureType, "Bull_Black", point, num84).Count +
-                           SpawnCreatures(creatureType, "Cow_Black", point, count).Count;
+                           SpawnCreatures(creatureType, "Bull_Black", point, bullCount).Count +
+                           SpawnCreatures(creatureType, "Cow_Black", point, cowCount).Count;
                 }
             }
         );
@@ -341,20 +346,20 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num81 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var humidity21 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var temperature34 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num82 = Terrain.ExtractContents(
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num81 > 20f &&
-                           humidity21 > 8 &&
-                           temperature34 < 4 &&
+                    return shoreDistance > 20f &&
+                           humidity > 8 &&
+                           temperature < 4 &&
                            point.Y < 70 &&
-                           (num82 == 8 || num82 == 2)
+                           (groundContents == 8 || groundContents == 2)
                         ? 0.01f
                         : 0f;
                 },
@@ -366,15 +371,20 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num79 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var humidity20 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num80 = Terrain.ExtractContents(
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num79 > 40f && humidity20 >= 8 && point.Y < 100 && (num80 == 8 || num80 == 2) ? 0.075f : 0f;
+                    return shoreDistance > 40f &&
+                           humidity >= 8 &&
+                           point.Y < 100 &&
+                           (groundContents == 8 || groundContents == 2)
+                        ? 0.075f
+                        : 0f;
                 },
                 SpawnFunction = (creatureType, point) =>
                     SpawnCreatures(creatureType, "Wolf_Gray", point, _random.Int(1, 3)).Count
@@ -385,20 +395,20 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num77 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var humidity19 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var temperature33 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num78 = Terrain.ExtractContents(
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num77 > 40f &&
-                           temperature33 > 8 &&
-                           humidity19 is < 8 and >= 2 &&
+                    return shoreDistance > 40f &&
+                           temperature > 8 &&
+                           humidity is < 8 and >= 2 &&
                            point.Y < 100 &&
-                           num78 == 7
+                           groundContents == 7
                         ? 0.075f
                         : 0f;
                 },
@@ -411,20 +421,20 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num75 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature32 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var humidity18 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num76 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num75 > 40f &&
-                           humidity18 >= 4 &&
-                           temperature32 >= 8 &&
+                    return shoreDistance > 40f &&
+                           humidity >= 4 &&
+                           temperature >= 8 &&
                            point.Y < 110 &&
-                           num76 is 8 or 2 or 3
+                           groundContents is 8 or 2 or 3
                         ? 0.1f
                         : 0f;
                 },
@@ -436,20 +446,20 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num73 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature31 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var humidity17 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num74 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num73 > 40f &&
-                           humidity17 >= 4 &&
-                           temperature31 < 8 &&
+                    return shoreDistance > 40f &&
+                           humidity >= 4 &&
+                           temperature < 8 &&
                            point.Y < 120 &&
-                           num74 is 8 or 2 or 3
+                           groundContents is 8 or 2 or 3
                         ? 0.1f
                         : 0f;
                 },
@@ -461,15 +471,15 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num71 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature30 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num72 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num71 > -40f && temperature30 < 8 && point.Y < 80 && num72 == 62 ? 0.1f : 0f;
+                    return shoreDistance > -40f && temperature < 8 && point.Y < 80 && groundContents == 62 ? 0.1f : 0f;
                 },
                 SpawnFunction = (creatureType, point) => SpawnCreatures(creatureType, "Bear_Polar", point, 1).Count
             }
@@ -479,53 +489,53 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num69 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature29 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var humidity16 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num70 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num69 > 20f &&
-                           temperature29 > 3 &&
-                           humidity16 > 6 &&
+                    return shoreDistance > 20f &&
+                           temperature > 3 &&
+                           humidity > 6 &&
                            point.Y < 80 &&
-                           num70 is 8 or 2 or 3
+                           groundContents is 8 or 2 or 3
                         ? 0.05f
                         : 0f;
                 },
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
                 {
-                    var temperature28 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num68 = 0;
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var spawnedCount = 0;
                     if (_random.Float(0f, 1f) < 0.35f)
                     {
-                        num68 += SpawnCreatures(creatureType, "Horse_Black", point, 1).Count;
+                        spawnedCount += SpawnCreatures(creatureType, "Horse_Black", point, 1).Count;
                     }
 
                     if (_random.Float(0f, 1f) < 0.5f)
                     {
-                        num68 += SpawnCreatures(creatureType, "Horse_Bay", point, 1).Count;
+                        spawnedCount += SpawnCreatures(creatureType, "Horse_Bay", point, 1).Count;
                     }
 
                     if (_random.Float(0f, 1f) < 0.5f)
                     {
-                        num68 += SpawnCreatures(creatureType, "Horse_Chestnut", point, 1).Count;
+                        spawnedCount += SpawnCreatures(creatureType, "Horse_Chestnut", point, 1).Count;
                     }
 
-                    if (temperature28 > 8 && _random.Float(0f, 1f) < 0.3f)
+                    if (temperature > 8 && _random.Float(0f, 1f) < 0.3f)
                     {
-                        num68 += SpawnCreatures(creatureType, "Horse_Palomino", point, 1).Count;
+                        spawnedCount += SpawnCreatures(creatureType, "Horse_Palomino", point, 1).Count;
                     }
 
-                    if (temperature28 < 8 && _random.Float(0f, 1f) < 0.3f)
+                    if (temperature < 8 && _random.Float(0f, 1f) < 0.3f)
                     {
-                        num68 += SpawnCreatures(creatureType, "Horse_White", point, 1).Count;
+                        spawnedCount += SpawnCreatures(creatureType, "Horse_White", point, 1).Count;
                     }
 
-                    return num68;
+                    return spawnedCount;
                 }
             }
         );
@@ -534,16 +544,16 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num66 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature27 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var humidity15 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num67 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num66 > 20f && temperature27 > 8 && humidity15 < 8 && point.Y < 80 && num67 == 7
+                    return shoreDistance > 20f && temperature > 8 && humidity < 8 && point.Y < 80 && groundContents == 7
                         ? 0.05f
                         : 0f;
                 },
@@ -556,18 +566,18 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num64 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature26 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num65 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num64 > 20f &&
-                           temperature26 > 6 &&
+                    return shoreDistance > 20f &&
+                           temperature > 6 &&
                            point.Y < 120 &&
-                           num65 is 8 or 2 or 3 or 7
+                           groundContents is 8 or 2 or 3 or 7
                         ? 0.05f
                         : 0f;
                 },
@@ -579,20 +589,20 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num62 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature25 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var humidity14 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num63 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num62 > 20f &&
-                           temperature25 > 8 &&
-                           humidity14 > 7 &&
+                    return shoreDistance > 20f &&
+                           temperature > 8 &&
+                           humidity > 7 &&
                            point.Y < 75 &&
-                           num63 is 8 or 2 or 3
+                           groundContents is 8 or 2 or 3
                         ? 0.03f
                         : 0f;
                 },
@@ -605,20 +615,20 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num60 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature24 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var humidity13 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num61 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num60 > 40f &&
-                           temperature24 > 8 &&
-                           humidity13 > 7 &&
+                    return shoreDistance > 40f &&
+                           temperature > 8 &&
+                           humidity > 7 &&
                            point.Y < 75 &&
-                           num61 is 8 or 2 or 3
+                           groundContents is 8 or 2 or 3
                         ? 0.04f
                         : 0f;
                 },
@@ -630,18 +640,18 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num58 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var humidity12 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num59 = Terrain.ExtractContents(
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num58 > 40f &&
-                           humidity12 > 8 &&
+                    return shoreDistance > 40f &&
+                           humidity > 8 &&
                            point.Y < 80 &&
-                           num59 is 8 or 2 or 3 or 7
+                           groundContents is 8 or 2 or 3 or 7
                         ? 0.025f
                         : 0f;
                 },
@@ -653,19 +663,19 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num56 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature23 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                     _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num57 = Terrain.ExtractContents(
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num56 > 40f &&
-                           temperature23 < 2 &&
+                    return shoreDistance > 40f &&
+                           temperature < 2 &&
                            point.Y < 90 &&
-                           num57 is 8 or 2 or 3 or 7 or 62
+                           groundContents is 8 or 2 or 3 or 7 or 62
                         ? 0.025f
                         : 0f;
                 },
@@ -677,18 +687,18 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num54 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature22 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num55 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num54 > 40f &&
-                           temperature22 > 8 &&
+                    return shoreDistance > 40f &&
+                           temperature > 8 &&
                            point.Y < 80 &&
-                           num55 is 8 or 2 or 3 or 7
+                           groundContents is 8 or 2 or 3 or 7
                         ? 0.05f
                         : 0f;
                 },
@@ -700,20 +710,20 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num52 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature21 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var humidity11 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num53 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num52 > 40f &&
-                           humidity11 > 8 &&
-                           temperature21 > 8 &&
+                    return shoreDistance > 40f &&
+                           humidity > 8 &&
+                           temperature > 8 &&
                            point.Y < 100 &&
-                           num53 is 8 or 2 or 3 or 7 or 12
+                           groundContents is 8 or 2 or 3 or 7 or 12
                         ? 0.04f
                         : 0f;
                 },
@@ -725,19 +735,19 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num50 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature20 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                     _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num51 = Terrain.ExtractContents(
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num50 > 40f &&
-                           temperature20 > 8 &&
+                    return shoreDistance > 40f &&
+                           temperature > 8 &&
                            point.Y < 120 &&
-                           num51 is 8 or 2 or 3 or 7 or 12
+                           groundContents is 8 or 2 or 3 or 7 or 12
                         ? 0.04f
                         : 0f;
                 },
@@ -749,20 +759,20 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num48 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature19 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var humidity10 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num49 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num48 > 20f &&
-                           temperature19 > 8 &&
-                           humidity10 > 7 &&
+                    return shoreDistance > 20f &&
+                           temperature > 8 &&
+                           humidity > 7 &&
                            point.Y < 80 &&
-                           num49 is 8 or 2 or 3
+                           groundContents is 8 or 2 or 3
                         ? 0.05f
                         : 0f;
                 },
@@ -775,15 +785,18 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num46 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature18 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num47 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num46 > 20f && temperature18 > 8 && point.Y < 80 && (num47 == 8 || num47 == 2 || num47 == 3)
+                    return shoreDistance > 20f &&
+                           temperature > 8 &&
+                           point.Y < 80 &&
+                           (groundContents == 8 || groundContents == 2 || groundContents == 3)
                         ? 0.05f
                         : 0f;
                 },
@@ -796,11 +809,13 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var temperature17 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num45 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return temperature17 < 3 && point.Y < 90 && (num45 == 8 || num45 == 2 || num45 == 3 || num45 == 62)
+                    return temperature < 3 &&
+                           point.Y < 90 &&
+                           (groundContents == 8 || groundContents == 2 || groundContents == 3 || groundContents == 62)
                         ? 0.05f
                         : 0f;
                 },
@@ -813,11 +828,13 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var temperature16 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num44 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return temperature16 < 7 && point.Y < 90 && (num44 == 8 || num44 == 2 || num44 == 3 || num44 == 62)
+                    return temperature < 7 &&
+                           point.Y < 90 &&
+                           (groundContents == 8 || groundContents == 2 || groundContents == 3 || groundContents == 62)
                         ? 0.1f
                         : 0f;
                 },
@@ -830,15 +847,15 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var temperature15 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var humidity9 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num43 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return temperature15 < 10 &&
-                           humidity9 < 12 &&
+                    return temperature < 10 &&
+                           humidity < 12 &&
                            point.Y < 80 &&
-                           num43 is 8 or 2 or 3 or 62
+                           groundContents is 8 or 2 or 3 or 62
                         ? 0.1f
                         : 0f;
                 },
@@ -851,20 +868,20 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num41 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature14 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var humidity8 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num42 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num41 > 20f &&
-                           temperature14 > 8 &&
-                           humidity8 < 8 &&
+                    return shoreDistance > 20f &&
+                           temperature > 8 &&
+                           humidity < 8 &&
                            point.Y < 75 &&
-                           num42 is 8 or 2 or 7
+                           groundContents is 8 or 2 or 7
                         ? 0.05f
                         : 0f;
                 },
@@ -877,20 +894,20 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num39 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature13 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var humidity7 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num40 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num39 > 20f &&
-                           temperature13 > 8 &&
-                           humidity7 < 12 &&
+                    return shoreDistance > 20f &&
+                           temperature > 8 &&
+                           humidity < 12 &&
                            point.Y < 75 &&
-                           num40 is 8 or 2 or 7
+                           groundContents is 8 or 2 or 7
                         ? 0.05f
                         : 0f;
                 },
@@ -902,15 +919,18 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num37 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature12 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num38 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num37 > 40f && temperature12 > 8 && point.Y < 80 && (num38 == 8 || num38 == 2 || num38 == 7)
+                    return shoreDistance > 40f &&
+                           temperature > 8 &&
+                           point.Y < 80 &&
+                           (groundContents == 8 || groundContents == 2 || groundContents == 7)
                         ? 0.05f
                         : 0f;
                 },
@@ -923,15 +943,15 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num36 = Terrain.ExtractContents(
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num36 is 3 or 67 or 4 or 66 or 2 or 7 ? 1f : 0f;
+                    return groundContents is 3 or 67 or 4 or 66 or 2 or 7 ? 1f : 0f;
                 },
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
                 {
-                    var templateName11 = _random.Int(0, 1) == 0 ? "Bear_Black" : "Bear_Brown";
-                    return SpawnCreatures(creatureType, templateName11, point, 1).Count;
+                    var templateName = _random.Int(0, 1) == 0 ? "Bear_Black" : "Bear_Brown";
+                    return SpawnCreatures(creatureType, templateName, point, 1).Count;
                 }
             }
         );
@@ -940,10 +960,10 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num35 = Terrain.ExtractContents(
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num35 is 3 or 67 or 4 or 66 or 2 or 7 ? 0.25f : 0f;
+                    return groundContents is 3 or 67 or 4 or 66 or 2 or 7 ? 0.25f : 0f;
                 },
                 SpawnFunction = (creatureType, point) => SpawnCreatures(creatureType, "Tiger", point, 1).Count
             }
@@ -953,14 +973,14 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var temperature11 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var humidity6 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num34 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num34 is 3 or 67 or 4 or 66 or 2 or 7 &&
-                           temperature11 > 8 &&
-                           humidity6 < 8
+                    return groundContents is 3 or 67 or 4 or 66 or 2 or 7 &&
+                           temperature > 8 &&
+                           humidity < 8
                         ? 0.25f
                         : 0f;
                 },
@@ -972,10 +992,10 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num33 = Terrain.ExtractContents(
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num33 is 3 or 67 or 4 or 66 or 2 or 7 ? 0.5f : 0f;
+                    return groundContents is 3 or 67 or 4 or 66 or 2 or 7 ? 0.5f : 0f;
                 },
                 SpawnFunction = (creatureType, point) => SpawnCreatures(creatureType, "Jaguar", point, 1).Count
             }
@@ -985,10 +1005,10 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num32 = Terrain.ExtractContents(
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num32 is 3 or 67 or 4 or 66 or 2 or 7 ? 0.25f : 0f;
+                    return groundContents is 3 or 67 or 4 or 66 or 2 or 7 ? 0.25f : 0f;
                 },
                 SpawnFunction = (creatureType, point) => SpawnCreatures(creatureType, "Leopard", point, 1).Count
             }
@@ -998,12 +1018,12 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var temperature10 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num31 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    return num31 is 3 or 67 or 4 or 66 or 2 or 7 &&
-                           temperature10 > 8
+                    return groundContents is 3 or 67 or 4 or 66 or 2 or 7 &&
+                           temperature > 8
                         ? 1f
                         : 0f;
                 },
@@ -1019,8 +1039,8 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         : 0.4f,
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
                 {
-                    const string templateName10 = "Shark_Bull";
-                    return SpawnCreatures(creatureType, templateName10, point, 1).Count;
+                    const string templateName = "Shark_Bull";
+                    return SpawnCreatures(creatureType, templateName, point, 1).Count;
                 }
             }
         );
@@ -1033,8 +1053,8 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         : 0.3f,
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
                 {
-                    const string templateName9 = "Shark_Tiger";
-                    return SpawnCreatures(creatureType, templateName9, point, 1).Count;
+                    const string templateName = "Shark_Tiger";
+                    return SpawnCreatures(creatureType, templateName, point, 1).Count;
                 }
             }
         );
@@ -1047,8 +1067,8 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         : 0.2f,
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
                 {
-                    const string templateName8 = "Shark_GreatWhite";
-                    return SpawnCreatures(creatureType, templateName8, point, 1).Count;
+                    const string templateName = "Shark_GreatWhite";
+                    return SpawnCreatures(creatureType, templateName, point, 1).Count;
                 }
             }
         );
@@ -1061,8 +1081,8 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         : 0.5f,
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
                 {
-                    const string templateName7 = "Barracuda";
-                    return SpawnCreatures(creatureType, templateName7, point, 1).Count;
+                    const string templateName = "Barracuda";
+                    return SpawnCreatures(creatureType, templateName, point, 1).Count;
                 }
             }
         );
@@ -1075,8 +1095,8 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         : 1f,
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
                 {
-                    const string templateName6 = "Bass_Sea";
-                    return SpawnCreatures(creatureType, templateName6, point, 1).Count;
+                    const string templateName = "Bass_Sea";
+                    return SpawnCreatures(creatureType, templateName, point, 1).Count;
                 }
             }
         );
@@ -1085,17 +1105,17 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num30 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature9 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    return num30 > 10f && temperature9 >= 4 ? 1f : 0f;
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    return shoreDistance > 10f && temperature >= 4 ? 1f : 0f;
                 },
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
                 {
-                    const string templateName5 = "Bass_Freshwater";
-                    return SpawnCreatures(creatureType, templateName5, point, _random.Int(1, 2)).Count;
+                    const string templateName = "Bass_Freshwater";
+                    return SpawnCreatures(creatureType, templateName, point, _random.Int(1, 2)).Count;
                 }
             }
         );
@@ -1108,23 +1128,23 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         : 0.5f,
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
                 {
-                    var num27 = 0;
-                    var num28 = 0;
+                    var dirtSamples = 0;
+                    var sandSamples = 0;
                     for (var i = point.X - 2; i <= point.X + 2; i++)
                     {
                         for (var j = point.Z - 2; j <= point.Z + 2; j++)
                         {
                             if (_subsystemTerrain.Terrain.GetCellContents(point.X, point.Y, point.Z) == 18)
                             {
-                                for (var num29 = point.Y - 1; num29 > 0; num29--)
+                                for (var sampleY = point.Y - 1; sampleY > 0; sampleY--)
                                 {
-                                    switch (_subsystemTerrain.Terrain.GetCellContents(point.X, num29, point.Z))
+                                    switch (_subsystemTerrain.Terrain.GetCellContents(point.X, sampleY, point.Z))
                                     {
                                         case 2:
-                                            num27++;
+                                            dirtSamples++;
                                             break;
                                         case 7:
-                                            num28++;
+                                            sandSamples++;
                                             break;
                                         default:
                                             continue;
@@ -1136,8 +1156,8 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         }
                     }
 
-                    var templateName4 = num27 >= num28 ? "Ray_Brown" : "Ray_Yellow";
-                    return SpawnCreatures(creatureType, templateName4, point, 1).Count;
+                    var templateName = dirtSamples >= sandSamples ? "Ray_Brown" : "Ray_Yellow";
+                    return SpawnCreatures(creatureType, templateName, point, 1).Count;
                 }
             }
         );
@@ -1146,18 +1166,18 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num26 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var humidity5 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var temperature8 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    return num26 > 10f && humidity5 >= 4 && temperature8 >= 7 ? 1f : 0f;
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    return shoreDistance > 10f && humidity >= 4 && temperature >= 7 ? 1f : 0f;
                 },
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
                 {
-                    const string templateName3 = "Piranha";
-                    return SpawnCreatures(creatureType, templateName3, point, _random.Int(2, 4)).Count;
+                    const string templateName = "Piranha";
+                    return SpawnCreatures(creatureType, templateName, point, _random.Int(2, 4)).Count;
                 }
             }
         );
@@ -1166,21 +1186,21 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num25 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    if (num25 < -100f)
+                    if (shoreDistance < -100f)
                     {
                         return 0.05f;
                     }
 
-                    return num25 < -20f ? 0.01f : 0f;
+                    return shoreDistance < -20f ? 0.01f : 0f;
                 },
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
                 {
-                    const string templateName2 = "Orca";
-                    return SpawnCreatures(creatureType, templateName2, point, 1).Count;
+                    const string templateName = "Orca";
+                    return SpawnCreatures(creatureType, templateName, point, 1).Count;
                 }
             }
         );
@@ -1189,16 +1209,16 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num24 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    if (num24 < -100f)
+                    if (shoreDistance < -100f)
                     {
                         return 0.05f;
                     }
 
-                    return num24 < -20f ? 0.01f : 0f;
+                    return shoreDistance < -20f ? 0.01f : 0f;
                 },
                 SpawnFunction = delegate(CreatureType creatureType, Point3 point)
                 {
@@ -1217,20 +1237,21 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         return 0f;
                     }
 
-                    var num21 =
+                    var shoreDistance =
                         _subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z);
-                    var humidity4 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    float num22 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num23 = Terrain.ExtractContents(
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    float temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast10))
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var lightAbove))
                     {
                         return 0f;
                     }
 
-                    if (((num21 > 20f && humidity4 >= 8) || (num22 <= 8f && point.Y < 90 && cellLightFast10 <= 7)) &&
-                        num23 is 8 or 2)
+                    if (((shoreDistance > 20f && humidity >= 8) ||
+                         (temperature <= 8f && point.Y < 90 && lightAbove <= 7)) &&
+                        groundContents is 8 or 2)
                     {
                         return 2f;
                     }
@@ -1251,24 +1272,24 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         return 0f;
                     }
 
-                    var num17 =
+                    var shoreDistance =
                         _subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z);
-                    float num18 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    float num19 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num20 = Terrain.ExtractContents(
+                    float humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    float temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast9))
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var lightAbove))
                     {
                         return 0f;
                     }
 
-                    if (num17 > 20f &&
-                        num19 > 8f &&
-                        num18 < 8f &&
+                    if (shoreDistance > 20f &&
+                        temperature > 8f &&
+                        humidity < 8f &&
                         point.Y < 90 &&
-                        cellLightFast9 <= 7 &&
-                        num20 == 7)
+                        lightAbove <= 7 &&
+                        groundContents == 7)
                     {
                         return 2f;
                     }
@@ -1289,24 +1310,24 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         return 0f;
                     }
 
-                    var num15 =
+                    var shoreDistance =
                         _subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z);
-                    var temperature7 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var humidity3 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num16 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast8))
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var lightAbove))
                     {
                         return 0f;
                     }
 
-                    if (num15 > 20f &&
-                        humidity3 >= 4 &&
-                        temperature7 >= 8 &&
+                    if (shoreDistance > 20f &&
+                        humidity >= 4 &&
+                        temperature >= 8 &&
                         point.Y < 100 &&
-                        cellLightFast8 <= 7 &&
-                        num16 is 8 or 2 or 3)
+                        lightAbove <= 7 &&
+                        groundContents is 8 or 2 or 3)
                     {
                         return 0.5f;
                     }
@@ -1326,23 +1347,23 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         return 0f;
                     }
 
-                    var num13 =
+                    var shoreDistance =
                         _subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z);
-                    var temperature6 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                     _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num14 = Terrain.ExtractContents(
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast7))
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var lightAbove))
                     {
                         return 0f;
                     }
 
-                    if (num13 > 20f &&
-                        temperature6 < 8 &&
+                    if (shoreDistance > 20f &&
+                        temperature < 8 &&
                         point.Y < 110 &&
-                        cellLightFast7 <= 7 &&
-                        num14 is 8 or 2 or 3)
+                        lightAbove <= 7 &&
+                        groundContents is 8 or 2 or 3)
                     {
                         return 0.5f;
                     }
@@ -1362,18 +1383,22 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         return 0f;
                     }
 
-                    var num11 =
+                    var shoreDistance =
                         _subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z);
-                    var temperature5 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num12 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast6))
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var lightAbove))
                     {
                         return 0f;
                     }
 
-                    if (num11 > -40f && temperature5 < 8 && point.Y < 90 && cellLightFast6 <= 7 && num12 == 62)
+                    if (shoreDistance > -40f &&
+                        temperature < 8 &&
+                        point.Y < 90 &&
+                        lightAbove <= 7 &&
+                        groundContents == 62)
                     {
                         return 0.25f;
                     }
@@ -1393,22 +1418,22 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         return 0f;
                     }
 
-                    var num9 = _subsystemTerrain.Environment
+                    var shoreDistance = _subsystemTerrain.Environment
                         .CalculateOceanShoreDistance(point.X, point.Z);
-                    var humidity2 = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num10 = Terrain.ExtractContents(
+                    var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast5))
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var lightAbove))
                     {
                         return 0f;
                     }
 
-                    if (num9 > 20f &&
-                        humidity2 > 8 &&
+                    if (shoreDistance > 20f &&
+                        humidity > 8 &&
                         point.Y < 90 &&
-                        cellLightFast5 <= 7 &&
-                        num10 is 8 or 2 or 3)
+                        lightAbove <= 7 &&
+                        groundContents is 8 or 2 or 3)
                     {
                         return 0.05f;
                     }
@@ -1428,22 +1453,22 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         return 0f;
                     }
 
-                    var num7 = _subsystemTerrain.Environment
+                    var shoreDistance = _subsystemTerrain.Environment
                         .CalculateOceanShoreDistance(point.X, point.Z);
-                    var temperature4 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num8 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast4))
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var lightAbove))
                     {
                         return 0f;
                     }
 
-                    if (num7 > 20f &&
-                        temperature4 > 8 &&
+                    if (shoreDistance > 20f &&
+                        temperature > 8 &&
                         point.Y < 90 &&
-                        cellLightFast4 <= 7 &&
-                        num8 is 8 or 2 or 3 or 7)
+                        lightAbove <= 7 &&
+                        groundContents is 8 or 2 or 3 or 7)
                     {
                         return 0.25f;
                     }
@@ -1464,24 +1489,24 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         return 0f;
                     }
 
-                    var num5 = _subsystemTerrain.Environment
+                    var shoreDistance = _subsystemTerrain.Environment
                         .CalculateOceanShoreDistance(point.X, point.Z);
-                    var temperature3 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                     var humidity = _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num6 = Terrain.ExtractContents(
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast3))
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var lightAbove))
                     {
                         return 0f;
                     }
 
-                    if (num5 > 20f &&
-                        temperature3 > 8 &&
+                    if (shoreDistance > 20f &&
+                        temperature > 8 &&
                         humidity > 8 &&
                         point.Y < 100 &&
-                        cellLightFast3 <= 7 &&
-                        num6 is 8 or 2 or 3 or 12)
+                        lightAbove <= 7 &&
+                        groundContents is 8 or 2 or 3 or 12)
                     {
                         return 0.25f;
                     }
@@ -1501,22 +1526,22 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         return 0f;
                     }
 
-                    var num3 = _subsystemTerrain.Environment
+                    var shoreDistance = _subsystemTerrain.Environment
                         .CalculateOceanShoreDistance(point.X, point.Z);
-                    var temperature2 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num4 = Terrain.ExtractContents(
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast2))
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var lightAbove))
                     {
                         return 0f;
                     }
 
-                    if (num3 > 20f &&
-                        temperature2 > 8 &&
+                    if (shoreDistance > 20f &&
+                        temperature > 8 &&
                         point.Y < 110 &&
-                        cellLightFast2 <= 7 &&
-                        num4 is 8 or 2 or 3 or 12)
+                        lightAbove <= 7 &&
+                        groundContents is 8 or 2 or 3 or 12)
                     {
                         return 0.25f;
                     }
@@ -1536,21 +1561,21 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                         return 0f;
                     }
 
-                    var num = _subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z);
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(point.X, point.Z);
                     var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
-                    var num2 = Terrain.ExtractContents(
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var cellLightFast))
+                    if (!_subsystemTerrain.TryGetEffectiveLight(point.X, point.Y + 1, point.Z, out var lightAbove))
                     {
                         return 0f;
                     }
 
-                    if (num > 20f &&
+                    if (shoreDistance > 20f &&
                         temperature > 8 &&
                         point.Y < 100 &&
-                        cellLightFast <= 7 &&
-                        num2 is 8 or 2 or 3 or 7)
+                        lightAbove <= 7 &&
+                        groundContents is 8 or 2 or 3 or 7)
                     {
                         return 1f;
                     }
@@ -1566,23 +1591,23 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num95 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature38 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                     _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num96 = Terrain.ExtractContents(
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
-                    var topHeight2 = _subsystemTerrain.Terrain.GetTopHeight(point.X, point.Z);
-                    return temperature38 > 3 &&
-                           num95 > 30f &&
-                           point.Y >= topHeight2 &&
-                           (WorldContentBinding.For(Project).Catalog.Blocks[num96] is LeavesBlock ||
-                            num96 == 8 ||
-                            num96 == 2 ||
-                            num96 == 7)
+                    var topHeight = _subsystemTerrain.Terrain.GetTopHeight(point.X, point.Z);
+                    return temperature > 3 &&
+                           shoreDistance > 30f &&
+                           point.Y >= topHeight &&
+                           (WorldContentBinding.For(Project).Catalog.Blocks[groundContents] is LeavesBlock ||
+                            groundContents == 8 ||
+                            groundContents == 2 ||
+                            groundContents == 7)
                         ? 1.5f
                         : 0f;
                 },
@@ -1594,23 +1619,23 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             {
                 SpawnSuitabilityFunction = delegate(CreatureType _, Point3 point)
                 {
-                    var num93 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
+                    var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(
                         point.X,
                         point.Z
                     );
-                    var temperature37 = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
+                    var temperature = _subsystemTerrain.Terrain.GetTemperature(point.X, point.Z);
                     _subsystemTerrain.Terrain.GetHumidity(point.X, point.Z);
-                    var num94 = Terrain.ExtractContents(
+                    var groundContents = Terrain.ExtractContents(
                         _subsystemTerrain.Terrain.GetCellValueFast(point.X, point.Y - 1, point.Z)
                     );
                     var topHeight = _subsystemTerrain.Terrain.GetTopHeight(point.X, point.Z);
-                    return temperature37 > 3 &&
-                           num93 > 20f &&
+                    return temperature > 3 &&
+                           shoreDistance > 20f &&
                            point.Y >= topHeight &&
-                           (WorldContentBinding.For(Project).Catalog.Blocks[num94] is LeavesBlock ||
-                            num94 == 8 ||
-                            num94 == 2 ||
-                            num94 == 7)
+                           (WorldContentBinding.For(Project).Catalog.Blocks[groundContents] is LeavesBlock ||
+                            groundContents == 8 ||
+                            groundContents == 2 ||
+                            groundContents == 7)
                         ? 2f
                         : 0f;
                 },
@@ -1708,21 +1733,21 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
         }
 
         //判断这个区块的生物数量限制
-        var num = constantSpawn ? Policy.TotalLimitConstant : Policy.TotalLimit;
-        var num2 = constantSpawn ? Policy.AreaLimitConstant : Policy.AreaLimit;
-        float v = constantSpawn ? Policy.AreaRadiusConstant : Policy.AreaRadius;
-        var num3 = CountCreatures(constantSpawn);
-        var c2 = new Vector2(chunk.Point.X * 16, chunk.Point.Y * 16) - new Vector2(v);
-        var c3 = new Vector2((chunk.Point.X + 1) * 16, (chunk.Point.Y + 1) * 16) + new Vector2(v);
-        var num4 = CountCreaturesInArea(c2, c3, constantSpawn);
+        var totalLimit = constantSpawn ? Policy.TotalLimitConstant : Policy.TotalLimit;
+        var areaLimit = constantSpawn ? Policy.AreaLimitConstant : Policy.AreaLimit;
+        float areaRadius = constantSpawn ? Policy.AreaRadiusConstant : Policy.AreaRadius;
+        var totalCount = CountCreatures(constantSpawn);
+        var areaMin = new Vector2(chunk.Point.X * 16, chunk.Point.Y * 16) - new Vector2(areaRadius);
+        var areaMax = new Vector2((chunk.Point.X + 1) * 16, (chunk.Point.Y + 1) * 16) + new Vector2(areaRadius);
+        var areaCount = CountCreaturesInArea(areaMin, areaMax, constantSpawn);
         for (var i = 0; i < maxAttempts; i++)
         {
-            if (num3 >= num) //总数超出，不生成
+            if (totalCount >= totalLimit) //总数超出，不生成
             {
                 break;
             }
 
-            if (num4 >= num2) //区块超出，不生成
+            if (areaCount >= areaLimit) //区块超出，不生成
             {
                 break;
             }
@@ -1746,46 +1771,47 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             }
 
             var creatureType = creatureTypes.ElementAt(randomWeightedItem);
-            var num5 = creatureType.SpawnFunction(creatureType, spawnPoint.Value);
-            num3 += num5;
-            num4 += num5;
+            var spawnedCount = creatureType.SpawnFunction(creatureType, spawnPoint.Value);
+            totalCount += spawnedCount;
+            areaCount += spawnedCount;
         }
     }
 
     private List<Entity> SpawnCreatures(CreatureType creatureType, string templateName, Point3 point, int count)
     {
-        var list = new List<Entity>();
-        var num = 0;
-        while (count > 0 && num < 50)
+        var spawnedEntities = new List<Entity>();
+        var attempts = 0;
+        while (count > 0 && attempts < 50)
         {
             var spawnPoint = point;
-            if (num > 0)
+            if (attempts > 0)
             {
                 spawnPoint.X += _random.Int(-8, 8);
                 spawnPoint.Y += _random.Int(-4, 8);
                 spawnPoint.Z += _random.Int(-8, 8);
             }
 
-            var point2 = ProcessSpawnPoint(spawnPoint, creatureType.SpawnLocationType);
-            if (point2.HasValue && creatureType.SpawnSuitabilityFunction(creatureType, point2.Value) > 0f)
+            var validSpawnPoint = ProcessSpawnPoint(spawnPoint, creatureType.SpawnLocationType);
+            if (validSpawnPoint.HasValue &&
+                creatureType.SpawnSuitabilityFunction(creatureType, validSpawnPoint.Value) > 0f)
             {
                 var position = new Vector3(
-                    point2.Value.X + _random.Float(0.4f, 0.6f),
-                    point2.Value.Y + 1.1f,
-                    point2.Value.Z + _random.Float(0.4f, 0.6f)
+                    validSpawnPoint.Value.X + _random.Float(0.4f, 0.6f),
+                    validSpawnPoint.Value.Y + 1.1f,
+                    validSpawnPoint.Value.Z + _random.Float(0.4f, 0.6f)
                 );
                 var entity = SpawnCreature(templateName, position, creatureType.ConstantSpawn);
                 if (entity != null)
                 {
-                    list.Add(entity);
+                    spawnedEntities.Add(entity);
                     count--;
                 }
             }
 
-            num++;
+            attempts++;
         }
 
-        return list;
+        return spawnedEntities;
     }
 
     public Entity? SpawnCreature(string templateName, Vector3 position, bool constantSpawn)
@@ -1829,7 +1855,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
     private Point3? ProcessSpawnPoint(Point3 spawnPoint, SpawnLocationType spawnLocationType)
     {
         var x = spawnPoint.X;
-        var num = MathUtils.Clamp(spawnPoint.Y, 1, 253);
+        var startY = MathUtils.Clamp(spawnPoint.Y, 1, 253);
         var z = spawnPoint.Z;
         var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
         if (chunkAtCell is not { HasCurrentLight: true })
@@ -1837,18 +1863,18 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             return null;
         }
 
-        for (var i = 0; i < 30; i++)
+        for (var offsetY = 0; offsetY < 30; offsetY++)
         {
-            var point = new Point3(x, num + i, z);
-            if (TestSpawnPoint(point, spawnLocationType))
+            var upperCandidate = new Point3(x, startY + offsetY, z);
+            if (TestSpawnPoint(upperCandidate, spawnLocationType))
             {
-                return point;
+                return upperCandidate;
             }
 
-            var point2 = new Point3(x, num - i, z);
-            if (TestSpawnPoint(point2, spawnLocationType))
+            var lowerCandidate = new Point3(x, startY - offsetY, z);
+            if (TestSpawnPoint(lowerCandidate, spawnLocationType))
             {
-                return point2;
+                return lowerCandidate;
             }
         }
 
@@ -1952,22 +1978,22 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
 
     private int CountCreatures(bool constantSpawn)
     {
-        var num = 0;
+        var count = 0;
         foreach (var body in _subsystemBodies.Bodies)
         {
             var componentCreature = body.Entity.FindComponent<ComponentCreature>();
             if (componentCreature != null && componentCreature.ConstantSpawn == constantSpawn)
             {
-                num++;
+                count++;
             }
         }
 
-        return num;
+        return count;
     }
 
     private int CountCreaturesInArea(Vector2 c1, Vector2 c2, bool constantSpawn)
     {
-        var num = 0;
+        var count = 0;
         _componentBodies.Clear();
         _subsystemBodies.FindBodiesInArea(c1, c2, _componentBodies);
         for (var i = 0; i < _componentBodies.Count; i++)
@@ -1982,7 +2008,7 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
             var position = componentBody.Position;
             if (position.X >= c1.X && position.X <= c2.X && position.Z >= c1.Y && position.Z <= c2.Y)
             {
-                num++;
+                count++;
             }
         }
 
@@ -2008,31 +2034,31 @@ public class SubsystemCreatureSpawn : Subsystem, IUpdateable
                             position2.Z >= c1.Y &&
                             position2.Z <= c2.Y)
                         {
-                            num++;
+                            count++;
                         }
                     }
                 }
             }
         }
 
-        return num;
+        return count;
     }
 
     private int GetRandomWeightedItem(IEnumerable<float> items)
     {
-        var enumerable = items as float[] ?? items.ToArray();
-        var max = MathUtils.Max(enumerable.Sum(), 1f);
-        var num = _random.Float(0f, max);
-        var num2 = 0;
-        foreach (var item in enumerable)
+        var weights = items as float[] ?? items.ToArray();
+        var weightRange = MathUtils.Max(weights.Sum(), 1f);
+        var remainingWeight = _random.Float(0f, weightRange);
+        var index = 0;
+        foreach (var weight in weights)
         {
-            if (num < item)
+            if (remainingWeight < weight)
             {
-                return num2;
+                return index;
             }
 
-            num -= item;
-            num2++;
+            remainingWeight -= weight;
+            index++;
         }
 
         return -1;

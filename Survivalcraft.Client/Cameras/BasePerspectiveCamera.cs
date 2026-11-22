@@ -281,20 +281,20 @@ public abstract class BasePerspectiveCamera(GameWidget gameWidget) : Camera(game
             return VrManager.GetProjectionMatrix(Eye.Value, 0.1f, 2048f);
         }
 
-        var num = 80f * Configuration.ClientConfiguration.Preferences.ViewAngle;
+        var baseFieldOfView = 80f * Configuration.ClientConfiguration.Preferences.ViewAngle;
         var viewWidget = GameWidget.ViewWidget;
-        var num2 = viewWidget.ActualSize.X / viewWidget.ActualSize.Y;
-        var num3 = MathUtils.Min(num * num2, num);
-        var num4 = num3 * num2;
-        if (num4 < 90f)
+        var aspectRatio = viewWidget.ActualSize.X / viewWidget.ActualSize.Y;
+        var verticalFieldOfView = MathUtils.Min(baseFieldOfView * aspectRatio, baseFieldOfView);
+        var horizontalFieldOfView = verticalFieldOfView * aspectRatio;
+        if (horizontalFieldOfView < 90f)
         {
-            num3 *= 90f / num4;
+            verticalFieldOfView *= 90f / horizontalFieldOfView;
         }
-        else if (num4 > 175f)
+        else if (horizontalFieldOfView > 175f)
         {
-            num3 *= 175f / num4;
+            verticalFieldOfView *= 175f / horizontalFieldOfView;
         }
 
-        return Matrix.CreatePerspectiveFieldOfView(MathUtils.DegToRad(num3), num2, 0.1f, 2048f);
+        return Matrix.CreatePerspectiveFieldOfView(MathUtils.DegToRad(verticalFieldOfView), aspectRatio, 0.1f, 2048f);
     }
 }

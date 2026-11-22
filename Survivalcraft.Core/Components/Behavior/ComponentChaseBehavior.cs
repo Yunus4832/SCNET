@@ -215,9 +215,10 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                 var componentCreature2 = body.Entity.FindComponent<ComponentCreature>();
                 if (componentCreature2 != null)
                 {
-                    var flag2 = _subsystemCharacters.IsCharacter(body.Entity);
-                    var flag3 = (componentCreature2.Category & _autoChaseMask) != 0;
-                    if ((flag2 && _subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless) || (!flag2 && flag3))
+                    var isCharacter = _subsystemCharacters.IsCharacter(body.Entity);
+                    var matchesChaseMask = (componentCreature2.Category & _autoChaseMask) != 0;
+                    if ((isCharacter && _subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless) ||
+                        (!isCharacter && matchesChaseMask))
                     {
                         Attack(componentCreature2, 7f, 7f, false);
                     }
@@ -264,12 +265,12 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                         return;
                     }
 
-                    var flag = _subsystemSky.SkyLightIntensity >= 0.1f;
-                    var maxRange = flag ? _dayChaseRange + 6f : _nightChaseRange + 6f;
-                    var maxChaseTime = flag
+                    var isDaylight = _subsystemSky.SkyLightIntensity >= 0.1f;
+                    var maxRange = isDaylight ? _dayChaseRange + 6f : _nightChaseRange + 6f;
+                    var maxChaseTime = isDaylight
                         ? _dayChaseTime * _random.Float(0.75f, 1f)
                         : _nightChaseTime * _random.Float(0.75f, 1f);
-                    Attack(componentCreature, maxRange, maxChaseTime, !flag);
+                    Attack(componentCreature, maxRange, maxChaseTime, !isDaylight);
                 }
             },
             Actions.Empty
@@ -384,10 +385,10 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                         var boundingBox2 = _target.ComponentBody.BoundingBox;
                         var v = 0.5f * (boundingBox.Min + boundingBox.Max);
                         var vector = 0.5f * (boundingBox2.Min + boundingBox2.Max);
-                        var num = Vector3.Distance(v, vector);
-                        var num2 = num < 4f ? 0.2f : 0f;
+                        var targetDistance = Vector3.Distance(v, vector);
+                        var leadFactor = targetDistance < 4f ? 0.2f : 0f;
                         _componentPathfinding.SetDestination(
-                            vector + num2 * num * _target.ComponentBody.Velocity,
+                            vector + leadFactor * targetDistance * _target.ComponentBody.Velocity,
                             1f,
                             1.5f,
                             maxPathfindingPositions,
@@ -412,7 +413,7 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
     {
         var position = _componentCreature.ComponentBody.Position;
         ComponentCreature? result = null;
-        var num = 0f;
+        var bestScore = 0f;
         _componentBodies.Clear();
         _subsystemBodies.FindBodiesAroundPoint(new Vector2(position.X, position.Z), _range, _componentBodies);
         for (var i = 0; i < _componentBodies.Count; i++)
@@ -423,13 +424,13 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
                 continue;
             }
 
-            var num2 = ScoreTarget(componentCreature);
-            if (!(num2 > num))
+            var candidateScore = ScoreTarget(componentCreature);
+            if (!(candidateScore > bestScore))
             {
                 continue;
             }
 
-            num = num2;
+            bestScore = candidateScore;
             result = componentCreature;
         }
 
@@ -438,33 +439,34 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
 
     public float ScoreTarget(ComponentCreature componentCreature)
     {
-        var flag = componentCreature.Entity.FindComponent<ComponentCharacter>() != null;
-        var flag2 = _componentCreature.Category != CreatureCategory.WaterPredator &&
-                    _componentCreature.Category != CreatureCategory.WaterOther;
-        var flag3 = componentCreature == Target || _subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless;
-        var flag4 = (componentCreature.Category & _autoChaseMask) != 0;
-        var flag5 = componentCreature == Target ||
-                    (flag4 &&
-                     MathUtils.Remainder(
-                         0.004999999888241291 * _subsystemTime.GameTime +
-                         GetHashCode() % 1000 / 1000f +
-                         componentCreature.GetHashCode() % 1000 / 1000f,
-                         1.0
-                     ) <
-                     _chaseNonCharacterProbability);
+        var isCharacter = componentCreature.Entity.FindComponent<ComponentCharacter>() != null;
+        var canChaseOnLand = _componentCreature.Category != CreatureCategory.WaterPredator &&
+                             _componentCreature.Category != CreatureCategory.WaterOther;
+        var canChaseCharacter =
+            componentCreature == Target || _subsystemGameInfo.WorldSettings.GameMode > GameMode.Harmless;
+        var matchesChaseMask = (componentCreature.Category & _autoChaseMask) != 0;
+        var canChaseNonCharacter = componentCreature == Target ||
+                                   (matchesChaseMask &&
+                                    MathUtils.Remainder(
+                                        0.004999999888241291 * _subsystemTime.GameTime +
+                                        GetHashCode() % 1000 / 1000f +
+                                        componentCreature.GetHashCode() % 1000 / 1000f,
+                                        1.0
+                                    ) <
+                                    _chaseNonCharacterProbability);
         if (componentCreature != _componentCreature &&
-            ((!flag && flag5) || (flag && flag3)) &&
+            ((!isCharacter && canChaseNonCharacter) || (isCharacter && canChaseCharacter)) &&
             componentCreature.Entity.IsAddedToProject &&
             componentCreature.ComponentHealth.Health > 0f &&
-            (flag2 || IsTargetInWater(componentCreature.ComponentBody)))
+            (canChaseOnLand || IsTargetInWater(componentCreature.ComponentBody)))
         {
-            var num = Vector3.Distance(
+            var distance = Vector3.Distance(
                 _componentCreature.ComponentBody.Position,
                 componentCreature.ComponentBody.Position
             );
-            if (num < _range)
+            if (distance < _range)
             {
-                var score = _range - num;
+                var score = _range - distance;
                 if (score <= 0f)
                 {
                     return score;
@@ -514,18 +516,21 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
         var boundingBox2 = target.BoundingBox;
         var v = 0.5f * (boundingBox.Min + boundingBox.Max);
         var v2 = 0.5f * (boundingBox2.Min + boundingBox2.Max) - v;
-        var num = v2.Length();
-        var v3 = v2 / num;
-        var num2 = 0.5f * (boundingBox.Max.X - boundingBox.Min.X + boundingBox2.Max.X - boundingBox2.Min.X);
-        var num3 = 0.5f * (boundingBox.Max.Y - boundingBox.Min.Y + boundingBox2.Max.Y - boundingBox2.Min.Y);
-        if (MathUtils.Abs(v2.Y) < num3 * 0.99f)
+        var distance = v2.Length();
+        var v3 = v2 / distance;
+        var combinedHalfWidth =
+            0.5f * (boundingBox.Max.X - boundingBox.Min.X + boundingBox2.Max.X - boundingBox2.Min.X);
+        var combinedHalfHeight =
+            0.5f * (boundingBox.Max.Y - boundingBox.Min.Y + boundingBox2.Max.Y - boundingBox2.Min.Y);
+        if (MathUtils.Abs(v2.Y) < combinedHalfHeight * 0.99f)
         {
-            if (num < num2 + 0.99f && Vector3.Dot(v3, _componentCreature.ComponentBody.Matrix.Forward) > 0.25f)
+            if (distance < combinedHalfWidth + 0.99f &&
+                Vector3.Dot(v3, _componentCreature.ComponentBody.Matrix.Forward) > 0.25f)
             {
                 return true;
             }
         }
-        else if (num < num3 + 0.3f && MathUtils.Abs(Vector3.Dot(v3, Vector3.UnitY)) > 0.8f)
+        else if (distance < combinedHalfHeight + 0.3f && MathUtils.Abs(Vector3.Dot(v3, Vector3.UnitY)) > 0.8f)
         {
             return true;
         }
@@ -546,18 +551,21 @@ public class ComponentChaseBehavior : ComponentBehavior, IUpdateable
         var boundingBox2 = target.BoundingBox;
         var v = 0.5f * (boundingBox.Min + boundingBox.Max);
         var v2 = 0.5f * (boundingBox2.Min + boundingBox2.Max) - v;
-        var num = v2.Length();
-        var v3 = v2 / num;
-        var num2 = 0.5f * (boundingBox.Max.X - boundingBox.Min.X + boundingBox2.Max.X - boundingBox2.Min.X);
-        var num3 = 0.5f * (boundingBox.Max.Y - boundingBox.Min.Y + boundingBox2.Max.Y - boundingBox2.Min.Y);
-        if (MathUtils.Abs(v2.Y) < num3 * 0.99f)
+        var distance = v2.Length();
+        var v3 = v2 / distance;
+        var combinedHalfWidth =
+            0.5f * (boundingBox.Max.X - boundingBox.Min.X + boundingBox2.Max.X - boundingBox2.Min.X);
+        var combinedHalfHeight =
+            0.5f * (boundingBox.Max.Y - boundingBox.Min.Y + boundingBox2.Max.Y - boundingBox2.Min.Y);
+        if (MathUtils.Abs(v2.Y) < combinedHalfHeight * 0.99f)
         {
-            if (num < num2 + 0.99f && Vector3.Dot(v3, _componentCreature.ComponentBody.Matrix.Forward) > 0.25f)
+            if (distance < combinedHalfWidth + 0.99f &&
+                Vector3.Dot(v3, _componentCreature.ComponentBody.Matrix.Forward) > 0.25f)
             {
                 return true;
             }
         }
-        else if (num < num3 + 0.3f && MathUtils.Abs(Vector3.Dot(v3, Vector3.UnitY)) > 0.8f)
+        else if (distance < combinedHalfHeight + 0.3f && MathUtils.Abs(Vector3.Dot(v3, Vector3.UnitY)) > 0.8f)
         {
             return true;
         }

@@ -22,8 +22,8 @@ public class DetonatorBlockPresentation(DetonatorBlock block, BlockPresentationC
         int z
     )
     {
-        var num = Terrain.ExtractData(value);
-        if (num >= BlockMeshesByData.Length)
+        var mountingData = Terrain.ExtractData(value);
+        if (mountingData >= BlockMeshesByData.Length)
         {
             return;
         }
@@ -33,7 +33,7 @@ public class DetonatorBlockPresentation(DetonatorBlock block, BlockPresentationC
             x,
             y,
             z,
-            BlockMeshesByData[num],
+            BlockMeshesByData[mountingData],
             Color.White,
             null,
             geometry.SubsetOpaque

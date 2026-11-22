@@ -58,29 +58,29 @@ public sealed class SubsystemProjectilesPresentation : Subsystem, IDrawable, IUp
 
         _drawBlockEnvironmentData.SubsystemTerrain = _subsystemTerrain;
         _drawBlockEnvironmentData.InWorldMatrix = Matrix.Identity;
-        var num = MathUtils.Sqr(_subsystemSky.VisibilityRange);
+        var visibilityRangeSquared = MathUtils.Sqr(_subsystemSky.VisibilityRange);
         foreach (var projectile in _projectiles.Projectiles)
         {
             var position = projectile.Position;
             if (projectile.NoChunk ||
-                !(Vector3.DistanceSquared(camera.ViewPosition, position) < num) ||
+                !(Vector3.DistanceSquared(camera.ViewPosition, position) < visibilityRangeSquared) ||
                 !camera.ViewFrustum.Intersection(position))
             {
                 continue;
             }
 
             var x = Terrain.ToCell(position.X);
-            var num2 = Terrain.ToCell(position.Y);
+            var cellY = Terrain.ToCell(position.Y);
             var z = Terrain.ToCell(position.Z);
-            var num3 = Terrain.ExtractContents(projectile.Value);
-            var block = WorldContentBinding.For(Project).Catalog.Blocks[num3];
+            var contents = Terrain.ExtractContents(projectile.Value);
+            var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
             var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
-            if (chunkAtCell is { HasContents: true } && num2 is >= 0 and < 255)
+            if (chunkAtCell is { HasContents: true } && cellY is >= 0 and < 255)
             {
                 _drawBlockEnvironmentData.Humidity = _subsystemTerrain.Terrain.GetSeasonalHumidity(x, z);
                 _drawBlockEnvironmentData.Temperature = _subsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
-                                                        SubsystemWeather.GetTemperatureAdjustmentAtHeight(num2);
-                _lightSamples[projectile] = (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, num2, z) ?? 0);
+                                                        SubsystemWeather.GetTemperatureAdjustmentAtHeight(cellY);
+                _lightSamples[projectile] = (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, cellY, z) ?? 0);
             }
 
             _drawBlockEnvironmentData.Light = _lightSamples.GetValueOrDefault(projectile);
@@ -105,7 +105,7 @@ public sealed class SubsystemProjectilesPresentation : Subsystem, IDrawable, IUp
                 matrix = Matrix.CreateTranslation(projectile.Position);
             }
 
-            _blockPresentations.Get(num3).DrawBlock(
+            _blockPresentations.Get(contents).DrawBlock(
                 PrimitivesRenderer3D,
                 projectile.Value,
                 Color.White,

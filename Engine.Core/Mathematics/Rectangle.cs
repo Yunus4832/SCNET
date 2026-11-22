@@ -78,13 +78,13 @@ public struct Rectangle(int left, int top, int width, int height) : IEquatable<R
 
     public bool Intersection(Rectangle r)
     {
-        var num = MathUtils.Max(Left, r.Left);
-        var num2 = MathUtils.Max(Top, r.Top);
-        var num3 = MathUtils.Min(Left + Width, r.Left + r.Width);
-        var num4 = MathUtils.Min(Top + Height, r.Top + r.Height);
-        if (num3 > num)
+        var left = MathUtils.Max(Left, r.Left);
+        var top = MathUtils.Max(Top, r.Top);
+        var right = MathUtils.Min(Left + Width, r.Left + r.Width);
+        var bottom = MathUtils.Min(Top + Height, r.Top + r.Height);
+        if (right > left)
         {
-            return num4 > num2;
+            return bottom > top;
         }
 
         return false;
@@ -92,25 +92,25 @@ public struct Rectangle(int left, int top, int width, int height) : IEquatable<R
 
     public static Rectangle Intersection(Rectangle r1, Rectangle r2)
     {
-        var num = MathUtils.Max(r1.Left, r2.Left);
-        var num2 = MathUtils.Max(r1.Top, r2.Top);
-        var num3 = MathUtils.Min(r1.Left + r1.Width, r2.Left + r2.Width);
-        var num4 = MathUtils.Min(r1.Top + r1.Height, r2.Top + r2.Height);
-        if (num3 <= num || num4 <= num2)
+        var left = MathUtils.Max(r1.Left, r2.Left);
+        var top = MathUtils.Max(r1.Top, r2.Top);
+        var right = MathUtils.Min(r1.Left + r1.Width, r2.Left + r2.Width);
+        var bottom = MathUtils.Min(r1.Top + r1.Height, r2.Top + r2.Height);
+        if (right <= left || bottom <= top)
         {
             return Empty;
         }
 
-        return new Rectangle(num, num2, num3 - num, num4 - num2);
+        return new Rectangle(left, top, right - left, bottom - top);
     }
 
     public static Rectangle Union(Rectangle r1, Rectangle r2)
     {
-        var num = MathUtils.Min(r1.Left, r2.Left);
-        var num2 = MathUtils.Min(r1.Top, r2.Top);
-        var num3 = MathUtils.Max(r1.Left + r1.Width, r2.Left + r2.Width);
-        var num4 = MathUtils.Max(r1.Top + r1.Height, r2.Top + r2.Height);
-        return new Rectangle(num, num2, num3 - num, num4 - num2);
+        var left = MathUtils.Min(r1.Left, r2.Left);
+        var top = MathUtils.Min(r1.Top, r2.Top);
+        var right = MathUtils.Max(r1.Left + r1.Width, r2.Left + r2.Width);
+        var bottom = MathUtils.Max(r1.Top + r1.Height, r2.Top + r2.Height);
+        return new Rectangle(left, top, right - left, bottom - top);
     }
 
     public static bool operator ==(Rectangle r1, Rectangle r2)

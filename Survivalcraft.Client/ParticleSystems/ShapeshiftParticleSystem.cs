@@ -24,14 +24,14 @@ public class ShapeshiftParticleSystem : ParticleSystem<ShapeshiftParticleSystem.
 
     public override bool Simulate(float dt)
     {
-        var flag = false;
+        var hasActiveParticles = false;
         _generationSpeed = MathUtils.Min(_generationSpeed + 15f * dt, 35f);
         _toGenerate += _generationSpeed * dt;
         foreach (var particle in Particles)
         {
             if (particle.IsActive)
             {
-                flag = true;
+                hasActiveParticles = true;
                 particle.Time += dt;
                 if (particle.Time <= particle.Duration)
                 {
@@ -68,7 +68,7 @@ public class ShapeshiftParticleSystem : ParticleSystem<ShapeshiftParticleSystem.
         }
 
         _toGenerate = MathUtils.Remainder(_toGenerate, 1f);
-        return Stopped && !flag;
+        return Stopped && !hasActiveParticles;
     }
 
     public class Particle : Game.ParticleSystems.Particle

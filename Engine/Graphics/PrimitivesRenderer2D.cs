@@ -7,9 +7,26 @@ public sealed class PrimitivesRenderer2D : BasePrimitivesRenderer<FlatBatch2D, T
     public static Matrix ViewportMatrix()
     {
         var viewport = Display.Viewport;
-        var num = 1f / viewport.Width;
-        var num2 = 1f / viewport.Height;
-        return new Matrix(2f * num, 0f, 0f, 0f, 0f, -2f * num2, 0f, 0f, 0f, 0f, 1f, 0f, -1f, 1f, 0f, 1f);
+        var inverseWidth = 1f / viewport.Width;
+        var inverseHeight = 1f / viewport.Height;
+        return new Matrix(
+            2f * inverseWidth,
+            0f,
+            0f,
+            0f,
+            0f,
+            -2f * inverseHeight,
+            0f,
+            0f,
+            0f,
+            0f,
+            1f,
+            0f,
+            -1f,
+            1f,
+            0f,
+            1f
+        );
     }
 
     public FlatBatch2D FlatBatch(

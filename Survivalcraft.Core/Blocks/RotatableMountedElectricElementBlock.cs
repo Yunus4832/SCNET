@@ -23,35 +23,35 @@ public abstract class RotatableMountedElectricElementBlock(string modelName, str
         for (var i = 0; i < 6; i++)
         {
             float radians;
-            bool flag;
+            bool mountedOnHorizontalFace;
             switch (i)
             {
                 case < 4:
                     radians = i * (float)Math.PI / 2f;
-                    flag = false;
+                    mountedOnHorizontalFace = false;
                     break;
                 case 4:
                     radians = -(float)Math.PI / 2f;
-                    flag = true;
+                    mountedOnHorizontalFace = true;
                     break;
                 default:
                     radians = (float)Math.PI / 2f;
-                    flag = true;
+                    mountedOnHorizontalFace = true;
                     break;
             }
 
             for (var j = 0; j < 4; j++)
             {
                 var radians2 = -j * (float)Math.PI / 2f;
-                var num = (i << 2) + j;
+                var orientationIndex = (i << 2) + j;
                 var m = Matrix.CreateRotationX((float)Math.PI / 2f) *
                         Matrix.CreateRotationZ(radians2) *
                         Matrix.CreateTranslation(0f, 0f, -0.5f) *
-                        (flag ? Matrix.CreateRotationX(radians) : Matrix.CreateRotationY(radians)) *
+                        (mountedOnHorizontalFace ? Matrix.CreateRotationX(radians) : Matrix.CreateRotationY(radians)) *
                         Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-                blockPositions[num] = new CollisionGeometryBuilder();
-                blockPositions[num].Append(modelNode.Primitives[0], nodeAbsoluteTransform * m);
-                CollisionBoxes[num] = [blockPositions[num].GetBounds()];
+                blockPositions[orientationIndex] = new CollisionGeometryBuilder();
+                blockPositions[orientationIndex].Append(modelNode.Primitives[0], nodeAbsoluteTransform * m);
+                CollisionBoxes[orientationIndex] = [blockPositions[orientationIndex].GetBounds()];
             }
         }
     }
@@ -74,41 +74,64 @@ public abstract class RotatableMountedElectricElementBlock(string modelName, str
         if (raycastResult.CellFace.Face >= 4)
         {
             var forward = eyeForward;
-            var num = Vector3.Dot(forward, Vector3.UnitZ);
-            var num2 = Vector3.Dot(forward, Vector3.UnitX);
-            var num3 = Vector3.Dot(forward, -Vector3.UnitZ);
-            var num4 = Vector3.Dot(forward, -Vector3.UnitX);
-            if (num.CloseTo(MathUtils.Max(num, num2, num3, num4)))
+            var forwardDotPositiveZ = Vector3.Dot(forward, Vector3.UnitZ);
+            var forwardDotPositiveX = Vector3.Dot(forward, Vector3.UnitX);
+            var forwardDotNegativeZ = Vector3.Dot(forward, -Vector3.UnitZ);
+            var forwardDotNegativeX = Vector3.Dot(forward, -Vector3.UnitX);
+            if (forwardDotPositiveZ.CloseTo(
+                    MathUtils.Max(forwardDotPositiveZ, forwardDotPositiveX, forwardDotNegativeZ, forwardDotNegativeX)
+                ))
             {
                 rotation = 2;
             }
-            else if (num2.CloseTo(MathUtils.Max(num, num2, num3, num4)))
+            else if (forwardDotPositiveX.CloseTo(
+                         MathUtils.Max(
+                             forwardDotPositiveZ,
+                             forwardDotPositiveX,
+                             forwardDotNegativeZ,
+                             forwardDotNegativeX
+                         )
+                     ))
             {
                 rotation = 1;
             }
-            else if (num3.CloseTo(MathUtils.Max(num, num2, num3, num4)))
+            else if (forwardDotNegativeZ.CloseTo(
+                         MathUtils.Max(
+                             forwardDotPositiveZ,
+                             forwardDotPositiveX,
+                             forwardDotNegativeZ,
+                             forwardDotNegativeX
+                         )
+                     ))
             {
                 rotation = 0;
             }
-            else if (num4.CloseTo(MathUtils.Max(num, num2, num3, num4)))
+            else if (forwardDotNegativeX.CloseTo(
+                         MathUtils.Max(
+                             forwardDotPositiveZ,
+                             forwardDotPositiveX,
+                             forwardDotNegativeZ,
+                             forwardDotNegativeX
+                         )
+                     ))
             {
                 rotation = 3;
             }
         }
 
-        var num5 = Terrain.ExtractData(value);
-        num5 &= -29;
-        num5 |= raycastResult.CellFace.Face << 2;
+        var blockData = Terrain.ExtractData(value);
+        blockData &= -29;
+        blockData |= raycastResult.CellFace.Face << 2;
         BlockPlacementData result = default;
-        result.Value = Terrain.MakeBlockValue(BlockIndex, SetRotation(num5, rotation));
+        result.Value = Terrain.MakeBlockValue(BlockIndex, SetRotation(blockData, rotation));
         result.CellFace = raycastResult.CellFace;
         return result;
     }
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = Terrain.ExtractData(value) & 0x1F;
-        return CollisionBoxes[num];
+        var orientationIndex = Terrain.ExtractData(value) & 0x1F;
+        return CollisionBoxes[orientationIndex];
     }
 
     public static int GetRotation(int data)

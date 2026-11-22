@@ -4,8 +4,8 @@ public static class EnumUtils
 {
     public static string GetEnumName(Type type, int value)
     {
-        var num = GetEnumValues(type).IndexOf(value);
-        return num >= 0 ? GetEnumNames(type)[num] : "<invalid enum>";
+        var valueIndex = GetEnumValues(type).IndexOf(value);
+        return valueIndex >= 0 ? GetEnumNames(type)[valueIndex] : "<invalid enum>";
     }
 
     public static IList<string> GetEnumNames(Type type)

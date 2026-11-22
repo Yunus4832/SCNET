@@ -93,12 +93,12 @@ public class FireworksBlockPresentation(FireworksBlock block, BlockPresentationC
         var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(finsNode);
         for (var i = 0; i < 64; i++)
         {
-            var num = i / 8;
-            var num2 = i % 8;
-            var color = FireworksBlock.FireworksColors[num2];
+            var headIndex = i / 8;
+            var colorIndex = i % 8;
+            var color = FireworksBlock.FireworksColors[colorIndex];
             color *= 0.75f;
             color.A = byte.MaxValue;
-            var headNameNode = model.FindNode(FireworksBlock.HeadNames[num])!;
+            var headNameNode = model.FindNode(FireworksBlock.HeadNames[headIndex])!;
             var nodeAbsoluteTransform3 = BlockMesh.GetNodeAbsoluteTransform(headNameNode);
             HeadBlockMeshes[i] = new BlockMesh();
             HeadBlockMeshes[i].AppendModelPrimitive(
@@ -114,8 +114,8 @@ public class FireworksBlockPresentation(FireworksBlock block, BlockPresentationC
 
         for (var j = 0; j < 2; j++)
         {
-            var num3 = 0.5f + j * 0.5f;
-            var m = Matrix.CreateScale(new Vector3(num3, 1f, num3));
+            var headWidthScale = 0.5f + j * 0.5f;
+            var m = Matrix.CreateScale(new Vector3(headWidthScale, 1f, headWidthScale));
             BodyBlockMeshes[j] = new BlockMesh();
             BodyBlockMeshes[j].AppendModelPrimitive(
                 bodyNode.RequireMesh().Primitives[0],

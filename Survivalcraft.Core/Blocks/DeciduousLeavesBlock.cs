@@ -170,50 +170,50 @@ public abstract class DeciduousLeavesBlock : LeavesBlock
 
     public virtual int SetTimeOfYear(int data, float timeOfYear)
     {
-        var num = IntervalUtils.Interval(SummerStart, timeOfYear);
-        int num2;
-        if (num < SummerInterval)
+        var sinceSummer = IntervalUtils.Interval(SummerStart, timeOfYear);
+        int updatedData;
+        if (sinceSummer < SummerInterval)
         {
-            num2 = SetSeason(SetTimeOfSeason(data, num * SummerIntervalInv), Season.Summer);
+            updatedData = SetSeason(SetTimeOfSeason(data, sinceSummer * SummerIntervalInv), Season.Summer);
         }
         else
         {
-            var num3 = IntervalUtils.Interval(AutumnStart, timeOfYear);
-            if (num3 < AutumnInterval)
+            var sinceAutumn = IntervalUtils.Interval(AutumnStart, timeOfYear);
+            if (sinceAutumn < AutumnInterval)
             {
-                num2 = SetSeason(SetTimeOfSeason(data, num3 * AutumnIntervalInv), Season.Autumn);
+                updatedData = SetSeason(SetTimeOfSeason(data, sinceAutumn * AutumnIntervalInv), Season.Autumn);
             }
             else
             {
-                var num4 = IntervalUtils.Interval(WinterStart, timeOfYear);
-                if (num4 < WinterInterval)
+                var sinceWinter = IntervalUtils.Interval(WinterStart, timeOfYear);
+                if (sinceWinter < WinterInterval)
                 {
-                    num2 = SetSeason(SetTimeOfSeason(data, num4 * WinterIntervalInv), Season.Winter);
+                    updatedData = SetSeason(SetTimeOfSeason(data, sinceWinter * WinterIntervalInv), Season.Winter);
                 }
                 else
                 {
-                    var num5 = IntervalUtils.Interval(SpringStart, timeOfYear);
-                    num2 = SetSeason(SetTimeOfSeason(data, num5 * SpringIntervalInv), Season.Spring);
+                    var sinceSpring = IntervalUtils.Interval(SpringStart, timeOfYear);
+                    updatedData = SetSeason(SetTimeOfSeason(data, sinceSpring * SpringIntervalInv), Season.Spring);
                 }
             }
         }
 
         if (!GetIsShaken(data))
         {
-            return num2;
+            return updatedData;
         }
 
-        if (GetSeason(num2) == Season.Autumn)
+        if (GetSeason(updatedData) == Season.Autumn)
         {
             return data;
         }
 
-        if (GetSeason(num2) != Season.Winter)
+        if (GetSeason(updatedData) != Season.Winter)
         {
-            num2 = SetIsShaken(num2, false);
+            updatedData = SetIsShaken(updatedData, false);
         }
 
-        return num2;
+        return updatedData;
     }
 
     public static Season GetSeason(int data)
@@ -233,8 +233,8 @@ public abstract class DeciduousLeavesBlock : LeavesBlock
 
     public static int SetTimeOfSeason(int data, float timeOfSeason)
     {
-        var num = (int)(MathUtils.Clamp(timeOfSeason, 0f, 0.999f) * 8f);
-        return (data & -8) | (num & 7);
+        var seasonStage = (int)(MathUtils.Clamp(timeOfSeason, 0f, 0.999f) * 8f);
+        return (data & -8) | (seasonStage & 7);
     }
 
     public static bool GetIsShaken(int data)

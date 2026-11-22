@@ -30,8 +30,8 @@ public class CottonBlock : CrossBlock
             dropValues.Add(item);
             if (!GetIsWild(data))
             {
-                var num = Random.Int(1, 2);
-                for (var i = 0; i < num; i++)
+                var dropCount = Random.Int(1, 2);
+                for (var i = 0; i < dropCount; i++)
                 {
                     item = new BlockDropValue
                     {

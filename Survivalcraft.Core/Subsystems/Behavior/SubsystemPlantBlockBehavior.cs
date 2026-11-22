@@ -30,14 +30,14 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
 
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
-        var num = Terrain.ExtractContents(SubsystemTerrain.Terrain.GetCellValue(x, y, z));
+        var plantContents = Terrain.ExtractContents(SubsystemTerrain.Terrain.GetCellValue(x, y, z));
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y - 1, z);
-        var num2 = Terrain.ExtractContents(cellValue);
-        switch (num)
+        var supportContents = Terrain.ExtractContents(cellValue);
+        switch (plantContents)
         {
             case 131:
             case 244:
-                if (num2 != 8 && num2 != 2 && num2 != 168)
+                if (supportContents != 8 && supportContents != 2 && supportContents != 168)
                 {
                     SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
                 }
@@ -45,7 +45,7 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
                 break;
             case 132:
             {
-                var block = WorldContentBinding.For(Project).Catalog.Blocks[num2];
+                var block = WorldContentBinding.For(Project).Catalog.Blocks[supportContents];
                 if (block.IsFaceTransparent(SubsystemTerrain, 4, cellValue) && !(block is FenceBlock))
                 {
                     SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
@@ -54,7 +54,7 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
                 break;
             }
             default:
-                if (num2 != 8 && num2 != 2 && num2 != 7 && num2 != 168)
+                if (supportContents != 8 && supportContents != 2 && supportContents != 7 && supportContents != 168)
                 {
                     SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
                 }
@@ -90,9 +90,9 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
             return;
         }
 
-        var num = Terrain.ExtractContents(value);
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
-        if (num == 19)
+        var contents = Terrain.ExtractContents(value);
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
+        if (contents == 19)
         {
             GrowTallGrass(value, x, y, z, pollPass);
             return;
@@ -104,7 +104,7 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
             return;
         }
 
-        switch (num)
+        switch (contents)
         {
             case 174:
                 GrowRye(value, x, y, z, pollPass);
@@ -182,34 +182,34 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
             var data3 = Terrain.ExtractData(cellValueFast);
             var hydration = SoilBlock.GetHydration(data3);
             var nitrogen = SoilBlock.GetNitrogen(data3);
-            var num = SubsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
-                      SubsystemWeather.GetTemperatureAdjustmentAtHeight(y);
-            var num2 = 4;
-            var num3 = 0.8f;
+            var temperature = SubsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
+                              SubsystemWeather.GetTemperatureAdjustmentAtHeight(y);
+            var growthInterval = 4;
+            var wildChance = 0.8f;
             if (nitrogen > 0)
             {
-                num2--;
-                num3 -= 0.4f;
+                growthInterval--;
+                wildChance -= 0.4f;
             }
 
             if (hydration)
             {
-                num2--;
-                num3 -= 0.4f;
+                growthInterval--;
+                wildChance -= 0.4f;
             }
 
-            if (num <= 4)
+            if (temperature <= 4)
             {
-                num2 += 4;
+                growthInterval += 4;
             }
 
-            if (pollPass % MathUtils.Max(num2, 1) != 0 && num3 < 1f)
+            if (pollPass % MathUtils.Max(growthInterval, 1) != 0 && wildChance < 1f)
             {
                 return;
             }
 
             var data4 = RyeBlock.SetSize(data, MathUtils.Min(size + 1, 7));
-            if (_random.Float(0f, 1f) < num3 && size == 3)
+            if (_random.Float(0f, 1f) < wildChance && size == 3)
             {
                 data4 = RyeBlock.SetIsWild(data4, true);
             }
@@ -264,34 +264,34 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
             var data3 = Terrain.ExtractData(cellValueFast);
             var hydration = SoilBlock.GetHydration(data3);
             var nitrogen = SoilBlock.GetNitrogen(data3);
-            var num = SubsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
-                      SubsystemWeather.GetTemperatureAdjustmentAtHeight(y);
-            var num2 = 8;
-            var num3 = 0.8f;
+            var temperature = SubsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
+                              SubsystemWeather.GetTemperatureAdjustmentAtHeight(y);
+            var growthInterval = 8;
+            var wildChance = 0.8f;
             if (nitrogen > 0)
             {
-                num2 -= 2;
-                num3 -= 0.4f;
+                growthInterval -= 2;
+                wildChance -= 0.4f;
             }
 
             if (hydration)
             {
-                num2 -= 2;
-                num3 -= 0.4f;
+                growthInterval -= 2;
+                wildChance -= 0.4f;
             }
 
-            if (num <= 4)
+            if (temperature <= 4)
             {
-                num2 += 8;
+                growthInterval += 8;
             }
 
-            if (pollPass % MathUtils.Max(num2, 1) != 0 && num3 < 1f)
+            if (pollPass % MathUtils.Max(growthInterval, 1) != 0 && wildChance < 1f)
             {
                 return;
             }
 
             var data4 = CottonBlock.SetSize(data, MathUtils.Min(size + 1, 2));
-            if (_random.Float(0f, 1f) < num3 && size == 1)
+            if (_random.Float(0f, 1f) < wildChance && size == 1)
             {
                 data4 = CottonBlock.SetIsWild(data4, true);
             }
@@ -332,57 +332,57 @@ public class SubsystemPlantBlockBehavior : SubsystemPollableBlockBehavior //IUpd
         }
 
         var cellValueFast = SubsystemTerrain.Terrain.GetCellValueFast(x, y - 1, z);
-        var num = Terrain.ExtractContents(cellValueFast);
+        var soilContents = Terrain.ExtractContents(cellValueFast);
         var data2 = Terrain.ExtractData(cellValueFast);
-        var flag = num == 168 && SoilBlock.GetHydration(data2);
-        var num2 = num == 168 ? SoilBlock.GetNitrogen(data2) : 0;
-        var num3 = SubsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
-                   SubsystemWeather.GetTemperatureAdjustmentAtHeight(y);
-        var num4 = 4;
-        var num5 = 0.15f;
-        if (num == 168)
+        var isHydrated = soilContents == 168 && SoilBlock.GetHydration(data2);
+        var nitrogen = soilContents == 168 ? SoilBlock.GetNitrogen(data2) : 0;
+        var temperature = SubsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
+                          SubsystemWeather.GetTemperatureAdjustmentAtHeight(y);
+        var growthInterval = 4;
+        var deathChance = 0.15f;
+        if (soilContents == 168)
         {
-            num4--;
-            num5 -= 0.05f;
+            growthInterval--;
+            deathChance -= 0.05f;
         }
 
-        if (num2 > 0)
+        if (nitrogen > 0)
         {
-            num4--;
-            num5 -= 0.05f;
+            growthInterval--;
+            deathChance -= 0.05f;
         }
 
-        if (flag)
+        if (isHydrated)
         {
-            num4--;
-            num5 -= 0.05f;
+            growthInterval--;
+            deathChance -= 0.05f;
         }
 
-        if (num3 <= 4)
+        if (temperature <= 4)
         {
-            num4 += 5;
+            growthInterval += 5;
         }
 
-        if (pollPass % MathUtils.Max(num4, 1) != 0 && num5 < 1f)
+        if (pollPass % MathUtils.Max(growthInterval, 1) != 0 && deathChance < 1f)
         {
             return;
         }
 
         var data3 = BasePumpkinBlock.SetSize(data, MathUtils.Min(size + 1, 7));
-        if (_random.Float(0f, 1f) < num5)
+        if (_random.Float(0f, 1f) < deathChance)
         {
             data3 = BasePumpkinBlock.SetIsDead(data3, true);
         }
 
         var value2 = Terrain.ReplaceData(value, data3);
-        if (num != 168 || size + 1 != 7)
+        if (soilContents != 168 || size + 1 != 7)
         {
             if (!_subsystemCellChangeQueue.TryQueueCellChange(x, y, z, value2)) { return; }
 
             return;
         }
 
-        var data4 = SoilBlock.SetNitrogen(data2, MathUtils.Max(num2 - 3, 0));
+        var data4 = SoilBlock.SetNitrogen(data2, MathUtils.Max(nitrogen - 3, 0));
         var value3 = Terrain.ReplaceData(cellValueFast, data4);
         if (!_subsystemCellChangeQueue.TryQueueCellChanges(
                 [(new Point3(x, y, z), value2), (new Point3(x, y - 1, z), value3)]

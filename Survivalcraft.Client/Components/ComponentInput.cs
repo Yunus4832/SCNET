@@ -240,14 +240,14 @@ public class ComponentInput : Component, IUpdateable
         {
             input.IsMouseCursorVisible = false;
             var zero = Vector2.Zero;
-            var num = 0;
+            var wheelSteps = 0;
             if (Window.IsActive && Time.FrameDuration > 0f)
             {
                 var mouseMovement = input.MouseMovement;
                 var mouseWheelMovement = input.MouseWheelMovement;
                 zero.X = 0.02f * mouseMovement.X / Time.FrameDuration / 60f;
                 zero.Y = -0.02f * mouseMovement.Y / Time.FrameDuration / 60f;
-                num = mouseWheelMovement / 120;
+                wheelSteps = mouseWheelMovement / 120;
                 isMouseOrKeyboardInputActive = mouseMovement != Point2.Zero || mouseWheelMovement != 0;
             }
 
@@ -268,11 +268,11 @@ public class ComponentInput : Component, IUpdateable
             if (_componentCharacter.ComponentMiner.Inventory is IPagedInventory &&
                 input.IsKeyDown(Key.Control))
             {
-                _playerInput.ScrollInventoryPage -= num;
+                _playerInput.ScrollInventoryPage -= wheelSteps;
             }
             else
             {
-                _playerInput.ScrollInventory -= num;
+                _playerInput.ScrollInventory -= wheelSteps;
             }
 
             _playerInput.Dig = input.IsMouseButtonDown(MouseButton.Left)
@@ -451,18 +451,18 @@ public class ComponentInput : Component, IUpdateable
 
     public void UpdateInputFromWidgets(WidgetInput input)
     {
-        var num = MathUtils.Pow(
+        var moveSensitivity = MathUtils.Pow(
             1.25f,
             10f * (Configuration.ClientConfiguration.Preferences.MoveSensitivity - 0.5f)
         );
-        var num2 = MathUtils.Pow(
+        var lookSensitivity = MathUtils.Pow(
             1.25f,
             10f * (Configuration.ClientConfiguration.Preferences.LookSensitivity - 0.5f)
         );
-        var num3 = MathUtils.Clamp(_subsystemTime.GameTimeDelta, 0f, 0.1f);
+        var frameDelta = MathUtils.Clamp(_subsystemTime.GameTimeDelta, 0f, 0.1f);
         var viewWidget = _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.ViewWidget;
-        _componentGui.MoveWidget.Radius = 30f / num * _componentGui.MoveWidget.GlobalScale;
-        if (_componentGui.ModalPanelWidget != null || !(_subsystemTime.GameTimeFactor > 0f) || !(num3 > 0f))
+        _componentGui.MoveWidget.Radius = 30f / moveSensitivity * _componentGui.MoveWidget.GlobalScale;
+        if (_componentGui.ModalPanelWidget != null || !(_subsystemTime.GameTimeFactor > 0f) || !(frameDelta > 0f))
         {
             return;
         }
@@ -521,8 +521,8 @@ public class ComponentInput : Component, IUpdateable
                     Configuration.ClientConfiguration.Preferences.LookControlMode == LookControlMode.SplitTouch)
                 {
                     var v2 = Vector2.TransformNormal(value.Move, _componentGui.ViewWidget.InvertedGlobalTransform);
-                    var vector = num2 /
-                                 num3 *
+                    var vector = lookSensitivity /
+                                 frameDelta *
                                  new Vector2(0.0006f, -0.0006f) *
                                  v2 *
                                  MathUtils.Pow(v2.LengthSquared(), 0.125f);
@@ -556,20 +556,20 @@ public class ComponentInput : Component, IUpdateable
             else if (value2.InputType is TouchInputType.Move or TouchInputType.Hold)
             {
                 var v3 = Vector2.TransformNormal(value2.Move, _componentGui.ViewWidget.InvertedGlobalTransform);
-                var vector2 = num /
-                              num3 *
-                              new Vector2(0.003f, -0.003f) *
-                              v3 *
-                              MathUtils.Pow(v3.LengthSquared(), 0.175f);
-                _playerInput.SneakMove.X += vector2.X;
-                _playerInput.SneakMove.Z += vector2.Y;
-                var vector3 = Vector2.TransformNormal(
+                var sneakDelta = moveSensitivity /
+                                 frameDelta *
+                                 new Vector2(0.003f, -0.003f) *
+                                 v3 *
+                                 MathUtils.Pow(v3.LengthSquared(), 0.175f);
+                _playerInput.SneakMove.X += sneakDelta.X;
+                _playerInput.SneakMove.Z += sneakDelta.Y;
+                var moveDelta = Vector2.TransformNormal(
                     value2.TotalMoveLimited,
                     _componentGui.ViewWidget.InvertedGlobalTransform
                 );
-                _playerInput.Move.X += ProcessInputValue(vector3.X * viewWidget.GlobalScale, 0.2f * radius, radius);
+                _playerInput.Move.X += ProcessInputValue(moveDelta.X * viewWidget.GlobalScale, 0.2f * radius, radius);
                 _playerInput.Move.Z +=
-                    ProcessInputValue((0f - vector3.Y) * viewWidget.GlobalScale, 0.2f * radius, radius);
+                    ProcessInputValue((0f - moveDelta.Y) * viewWidget.GlobalScale, 0.2f * radius, radius);
             }
         }
 
@@ -596,12 +596,12 @@ public class ComponentInput : Component, IUpdateable
         else if (value3.InputType == TouchInputType.Move)
         {
             var v4 = Vector2.TransformNormal(value3.Move, _componentGui.ViewWidget.InvertedGlobalTransform);
-            var vector4 = num2 /
-                          num3 *
-                          new Vector2(0.0006f, -0.0006f) *
-                          v4 *
-                          MathUtils.Pow(v4.LengthSquared(), 0.125f);
-            _playerInput.Look += vector4;
+            var lookDelta = lookSensitivity /
+                            frameDelta *
+                            new Vector2(0.0006f, -0.0006f) *
+                            v4 *
+                            MathUtils.Pow(v4.LengthSquared(), 0.125f);
+            _playerInput.Look += lookDelta;
         }
     }
 

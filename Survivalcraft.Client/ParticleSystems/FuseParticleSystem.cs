@@ -68,8 +68,8 @@ public class FuseParticleSystem : ParticleSystem<FuseParticleSystem.Particle>
 
     public override void Draw(Camera camera)
     {
-        var num = Vector3.Dot(_position - camera.ViewPosition, camera.ViewDirection);
-        if (num is <= -0.5f or > 32f || !(Vector3.DistanceSquared(_position, camera.ViewPosition) <= 1024f))
+        var viewDepth = Vector3.Dot(_position - camera.ViewPosition, camera.ViewDirection);
+        if (viewDepth is <= -0.5f or > 32f || !(Vector3.DistanceSquared(_position, camera.ViewPosition) <= 1024f))
         {
             return;
         }

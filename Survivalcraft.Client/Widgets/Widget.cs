@@ -422,12 +422,12 @@ public class Widget : IDisposable
 
     public void Arrange(Vector2 position, Vector2 parentActualSize)
     {
-        var num = _layoutTransform.M11 * _layoutTransform.M11;
-        var num2 = _layoutTransform.M12 * _layoutTransform.M12;
-        var num3 = _layoutTransform.M21 * _layoutTransform.M21;
-        var num4 = _layoutTransform.M22 * _layoutTransform.M22;
-        _actualSize.X = (num * parentActualSize.X + num3 * parentActualSize.Y) / (num + num3);
-        _actualSize.Y = (num2 * parentActualSize.X + num4 * parentActualSize.Y) / (num2 + num4);
+        var m11Squared = _layoutTransform.M11 * _layoutTransform.M11;
+        var m12Squared = _layoutTransform.M12 * _layoutTransform.M12;
+        var m21Squared = _layoutTransform.M21 * _layoutTransform.M21;
+        var m22Squared = _layoutTransform.M22 * _layoutTransform.M22;
+        _actualSize.X = (m11Squared * parentActualSize.X + m21Squared * parentActualSize.Y) / (m11Squared + m21Squared);
+        _actualSize.Y = (m12Squared * parentActualSize.X + m22Squared * parentActualSize.Y) / (m12Squared + m22Squared);
         _parentOffset = -TransformBoundsToParent(_actualSize).Min;
         GlobalColorTransform = ParentWidget != null
             ? ParentWidget.GlobalColorTransform * ColorTransform
@@ -583,35 +583,35 @@ public class Widget : IDisposable
 
     public BoundingRectangle TransformBoundsToParent(Vector2 size)
     {
-        var num = _layoutTransform.M11 * size.X;
-        var num2 = _layoutTransform.M21 * size.Y;
-        var x = num + num2;
-        var num3 = _layoutTransform.M12 * size.X;
-        var num4 = _layoutTransform.M22 * size.Y;
-        var x2 = num3 + num4;
-        var x3 = MathUtils.Min(0f, num, num2, x);
-        var x4 = MathUtils.Max(0f, num, num2, x);
-        var y = MathUtils.Min(0f, num3, num4, x2);
-        var y2 = MathUtils.Max(0f, num3, num4, x2);
+        var widthX = _layoutTransform.M11 * size.X;
+        var heightX = _layoutTransform.M21 * size.Y;
+        var x = widthX + heightX;
+        var widthY = _layoutTransform.M12 * size.X;
+        var heightY = _layoutTransform.M22 * size.Y;
+        var x2 = widthY + heightY;
+        var x3 = MathUtils.Min(0f, widthX, heightX, x);
+        var x4 = MathUtils.Max(0f, widthX, heightX, x);
+        var y = MathUtils.Min(0f, widthY, heightY, x2);
+        var y2 = MathUtils.Max(0f, widthY, heightY, x2);
         return new BoundingRectangle(x3, y, x4, y2);
     }
 
     public BoundingRectangle TransformBoundsToGlobal(Vector2 size)
     {
-        var num = _globalTransform.M11 * size.X;
-        var num2 = _globalTransform.M21 * size.Y;
-        var x = num + num2;
-        var num3 = _globalTransform.M12 * size.X;
-        var num4 = _globalTransform.M22 * size.Y;
-        var x2 = num3 + num4;
-        var num5 = MathUtils.Min(0f, num, num2, x);
-        var num6 = MathUtils.Max(0f, num, num2, x);
-        var num7 = MathUtils.Min(0f, num3, num4, x2);
+        var widthX = _globalTransform.M11 * size.X;
+        var heightX = _globalTransform.M21 * size.Y;
+        var x = widthX + heightX;
+        var widthY = _globalTransform.M12 * size.X;
+        var heightY = _globalTransform.M22 * size.Y;
+        var x2 = widthY + heightY;
+        var minX = MathUtils.Min(0f, widthX, heightX, x);
+        var maxX = MathUtils.Max(0f, widthX, heightX, x);
+        var minY = MathUtils.Min(0f, widthY, heightY, x2);
         return new BoundingRectangle(
-            y2: MathUtils.Max(0f, num3, num4, x2) + _globalTransform.M42,
-            x1: num5 + _globalTransform.M41,
-            y1: num7 + _globalTransform.M42,
-            x2: num6 + _globalTransform.M41
+            y2: MathUtils.Max(0f, widthY, heightY, x2) + _globalTransform.M42,
+            x1: minX + _globalTransform.M41,
+            y1: minY + _globalTransform.M42,
+            x2: maxX + _globalTransform.M41
         );
     }
 
@@ -643,9 +643,9 @@ public class Widget : IDisposable
         if (widget is ContainerWidget containerWidget)
         {
             var children = containerWidget.Children;
-            for (var num = children.Count - 1; num >= 0; num--)
+            for (var childIndex = children.Count - 1; childIndex >= 0; childIndex--)
             {
-                var widget2 = HitTestGlobal(children[num], point, predicate);
+                var widget2 = HitTestGlobal(children[childIndex], point, predicate);
                 if (widget2 != null)
                 {
                     return widget2;
@@ -679,13 +679,13 @@ public class Widget : IDisposable
         if (widget is ContainerWidget containerWidget)
         {
             var children = containerWidget.Children;
-            for (var num = children.Count - 1; num >= 0; num--)
+            for (var childIndex = children.Count - 1; childIndex >= 0; childIndex--)
             {
                 if (!widget.IsVisible || !widget.IsEnabled) { break; }
 
-                if (num < children.Count)
+                if (childIndex < children.Count)
                 {
-                    UpdateWidgetsHierarchy(children[num], ref isMouseCursorVisible);
+                    UpdateWidgetsHierarchy(children[childIndex], ref isMouseCursorVisible);
                 }
             }
         }
@@ -723,7 +723,7 @@ public class Widget : IDisposable
                 return;
             }
 
-            var flag = widget.GlobalBounds.Intersection(
+            var intersectsScissor = widget.GlobalBounds.Intersection(
                 new BoundingRectangle(
                     scissorRectangle.Left,
                     scissorRectangle.Top,
@@ -732,15 +732,15 @@ public class Widget : IDisposable
                 )
             );
             Rectangle? scissorRectangle2 = null;
-            if (widget.ClampToBounds && flag)
+            if (widget.ClampToBounds && intersectsScissor)
             {
                 scissorRectangle2 = scissorRectangle;
-                var num = (int)MathUtils.Floor(widget.GlobalBounds.Min.X - 0.5f);
-                var num2 = (int)MathUtils.Floor(widget.GlobalBounds.Min.Y - 0.5f);
-                var num3 = (int)MathUtils.Ceiling(widget.GlobalBounds.Max.X - 0.5f);
-                var num4 = (int)MathUtils.Ceiling(widget.GlobalBounds.Max.Y - 0.5f);
+                var clipLeft = (int)MathUtils.Floor(widget.GlobalBounds.Min.X - 0.5f);
+                var clipTop = (int)MathUtils.Floor(widget.GlobalBounds.Min.Y - 0.5f);
+                var clipRight = (int)MathUtils.Ceiling(widget.GlobalBounds.Max.X - 0.5f);
+                var clipBottom = (int)MathUtils.Ceiling(widget.GlobalBounds.Max.Y - 0.5f);
                 scissorRectangle = Rectangle.Intersection(
-                    new Rectangle(num, num2, num3 - num, num4 - num2),
+                    new Rectangle(clipLeft, clipTop, clipRight - clipLeft, clipBottom - clipTop),
                     scissorRectangle2.Value
                 );
                 var drawItemFromCache = GetDrawItemFromCache();
@@ -748,14 +748,14 @@ public class Widget : IDisposable
                 _drawItems.Add(drawItemFromCache);
             }
 
-            if (widget.IsDrawRequired && flag)
+            if (widget.IsDrawRequired && intersectsScissor)
             {
                 var drawItemFromCache2 = GetDrawItemFromCache();
                 drawItemFromCache2.Widget = widget;
                 _drawItems.Add(drawItemFromCache2);
             }
 
-            if (flag || !widget.ClampToBounds)
+            if (intersectsScissor || !widget.ClampToBounds)
             {
                 if (widget is ContainerWidget containerWidget)
                 {
@@ -766,7 +766,7 @@ public class Widget : IDisposable
                 }
             }
 
-            if (widget.IsOverdrawRequired && flag)
+            if (widget.IsOverdrawRequired && intersectsScissor)
             {
                 var drawItemFromCache3 = GetDrawItemFromCache();
                 drawItemFromCache3.Widget = widget;
@@ -809,7 +809,7 @@ public class Widget : IDisposable
         public void RenderDrawItems()
         {
             var scissorRectangle = Display.ScissorRectangle;
-            var num = 0;
+            var currentLayer = 0;
             foreach (var drawItem in _drawItems)
             {
                 if (_layersLimit >= 0 && drawItem.Layer > _layersLimit)
@@ -817,9 +817,9 @@ public class Widget : IDisposable
                     break;
                 }
 
-                if (drawItem.Layer != num)
+                if (drawItem.Layer != currentLayer)
                 {
-                    num = drawItem.Layer;
+                    currentLayer = drawItem.Layer;
                     PrimitivesRenderer3D.Flush(Matrix.Identity);
                     PrimitivesRenderer2D.Flush();
                 }

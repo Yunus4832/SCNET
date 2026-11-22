@@ -46,23 +46,23 @@ public class SubsystemRotBlockBehavior : SubsystemPollableBlockBehavior
             return;
         }
 
-        var num = Terrain.ExtractContents(value);
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var contents = Terrain.ExtractContents(value);
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
         var rotPeriod = block.GetRotPeriod(value);
         if (rotPeriod <= 0 || pollPass % rotPeriod != 0)
         {
             return;
         }
 
-        var num2 = block.GetDamage(value) + 1;
-        value = num2 > 1 ? block.GetDamageDestructionValue(value) : block.SetDamage(value, num2);
+        var newDamage = block.GetDamage(value) + 1;
+        value = newDamage > 1 ? block.GetDamageDestructionValue(value) : block.SetDamage(value, newDamage);
         SubsystemTerrain.ChangeCell(x, y, z, value);
     }
 
     public void ItemsScanned(ReadOnlyList<ScannedItemData> items)
     {
-        var num = (int)((_subsystemGameInfo.TotalElapsedGameTime - _lastRotTime) / RotPeriod);
-        if (num <= 0)
+        var elapsedPeriods = (int)((_subsystemGameInfo.TotalElapsedGameTime - _lastRotTime) / RotPeriod);
+        if (elapsedPeriods <= 0)
         {
             return;
         }
@@ -71,38 +71,38 @@ public class SubsystemRotBlockBehavior : SubsystemPollableBlockBehavior
         {
             foreach (var item in items)
             {
-                var num2 = Terrain.ExtractContents(item.Value);
-                var block = WorldContentBinding.For(Project).Catalog.Blocks[num2];
+                var contents = Terrain.ExtractContents(item.Value);
+                var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
                 var rotPeriod = block.GetRotPeriod(item.Value);
                 if (rotPeriod <= 0)
                 {
                     continue;
                 }
 
-                var num3 = block.GetDamage(item.Value);
-                for (var i = 0; i < num; i++)
+                var currentDamage = block.GetDamage(item.Value);
+                for (var i = 0; i < elapsedPeriods; i++)
                 {
-                    if (num3 > 1)
+                    if (currentDamage > 1)
                     {
                         break;
                     }
 
                     if ((i + _rotStep) % rotPeriod == 0)
                     {
-                        num3++;
+                        currentDamage++;
                     }
                 }
 
                 _subsystemItemsScanner.TryModifyItem(
                     item,
-                    num3 <= 1
-                        ? block.SetDamage(item.Value, num3)
+                    currentDamage <= 1
+                        ? block.SetDamage(item.Value, currentDamage)
                         : block.GetDamageDestructionValue(item.Value)
                 );
             }
         }
 
-        _rotStep += num;
-        _lastRotTime += num * 60f;
+        _rotStep += elapsedPeriods;
+        _lastRotTime += elapsedPeriods * 60f;
     }
 }

@@ -23,26 +23,26 @@ public class ComponentDispenser : ComponentInventoryBase
         );
         var direction = DispenserBlock.GetDirection(data);
         var mode = DispenserBlock.GetMode(data);
-        var num = 0;
+        var slotIndex = 0;
         int slotValue;
         while (true)
         {
-            if (num >= SlotsCount)
+            if (slotIndex >= SlotsCount)
             {
                 return;
             }
 
-            slotValue = GetSlotValue(num);
-            var slotCount = GetSlotCount(num);
+            slotValue = GetSlotValue(slotIndex);
+            var slotCount = GetSlotCount(slotIndex);
             if (slotValue != 0 && slotCount > 0)
             {
                 break;
             }
 
-            num++;
+            slotIndex++;
         }
 
-        var removed = RemoveSlotItems(num, 1);
+        var removed = RemoveSlotItems(slotIndex, 1);
         for (var i = 0; i < removed; i++) { DispenseItem(coordinates, direction, slotValue, mode); }
     }
 

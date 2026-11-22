@@ -53,12 +53,12 @@ public class FireworksBlock : Block
         var color = 0;
         while (color < 8)
         {
-            int num;
-            for (var altitude = 0; altitude < 2; altitude = num)
+            int nextVariant;
+            for (var altitude = 0; altitude < 2; altitude = nextVariant)
             {
-                for (var flickering = 0; flickering < 2; flickering = num)
+                for (var flickering = 0; flickering < 2; flickering = nextVariant)
                 {
-                    for (var shape = 0; shape < 8; shape = num)
+                    for (var shape = 0; shape < 8; shape = nextVariant)
                     {
                         yield return Terrain.MakeBlockValue(
                             BlockIndex,
@@ -67,17 +67,17 @@ public class FireworksBlock : Block
                                 color
                             )
                         );
-                        num = shape + 1;
+                        nextVariant = shape + 1;
                     }
 
-                    num = flickering + 1;
+                    nextVariant = flickering + 1;
                 }
 
-                num = altitude + 1;
+                nextVariant = altitude + 1;
             }
 
-            num = color + 1;
-            color = num;
+            nextVariant = color + 1;
+            color = nextVariant;
         }
     }
 
@@ -86,12 +86,12 @@ public class FireworksBlock : Block
         var shape = 0;
         while (shape < 8)
         {
-            int num;
-            for (var altitude = 0; altitude < 2; altitude = num)
+            int nextVariant;
+            for (var altitude = 0; altitude < 2; altitude = nextVariant)
             {
-                for (var flickering = 0; flickering < 2; flickering = num)
+                for (var flickering = 0; flickering < 2; flickering = nextVariant)
                 {
-                    for (var color = 0; color < 8; color = num)
+                    for (var color = 0; color < 8; color = nextVariant)
                     {
                         var craftingRecipe = new CraftingRecipe
                         {
@@ -187,17 +187,17 @@ public class FireworksBlock : Block
                                                         (color != 7 ? color : 10)
                                                         .ToString(CultureInfo.InvariantCulture);
                         yield return craftingRecipe;
-                        num = color + 1;
+                        nextVariant = color + 1;
                     }
 
-                    num = flickering + 1;
+                    nextVariant = flickering + 1;
                 }
 
-                num = altitude + 1;
+                nextVariant = altitude + 1;
             }
 
-            num = shape + 1;
-            shape = num;
+            nextVariant = shape + 1;
+            shape = nextVariant;
         }
     }
 

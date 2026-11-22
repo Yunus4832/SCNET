@@ -107,42 +107,42 @@ public class ArrowLineWidget : Widget
             if (j >= 1)
             {
                 var vector = list[j - 1];
-                var vector2 = list[j];
-                var vector3 = Vector2.Normalize(vector2 - vector);
-                var vector4 = vector3;
-                var v = vector3;
+                var segmentEnd = list[j];
+                var segmentDirection = Vector2.Normalize(segmentEnd - vector);
+                var previousDirection = segmentDirection;
+                var v = segmentDirection;
                 if (j >= 2)
                 {
-                    vector4 = Vector2.Normalize(vector - list[j - 2]);
+                    previousDirection = Vector2.Normalize(vector - list[j - 2]);
                 }
 
                 if (j <= list.Count - 2)
                 {
-                    v = Vector2.Normalize(list[j + 1] - vector2);
+                    v = Vector2.Normalize(list[j + 1] - segmentEnd);
                 }
 
-                var v2 = Vector2.Perpendicular(vector4);
-                var v3 = Vector2.Perpendicular(vector3);
-                var num = (float)Math.PI - Vector2.Angle(vector4, vector3);
-                var s = 0.5f * Width / MathUtils.Tan(num / 2f);
-                var v4 = 0.5f * v2 * Width - vector4 * s;
-                var num2 = (float)Math.PI - Vector2.Angle(vector3, v);
-                var s2 = 0.5f * Width / MathUtils.Tan(num2 / 2f);
-                var v5 = 0.5f * v3 * Width - vector3 * s2;
+                var v2 = Vector2.Perpendicular(previousDirection);
+                var v3 = Vector2.Perpendicular(segmentDirection);
+                var startCornerAngle = (float)Math.PI - Vector2.Angle(previousDirection, segmentDirection);
+                var s = 0.5f * Width / MathUtils.Tan(startCornerAngle / 2f);
+                var v4 = 0.5f * v2 * Width - previousDirection * s;
+                var endCornerAngle = (float)Math.PI - Vector2.Angle(segmentDirection, v);
+                var s2 = 0.5f * Width / MathUtils.Tan(endCornerAngle / 2f);
+                var v5 = 0.5f * v3 * Width - segmentDirection * s2;
                 _vertices.Add(vector + v4);
                 _vertices.Add(vector - v4);
-                _vertices.Add(vector2 - v5);
-                _vertices.Add(vector2 - v5);
-                _vertices.Add(vector2 + v5);
+                _vertices.Add(segmentEnd - v5);
+                _vertices.Add(segmentEnd - v5);
+                _vertices.Add(segmentEnd + v5);
                 _vertices.Add(vector + v4);
                 if (j != list.Count - 1)
                 {
                     continue;
                 }
 
-                _vertices.Add(vector2 - 0.5f * ArrowWidth * v3);
-                _vertices.Add(vector2 + 0.5f * ArrowWidth * v3);
-                _vertices.Add(vector2 + 0.5f * ArrowWidth * vector3);
+                _vertices.Add(segmentEnd - 0.5f * ArrowWidth * v3);
+                _vertices.Add(segmentEnd + 0.5f * ArrowWidth * v3);
+                _vertices.Add(segmentEnd + 0.5f * ArrowWidth * segmentDirection);
             }
         }
 

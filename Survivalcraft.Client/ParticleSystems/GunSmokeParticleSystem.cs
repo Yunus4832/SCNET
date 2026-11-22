@@ -30,30 +30,30 @@ public class GunSmokeParticleSystem : ParticleSystem<GunSmokeParticleSystem.Part
     public override bool Simulate(float dt)
     {
         _time += dt;
-        var num = MathUtils.Lerp(150f, 20f, MathUtils.Saturate(2f * _time / 0.5f));
-        var num2 = MathUtils.Pow(0.01f, dt);
+        var emissionRate = MathUtils.Lerp(150f, 20f, MathUtils.Saturate(2f * _time / 0.5f));
+        var velocityDamping = MathUtils.Pow(0.01f, dt);
         var s = MathUtils.Lerp(20f, 0f, MathUtils.Saturate(2f * _time / 0.5f));
         var v = new Vector3(2f, 2f, 1f);
         if (_time < 0.5f)
         {
-            _toGenerate += num * dt;
+            _toGenerate += emissionRate * dt;
         }
         else
         {
             _toGenerate = 0f;
         }
 
-        var flag = false;
+        var hasActiveParticles = false;
         foreach (var particle in Particles)
         {
             if (particle.IsActive)
             {
-                flag = true;
+                hasActiveParticles = true;
                 particle.Time += dt;
                 if (particle.Time <= particle.Duration)
                 {
                     particle.Position += particle.Velocity * dt;
-                    particle.Velocity *= num2;
+                    particle.Velocity *= velocityDamping;
                     particle.Velocity += v * dt;
                     particle.TextureSlot = (int)MathUtils.Min(9f * particle.Time / particle.Duration, 8f);
                     particle.Size = new Vector2(0.3f);
@@ -80,7 +80,7 @@ public class GunSmokeParticleSystem : ParticleSystem<GunSmokeParticleSystem.Part
         }
 
         _toGenerate = MathUtils.Remainder(_toGenerate, 1f);
-        return !flag && _time >= 0.5f;
+        return !hasActiveParticles && _time >= 0.5f;
     }
 
     public class Particle : Game.ParticleSystems.Particle

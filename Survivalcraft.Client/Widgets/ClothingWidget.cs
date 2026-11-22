@@ -63,13 +63,13 @@ public class ClothingWidget : CanvasWidget
             _clothingStack.Children.Add(inventorySlotWidget);
         }
 
-        var num = PlayerInventoryLayout.GetBackpackStartIndex(_componentCharacter.ComponentMiner.Inventory);
+        var backpackSlot = PlayerInventoryLayout.GetBackpackStartIndex(_componentCharacter.ComponentMiner.Inventory);
         for (var j = 0; j < _inventoryGrid.RowsCount; j++)
         {
             for (var k = 0; k < _inventoryGrid.ColumnsCount; k++)
             {
                 var inventorySlotWidget2 = new InventorySlotWidget();
-                inventorySlotWidget2.AssignInventorySlot(_componentCharacter.ComponentMiner.Inventory, num++);
+                inventorySlotWidget2.AssignInventorySlot(_componentCharacter.ComponentMiner.Inventory, backpackSlot++);
                 _inventoryGrid.Children.Add(inventorySlotWidget2);
                 _inventoryGrid.SetWidgetCell(inventorySlotWidget2, new Point2(k, j));
             }

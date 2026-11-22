@@ -79,18 +79,19 @@ public class ComponentPilot : Component, IUpdateable
                 var forward = _componentCreature.ComponentBody.Matrix.Forward;
                 var v = AvoidNearestBody(position, Destination.Value);
                 var vector = v - position;
-                var num = vector.LengthSquared();
-                var vector2 = new Vector2(v.X, v.Z) - new Vector2(position.X, position.Z);
-                var num2 = vector2.LengthSquared();
+                var distanceSquared = vector.LengthSquared();
+                var horizontalDelta = new Vector2(v.X, v.Z) - new Vector2(position.X, position.Z);
+                var horizontalDistanceSquared = horizontalDelta.LengthSquared();
                 var x = Vector2.Angle(forward.XZ, vector.XZ);
-                var num3 =
+                var stuckCheckInterval =
                     (_componentCreature.ComponentBody.CollisionVelocityChange * new Vector3(1f, 0f, 1f))
                     .LengthSquared() >
                     0f &&
                     _componentCreature.ComponentBody.StandingOnValue.HasValue
                         ? 0.15f
                         : 0.4f;
-                if (_subsystemTime.GameTime >= _lastStuckCheckTime + num3 || !_lastStuckCheckPosition.HasValue)
+                if (_subsystemTime.GameTime >= _lastStuckCheckTime + stuckCheckInterval ||
+                    !_lastStuckCheckPosition.HasValue)
                 {
                     _lastStuckCheckTime = _subsystemTime.GameTime;
                     if (MathUtils.Abs(x) > MathUtils.DegToRad(20f) ||
@@ -109,7 +110,7 @@ public class ComponentPilot : Component, IUpdateable
                 }
 
                 if (_componentCreature.ComponentLocomotion.FlySpeed > 0f &&
-                    (num > 9f ||
+                    (distanceSquared > 9f ||
                      vector.Y > 0.5f ||
                      vector.Y < -1.5f ||
                      (!_componentCreature.ComponentBody
@@ -119,7 +120,7 @@ public class ComponentPilot : Component, IUpdateable
                       0f)) &&
                     _componentCreature.ComponentBody.ImmersionFactor < 1f)
                 {
-                    var y = MathUtils.Min(0.08f * vector2.LengthSquared(), 12f);
+                    var y = MathUtils.Min(0.08f * horizontalDelta.LengthSquared(), 12f);
                     var v2 = v + new Vector3(0f, y, 0f);
                     var value2 = Speed * Vector3.Normalize(v2 - position);
                     value2.Y = MathUtils.Max(value2.Y, -0.5f);
@@ -139,7 +140,7 @@ public class ComponentPilot : Component, IUpdateable
                     if (IsTerrainSafeToGo(position, vector))
                     {
                         _turnOrder = new Vector2(MathUtils.Clamp(x, -1f, 1f), 0f);
-                        if (num2 > 1f)
+                        if (horizontalDistanceSquared > 1f)
                         {
                             _walkOrder = new Vector2(
                                 0f,
@@ -147,7 +148,7 @@ public class ComponentPilot : Component, IUpdateable
                             );
                             if (Speed >= 1f &&
                                 _componentCreature.ComponentLocomotion.InAirWalkFactor >= 1f &&
-                                num > 1f &&
+                                distanceSquared > 1f &&
                                 _random.Float(0f, 1f) < 0.05f)
                             {
                                 _jumpOrder = 1f;
@@ -155,7 +156,7 @@ public class ComponentPilot : Component, IUpdateable
                         }
                         else
                         {
-                            var x2 = Speed * MathUtils.Min(1f * MathUtils.Sqrt(num2), 1f);
+                            var x2 = Speed * MathUtils.Min(1f * MathUtils.Sqrt(horizontalDistanceSquared), 1f);
                             _walkOrder = new Vector2(
                                 0f,
                                 MathUtils.Lerp(x2, 0f, MathUtils.Saturate(2f * MathUtils.Abs(x)))
@@ -167,8 +168,9 @@ public class ComponentPilot : Component, IUpdateable
                         IsStuck = true;
                     }
 
-                    _componentCreature.ComponentBody.IsSmoothRiseEnabled = num2 >= 1f || vector.Y >= -0.1f;
-                    if (num2 < 1f && vector.Y is < -0.5f or > 1f)
+                    _componentCreature.ComponentBody.IsSmoothRiseEnabled =
+                        horizontalDistanceSquared >= 1f || vector.Y >= -0.1f;
+                    if (horizontalDistanceSquared < 1f && vector.Y is < -0.5f or > 1f)
                     {
                         if (vector.Y > 0f && _random.Float(0f, 1f) < 0.05f)
                         {
@@ -191,7 +193,9 @@ public class ComponentPilot : Component, IUpdateable
                     }
                 }
 
-                if (!IgnoreHeightDifference ? num <= Range * Range : num2 <= Range * Range)
+                if (!IgnoreHeightDifference
+                        ? distanceSquared <= Range * Range
+                        : horizontalDistanceSquared <= Range * Range)
                 {
                     if (RaycastDestination)
                     {
@@ -250,18 +254,18 @@ public class ComponentPilot : Component, IUpdateable
         ComponentBody? doNotAvoidBody
     )
     {
-        var flag = true;
+        var resetStuckState = true;
         if (Destination.HasValue && destination.HasValue)
         {
             var v = Vector3.Normalize(Destination.Value - _componentCreature.ComponentBody.Position);
             if (Vector3.Dot(Vector3.Normalize(destination.Value - _componentCreature.ComponentBody.Position), v) >
                 0.5f)
             {
-                flag = false;
+                resetStuckState = false;
             }
         }
 
-        if (flag)
+        if (resetStuckState)
         {
             IsStuck = false;
             _lastStuckCheckPosition = null;
@@ -306,11 +310,11 @@ public class ComponentPilot : Component, IUpdateable
                     continue;
                 }
 
-                for (var num = 0; num >= -2; num--)
+                for (var scanOffsetY = 0; scanOffsetY >= -2; scanOffsetY--)
                 {
                     var cellValue = _subsystemTerrain.Terrain.GetCellValue(
                         Terrain.ToCell(vector.X) + i,
-                        Terrain.ToCell(vector.Y) + num,
+                        Terrain.ToCell(vector.Y) + scanOffsetY,
                         Terrain.ToCell(vector.Z) + j
                     );
                     var block = WorldContentBinding.For(Project).Catalog
@@ -328,19 +332,19 @@ public class ComponentPilot : Component, IUpdateable
             }
         }
 
-        var vector2 = position +
-                      new Vector3(0f, 0.1f, 0f) +
-                      (direction.LengthSquared() < 1f
-                          ? new Vector3(direction.X, 0f, direction.Z)
-                          : 1f * Vector3.Normalize(new Vector3(direction.X, 0f, direction.Z)));
-        var flag = true;
-        var num2 = TakeRisks ? 7 : 5;
-        for (var num3 = 0; num3 >= -num2; num3--)
+        var probePosition = position +
+                            new Vector3(0f, 0.1f, 0f) +
+                            (direction.LengthSquared() < 1f
+                                ? new Vector3(direction.X, 0f, direction.Z)
+                                : 1f * Vector3.Normalize(new Vector3(direction.X, 0f, direction.Z)));
+        var missingSupport = true;
+        var maxDrop = TakeRisks ? 7 : 5;
+        for (var dropOffsetY = 0; dropOffsetY >= -maxDrop; dropOffsetY--)
         {
             var cellValue2 = _subsystemTerrain.Terrain.GetCellValue(
-                Terrain.ToCell(vector2.X),
-                Terrain.ToCell(vector2.Y) + num3,
-                Terrain.ToCell(vector2.Z)
+                Terrain.ToCell(probePosition.X),
+                Terrain.ToCell(probePosition.Y) + dropOffsetY,
+                Terrain.ToCell(probePosition.Z)
             );
             var block2 = WorldContentBinding.For(Project).Catalog
                 .Blocks[Terrain.ExtractContents(cellValue2)];
@@ -349,11 +353,11 @@ public class ComponentPilot : Component, IUpdateable
                 continue;
             }
 
-            flag = false;
+            missingSupport = false;
             break;
         }
 
-        return !flag;
+        return !missingSupport;
     }
 
     public ComponentBody? FindNearestBodyInFront(Vector3 position, Vector2 direction)
@@ -366,20 +370,20 @@ public class ComponentPilot : Component, IUpdateable
         }
 
         ComponentBody? result = null;
-        var num = float.MaxValue;
+        var nearestDistanceSquared = float.MaxValue;
         foreach (var nearbyBody in _nearbyBodies)
         {
             if (nearbyBody != _componentCreature.ComponentBody &&
                 !(MathUtils.Abs(nearbyBody.Position.Y - _componentCreature.ComponentBody.Position.Y) > 1.1f) &&
                 Vector2.Dot(nearbyBody.Position.XZ - position.XZ, direction) > 0f)
             {
-                var num2 = Vector2.DistanceSquared(nearbyBody.Position.XZ, position.XZ);
-                if (!(num2 < num))
+                var candidateDistanceSquared = Vector2.DistanceSquared(nearbyBody.Position.XZ, position.XZ);
+                if (!(candidateDistanceSquared < nearestDistanceSquared))
                 {
                     continue;
                 }
 
-                num = num2;
+                nearestDistanceSquared = candidateDistanceSquared;
                 result = nearbyBody;
             }
         }
@@ -396,18 +400,22 @@ public class ComponentPilot : Component, IUpdateable
             return destination;
         }
 
-        var num = 0.72f * (componentBody.BoxSize.X + _componentCreature.ComponentBody.BoxSize.X) + 0.5f;
+        var clearanceRadius = 0.72f * (componentBody.BoxSize.X + _componentCreature.ComponentBody.BoxSize.X) + 0.5f;
         var xZ = componentBody.Position.XZ;
         var v2 = Segment2.NearestPoint(new Segment2(position.XZ, destination.XZ), xZ) - xZ;
-        if (!(v2.LengthSquared() < num * num))
+        if (!(v2.LengthSquared() < clearanceRadius * clearanceRadius))
         {
             return destination;
         }
 
-        var num2 = v.Length();
-        var v3 = Vector2.Normalize(xZ + Vector2.Normalize(v2) * num - position.XZ);
-        return Vector2.Dot(v / num2, v3) > 0.5f
-            ? new Vector3(position.X + v3.X * num2, destination.Y, position.Z + v3.Y * num2)
+        var destinationDistance = v.Length();
+        var v3 = Vector2.Normalize(xZ + Vector2.Normalize(v2) * clearanceRadius - position.XZ);
+        return Vector2.Dot(v / destinationDistance, v3) > 0.5f
+            ? new Vector3(
+                position.X + v3.X * destinationDistance,
+                destination.Y,
+                position.Z + v3.Y * destinationDistance
+            )
             : destination;
     }
 

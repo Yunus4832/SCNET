@@ -73,12 +73,12 @@ public abstract class FenceGateBlock(string modelName, float pivotDistance)
             var rotation = GetRotation(i);
             var open = GetOpen(i);
             var rightHanded = GetRightHanded(i);
-            float num = !rightHanded ? 1 : -1;
+            float hingeMirrorScale = !rightHanded ? 1 : -1;
             var identity = Matrix.Identity;
-            identity *= Matrix.CreateScale(0f - num, 1f, 1f);
-            identity *= Matrix.CreateTranslation((0.5f - PivotDistance) * num, 0f, 0f) *
-                        Matrix.CreateRotationY(open ? num * (float)Math.PI / 2f : 0f) *
-                        Matrix.CreateTranslation((0f - (0.5f - PivotDistance)) * num, 0f, 0f);
+            identity *= Matrix.CreateScale(0f - hingeMirrorScale, 1f, 1f);
+            identity *= Matrix.CreateTranslation((0.5f - PivotDistance) * hingeMirrorScale, 0f, 0f) *
+                        Matrix.CreateRotationY(open ? hingeMirrorScale * (float)Math.PI / 2f : 0f) *
+                        Matrix.CreateTranslation((0f - (0.5f - PivotDistance)) * hingeMirrorScale, 0f, 0f);
             identity *= Matrix.CreateTranslation(0f, 0f, 0f) *
                         Matrix.CreateRotationY(rotation * (float)Math.PI / 2f) *
                         Matrix.CreateTranslation(0.5f, 0f, 0.5f);
@@ -114,8 +114,8 @@ public abstract class FenceGateBlock(string modelName, float pivotDistance)
         while (i < 16)
         {
             yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, i));
-            var num = i + 1;
-            i = num;
+            var nextColor = i + 1;
+            i = nextColor;
         }
     }
 
@@ -147,60 +147,68 @@ public abstract class FenceGateBlock(string modelName, float pivotDistance)
     )
     {
         var forward = eyeForward;
-        var num = Vector3.Dot(forward, Vector3.UnitZ);
-        var num2 = Vector3.Dot(forward, Vector3.UnitX);
-        var num3 = Vector3.Dot(forward, -Vector3.UnitZ);
-        var num4 = Vector3.Dot(forward, -Vector3.UnitX);
-        var num5 = 0;
-        if (num.CloseTo(MathUtils.Max(num, num2, num3, num4)))
+        var forwardDotPositiveZ = Vector3.Dot(forward, Vector3.UnitZ);
+        var forwardDotPositiveX = Vector3.Dot(forward, Vector3.UnitX);
+        var forwardDotNegativeZ = Vector3.Dot(forward, -Vector3.UnitZ);
+        var forwardDotNegativeX = Vector3.Dot(forward, -Vector3.UnitX);
+        var rotation = 0;
+        if (forwardDotPositiveZ.CloseTo(
+                MathUtils.Max(forwardDotPositiveZ, forwardDotPositiveX, forwardDotNegativeZ, forwardDotNegativeX)
+            ))
         {
-            num5 = 2;
+            rotation = 2;
         }
-        else if (num2.CloseTo(MathUtils.Max(num, num2, num3, num4)))
+        else if (forwardDotPositiveX.CloseTo(
+                     MathUtils.Max(forwardDotPositiveZ, forwardDotPositiveX, forwardDotNegativeZ, forwardDotNegativeX)
+                 ))
         {
-            num5 = 3;
+            rotation = 3;
         }
-        else if (num3.CloseTo(MathUtils.Max(num, num2, num3, num4)))
+        else if (forwardDotNegativeZ.CloseTo(
+                     MathUtils.Max(forwardDotPositiveZ, forwardDotPositiveX, forwardDotNegativeZ, forwardDotNegativeX)
+                 ))
         {
-            num5 = 0;
+            rotation = 0;
         }
-        else if (num4.CloseTo(MathUtils.Max(num, num2, num3, num4)))
+        else if (forwardDotNegativeX.CloseTo(
+                     MathUtils.Max(forwardDotPositiveZ, forwardDotPositiveX, forwardDotNegativeZ, forwardDotNegativeX)
+                 ))
         {
-            num5 = 1;
+            rotation = 1;
         }
 
         var point = CellFace.FaceToPoint3(raycastResult.CellFace.Face);
-        var num6 = raycastResult.CellFace.X + point.X;
+        var placementX = raycastResult.CellFace.X + point.X;
         var y = raycastResult.CellFace.Y + point.Y;
-        var num7 = raycastResult.CellFace.Z + point.Z;
-        var num8 = 0;
-        var num9 = 0;
-        switch (num5)
+        var placementZ = raycastResult.CellFace.Z + point.Z;
+        var sideOffsetX = 0;
+        var sideOffsetZ = 0;
+        switch (rotation)
         {
             case 0:
-                num8 = -1;
+                sideOffsetX = -1;
                 break;
             case 1:
-                num9 = 1;
+                sideOffsetZ = 1;
                 break;
             case 2:
-                num8 = 1;
+                sideOffsetX = 1;
                 break;
             default:
-                num9 = -1;
+                sideOffsetZ = -1;
                 break;
         }
 
-        var cellValue = subsystemTerrain.Terrain.GetCellValue(num6 + num8, y, num7 + num9);
-        var cellValue2 = subsystemTerrain.Terrain.GetCellValue(num6 - num8, y, num7 - num9);
+        var cellValue = subsystemTerrain.Terrain.GetCellValue(placementX + sideOffsetX, y, placementZ + sideOffsetZ);
+        var cellValue2 = subsystemTerrain.Terrain.GetCellValue(placementX - sideOffsetX, y, placementZ - sideOffsetZ);
         var block = Catalog.Blocks[Terrain.ExtractContents(cellValue)];
         var block2 = Catalog.Blocks[Terrain.ExtractContents(cellValue2)];
         var data = Terrain.ExtractData(cellValue);
         var data2 = Terrain.ExtractData(cellValue2);
         var data3 = SetRightHanded(
-            rightHanded: (block is FenceGateBlock && GetRotation(data) == num5) ||
-                         ((block2 is not FenceGateBlock || GetRotation(data2) != num5) && !block.Collidable),
-            data: SetOpen(SetRotation(Terrain.ExtractData(value), num5), false)
+            rightHanded: (block is FenceGateBlock && GetRotation(data) == rotation) ||
+                         ((block2 is not FenceGateBlock || GetRotation(data2) != rotation) && !block.Collidable),
+            data: SetOpen(SetRotation(Terrain.ExtractData(value), rotation), false)
         );
         BlockPlacementData result = default;
         result.Value = Terrain.ReplaceData(Terrain.ReplaceContents(0, BlockIndex), data3);
@@ -258,13 +266,13 @@ public abstract class FenceGateBlock(string modelName, float pivotDistance)
     public static int GetHingeFace(int data)
     {
         var rotation = GetRotation(data);
-        var num = rotation - 1 < 0 ? 3 : rotation - 1;
+        var previousFace = rotation - 1 < 0 ? 3 : rotation - 1;
         if (!GetRightHanded(data))
         {
-            num = CellFace.OppositeFace(num);
+            previousFace = CellFace.OppositeFace(previousFace);
         }
 
-        return num;
+        return previousFace;
     }
 
     public static int GetVariant(int data)

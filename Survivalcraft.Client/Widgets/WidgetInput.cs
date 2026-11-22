@@ -140,21 +140,21 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
             if (_useSoftMouseCursor)
             {
                 Vector2 vector;
-                Vector2 vector2;
+                Vector2 clipMax;
                 if (Widget != null)
                 {
                     vector = Widget.GlobalBounds.Min;
-                    vector2 = Widget.GlobalBounds.Max;
+                    clipMax = Widget.GlobalBounds.Max;
                 }
                 else
                 {
                     vector = Vector2.Zero;
-                    vector2 = new Vector2(Window.Size);
+                    clipMax = new Vector2(Window.Size);
                 }
 
                 _softMouseCursorPosition = new Vector2(
-                    MathUtils.Clamp(value.Value.X, vector.X, vector2.X - 1f),
-                    MathUtils.Clamp(value.Value.Y, vector.Y, vector2.Y - 1f)
+                    MathUtils.Clamp(value.Value.X, vector.X, clipMax.X - 1f),
+                    MathUtils.Clamp(value.Value.Y, vector.Y, clipMax.Y - 1f)
                 );
             }
             else
@@ -217,20 +217,20 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
         set
         {
             Vector2 vector;
-            Vector2 vector2;
+            Vector2 clipMax;
             if (Widget != null)
             {
                 vector = Widget.GlobalBounds.Min;
-                vector2 = Widget.GlobalBounds.Max;
+                clipMax = Widget.GlobalBounds.Max;
             }
             else
             {
                 vector = Vector2.Zero;
-                vector2 = new Vector2(Window.Size);
+                clipMax = new Vector2(Window.Size);
             }
 
-            value.X = MathUtils.Clamp(value.X, vector.X, vector2.X - 1f);
-            value.Y = MathUtils.Clamp(value.Y, vector.Y, vector2.Y - 1f);
+            value.X = MathUtils.Clamp(value.X, vector.X, clipMax.X - 1f);
+            value.Y = MathUtils.Clamp(value.Y, vector.Y, clipMax.Y - 1f);
             field = value;
         }
     }
@@ -354,16 +354,16 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
             return 0f;
         }
 
-        var num = 0f;
+        var triggerPosition = 0f;
         for (var i = 0; i < 4; i++)
         {
             if (((int)Devices & (8 << i)) != 0)
             {
-                num += GamePad.GetTriggerPosition(i, trigger, deadZone);
+                triggerPosition += GamePad.GetTriggerPosition(i, trigger, deadZone);
             }
         }
 
-        return MathUtils.Min(num, 1f);
+        return MathUtils.Min(triggerPosition, 1f);
     }
 
     public bool IsPadButtonDown(GamePadButton button)
@@ -927,10 +927,10 @@ public class WidgetInput(WidgetInputDevice devices = WidgetInputDevice.All)
             var controllerMatrix = VrManager.GetControllerMatrix(VrController.Right);
             var plane = new Plane(value.Translation, value.Translation + value.Right, value.Translation + value.Up);
             var ray = new Ray3(controllerMatrix.Translation, controllerMatrix.Forward);
-            var num = ray.Intersection(plane);
-            if (num.HasValue)
+            var hitDistance = ray.Intersection(plane);
+            if (hitDistance.HasValue)
             {
-                var v = ray.Position + num.Value * ray.Direction - value.Translation;
+                var v = ray.Position + hitDistance.Value * ray.Direction - value.Translation;
                 if (Widget != null)
                 {
                     var x = Vector3.Dot(v, Vector3.Normalize(value.Right)) / value.Right.Length() * Widget.ActualSize.X;

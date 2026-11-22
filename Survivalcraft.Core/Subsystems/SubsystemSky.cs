@@ -107,10 +107,10 @@ public class SubsystemSky : Subsystem, IUpdateable
         }
 
         var x = Terrain.ToCell(targetPosition.X);
-        var num3 = Terrain.ToCell(targetPosition.Y);
+        var strikeCellY = Terrain.ToCell(targetPosition.Y);
         var z = Terrain.ToCell(targetPosition.Z);
         float pressure = _random.Float(0f, 1f) < 0.2f ? 39 : 19;
-        Project.FindSubsystem<SubsystemExplosions>(true)!.AddExplosion(x, num3 + 1, z, pressure, false, true);
+        Project.FindSubsystem<SubsystemExplosions>(true)!.AddExplosion(x, strikeCellY + 1, z, pressure, false, true);
     }
 
     public override void Dispose() => LightningStrike = null;

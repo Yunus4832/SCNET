@@ -14,10 +14,10 @@ public class TerrainBrush
     public void Compile()
     {
         Cells = new Cell[_cellsDictionary.Values.Count];
-        var num = 0;
+        var writeIndex = 0;
         foreach (var value in _cellsDictionary.Values)
         {
-            Cells[num++] = value;
+            Cells[writeIndex++] = value;
         }
 
         Array.Sort(Cells);
@@ -37,19 +37,19 @@ public class TerrainBrush
 
     public int CountBox(int x, int y, int z, int sizeX, int sizeY, int sizeZ, Counter counter)
     {
-        var num = 0;
+        var sum = 0;
         for (var i = x; i < x + sizeX; i++)
         {
             for (var j = y; j < y + sizeY; j++)
             {
                 for (var k = z; k < z + sizeZ; k++)
                 {
-                    num += counter.Count(this, new Point3(i, j, k));
+                    sum += counter.Count(this, new Point3(i, j, k));
                 }
             }
         }
 
-        return num;
+        return sum;
     }
 
     public void Replace(int oldValue, int newValue)
@@ -74,12 +74,12 @@ public class TerrainBrush
     {
         min = Point3.Zero;
         max = Point3.Zero;
-        var flag = true;
+        var isFirstCell = true;
         foreach (var value in _cellsDictionary.Values)
         {
-            if (flag)
+            if (isFirstCell)
             {
-                flag = false;
+                isFirstCell = false;
                 min.X = max.X = value.X;
                 min.Y = max.Y = value.Y;
                 min.Z = max.Z = value.Z;
@@ -114,8 +114,8 @@ public class TerrainBrush
 
     public void AddCell(int x, int y, int z, Brush brush)
     {
-        var num = brush.Paint(this, new Point3(x, y, z));
-        if (!num.HasValue)
+        var paintValue = brush.Paint(this, new Point3(x, y, z));
+        if (!paintValue.HasValue)
         {
             return;
         }
@@ -126,7 +126,7 @@ public class TerrainBrush
             X = (sbyte)x,
             Y = (sbyte)y,
             Z = (sbyte)z,
-            Value = num.Value
+            Value = paintValue.Value
         };
         Cells = [];
     }
@@ -147,18 +147,18 @@ public class TerrainBrush
 
     public void AddRay(int x1, int y1, int z1, int x2, int y2, int z2, int sizeX, int sizeY, int sizeZ, Brush brush)
     {
-        var vector = new Vector3(x1, y1, z1) + new Vector3(0.5f);
-        var vector2 = new Vector3(x2, y2, z2) + new Vector3(0.5f);
-        var vector3 = 0.33f * Vector3.Normalize(vector2 - vector);
-        var num = (int)MathUtils.Round(3f * Vector3.Distance(vector, vector2));
-        var vector4 = vector;
-        for (var i = 0; i < num; i++)
+        var rayStart = new Vector3(x1, y1, z1) + new Vector3(0.5f);
+        var rayEnd = new Vector3(x2, y2, z2) + new Vector3(0.5f);
+        var step = 0.33f * Vector3.Normalize(rayEnd - rayStart);
+        var sampleCount = (int)MathUtils.Round(3f * Vector3.Distance(rayStart, rayEnd));
+        var samplePosition = rayStart;
+        for (var i = 0; i < sampleCount; i++)
         {
-            var x3 = Terrain.ToCell(vector4.X);
-            var y3 = Terrain.ToCell(vector4.Y);
-            var z3 = Terrain.ToCell(vector4.Z);
+            var x3 = Terrain.ToCell(samplePosition.X);
+            var y3 = Terrain.ToCell(samplePosition.Y);
+            var z3 = Terrain.ToCell(samplePosition.Z);
             AddBox(x3, y3, z3, sizeX, sizeY, sizeZ, brush);
-            vector4 += vector3;
+            samplePosition += step;
         }
     }
 
@@ -169,15 +169,15 @@ public class TerrainBrush
         var cells = Cells;
         foreach (var cell in cells)
         {
-            var num = cell.X + x;
-            var num2 = cell.Y + y;
-            var num3 = cell.Z + z;
-            if (num is < 0 or >= 16 || num2 is < 0 or >= 505 || num3 is < 0 or >= 16)
+            var localX = cell.X + x;
+            var cellY = cell.Y + y;
+            var localZ = cell.Z + z;
+            if (localX is < 0 or >= 16 || cellY is < 0 or >= 505 || localZ is < 0 or >= 16)
             {
                 continue;
             }
 
-            var index = TerrainChunk.CalculateCellIndex(num, num2, num3);
+            var index = TerrainChunk.CalculateCellIndex(localX, cellY, localZ);
             var cellValueFast = chunk.GetCellValueFast(index);
             if (onlyInValue == cellValueFast)
             {
@@ -203,18 +203,18 @@ public class TerrainBrush
         var cells = Cells;
         foreach (var cell in cells)
         {
-            var num = cell.X + x;
-            var num2 = cell.Y + y;
-            var num3 = cell.Z + z;
-            if (num < minX || num >= maxX || num2 < minY || num2 >= maxY || num3 < minZ || num3 >= maxZ)
+            var worldX = cell.X + x;
+            var worldY = cell.Y + y;
+            var worldZ = cell.Z + z;
+            if (worldX < minX || worldX >= maxX || worldY < minY || worldY >= maxY || worldZ < minZ || worldZ >= maxZ)
             {
                 continue;
             }
 
-            var cellValueFast = terrain.GetCellValueFast(num, num2, num3);
+            var cellValueFast = terrain.GetCellValueFast(worldX, worldY, worldZ);
             if (onlyInValue == cellValueFast)
             {
-                terrain.SetCellValueFast(num, num2, num3, cell.Value);
+                terrain.SetCellValueFast(worldX, worldY, worldZ, cell.Value);
             }
         }
     }
@@ -227,24 +227,24 @@ public class TerrainBrush
         var cells = Cells;
         foreach (var cell in cells)
         {
-            var num = cell.X + x;
-            var num2 = cell.Y + y;
-            var num3 = cell.Z + z;
-            if (num < 0 || num >= 16 || num2 < 0 || num2 >= 505 || num3 < 0 || num3 >= 16)
+            var localX = cell.X + x;
+            var cellY = cell.Y + y;
+            var localZ = cell.Z + z;
+            if (localX < 0 || localX >= 16 || cellY < 0 || cellY >= 505 || localZ < 0 || localZ >= 16)
             {
                 continue;
             }
 
-            var num4 = num + chunk.Origin.X;
-            var num5 = num3 + chunk.Origin.Y;
-            if (chunk.GetCellContentsFast(num, num2, num3) != 18 &&
-                terrain.GetCellContents(num4 - 1, num2, num5) != 18 &&
-                terrain.GetCellContents(num4 + 1, num2, num5) != 18 &&
-                terrain.GetCellContents(num4, num2, num5 - 1) != 18 &&
-                terrain.GetCellContents(num4, num2, num5 + 1) != 18 &&
-                chunk.GetCellContentsFast(num, num2 + 1, num3) != 18)
+            var worldX = localX + chunk.Origin.X;
+            var worldZ = localZ + chunk.Origin.Y;
+            if (chunk.GetCellContentsFast(localX, cellY, localZ) != 18 &&
+                terrain.GetCellContents(worldX - 1, cellY, worldZ) != 18 &&
+                terrain.GetCellContents(worldX + 1, cellY, worldZ) != 18 &&
+                terrain.GetCellContents(worldX, cellY, worldZ - 1) != 18 &&
+                terrain.GetCellContents(worldX, cellY, worldZ + 1) != 18 &&
+                chunk.GetCellContentsFast(localX, cellY + 1, localZ) != 18)
             {
-                chunk.SetCellValueFast(num, num2, num3, cell.Value);
+                chunk.SetCellValueFast(localX, cellY, localZ, cell.Value);
             }
         }
     }
@@ -265,23 +265,23 @@ public class TerrainBrush
         var cells = Cells;
         foreach (var cell in cells)
         {
-            var num = cell.X + x;
-            var num2 = cell.Y + y;
-            var num3 = cell.Z + z;
-            if (num >= minX &&
-                num < maxX &&
-                num2 >= minY &&
-                num2 < maxY &&
-                num3 >= minZ &&
-                num3 < maxZ &&
-                terrain.GetCellContentsFast(num, num2, num3) != 18 &&
-                terrain.GetCellContents(num - 1, num2, num3) != 18 &&
-                terrain.GetCellContents(num + 1, num2, num3) != 18 &&
-                terrain.GetCellContents(num, num2, num3 - 1) != 18 &&
-                terrain.GetCellContents(num, num2, num3 + 1) != 18 &&
-                terrain.GetCellContentsFast(num, num2 + 1, num3) != 18)
+            var worldX = cell.X + x;
+            var worldY = cell.Y + y;
+            var worldZ = cell.Z + z;
+            if (worldX >= minX &&
+                worldX < maxX &&
+                worldY >= minY &&
+                worldY < maxY &&
+                worldZ >= minZ &&
+                worldZ < maxZ &&
+                terrain.GetCellContentsFast(worldX, worldY, worldZ) != 18 &&
+                terrain.GetCellContents(worldX - 1, worldY, worldZ) != 18 &&
+                terrain.GetCellContents(worldX + 1, worldY, worldZ) != 18 &&
+                terrain.GetCellContents(worldX, worldY, worldZ - 1) != 18 &&
+                terrain.GetCellContents(worldX, worldY, worldZ + 1) != 18 &&
+                terrain.GetCellContentsFast(worldX, worldY + 1, worldZ) != 18)
             {
-                terrain.SetCellValueFast(num, num2, num3, cell.Value);
+                terrain.SetCellValueFast(worldX, worldY, worldZ, cell.Value);
             }
         }
     }

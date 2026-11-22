@@ -36,7 +36,7 @@ public class FireParticleSystem : ParticleSystem<FireParticleSystem.Particle>
     public override bool Simulate(float dt)
     {
         _age += dt;
-        var flag = false;
+        var hasActiveParticles = false;
         if (_visible || _age < 2f)
         {
             _toGenerate += IsStopped ? 0f : 5f * dt;
@@ -44,7 +44,7 @@ public class FireParticleSystem : ParticleSystem<FireParticleSystem.Particle>
             {
                 if (particle.IsActive)
                 {
-                    flag = true;
+                    hasActiveParticles = true;
                     particle.Time += dt;
                     particle.TimeToLive -= dt;
                     if (particle.TimeToLive > 0f)
@@ -85,7 +85,7 @@ public class FireParticleSystem : ParticleSystem<FireParticleSystem.Particle>
         _visible = false;
         if (IsStopped)
         {
-            return !flag;
+            return !hasActiveParticles;
         }
 
         return false;
@@ -93,9 +93,9 @@ public class FireParticleSystem : ParticleSystem<FireParticleSystem.Particle>
 
     public override void Draw(Camera camera)
     {
-        var num = Vector3.Dot(_position - camera.ViewPosition, camera.ViewDirection);
-        if (!(num > -0.5f) ||
-            !(num <= _maxVisibilityDistance) ||
+        var viewDepth = Vector3.Dot(_position - camera.ViewPosition, camera.ViewDirection);
+        if (!(viewDepth > -0.5f) ||
+            !(viewDepth <= _maxVisibilityDistance) ||
             !(Vector3.DistanceSquared(_position, camera.ViewPosition) <=
               _maxVisibilityDistance * _maxVisibilityDistance))
         {

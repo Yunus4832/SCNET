@@ -38,9 +38,9 @@ public partial class TerrainContentsGenerator
         }
 
         var x = chunk.Origin.X;
-        var num = x + 16;
+        var chunkEndX = x + 16;
         var y = chunk.Origin.Y;
-        var num2 = y + 16;
+        var chunkEndZ = y + 16;
         var x2 = chunk.Coords.X;
         var y2 = chunk.Coords.Y;
         for (var i = x2; i <= x2; i++)
@@ -49,102 +49,102 @@ public partial class TerrainContentsGenerator
             {
                 var random = new Random(seed + i + 3943 * j);
                 var humidity = CalculateHumidity(i * 16, j * 16);
-                var num3 = CalculateTemperature(i * 16, j * 16);
-                var num4 = MathUtils.Saturate(
+                var temperature = CalculateTemperature(i * 16, j * 16);
+                var logDensity = MathUtils.Saturate(
                     (SimplexNoise.OctavedNoise(i, j, 0.1f, 2, 2f, 0.5f) - 0.25f) / 0.2f +
                     (random.Bool(0.25f) ? 0.5f : 0f)
                 );
-                var num5 = 0;
-                if (num4 > 0.9f)
+                var targetCount = 0;
+                if (logDensity > 0.9f)
                 {
-                    num5 = random.Int(1, 2);
+                    targetCount = random.Int(1, 2);
                 }
-                else if (num4 > 0.5f)
+                else if (logDensity > 0.5f)
                 {
-                    num5 = random.Int(0, 1);
+                    targetCount = random.Int(0, 1);
                 }
 
-                var num6 = 0;
+                var placedCount = 0;
                 for (var k = 0; k < 16; k++)
                 {
-                    if (num6 >= num5)
+                    if (placedCount >= targetCount)
                     {
                         break;
                     }
 
-                    var num7 = i * 16 + random.Int(0, 15);
-                    var num8 = j * 16 + random.Int(0, 15);
-                    var num9 = _terrain.CalculateTopmostCellHeight(num7, num8);
-                    if (num9 < 66)
+                    var startX = i * 16 + random.Int(0, 15);
+                    var startZ = j * 16 + random.Int(0, 15);
+                    var placementY = _terrain.CalculateTopmostCellHeight(startX, startZ);
+                    if (placementY < 66)
                     {
                         continue;
                     }
 
-                    var cellContentsFast = _terrain.GetCellContentsFast(num7, num9, num8);
+                    var cellContentsFast = _terrain.GetCellContentsFast(startX, placementY, startZ);
                     if (cellContentsFast != 2 && cellContentsFast != 8)
                     {
                         continue;
                     }
 
-                    num9++;
-                    var num10 = random.Int(3, 7);
+                    placementY++;
+                    var logLength = random.Int(3, 7);
                     var point = CellFace.FaceToPoint3(random.Int(0, 3));
-                    if (point.X < 0 && num7 - num10 + 1 < 0)
+                    if (point.X < 0 && startX - logLength + 1 < 0)
                     {
                         point.X *= -1;
                     }
 
-                    if (point.X > 0 && num7 + num10 - 1 > 15)
+                    if (point.X > 0 && startX + logLength - 1 > 15)
                     {
                         point.X *= -1;
                     }
 
-                    if (point.Z < 0 && num8 - num10 + 1 < 0)
+                    if (point.Z < 0 && startZ - logLength + 1 < 0)
                     {
                         point.Z *= -1;
                     }
 
-                    if (point.Z > 0 && num8 + num10 - 1 > 15)
+                    if (point.Z > 0 && startZ + logLength - 1 > 15)
                     {
                         point.Z *= -1;
                     }
 
-                    var flag = true;
-                    var flag2 = false;
-                    var flag3 = false;
-                    for (var l = 0; l < num10; l++)
+                    var pathClear = true;
+                    var firstHalfSupported = false;
+                    var secondHalfSupported = false;
+                    for (var l = 0; l < logLength; l++)
                     {
-                        var num11 = num7 + point.X * l;
-                        var num12 = num8 + point.Z * l;
-                        if (num11 < x + 1 ||
-                            num11 >= num - 1 ||
-                            num12 < y + 1 ||
-                            num12 >= num2 - 1 ||
+                        var testX = startX + point.X * l;
+                        var testZ = startZ + point.Z * l;
+                        if (testX < x + 1 ||
+                            testX >= chunkEndX - 1 ||
+                            testZ < y + 1 ||
+                            testZ >= chunkEndZ - 1 ||
                             _subsystemTerrain.Catalog
-                                .Blocks[_terrain.GetCellContentsFast(num11, num9, num12)].Collidable)
+                                .Blocks[_terrain.GetCellContentsFast(testX, placementY, testZ)].Collidable)
                         {
-                            flag = false;
+                            pathClear = false;
                             break;
                         }
 
                         if (!_subsystemTerrain.Catalog
-                                .Blocks[_terrain.GetCellContentsFast(num11, num9 - 1, num12)].Collidable)
+                                .Blocks[_terrain.GetCellContentsFast(testX, placementY - 1, testZ)].Collidable)
                         {
                             continue;
                         }
 
-                        if (l <= MathUtils.Max(num10 / 2, 0))
+                        if (l <= MathUtils.Max(logLength / 2, 0))
                         {
-                            flag2 = true;
+                            firstHalfSupported = true;
                         }
 
-                        if (l >= MathUtils.Min(num10 / 2 + 1, num10 - 1))
+                        if (l >= MathUtils.Min(logLength / 2 + 1, logLength - 1))
                         {
-                            flag3 = true;
+                            secondHalfSupported = true;
                         }
                     }
 
-                    if (!(flag && flag2 && flag3))
+                    if (!(pathClear && firstHalfSupported && secondHalfSupported))
                     {
                         continue;
                     }
@@ -152,9 +152,9 @@ public partial class TerrainContentsGenerator
                     var point2 = point.X != 0 ? new Point3(0, 0, 1) : new Point3(1, 0, 0);
                     var treeType = PlantsManager.GenerateRandomTreeType(
                         random,
-                        num3 + SubsystemWeather.GetTemperatureAdjustmentAtHeight(num9),
+                        temperature + SubsystemWeather.GetTemperatureAdjustmentAtHeight(placementY),
                         humidity,
-                        num9,
+                        placementY,
                         2f
                     );
                     if (treeType.HasValue)
@@ -165,59 +165,69 @@ public partial class TerrainContentsGenerator
                             WoodBlock.SetCutFace(Terrain.ExtractData(treeTrunkValue), point.X != 0 ? 1 : 0)
                         );
                         var treeLeavesValue = PlantsManager.GetTreeLeavesValue(treeType.Value);
-                        for (var m = 0; m < num10; m++)
+                        for (var m = 0; m < logLength; m++)
                         {
-                            var num13 = num7 + point.X * m;
-                            var num14 = num8 + point.Z * m;
-                            _terrain.SetCellValueFast(num13, num9, num14, treeTrunkValue);
-                            if (m <= num10 / 2)
+                            var logX = startX + point.X * m;
+                            var logZ = startZ + point.Z * m;
+                            _terrain.SetCellValueFast(logX, placementY, logZ, treeTrunkValue);
+                            if (m <= logLength / 2)
                             {
                                 continue;
                             }
 
                             if (random.Bool(0.5f) &&
                                 !_subsystemTerrain.Catalog
-                                    .Blocks[_terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
+                                    .Blocks[_terrain.GetCellContentsFast(logX + point2.X, placementY, logZ + point2.Z)]
                                     .Collidable)
                             {
-                                _terrain.SetCellValueFast(num13 + point2.X, num9, num14 + point2.Z, treeLeavesValue);
+                                _terrain.SetCellValueFast(
+                                    logX + point2.X,
+                                    placementY,
+                                    logZ + point2.Z,
+                                    treeLeavesValue
+                                );
                             }
 
                             if (random.Bool(0.05f) &&
                                 !_subsystemTerrain.Catalog
-                                    .Blocks[_terrain.GetCellContentsFast(num13 + point2.X, num9, num14 + point2.Z)]
+                                    .Blocks[_terrain.GetCellContentsFast(logX + point2.X, placementY, logZ + point2.Z)]
                                     .Collidable)
                             {
-                                _terrain.SetCellValueFast(num13 + point2.X, num9, num14 + point2.Z, treeTrunkValue);
+                                _terrain.SetCellValueFast(logX + point2.X, placementY, logZ + point2.Z, treeTrunkValue);
                             }
 
                             if (random.Bool(0.5f) &&
                                 !_subsystemTerrain.Catalog
-                                    .Blocks[_terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
+                                    .Blocks[_terrain.GetCellContentsFast(logX - point2.X, placementY, logZ - point2.Z)]
                                     .Collidable)
                             {
-                                _terrain.SetCellValueFast(num13 - point2.X, num9, num14 - point2.Z, treeLeavesValue);
+                                _terrain.SetCellValueFast(
+                                    logX - point2.X,
+                                    placementY,
+                                    logZ - point2.Z,
+                                    treeLeavesValue
+                                );
                             }
 
                             if (random.Bool(0.05f) &&
                                 !_subsystemTerrain.Catalog
-                                    .Blocks[_terrain.GetCellContentsFast(num13 - point2.X, num9, num14 - point2.Z)]
+                                    .Blocks[_terrain.GetCellContentsFast(logX - point2.X, placementY, logZ - point2.Z)]
                                     .Collidable)
                             {
-                                _terrain.SetCellValueFast(num13 - point2.X, num9, num14 - point2.Z, treeTrunkValue);
+                                _terrain.SetCellValueFast(logX - point2.X, placementY, logZ - point2.Z, treeTrunkValue);
                             }
 
                             if (random.Bool(0.5f) &&
                                 !_subsystemTerrain.Catalog
-                                    .Blocks[_terrain.GetCellContentsFast(num13, num9 + 1, num14)]
+                                    .Blocks[_terrain.GetCellContentsFast(logX, placementY + 1, logZ)]
                                     .Collidable)
                             {
-                                _terrain.SetCellValueFast(num13, num9 + 1, num14, treeLeavesValue);
+                                _terrain.SetCellValueFast(logX, placementY + 1, logZ, treeLeavesValue);
                             }
                         }
                     }
 
-                    num6++;
+                    placedCount++;
                 }
             }
         }

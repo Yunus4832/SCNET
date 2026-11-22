@@ -86,26 +86,26 @@ internal class PeekStream : Stream
             throw new ArgumentOutOfRangeException(nameof(count));
         }
 
-        var num = 0;
+        var bytesRead = 0;
         if (_position < _end)
         {
-            var num2 = MathUtils.Min(_end - (int)_position, count);
-            Array.Copy(_buffer, (int)_position, buffer, offset, num2);
-            _position += num2;
-            offset += num2;
-            count -= num2;
-            num += num2;
+            var bufferedBytes = MathUtils.Min(_end - (int)_position, count);
+            Array.Copy(_buffer, (int)_position, buffer, offset, bufferedBytes);
+            _position += bufferedBytes;
+            offset += bufferedBytes;
+            count -= bufferedBytes;
+            bytesRead += bufferedBytes;
         }
 
         if (count <= 0)
         {
-            return num;
+            return bytesRead;
         }
 
-        num += _stream.Read(buffer, offset, count);
-        _position += num;
+        bytesRead += _stream.Read(buffer, offset, count);
+        _position += bytesRead;
 
-        return num;
+        return bytesRead;
     }
 
     public override void Write(byte[] buffer, int offset, int count)
@@ -120,13 +120,13 @@ internal class PeekStream : Stream
             return _buffer[_position++];
         }
 
-        var num = _stream.ReadByte();
-        if (num >= 0)
+        var nextByte = _stream.ReadByte();
+        if (nextByte >= 0)
         {
             _position++;
         }
 
-        return num;
+        return nextByte;
     }
 
     public override void Flush()

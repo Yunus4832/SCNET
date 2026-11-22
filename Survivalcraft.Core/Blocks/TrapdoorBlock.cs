@@ -96,16 +96,36 @@ public abstract class TrapdoorBlock(string modelName) : Block, IElectricElementB
         else
         {
             var forward = eyeForward;
-            var num = Vector3.Dot(forward, Vector3.UnitZ);
-            var num2 = Vector3.Dot(forward, Vector3.UnitX);
-            var num3 = Vector3.Dot(forward, -Vector3.UnitZ);
-            var num4 = Vector3.Dot(forward, -Vector3.UnitX);
-            rotation = num.CloseTo(MathUtils.Max(num, num2, num3, num4))
+            var forwardDotPositiveZ = Vector3.Dot(forward, Vector3.UnitZ);
+            var forwardDotPositiveX = Vector3.Dot(forward, Vector3.UnitX);
+            var forwardDotNegativeZ = Vector3.Dot(forward, -Vector3.UnitZ);
+            var forwardDotNegativeX = Vector3.Dot(forward, -Vector3.UnitX);
+            rotation = forwardDotPositiveZ.CloseTo(
+                MathUtils.Max(forwardDotPositiveZ, forwardDotPositiveX, forwardDotNegativeZ, forwardDotNegativeX)
+            )
                 ? 2
-                : num2.CloseTo(MathUtils.Max(num, num2, num3, num4))
+                : forwardDotPositiveX.CloseTo(
+                    MathUtils.Max(forwardDotPositiveZ, forwardDotPositiveX, forwardDotNegativeZ, forwardDotNegativeX)
+                )
                     ? 3
-                    : num3.CloseTo(MathUtils.Max(num, num2, num3, num4))
-                        ? num4.CloseTo(MathUtils.Max(num, num2, num3, num4)) ? 1 : 0
+                    : forwardDotNegativeZ.CloseTo(
+                        MathUtils.Max(
+                            forwardDotPositiveZ,
+                            forwardDotPositiveX,
+                            forwardDotNegativeZ,
+                            forwardDotNegativeX
+                        )
+                    )
+                        ? forwardDotNegativeX.CloseTo(
+                            MathUtils.Max(
+                                forwardDotPositiveZ,
+                                forwardDotPositiveX,
+                                forwardDotNegativeZ,
+                                forwardDotNegativeX
+                            )
+                        )
+                            ? 1
+                            : 0
                         : 0;
             upsideDown = raycastResult.CellFace.Face == 5;
         }
@@ -119,9 +139,9 @@ public abstract class TrapdoorBlock(string modelName) : Block, IElectricElementB
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = Terrain.ExtractData(value);
-        return num < CollisionBoxesByData.Length
-            ? CollisionBoxesByData[num]
+        var blockData = Terrain.ExtractData(value);
+        return blockData < CollisionBoxesByData.Length
+            ? CollisionBoxesByData[blockData]
             : base.GetCustomCollisionBoxes(terrain, value);
     }
 

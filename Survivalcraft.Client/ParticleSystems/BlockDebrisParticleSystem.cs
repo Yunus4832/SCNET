@@ -25,16 +25,16 @@ public class BlockDebrisParticleSystem : ParticleSystem<BlockDebrisParticleSyste
         SetLightOrigin(terrain, position);
         TextureSlotsCount = 32;
         color.A = 255;
-        var num5 = MathUtils.Sqrt(strength);
+        var strengthScale = MathUtils.Sqrt(strength);
         foreach (var obj in Particles)
         {
             obj.IsActive = true;
             var vector = new Vector3(_random.Float(-1f, 1f), _random.Float(-1f, 1f), _random.Float(-1f, 1f));
             obj.Position = position + strength * 0.45f * vector;
             obj.Color = Color.MultiplyColorOnly(color, _random.Float(0.7f, 1f));
-            obj.Size = num5 * scale * new Vector2(_random.Float(0.05f, 0.06f));
-            obj.TimeToLive = num5 * _random.Float(1f, 3f);
-            obj.Velocity = num5 *
+            obj.Size = strengthScale * scale * new Vector2(_random.Float(0.05f, 0.06f));
+            obj.TimeToLive = strengthScale * _random.Float(1f, 3f);
+            obj.Velocity = strengthScale *
                            2f *
                            (vector + new Vector3(_random.Float(-0.2f, 0.2f), 0.6f, _random.Float(-0.2f, 0.2f)));
             obj.TextureSlot = textureSlot % 16 * 2 +
@@ -46,8 +46,8 @@ public class BlockDebrisParticleSystem : ParticleSystem<BlockDebrisParticleSyste
     public override bool Simulate(float dt)
     {
         dt = MathUtils.Clamp(dt, 0f, 0.1f);
-        var num = MathUtils.Pow(0.1f, dt);
-        var flag = false;
+        var velocityDamping = MathUtils.Pow(0.1f, dt);
+        var hasActiveParticles = false;
         foreach (var particle in Particles)
         {
             if (!particle.IsActive)
@@ -55,7 +55,7 @@ public class BlockDebrisParticleSystem : ParticleSystem<BlockDebrisParticleSyste
                 continue;
             }
 
-            flag = true;
+            hasActiveParticles = true;
             particle.TimeToLive -= dt;
             if (particle.TimeToLive > 0f)
             {
@@ -91,7 +91,7 @@ public class BlockDebrisParticleSystem : ParticleSystem<BlockDebrisParticleSyste
 
                 particle.Position = vector;
                 particle.Velocity.Y += -9.81f * dt;
-                particle.Velocity *= num;
+                particle.Velocity *= velocityDamping;
                 particle.Color *= MathUtils.Saturate(particle.TimeToLive);
             }
             else
@@ -100,7 +100,7 @@ public class BlockDebrisParticleSystem : ParticleSystem<BlockDebrisParticleSyste
             }
         }
 
-        return !flag;
+        return !hasActiveParticles;
     }
 
     public class Particle : Game.ParticleSystems.Particle

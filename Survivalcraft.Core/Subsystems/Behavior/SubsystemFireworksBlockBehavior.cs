@@ -70,16 +70,16 @@ public class SubsystemFireworksBlockBehavior : SubsystemBlockBehavior, IUpdateab
         }
 
         _newYearCelebrationTimeRemaining -= dt;
-        var num = _newYearCelebrationTimeRemaining > 10f
+        var launchRate = _newYearCelebrationTimeRemaining > 10f
             ? MathUtils.Lerp(1f, 7f, 0.5f * MathUtils.Sin(0.25f * _newYearCelebrationTimeRemaining) + 0.5f)
             : 20f;
-        if (_random.Float(0f, 1f) < num * dt)
+        if (_random.Float(0f, 1f) < launchRate * dt)
         {
             var vector = _random.Vector2(35f, 50f);
-            var vector2 = componentCharacter.ComponentBody.Position + new Vector3(vector.X, 0f, vector.Y);
+            var launchPosition = componentCharacter.ComponentBody.Position + new Vector3(vector.X, 0f, vector.Y);
             var terrainRaycastResult = _subsystemTerrain.Raycast(
-                new Vector3(vector2.X, 120f, vector2.Z),
-                new Vector3(vector2.X, 40f, vector2.Z),
+                new Vector3(launchPosition.X, 120f, launchPosition.Z),
+                new Vector3(launchPosition.X, 40f, launchPosition.Z),
                 false,
                 true,
                 null
@@ -152,7 +152,7 @@ public class SubsystemFireworksBlockBehavior : SubsystemBlockBehavior, IUpdateab
         if (!WorldRuntimeContext.For(Project).IsAuthority) { return; }
 
         var data = Terrain.ExtractData(projectile.Value);
-        var num = FireworksBlock.GetAltitude(data) == 0 ? 0.8f : 1.3f;
+        var flightDuration = FireworksBlock.GetAltitude(data) == 0 ? 0.8f : 1.3f;
         var pitch = _random.Float(-0.2f, 0.2f);
         _subsystemProjectiles.PublishFireworksEffect(
             ProjectilePackage.EffectType.FireworksWhoosh,
@@ -162,7 +162,7 @@ public class SubsystemFireworksBlockBehavior : SubsystemBlockBehavior, IUpdateab
         );
         _subsystemNoise.MakeNoise(projectile.Position, 1f, 10f);
         _subsystemTime.QueueGameTimeDelayedExecution(
-            _subsystemTime.GameTime + num,
+            _subsystemTime.GameTime + flightDuration,
             delegate
             {
                 if (_disposed || !WorldRuntimeContext.IsProjectActive(Project) || projectile.ToRemove)

@@ -32,15 +32,15 @@ public class PistonHeadBlockPresentation(PistonHeadBlock block, BlockPresentatio
         int z
     )
     {
-        var num = Terrain.ExtractData(value);
-        if (num < BlockMeshesByData.Length && BlockMeshesByData[num] != null)
+        var meshIndex = Terrain.ExtractData(value);
+        if (meshIndex < BlockMeshesByData.Length && BlockMeshesByData[meshIndex] != null)
         {
             generator.GenerateShadedMeshVertices(
                 this,
                 x,
                 y,
                 z,
-                BlockMeshesByData[num],
+                BlockMeshesByData[meshIndex],
                 Color.White,
                 null,
                 [],
@@ -72,7 +72,7 @@ public class PistonHeadBlockPresentation(PistonHeadBlock block, BlockPresentatio
             {
                 for (var j = 0; j < 6; j++)
                 {
-                    var num = SetFace(SetMode(SetIsShaft(0, i != 0), pistonMode), j);
+                    var meshIndex = SetFace(SetMode(SetIsShaft(0, i != 0), pistonMode), j);
                     var m = j < 4
                         ? Matrix.CreateTranslation(0f, -0.5f, 0f) *
                           Matrix.CreateRotationY(j * (float)Math.PI / 2f + (float)Math.PI) *
@@ -84,8 +84,8 @@ public class PistonHeadBlockPresentation(PistonHeadBlock block, BlockPresentatio
                             : Matrix.CreateTranslation(0f, -0.5f, 0f) *
                               Matrix.CreateRotationX((float)Math.PI / 2f) *
                               Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-                    BlockMeshesByData[num] = new BlockMesh();
-                    BlockMeshesByData[num].AppendModelPrimitive(
+                    BlockMeshesByData[meshIndex] = new BlockMesh();
+                    BlockMeshesByData[meshIndex].AppendModelPrimitive(
                         modelNode.RequireMesh().Primitives[0],
                         nodeAbsoluteTransform * m,
                         false,
@@ -97,11 +97,11 @@ public class PistonHeadBlockPresentation(PistonHeadBlock block, BlockPresentatio
                     switch (pistonMode)
                     {
                         case PistonMode.Pulling:
-                            BlockMeshesByData[num]
+                            BlockMeshesByData[meshIndex]
                                 .TransformTextureCoordinates(Matrix.CreateTranslation(0f, 0.0625f, 0f), 1 << j);
                             break;
                         case PistonMode.StrictPulling:
-                            BlockMeshesByData[num]
+                            BlockMeshesByData[meshIndex]
                                 .TransformTextureCoordinates(Matrix.CreateTranslation(0f, 0.125f, 0f), 1 << j);
                             break;
                     }

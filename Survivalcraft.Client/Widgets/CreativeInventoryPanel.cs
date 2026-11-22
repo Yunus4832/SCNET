@@ -79,8 +79,8 @@ public class CreativeInventoryPanel : CanvasWidget
                  i++)
             {
                 var slotValue = _componentCreativeInventory.GetSlotValue(i);
-                var num2 = Terrain.ExtractContents(slotValue);
-                if (presentations.Get(num2).GetCategory(slotValue) ==
+                var contents = Terrain.ExtractContents(slotValue);
+                if (presentations.Get(contents).GetCategory(slotValue) ==
                     _creativeInventoryWidget.GetCategoryName(_componentCreativeInventory.CategoryIndex))
                 {
                     _slotIndices.Add(i);
@@ -96,8 +96,8 @@ public class CreativeInventoryPanel : CanvasWidget
             _slotIndices.Clear();
             _slotIndices.AddRange(orderedSlotIndices);
 
-            var num3 = _inventoryGrid.ColumnsCount * _inventoryGrid.RowsCount;
-            _pagesCount = (_slotIndices.Count + num3 - 1) / num3;
+            var pageCapacity = _inventoryGrid.ColumnsCount * _inventoryGrid.RowsCount;
+            _pagesCount = (_slotIndices.Count + pageCapacity - 1) / pageCapacity;
             _assignedCategoryIndex = _componentCreativeInventory.CategoryIndex;
             _assignedPageIndex = -1;
             _componentCreativeInventory.PageIndex = 0;
@@ -105,8 +105,8 @@ public class CreativeInventoryPanel : CanvasWidget
 
         if (_componentCreativeInventory.PageIndex != _assignedPageIndex)
         {
-            var num4 = _inventoryGrid.ColumnsCount * _inventoryGrid.RowsCount;
-            var num5 = _componentCreativeInventory.PageIndex * num4;
+            var pageCapacity = _inventoryGrid.ColumnsCount * _inventoryGrid.RowsCount;
+            var firstItemIndex = _componentCreativeInventory.PageIndex * pageCapacity;
             foreach (var child in _inventoryGrid.Children)
             {
                 if (child is not InventorySlotWidget inventorySlotWidget)
@@ -114,9 +114,12 @@ public class CreativeInventoryPanel : CanvasWidget
                     continue;
                 }
 
-                if (num5 < _slotIndices.Count)
+                if (firstItemIndex < _slotIndices.Count)
                 {
-                    inventorySlotWidget.AssignInventorySlot(_componentCreativeInventory, _slotIndices[num5++]);
+                    inventorySlotWidget.AssignInventorySlot(
+                        _componentCreativeInventory,
+                        _slotIndices[firstItemIndex++]
+                    );
                 }
                 else
                 {

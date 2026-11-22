@@ -45,10 +45,10 @@ public class MotionDetectorElectricElement : MountedElectricElement
                          MathUtils.Abs(_direction.Y),
                          MathUtils.Abs(_direction.Z)
                      );
-        var vector2 = _center - 8f * vector;
-        var vector3 = _center + 8f * (vector + _direction);
-        _corner1 = new Vector2(vector2.X, vector2.Z);
-        _corner2 = new Vector2(vector3.X, vector3.Z);
+        var boundsStart = _center - 8f * vector;
+        var boundsEnd = _center + 8f * (vector + _direction);
+        _corner1 = new Vector2(boundsStart.X, boundsStart.Z);
+        _corner2 = new Vector2(boundsEnd.X, boundsEnd.Z);
     }
 
     public override float GetOutputVoltage(int face)
@@ -65,17 +65,17 @@ public class MotionDetectorElectricElement : MountedElectricElement
             SubsystemElectricity.SoundRequests.RequestSound("Audio/MotionDetectorClick", 1f, 0f, _center, 1f, true);
         }
 
-        var num = 0.25f * (0.9f + 0.000200000009f * (GetHashCode() % 1000));
+        var sampleInterval = 0.25f * (0.9f + 0.000200000009f * (GetHashCode() % 1000));
         SubsystemElectricity.QueueElectricElementForSimulation(
             this,
-            SubsystemElectricity.CircuitStep + MathUtils.Max((int)(num / 0.01f), 1)
+            SubsystemElectricity.CircuitStep + MathUtils.Max((int)(sampleInterval / 0.01f), 1)
         );
         return _voltage.UncloseTo(voltage);
     }
 
     public float CalculateMotionVoltage()
     {
-        var num = 0f;
+        var strongestDetection = 0f;
         _bodies.Clear();
         _subsystemBodies.FindBodiesInArea(_corner1, _corner2, _bodies);
         for (var i = 0; i < _bodies.Count; i++)
@@ -83,8 +83,8 @@ public class MotionDetectorElectricElement : MountedElectricElement
             var componentBody = _bodies.Array[i];
             if (!(componentBody.Velocity.LengthSquared() < 0.0625f))
             {
-                num = MathUtils.Max(
-                    num,
+                strongestDetection = MathUtils.Max(
+                    strongestDetection,
                     TestPoint(componentBody.Position + new Vector3(0f, 0.5f * componentBody.BoxSize.Y, 0f))
                 );
             }
@@ -100,8 +100,8 @@ public class MotionDetectorElectricElement : MountedElectricElement
 
             foreach (var block in movingBlockSet.Blocks)
             {
-                num = MathUtils.Max(
-                    num,
+                strongestDetection = MathUtils.Max(
+                    strongestDetection,
                     TestPoint(movingBlockSet.Position + new Vector3(block.Offset) + new Vector3(0.5f))
                 );
             }
@@ -111,7 +111,7 @@ public class MotionDetectorElectricElement : MountedElectricElement
         {
             if (!(projectile.Velocity.LengthSquared() < 0.0625f))
             {
-                num = MathUtils.Max(num, TestPoint(projectile.Position));
+                strongestDetection = MathUtils.Max(strongestDetection, TestPoint(projectile.Position));
             }
         }
 
@@ -119,17 +119,19 @@ public class MotionDetectorElectricElement : MountedElectricElement
         {
             if (!(pickable.Velocity.LengthSquared() < 0.0625f))
             {
-                num = MathUtils.Max(num, TestPoint(pickable.Position));
+                strongestDetection = MathUtils.Max(strongestDetection, TestPoint(pickable.Position));
             }
         }
 
-        return !(num > 0f) ? 0f : MathUtils.Lerp(0.51f, 1f, MathUtils.Saturate(num * 1.1f));
+        return !(strongestDetection > 0f)
+            ? 0f
+            : MathUtils.Lerp(0.51f, 1f, MathUtils.Saturate(strongestDetection * 1.1f));
     }
 
     public float TestPoint(Vector3 p)
     {
-        var num = Vector3.DistanceSquared(p, _center);
-        if (num < 64f &&
+        var distanceSquared = Vector3.DistanceSquared(p, _center);
+        if (distanceSquared < 64f &&
             Vector3.Dot(Vector3.Normalize(p - (_center - 0.75f * _direction)), _direction) > 0.5f &&
             !SubsystemElectricity.SubsystemTerrain.Raycast(
                 _center,
@@ -147,7 +149,7 @@ public class MotionDetectorElectricElement : MountedElectricElement
                 }
             ).HasValue)
         {
-            return MathUtils.Saturate(1f - MathUtils.Sqrt(num) / 8f);
+            return MathUtils.Saturate(1f - MathUtils.Sqrt(distanceSquared) / 8f);
         }
 
         return 0f;

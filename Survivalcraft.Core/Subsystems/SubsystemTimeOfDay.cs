@@ -78,8 +78,8 @@ public class SubsystemTimeOfDay : Subsystem
 
     public float CalculateTimeOfDay(double totalElapsedGameTime)
     {
-        var num = CalculateDay(totalElapsedGameTime);
-        return (float)(num - MathUtils.Floor(num));
+        var elapsedDays = CalculateDay(totalElapsedGameTime);
+        return (float)(elapsedDays - MathUtils.Floor(elapsedDays));
     }
 
     public float CalculateTimeOfDay()
@@ -106,14 +106,14 @@ public class SubsystemTimeOfDay : Subsystem
 
     public virtual void UpdateStarts()
     {
-        var num = IntervalUtils.Midpoint(SeasonCalendar.SummerStart, SeasonCalendar.AutumnStart);
-        var num2 = MathUtils.Remainder(SubsystemGameInfo.WorldSettings.TimeOfYear - num, 1f);
-        var num3 = MathUtils.Lerp(0.2f, 0.4f, 0.5f + 0.5f * MathUtils.Cos((float)Math.PI * 2f * num2));
-        var num4 = 0.4f;
-        var num5 = (1f - (num3 + num4)) / 2f;
+        var midSummer = IntervalUtils.Midpoint(SeasonCalendar.SummerStart, SeasonCalendar.AutumnStart);
+        var seasonPhase = MathUtils.Remainder(SubsystemGameInfo.WorldSettings.TimeOfYear - midSummer, 1f);
+        var dayDuration = MathUtils.Lerp(0.2f, 0.4f, 0.5f + 0.5f * MathUtils.Cos((float)Math.PI * 2f * seasonPhase));
+        var nightDuration = 0.4f;
+        var twilightDuration = (1f - (dayDuration + nightDuration)) / 2f;
         DayStart = 0.3f;
-        DawnStart = IntervalUtils.Add(DayStart, 0f - num5);
-        DuskStart = IntervalUtils.Add(DayStart, num3);
-        NightStart = IntervalUtils.Add(DuskStart, num5);
+        DawnStart = IntervalUtils.Add(DayStart, 0f - twilightDuration);
+        DuskStart = IntervalUtils.Add(DayStart, dayDuration);
+        NightStart = IntervalUtils.Add(DuskStart, twilightDuration);
     }
 }

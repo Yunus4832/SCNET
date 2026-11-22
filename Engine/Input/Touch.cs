@@ -88,16 +88,16 @@ public static partial class Touch
         }
 
         IsTouched = true;
-        var num = FindTouchLocationIndex(id);
-        if (num >= 0)
+        var touchIndex = FindTouchLocationIndex(id);
+        if (touchIndex >= 0)
         {
-            if (_touchLocations[num].State == TouchLocationState.Moved)
+            if (_touchLocations[touchIndex].State == TouchLocationState.Moved)
             {
-                _touchLocations[num] = new TouchLocation
+                _touchLocations[touchIndex] = new TouchLocation
                     { Id = id, Position = position, State = TouchLocationState.Moved };
             }
 
-            TouchMoved?.Invoke(_touchLocations[num]);
+            TouchMoved?.Invoke(_touchLocations[touchIndex]);
         }
         else
         {
@@ -116,15 +116,15 @@ public static partial class Touch
             return;
         }
 
-        var num = FindTouchLocationIndex(id);
-        if (num < 0)
+        var touchIndex = FindTouchLocationIndex(id);
+        if (touchIndex < 0)
         {
             return;
         }
 
-        if (_touchLocations[num].State == TouchLocationState.Pressed)
+        if (_touchLocations[touchIndex].State == TouchLocationState.Pressed)
         {
-            _touchLocations[num] = new TouchLocation
+            _touchLocations[touchIndex] = new TouchLocation
             {
                 Id = id,
                 Position = position,
@@ -134,11 +134,11 @@ public static partial class Touch
         }
         else
         {
-            _touchLocations[num] = new TouchLocation
+            _touchLocations[touchIndex] = new TouchLocation
                 { Id = id, Position = position, State = TouchLocationState.Released };
         }
 
-        TouchReleased?.Invoke(_touchLocations[num]);
+        TouchReleased?.Invoke(_touchLocations[touchIndex]);
     }
 
     static partial void BeforeFramePlatform();

@@ -100,30 +100,31 @@ public class BlockMesh
         indices.Add((ushort)(vertices.Count - 4));
         for (var i = bounds.Left - 1; i <= bounds.Right; i++)
         {
-            var num = -1;
+            var edgeStartY = -1;
             for (var j = bounds.Top - 1; j <= bounds.Bottom; j++)
             {
-                var num2 = !bounds.Contains(new Point2(i, j)) || image.GetPixel(i, j) == Color.Transparent;
-                var flag = bounds.Contains(new Point2(i - 1, j)) && image.GetPixel(i - 1, j) != Color.Transparent;
-                if (num2 & flag)
+                var isEmpty = !bounds.Contains(new Point2(i, j)) || image.GetPixel(i, j) == Color.Transparent;
+                var hasLeftPixel = bounds.Contains(new Point2(i - 1, j)) &&
+                                   image.GetPixel(i - 1, j) != Color.Transparent;
+                if (isEmpty & hasLeftPixel)
                 {
-                    if (num < 0)
+                    if (edgeStartY < 0)
                     {
-                        num = j;
+                        edgeStartY = j;
                     }
                 }
-                else if (num >= 0)
+                else if (edgeStartY >= 0)
                 {
                     item = new BlockMeshVertex
                     {
-                        Position = new Vector3(i - 0.01f, num - 0.01f, -1.01f),
-                        TextureCoordinates = new Vector2(i - 1 + 0.01f, num + 0.01f)
+                        Position = new Vector3(i - 0.01f, edgeStartY - 0.01f, -1.01f),
+                        TextureCoordinates = new Vector2(i - 1 + 0.01f, edgeStartY + 0.01f)
                     };
                     vertices.Add(item);
                     item = new BlockMeshVertex
                     {
-                        Position = new Vector3(i - 0.01f, num - 0.01f, 1.01f),
-                        TextureCoordinates = new Vector2(i - 0.01f, num + 0.01f)
+                        Position = new Vector3(i - 0.01f, edgeStartY - 0.01f, 1.01f),
+                        TextureCoordinates = new Vector2(i - 0.01f, edgeStartY + 0.01f)
                     };
                     vertices.Add(item);
                     item = new BlockMeshVertex
@@ -144,37 +145,38 @@ public class BlockMesh
                     indices.Add((ushort)(vertices.Count - 1));
                     indices.Add((ushort)(vertices.Count - 4));
                     indices.Add((ushort)(vertices.Count - 2));
-                    num = -1;
+                    edgeStartY = -1;
                 }
             }
         }
 
         for (var k = bounds.Left - 1; k <= bounds.Right; k++)
         {
-            var num3 = -1;
+            var edgeStartY = -1;
             for (var l = bounds.Top - 1; l <= bounds.Bottom; l++)
             {
-                var num4 = !bounds.Contains(new Point2(k, l)) || image.GetPixel(k, l) == Color.Transparent;
-                var flag2 = bounds.Contains(new Point2(k + 1, l)) && image.GetPixel(k + 1, l) != Color.Transparent;
-                if (num4 & flag2)
+                var isEmpty = !bounds.Contains(new Point2(k, l)) || image.GetPixel(k, l) == Color.Transparent;
+                var hasRightPixel = bounds.Contains(new Point2(k + 1, l)) &&
+                                    image.GetPixel(k + 1, l) != Color.Transparent;
+                if (isEmpty & hasRightPixel)
                 {
-                    if (num3 < 0)
+                    if (edgeStartY < 0)
                     {
-                        num3 = l;
+                        edgeStartY = l;
                     }
                 }
-                else if (num3 >= 0)
+                else if (edgeStartY >= 0)
                 {
                     item = new BlockMeshVertex
                     {
-                        Position = new Vector3(k + 1 + 0.01f, num3 - 0.01f, -1.01f),
-                        TextureCoordinates = new Vector2(k + 1 + 0.01f, num3 + 0.01f)
+                        Position = new Vector3(k + 1 + 0.01f, edgeStartY - 0.01f, -1.01f),
+                        TextureCoordinates = new Vector2(k + 1 + 0.01f, edgeStartY + 0.01f)
                     };
                     vertices.Add(item);
                     item = new BlockMeshVertex
                     {
-                        Position = new Vector3(k + 1 + 0.01f, num3 - 0.01f, 1.01f),
-                        TextureCoordinates = new Vector2(k + 2 - 0.01f, num3 + 0.01f)
+                        Position = new Vector3(k + 1 + 0.01f, edgeStartY - 0.01f, 1.01f),
+                        TextureCoordinates = new Vector2(k + 2 - 0.01f, edgeStartY + 0.01f)
                     };
                     vertices.Add(item);
                     item = new BlockMeshVertex
@@ -195,37 +197,38 @@ public class BlockMesh
                     indices.Add((ushort)(vertices.Count - 1));
                     indices.Add((ushort)(vertices.Count - 2));
                     indices.Add((ushort)(vertices.Count - 4));
-                    num3 = -1;
+                    edgeStartY = -1;
                 }
             }
         }
 
         for (var m = bounds.Top - 1; m <= bounds.Bottom; m++)
         {
-            var num5 = -1;
+            var edgeStartX = -1;
             for (var n = bounds.Left - 1; n <= bounds.Right; n++)
             {
-                var num6 = !bounds.Contains(new Point2(n, m)) || image.GetPixel(n, m) == Color.Transparent;
-                var flag3 = bounds.Contains(new Point2(n, m - 1)) && image.GetPixel(n, m - 1) != Color.Transparent;
-                if (num6 & flag3)
+                var isEmpty = !bounds.Contains(new Point2(n, m)) || image.GetPixel(n, m) == Color.Transparent;
+                var hasUpperPixel = bounds.Contains(new Point2(n, m - 1)) &&
+                                    image.GetPixel(n, m - 1) != Color.Transparent;
+                if (isEmpty & hasUpperPixel)
                 {
-                    if (num5 < 0)
+                    if (edgeStartX < 0)
                     {
-                        num5 = n;
+                        edgeStartX = n;
                     }
                 }
-                else if (num5 >= 0)
+                else if (edgeStartX >= 0)
                 {
                     item = new BlockMeshVertex
                     {
-                        Position = new Vector3(num5 - 0.01f, m - 0.01f, -1.01f),
-                        TextureCoordinates = new Vector2(num5 + 0.01f, m - 1 + 0.01f)
+                        Position = new Vector3(edgeStartX - 0.01f, m - 0.01f, -1.01f),
+                        TextureCoordinates = new Vector2(edgeStartX + 0.01f, m - 1 + 0.01f)
                     };
                     vertices.Add(item);
                     item = new BlockMeshVertex
                     {
-                        Position = new Vector3(num5 - 0.01f, m - 0.01f, 1.01f),
-                        TextureCoordinates = new Vector2(num5 + 0.01f, m - 0.01f)
+                        Position = new Vector3(edgeStartX - 0.01f, m - 0.01f, 1.01f),
+                        TextureCoordinates = new Vector2(edgeStartX + 0.01f, m - 0.01f)
                     };
                     vertices.Add(item);
                     item = new BlockMeshVertex
@@ -246,50 +249,51 @@ public class BlockMesh
                     indices.Add((ushort)(vertices.Count - 1));
                     indices.Add((ushort)(vertices.Count - 2));
                     indices.Add((ushort)(vertices.Count - 4));
-                    num5 = -1;
+                    edgeStartX = -1;
                 }
             }
         }
 
-        for (var num7 = bounds.Top - 1; num7 <= bounds.Bottom; num7++)
+        for (var row = bounds.Top - 1; row <= bounds.Bottom; row++)
         {
-            var num8 = -1;
-            for (var num9 = bounds.Left - 1; num9 <= bounds.Right; num9++)
+            var edgeStartX = -1;
+            for (var column = bounds.Left - 1; column <= bounds.Right; column++)
             {
-                var num10 = !bounds.Contains(new Point2(num9, num7)) || image.GetPixel(num9, num7) == Color.Transparent;
-                var flag4 = bounds.Contains(new Point2(num9, num7 + 1)) &&
-                            image.GetPixel(num9, num7 + 1) != Color.Transparent;
-                if (num10 & flag4)
+                var isEmpty = !bounds.Contains(new Point2(column, row)) ||
+                              image.GetPixel(column, row) == Color.Transparent;
+                var hasLowerPixel = bounds.Contains(new Point2(column, row + 1)) &&
+                                    image.GetPixel(column, row + 1) != Color.Transparent;
+                if (isEmpty & hasLowerPixel)
                 {
-                    if (num8 < 0)
+                    if (edgeStartX < 0)
                     {
-                        num8 = num9;
+                        edgeStartX = column;
                     }
                 }
-                else if (num8 >= 0)
+                else if (edgeStartX >= 0)
                 {
                     item = new BlockMeshVertex
                     {
-                        Position = new Vector3(num8 - 0.01f, num7 + 1 + 0.01f, -1.01f),
-                        TextureCoordinates = new Vector2(num8 + 0.01f, num7 + 1 + 0.01f)
+                        Position = new Vector3(edgeStartX - 0.01f, row + 1 + 0.01f, -1.01f),
+                        TextureCoordinates = new Vector2(edgeStartX + 0.01f, row + 1 + 0.01f)
                     };
                     vertices.Add(item);
                     item = new BlockMeshVertex
                     {
-                        Position = new Vector3(num8 - 0.01f, num7 + 1 + 0.01f, 1.01f),
-                        TextureCoordinates = new Vector2(num8 + 0.01f, num7 + 2 - 0.01f)
+                        Position = new Vector3(edgeStartX - 0.01f, row + 1 + 0.01f, 1.01f),
+                        TextureCoordinates = new Vector2(edgeStartX + 0.01f, row + 2 - 0.01f)
                     };
                     vertices.Add(item);
                     item = new BlockMeshVertex
                     {
-                        Position = new Vector3(num9 + 0.01f, num7 + 1 + 0.01f, -1.01f),
-                        TextureCoordinates = new Vector2(num9 - 0.01f, num7 + 1 + 0.01f)
+                        Position = new Vector3(column + 0.01f, row + 1 + 0.01f, -1.01f),
+                        TextureCoordinates = new Vector2(column - 0.01f, row + 1 + 0.01f)
                     };
                     vertices.Add(item);
                     item = new BlockMeshVertex
                     {
-                        Position = new Vector3(num9 + 0.01f, num7 + 1 + 0.01f, 1.01f),
-                        TextureCoordinates = new Vector2(num9 - 0.01f, num7 + 2 - 0.01f)
+                        Position = new Vector3(column + 0.01f, row + 1 + 0.01f, 1.01f),
+                        TextureCoordinates = new Vector2(column - 0.01f, row + 2 - 0.01f)
                     };
                     vertices.Add(item);
                     indices.Add((ushort)(vertices.Count - 4));
@@ -298,21 +302,22 @@ public class BlockMesh
                     indices.Add((ushort)(vertices.Count - 1));
                     indices.Add((ushort)(vertices.Count - 4));
                     indices.Add((ushort)(vertices.Count - 2));
-                    num8 = -1;
+                    edgeStartX = -1;
                 }
             }
         }
 
-        for (var num11 = 0; num11 < vertices.Count; num11++)
+        for (var vertexIndex = 0; vertexIndex < vertices.Count; vertexIndex++)
         {
-            vertices.Array[num11].Position.X -= bounds.Left + bounds.Width / 2f;
-            vertices.Array[num11].Position.Y = bounds.Bottom - vertices.Array[num11].Position.Y - bounds.Height / 2f;
-            vertices.Array[num11].Position.X *= size.X / bounds.Width;
-            vertices.Array[num11].Position.Y *= size.Y / bounds.Height;
-            vertices.Array[num11].Position.Z *= size.Z / 2f;
-            vertices.Array[num11].TextureCoordinates.X /= image.Width;
-            vertices.Array[num11].TextureCoordinates.Y /= image.Height;
-            vertices.Array[num11].Color = color;
+            vertices.Array[vertexIndex].Position.X -= bounds.Left + bounds.Width / 2f;
+            vertices.Array[vertexIndex].Position.Y =
+                bounds.Bottom - vertices.Array[vertexIndex].Position.Y - bounds.Height / 2f;
+            vertices.Array[vertexIndex].Position.X *= size.X / bounds.Width;
+            vertices.Array[vertexIndex].Position.Y *= size.Y / bounds.Height;
+            vertices.Array[vertexIndex].Position.Z *= size.Z / 2f;
+            vertices.Array[vertexIndex].TextureCoordinates.X /= image.Width;
+            vertices.Array[vertexIndex].TextureCoordinates.Y /= image.Height;
+            vertices.Array[vertexIndex].Color = color;
         }
 
         AppendBlockMesh(blockMesh);
@@ -333,17 +338,17 @@ public class BlockMesh
         var dictionary = new Dictionary<ushort, ushort>();
         for (var i = meshPart.StartIndex; i < meshPart.StartIndex + meshPart.IndicesCount; i++)
         {
-            var num = indexData[i];
-            if (!dictionary.ContainsKey(num))
+            var sourceIndex = indexData[i];
+            if (!dictionary.ContainsKey(sourceIndex))
             {
-                dictionary.Add(num, checked((ushort)Vertices.Count));
+                dictionary.Add(sourceIndex, checked((ushort)Vertices.Count));
                 BlockMeshVertex item = default;
-                item.Position = Vector3.Transform(vertexData[num].Position, matrix);
-                item.TextureCoordinates = vertexData[num].TextureCoordinate;
+                item.Position = Vector3.Transform(vertexData[sourceIndex].Position, matrix);
+                item.TextureCoordinates = vertexData[sourceIndex].TextureCoordinate;
                 var vector =
                     Vector3.Normalize(
                         Vector3.TransformNormal(
-                            flipNormals ? -vertexData[num].Normal : vertexData[num].Normal,
+                            flipNormals ? -vertexData[sourceIndex].Normal : vertexData[sourceIndex].Normal,
                             matrix
                         )
                     );
@@ -472,12 +477,12 @@ public class BlockMesh
         Sides.Count = Indices.Count / 3;
         for (var i = 0; i < Sides.Count; i++)
         {
-            int num = Indices.Array[3 * i];
-            int num2 = Indices.Array[3 * i + 1];
-            int num3 = Indices.Array[3 * i + 2];
-            var position = Vertices.Array[num].Position;
-            var position2 = Vertices.Array[num2].Position;
-            var position3 = Vertices.Array[num3].Position;
+            int indexA = Indices.Array[3 * i];
+            int indexB = Indices.Array[3 * i + 1];
+            int indexC = Indices.Array[3 * i + 2];
+            var position = Vertices.Array[indexA].Position;
+            var position2 = Vertices.Array[indexB].Position;
+            var position3 = Vertices.Array[indexC].Position;
             if (IsNear(position.Z, position2.Z, position3.Z, 1f))
             {
                 Sides.Array[i] = 0;
@@ -614,14 +619,14 @@ public class BlockMesh
             );
         }
 
-        for (var num = bounds.Top; num < bounds.Bottom; num++)
+        for (var row = bounds.Top; row < bounds.Bottom; row++)
         {
             var image5 = new Image(bounds.Width, 1);
-            for (var num2 = bounds.Left; num2 < bounds.Right; num2++)
+            for (var column = bounds.Left; column < bounds.Right; column++)
             {
-                if (num == bounds.Bottom - 1 || image.Pixels[num2 + (num + 1) * image.Width].A <= alphaThreshold)
+                if (row == bounds.Bottom - 1 || image.Pixels[column + (row + 1) * image.Width].A <= alphaThreshold)
                 {
-                    image5.Pixels[num2 - bounds.Left] = image.Pixels[num2 + num * image.Width];
+                    image5.Pixels[column - bounds.Left] = image.Pixels[column + row * image.Width];
                 }
             }
 
@@ -631,23 +636,23 @@ public class BlockMesh
                 new Vector3(1f, 0f, 0f),
                 new Vector3(0f, 0f, 1f),
                 new Vector3(0f, -1f, 0f),
-                new Vector3(bounds.Left, num + 1, 0f),
+                new Vector3(bounds.Left, row + 1, 0f),
                 color,
                 alphaThreshold
             );
         }
 
-        for (var num3 = count; num3 < Vertices.Count; num3++)
+        for (var vertexIndex = count; vertexIndex < Vertices.Count; vertexIndex++)
         {
-            Vertices.Array[num3].Position.X -= (bounds.Left + bounds.Right) / 2f;
-            Vertices.Array[num3].Position.Y -= (bounds.Top + bounds.Bottom) / 2f;
-            Vertices.Array[num3].Position.Z -= 0.5f;
-            Vertices.Array[num3].Position.X *= scale.X;
-            Vertices.Array[num3].Position.Y *= 0f - scale.Y;
-            Vertices.Array[num3].Position.Z *= scale.Z;
-            Vertices.Array[num3].TextureCoordinates.X /= image.Width;
-            Vertices.Array[num3].TextureCoordinates.Y /= image.Height;
-            Vertices.Array[num3].Color *= color;
+            Vertices.Array[vertexIndex].Position.X -= (bounds.Left + bounds.Right) / 2f;
+            Vertices.Array[vertexIndex].Position.Y -= (bounds.Top + bounds.Bottom) / 2f;
+            Vertices.Array[vertexIndex].Position.Z -= 0.5f;
+            Vertices.Array[vertexIndex].Position.X *= scale.X;
+            Vertices.Array[vertexIndex].Position.Y *= 0f - scale.Y;
+            Vertices.Array[vertexIndex].Position.Z *= scale.Z;
+            Vertices.Array[vertexIndex].TextureCoordinates.X /= image.Width;
+            Vertices.Array[vertexIndex].TextureCoordinates.Y /= image.Height;
+            Vertices.Array[vertexIndex].Color *= color;
         }
     }
 
@@ -662,25 +667,25 @@ public class BlockMesh
         int alphaThreshold
     )
     {
-        var num = int.MaxValue;
-        var num2 = int.MaxValue;
-        var num3 = int.MinValue;
-        var num4 = int.MinValue;
+        var minX = int.MaxValue;
+        var minY = int.MaxValue;
+        var maxX = int.MinValue;
+        var maxY = int.MinValue;
         for (var i = bounds.Top; i < bounds.Bottom; i++)
         {
             for (var j = bounds.Left; j < bounds.Right; j++)
             {
                 if (slice.Pixels[j + i * slice.Width].A > alphaThreshold)
                 {
-                    num = MathUtils.Min(num, j);
-                    num2 = MathUtils.Min(num2, i);
-                    num3 = MathUtils.Max(num3, j);
-                    num4 = MathUtils.Max(num4, i);
+                    minX = MathUtils.Min(minX, j);
+                    minY = MathUtils.Min(minY, i);
+                    maxX = MathUtils.Max(maxX, j);
+                    maxY = MathUtils.Max(maxY, i);
                 }
             }
         }
 
-        if (num != int.MaxValue)
+        if (minX != int.MaxValue)
         {
             var m = new Matrix(
                 right.X,
@@ -702,10 +707,10 @@ public class BlockMesh
             );
             var flip = m.Determinant() > 0f;
             var s = LightingManager.CalculateLighting(-forward);
-            var p = Vector3.Transform(new Vector3(num, num2, 0f), m);
-            var p2 = Vector3.Transform(new Vector3(num3 + 1, num2, 0f), m);
-            var p3 = Vector3.Transform(new Vector3(num, num4 + 1, 0f), m);
-            var p4 = Vector3.Transform(new Vector3(num3 + 1, num4 + 1, 0f), m);
+            var p = Vector3.Transform(new Vector3(minX, minY, 0f), m);
+            var p2 = Vector3.Transform(new Vector3(maxX + 1, minY, 0f), m);
+            var p3 = Vector3.Transform(new Vector3(minX, maxY + 1, 0f), m);
+            var p4 = Vector3.Transform(new Vector3(maxX + 1, maxY + 1, 0f), m);
             AppendImageExtrusionRectangle(p, p2, p3, p4, forward, flip, Color.MultiplyColorOnly(color, s));
         }
     }

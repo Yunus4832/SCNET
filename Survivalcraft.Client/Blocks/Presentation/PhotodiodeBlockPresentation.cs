@@ -22,8 +22,8 @@ public class PhotodiodeBlockPresentation(PhotodiodeBlock block, BlockPresentatio
         int z
     )
     {
-        var num = Terrain.ExtractData(value);
-        if (num >= BlockMeshesByData.Length)
+        var meshIndex = Terrain.ExtractData(value);
+        if (meshIndex >= BlockMeshesByData.Length)
         {
             return;
         }
@@ -33,7 +33,7 @@ public class PhotodiodeBlockPresentation(PhotodiodeBlock block, BlockPresentatio
             x,
             y,
             z,
-            BlockMeshesByData[num],
+            BlockMeshesByData[meshIndex],
             Color.White,
             null,
             geometry.SubsetOpaque
@@ -76,7 +76,7 @@ public class PhotodiodeBlockPresentation(PhotodiodeBlock block, BlockPresentatio
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(photodiodeNode);
         for (var i = 0; i < 6; i++)
         {
-            var num = i;
+            var mountingFace = i;
             var m = i >= 4
                 ? i != 4
                     ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
@@ -85,8 +85,8 @@ public class PhotodiodeBlockPresentation(PhotodiodeBlock block, BlockPresentatio
                   Matrix.CreateTranslation(0f, 0f, -0.5f) *
                   Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
                   Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-            BlockMeshesByData[num] = new BlockMesh();
-            BlockMeshesByData[num].AppendModelPrimitive(
+            BlockMeshesByData[mountingFace] = new BlockMesh();
+            BlockMeshesByData[mountingFace].AppendModelPrimitive(
                 photodiodeNode.RequireMesh().Primitives[0],
                 nodeAbsoluteTransform * m,
                 false,

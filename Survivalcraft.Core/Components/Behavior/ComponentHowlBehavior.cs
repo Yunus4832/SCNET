@@ -82,13 +82,13 @@ public class ComponentHowlBehavior : ComponentBehavior, IUpdateable
 
                 _componentCreature.ComponentLocomotion.LookOrder =
                     new Vector2(_componentCreature.ComponentLocomotion.LookOrder.X, 2f);
-                var num = _howlTime + _subsystemTime.GameTimeDelta;
-                if (_howlTime <= 0.5f && num > 0.5f)
+                var nextHowlTime = _howlTime + _subsystemTime.GameTimeDelta;
+                if (_howlTime <= 0.5f && nextHowlTime > 0.5f)
                 {
                     _componentCreature.ComponentCreatureSounds.PlayHowlSound();
                 }
 
-                _howlTime = num;
+                _howlTime = nextHowlTime;
                 if (_howlTime >= _howlDuration)
                 {
                     _importanceLevel = 0f;

@@ -90,14 +90,14 @@ public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)
             var array = item.Value.Trim().Split(["\n"], StringSplitOptions.None);
             for (var i = 0; i < array.Length; i++)
             {
-                var num = array[i].IndexOf('"');
-                var num2 = array[i].LastIndexOf('"');
-                if (num < 0 || num2 < 0 || num2 <= num)
+                var firstQuote = array[i].IndexOf('"');
+                var lastQuote = array[i].LastIndexOf('"');
+                if (firstQuote < 0 || lastQuote < 0 || lastQuote <= firstQuote)
                 {
                     throw new InvalidOperationException("Invalid recipe line.");
                 }
 
-                var text = array[i].Substring(num + 1, num2 - num - 1);
+                var text = array[i].Substring(firstQuote + 1, lastQuote - firstQuote - 1);
                 for (var j = 0; j < text.Length; j++)
                 {
                     var c = text[j];
@@ -262,17 +262,17 @@ public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)
                         continue;
                     }
 
-                    var flag = true;
+                    var matches = true;
                     for (var l = 0; l < 9; l++)
                     {
                         if (!CompareIngredients(array[l], actualIngredients[l]))
                         {
-                            flag = false;
+                            matches = false;
                             break;
                         }
                     }
 
-                    if (flag)
+                    if (matches)
                     {
                         return true;
                     }
@@ -300,12 +300,12 @@ public sealed class CraftingRecipeCatalog(BlockContentCatalog catalog)
         {
             for (var k = 0; k < 3; k++)
             {
-                var num = (flip ? 3 - k - 1 : k) + shiftX;
-                var num2 = j + shiftY;
+                var targetX = (flip ? 3 - k - 1 : k) + shiftX;
+                var targetY = j + shiftY;
                 var text = ingredients[k + j * 3];
-                if (num >= 0 && num2 >= 0 && num < 3 && num2 < 3)
+                if (targetX >= 0 && targetY >= 0 && targetX < 3 && targetY < 3)
                 {
-                    transformedIngredients[num + num2 * 3] = text;
+                    transformedIngredients[targetX + targetY * 3] = text;
                 }
                 else if (!string.IsNullOrEmpty(text))
                 {

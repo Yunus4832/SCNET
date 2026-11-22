@@ -9,19 +9,19 @@ public class BowBlock : Block
 
     public override int SetDamage(int value, int damage)
     {
-        var num = Terrain.ExtractData(value);
-        num &= -65281;
-        num |= MathUtils.Clamp(damage, 0, 255) << 8;
-        return Terrain.ReplaceData(value, num);
+        var blockData = Terrain.ExtractData(value);
+        blockData &= -65281;
+        blockData |= MathUtils.Clamp(damage, 0, 255) << 8;
+        return Terrain.ReplaceData(value, blockData);
     }
 
 
     public static ArrowBlock.ArrowType? GetArrowType(int data)
     {
-        var num = (data >> 4) & 0xF;
-        if (num != 0)
+        var encodedArrowType = (data >> 4) & 0xF;
+        if (encodedArrowType != 0)
         {
-            return (ArrowBlock.ArrowType)(num - 1);
+            return (ArrowBlock.ArrowType)(encodedArrowType - 1);
         }
 
         return null;
@@ -29,8 +29,8 @@ public class BowBlock : Block
 
     public static int SetArrowType(int data, ArrowBlock.ArrowType? arrowType)
     {
-        var num = (int)(arrowType.HasValue ? arrowType.Value + 1 : ArrowBlock.ArrowType.WoodenArrow);
-        return (data & -241) | ((num & 0xF) << 4);
+        var encodedArrowType = (int)(arrowType.HasValue ? arrowType.Value + 1 : ArrowBlock.ArrowType.WoodenArrow);
+        return (data & -241) | ((encodedArrowType & 0xF) << 4);
     }
 
     public static int GetDraw(int data)

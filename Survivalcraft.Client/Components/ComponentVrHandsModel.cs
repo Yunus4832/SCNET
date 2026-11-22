@@ -62,30 +62,30 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
 
         var eyePosition = _componentCharacter.ComponentCreaturePose.EyePosition;
         var x = Terrain.ToCell(eyePosition.X);
-        var num = Terrain.ToCell(eyePosition.Y);
+        var eyeCellY = Terrain.ToCell(eyePosition.Y);
         var z = Terrain.ToCell(eyePosition.Z);
         var activeBlockValue = _componentMiner.ActiveBlockValue;
         if (Time.FrameStartTime >= _nextHandLightTime)
         {
-            var num2 = LightingManager.CalculateSmoothLight(_subsystemTerrain, eyePosition);
-            if (num2.HasValue)
+            var sampledHandLight = LightingManager.CalculateSmoothLight(_subsystemTerrain, eyePosition);
+            if (sampledHandLight.HasValue)
             {
                 _nextHandLightTime = Time.FrameStartTime + 0.1;
-                _handLight = num2.Value;
+                _handLight = sampledHandLight.Value;
             }
         }
 
         var identity = Matrix.Identity;
         if (_pokeAnimationTime > 0f)
         {
-            var num3 = MathUtils.Sin(MathUtils.Sqrt(_pokeAnimationTime) * (float)Math.PI);
+            var pokeBlend = MathUtils.Sin(MathUtils.Sqrt(_pokeAnimationTime) * (float)Math.PI);
             if (activeBlockValue != 0)
             {
-                identity *= Matrix.CreateRotationX((0f - MathUtils.DegToRad(90f)) * num3);
+                identity *= Matrix.CreateRotationX((0f - MathUtils.DegToRad(90f)) * pokeBlend);
             }
             else
             {
-                identity *= Matrix.CreateRotationX((0f - MathUtils.DegToRad(45f)) * num3);
+                identity *= Matrix.CreateRotationX((0f - MathUtils.DegToRad(45f)) * pokeBlend);
             }
         }
 
@@ -132,17 +132,17 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
         }
         else
         {
-            if (num is >= 0 and <= 255)
+            if (eyeCellY is >= 0 and <= 255)
             {
                 var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
                 if (chunkAtCell is { HasContents: true })
                 {
-                    _itemLight = (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, num, z) ?? 0);
+                    _itemLight = (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, eyeCellY, z) ?? 0);
                 }
             }
 
-            var num4 = Terrain.ExtractContents(activeBlockValue);
-            var block = _blockPresentations.Get(num4);
+            var itemContents = Terrain.ExtractContents(activeBlockValue);
+            var block = _blockPresentations.Get(itemContents);
             var vector = block.InHandRotation * ((float)Math.PI / 180f) + _itemRotation;
             var matrix = Matrix.CreateFromYawPitchRoll(vector.Y, vector.X, vector.Z) *
                          Matrix.CreateTranslation(block.InHandOffset) *
@@ -155,7 +155,7 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
             _drawBlockEnvironmentData.Light = _itemLight;
             _drawBlockEnvironmentData.Humidity = _subsystemTerrain.Terrain.GetHumidity(x, z);
             _drawBlockEnvironmentData.Temperature = _subsystemTerrain.Terrain.GetTemperature(x, z) +
-                                                    SubsystemWeather.GetTemperatureAdjustmentAtHeight(num);
+                                                    SubsystemWeather.GetTemperatureAdjustmentAtHeight(eyeCellY);
             block.DrawBlock(
                 PrimitivesRenderer,
                 activeBlockValue,

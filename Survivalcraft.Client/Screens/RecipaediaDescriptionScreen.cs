@@ -80,8 +80,8 @@ public class RecipaediaDescriptionScreen : Screen
     private Dictionary<string, string> GetBlockProperties(int value)
     {
         var dictionary = new Dictionary<string, string>();
-        var num = Terrain.ExtractContents(value);
-        var block = ClientApplication.Content.PreviewCatalog.Rules.Blocks[num];
+        var contents = Terrain.ExtractContents(value);
+        var block = ClientApplication.Content.PreviewCatalog.Rules.Blocks[contents];
         if (block.EmittedLightAmount > 0)
         {
             dictionary.Add(
@@ -160,14 +160,14 @@ public class RecipaediaDescriptionScreen : Screen
             );
         }
 
-        var flag = false;
+        var hasToolProperties = false;
         if (block.GetMeleePower(value) > 1f)
         {
             dictionary.Add(
                 Localization.ClientLanguage.Catalog.Get(_typeName, 11),
                 block.GetMeleePower(value).ToString(CultureInfo.InvariantCulture)
             );
-            flag = true;
+            hasToolProperties = true;
         }
 
         if (block.GetMeleePower(value) > 1f)
@@ -176,7 +176,7 @@ public class RecipaediaDescriptionScreen : Screen
                 Localization.ClientLanguage.Catalog.Get(_typeName, 12),
                 $"{100f * block.GetMeleeHitProbability(value):0}%"
             );
-            flag = true;
+            hasToolProperties = true;
         }
 
         if (block.GetProjectilePower(value) > 1f)
@@ -185,7 +185,7 @@ public class RecipaediaDescriptionScreen : Screen
                 Localization.ClientLanguage.Catalog.Get(_typeName, 13),
                 block.GetProjectilePower(value).ToString(CultureInfo.InvariantCulture)
             );
-            flag = true;
+            hasToolProperties = true;
         }
 
         if (block.ShovelPower > 1f)
@@ -194,7 +194,7 @@ public class RecipaediaDescriptionScreen : Screen
                 Localization.ClientLanguage.Catalog.Get(_typeName, 14),
                 block.ShovelPower.ToString(CultureInfo.InvariantCulture)
             );
-            flag = true;
+            hasToolProperties = true;
         }
 
         if (block.HackPower > 1f)
@@ -203,7 +203,7 @@ public class RecipaediaDescriptionScreen : Screen
                 Localization.ClientLanguage.Catalog.Get(_typeName, 15),
                 block.HackPower.ToString(CultureInfo.InvariantCulture)
             );
-            flag = true;
+            hasToolProperties = true;
         }
 
         if (block.QuarryPower > 1f)
@@ -212,10 +212,10 @@ public class RecipaediaDescriptionScreen : Screen
                 Localization.ClientLanguage.Catalog.Get(_typeName, 16),
                 block.QuarryPower.ToString(CultureInfo.InvariantCulture)
             );
-            flag = true;
+            hasToolProperties = true;
         }
 
-        if (flag && block.Durability > 0)
+        if (hasToolProperties && block.Durability > 0)
         {
             dictionary.Add(Localization.ClientLanguage.Catalog.Get(_typeName, 17), block.Durability.ToString());
         }
@@ -267,8 +267,8 @@ public class RecipaediaDescriptionScreen : Screen
         }
 
         var value = _valuesList[_index];
-        var num = Terrain.ExtractContents(value);
-        var block = ClientApplication.Content.PreviewCatalog.Get(num);
+        var contents = Terrain.ExtractContents(value);
+        var block = ClientApplication.Content.PreviewCatalog.Get(contents);
         _blockIconWidget.Value = value;
         _nameWidget.Text = block.GetDisplayName(null, value);
         _descriptionWidget.Text = block.GetDescription(value);
@@ -277,10 +277,10 @@ public class RecipaediaDescriptionScreen : Screen
         _propertyNames2Widget.Text = string.Empty;
         _propertyValues2Widget.Text = string.Empty;
         var blockProperties = GetBlockProperties(value);
-        var num2 = 0;
+        var propertyIndex = 0;
         foreach (var item in blockProperties)
         {
-            if (num2 < blockProperties.Count - blockProperties.Count / 2)
+            if (propertyIndex < blockProperties.Count - blockProperties.Count / 2)
             {
                 _propertyNames1Widget.Text = _propertyNames1Widget.Text + item.Key + ":\n";
                 _propertyValues1Widget.Text = _propertyValues1Widget.Text + item.Value + "\n";
@@ -291,7 +291,7 @@ public class RecipaediaDescriptionScreen : Screen
                 _propertyValues2Widget.Text = _propertyValues2Widget.Text + item.Value + "\n";
             }
 
-            num2++;
+            propertyIndex++;
         }
     }
 }

@@ -113,8 +113,8 @@ public abstract class PostedSignBlock(string modelName, int attachedSignBlockInd
         while (i < 16)
         {
             yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, i));
-            var num = i + 1;
-            i = num;
+            var nextColor = i + 1;
+            i = nextColor;
         }
     }
 
@@ -165,14 +165,14 @@ public abstract class PostedSignBlock(string modelName, int attachedSignBlockInd
         }
 
         var forward = eyeForward;
-        var num = float.MinValue;
+        var bestAlignment = float.MinValue;
         var direction = 0;
         for (var i = 0; i < 8; i++)
         {
-            var num2 = Vector3.Dot(forward, Directions[i]);
-            if (num2 > num)
+            var alignment = Vector3.Dot(forward, Directions[i]);
+            if (alignment > bestAlignment)
             {
-                num = num2;
+                bestAlignment = alignment;
                 direction = i;
             }
         }

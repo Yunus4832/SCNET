@@ -142,14 +142,14 @@ public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable
 
                 var speed = _satiation == 0f ? _random.Float(0.5f, 0.7f) : 0.5f;
                 var maxPathfindingPositions = _satiation == 0f ? 1000 : 500;
-                var num2 = Vector3.Distance(
+                var foodDistance = Vector3.Distance(
                     _componentCreature.ComponentCreaturePose.EyePosition,
                     _componentCreature.ComponentBody.Position
                 );
                 _componentPathfinding.SetDestination(
                     _pickable.Position,
                     speed,
-                    1f + num2,
+                    1f + foodDistance,
                     maxPathfindingPositions,
                     true,
                     false,
@@ -270,14 +270,14 @@ public class ComponentEatPickableBehavior : ComponentBehavior, IUpdateable
                     }
                     else
                     {
-                        var num = Vector3.Distance(
+                        var foodDistance = Vector3.Distance(
                             _componentCreature.ComponentCreaturePose.EyePosition,
                             _componentCreature.ComponentBody.Position
                         );
                         _componentPathfinding.SetDestination(
                             _pickable.Position,
                             0.3f,
-                            0.5f + num,
+                            0.5f + foodDistance,
                             0,
                             false,
                             true,

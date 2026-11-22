@@ -55,9 +55,9 @@ public class BoundingFrustum : IEquatable<BoundingFrustum>
             _planes[5].D = 0f - value.M44 - value.M42;
             for (var i = 0; i < 6; i++)
             {
-                var num = _planes[i].Normal.Length();
-                _planes[i].Normal /= num;
-                _planes[i].D /= num;
+                var normalLength = _planes[i].Normal.Length();
+                _planes[i].Normal /= normalLength;
+                _planes[i].D /= normalLength;
             }
         }
     }
@@ -149,10 +149,10 @@ public class BoundingFrustum : IEquatable<BoundingFrustum>
             var y = _planes[i].Normal.Y;
             var z = _planes[i].Normal.Z;
             var d = _planes[i].D;
-            var num = x > 0f ? box.Min.X : box.Max.X;
-            var num2 = y > 0f ? box.Min.Y : box.Max.Y;
-            var num3 = z > 0f ? box.Min.Z : box.Max.Z;
-            if (x * num + y * num2 + z * num3 + d > 0f)
+            var supportX = x > 0f ? box.Min.X : box.Max.X;
+            var supportY = y > 0f ? box.Min.Y : box.Max.Y;
+            var supportZ = z > 0f ? box.Min.Z : box.Max.Z;
+            if (x * supportX + y * supportY + z * supportZ + d > 0f)
             {
                 return false;
             }

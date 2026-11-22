@@ -23,8 +23,8 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
     {
         var inventory = componentMiner.Inventory;
         var activeBlockValue = componentMiner.ActiveBlockValue;
-        var num = Terrain.ExtractContents(activeBlockValue);
-        switch (num)
+        var bucketContents = Terrain.ExtractContents(activeBlockValue);
+        switch (bucketContents)
         {
             case var emptyBucketContents when emptyBucketContents == BuiltInBlockRegistry.GetIndex<EmptyBucketBlock>():
                 var obj = componentMiner.Raycast(ray, RaycastMode.Gathering);
@@ -32,9 +32,9 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
                 {
                     var cellFace = result.CellFace;
                     var cellValue = SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
-                    var num2 = Terrain.ExtractContents(cellValue);
+                    var targetContents = Terrain.ExtractContents(cellValue);
                     var data = Terrain.ExtractData(cellValue);
-                    var block = WorldContentBinding.For(Project).Catalog.Blocks[num2];
+                    var block = WorldContentBinding.For(Project).Catalog.Blocks[targetContents];
                     if (block is WaterBlock && FluidBlock.GetLevel(data) == 0)
                     {
                         var value = Terrain.ReplaceContents(activeBlockValue, 91);
@@ -167,8 +167,8 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
                 {
                     var cellFace2 = terrainRaycastResult3.Value.CellFace;
                     var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(cellFace2.X, cellFace2.Y, cellFace2.Z);
-                    var num3 = Terrain.ExtractContents(cellValue2);
-                    var block2 = WorldContentBinding.For(Project).Catalog.Blocks[num3];
+                    var paintedContents = Terrain.ExtractContents(cellValue2);
+                    var block2 = WorldContentBinding.For(Project).Catalog.Blocks[paintedContents];
                     if (block2 is not IPaintableBlock block)
                     {
                         return true;
@@ -176,10 +176,10 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
 
                     var normal = CellFace.FaceToVector3(terrainRaycastResult3.Value.CellFace.Face);
                     var position = terrainRaycastResult3.Value.HitPoint();
-                    var num4 = num == 128
+                    var newColor = bucketContents == 128
                         ? null
                         : new int?(PaintBucketBlock.GetColor(Terrain.ExtractData(activeBlockValue)));
-                    var value6 = block.Paint(SubsystemTerrain, cellValue2, num4);
+                    var value6 = block.Paint(SubsystemTerrain, cellValue2, newColor);
                     SubsystemTerrain.ChangeCell(cellFace2.X, cellFace2.Y, cellFace2.Z, value6);
                     componentMiner.DamageActiveTool(1);
                     _soundRequests.RequestRandomSound(
@@ -192,7 +192,7 @@ public class SubsystemBucketBlockBehavior : SubsystemBlockBehavior
                     );
                     if (WorldRuntimeContext.IsProjectActive(Project))
                     {
-                        PaintEffectRequested?.Invoke(this, new PaintEffectRequest(position, normal, num4));
+                        PaintEffectRequested?.Invoke(this, new PaintEffectRequest(position, normal, newColor));
                     }
 
                     return true;

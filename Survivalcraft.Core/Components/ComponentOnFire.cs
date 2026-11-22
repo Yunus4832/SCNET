@@ -131,25 +131,25 @@ public class ComponentOnFire : Component, IUpdateable
         var boundingBox = ComponentBody.BoundingBox;
         boundingBox.Min -= new Vector3(0.25f);
         boundingBox.Max += new Vector3(0.25f);
-        var num = Terrain.ToCell(boundingBox.Min.X);
-        var num2 = Terrain.ToCell(boundingBox.Min.Y);
-        var num3 = Terrain.ToCell(boundingBox.Min.Z);
-        var num4 = Terrain.ToCell(boundingBox.Max.X);
-        var num5 = Terrain.ToCell(boundingBox.Max.Y);
-        var num6 = Terrain.ToCell(boundingBox.Max.Z);
-        for (var i = num; i <= num4; i++)
+        var minX = Terrain.ToCell(boundingBox.Min.X);
+        var minY = Terrain.ToCell(boundingBox.Min.Y);
+        var minZ = Terrain.ToCell(boundingBox.Min.Z);
+        var maxX = Terrain.ToCell(boundingBox.Max.X);
+        var maxY = Terrain.ToCell(boundingBox.Max.Y);
+        var maxZ = Terrain.ToCell(boundingBox.Max.Z);
+        for (var i = minX; i <= maxX; i++)
         {
-            for (var j = num2; j <= num5; j++)
+            for (var j = minY; j <= maxY; j++)
             {
-                for (var k = num3; k <= num6; k++)
+                for (var k = minZ; k <= maxZ; k++)
                 {
                     var cellValue = _subsystemTerrain.Terrain.GetCellValue(i, j, k);
-                    var num7 = Terrain.ExtractContents(cellValue);
-                    var num8 = Terrain.ExtractData(cellValue);
-                    switch (num7)
+                    var contents = Terrain.ExtractContents(cellValue);
+                    var blockData = Terrain.ExtractData(cellValue);
+                    switch (contents)
                     {
                         case 104:
-                            if (num8 == 0)
+                            if (blockData == 0)
                             {
                                 var box2 = new BoundingBox(new Vector3(i, j, k), new Vector3(i + 1, j + 1, k + 1));
                                 if (boundingBox.Intersection(box2))
@@ -160,7 +160,7 @@ public class ComponentOnFire : Component, IUpdateable
                                 break;
                             }
 
-                            if ((num8 & 1) != 0)
+                            if ((blockData & 1) != 0)
                             {
                                 var box3 = new BoundingBox(
                                     new Vector3(i, j, k + 0.5f),
@@ -172,7 +172,7 @@ public class ComponentOnFire : Component, IUpdateable
                                 }
                             }
 
-                            if ((num8 & 2) != 0)
+                            if ((blockData & 2) != 0)
                             {
                                 var box4 = new BoundingBox(
                                     new Vector3(i + 0.5f, j, k),
@@ -184,7 +184,7 @@ public class ComponentOnFire : Component, IUpdateable
                                 }
                             }
 
-                            if ((num8 & 4) != 0)
+                            if ((blockData & 4) != 0)
                             {
                                 var box5 = new BoundingBox(new Vector3(i, j, k), new Vector3(i + 1, j + 1, k + 0.5f));
                                 if (boundingBox.Intersection(box5))
@@ -193,7 +193,7 @@ public class ComponentOnFire : Component, IUpdateable
                                 }
                             }
 
-                            if ((num8 & 8) != 0)
+                            if ((blockData & 8) != 0)
                             {
                                 var box6 = new BoundingBox(new Vector3(i, j, k), new Vector3(i + 0.5f, j + 1, k + 1));
                                 if (boundingBox.Intersection(box6))
@@ -204,7 +204,7 @@ public class ComponentOnFire : Component, IUpdateable
 
                             break;
                         case 209:
-                            if (num8 > 0)
+                            if (blockData > 0)
                             {
                                 var box = new BoundingBox(
                                     new Vector3(i, j, k) + new Vector3(0.2f),

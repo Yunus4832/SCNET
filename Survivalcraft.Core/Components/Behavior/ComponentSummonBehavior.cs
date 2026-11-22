@@ -115,8 +115,8 @@ public class ComponentSummonBehavior : ComponentBehavior, IUpdateable
             return;
         }
 
-        var num = Vector3.Distance(_componentCreature.ComponentBody.Position, SummonTarget.Position);
-        if (!(num > 4f))
+        var targetDistance = Vector3.Distance(_componentCreature.ComponentBody.Position, SummonTarget.Position);
+        if (!(targetDistance > 4f))
         {
             return;
         }
@@ -128,7 +128,7 @@ public class ComponentSummonBehavior : ComponentBehavior, IUpdateable
             )
         );
         v *= 0.75f * (GetHashCode() % 2 != 0 ? 1 : -1) * (1 + GetHashCode() % 3);
-        var speed = MathUtils.Lerp(0.4f, 1f, MathUtils.Saturate(0.25f * (num - 5f)));
+        var speed = MathUtils.Lerp(0.4f, 1f, MathUtils.Saturate(0.25f * (targetDistance - 5f)));
         _componentPathfinding.SetDestination(
             SummonTarget.Position + v,
             speed,

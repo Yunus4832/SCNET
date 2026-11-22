@@ -146,8 +146,13 @@ public partial class BlockGeometryGenerator
         ref TerrainVertex vertex
     )
     {
-        var num = LightingManager.CalculateLighting(CellFace.FaceToVector3(face));
-        var color2 = new Color((byte)(color.R * num), (byte)(color.G * num), (byte)(color.B * num), color.A);
+        var faceBrightness = LightingManager.CalculateLighting(CellFace.FaceToVector3(face));
+        var color2 = new Color(
+            (byte)(color.R * faceBrightness),
+            (byte)(color.G * faceBrightness),
+            (byte)(color.B * faceBrightness),
+            color.A
+        );
         var tx = (_textureCoordinates[corner].X + textureSlot % textureSlotCount) / textureSlotCount;
         var ty = (_textureCoordinates[corner].Y + textureSlot / textureSlotCount) / textureSlotCount;
         SetupVertex(x, y, z, color2, tx, ty, ref vertex);
@@ -215,8 +220,13 @@ public partial class BlockGeometryGenerator
     {
         var vertices = subset.Vertices;
         var indices = subset.Indices;
-        var num2 = LightingManager.CalculateLighting(Vector3.UnitY);
-        var color2 = new Color((byte)(color.R * num2), (byte)(color.G * num2), (byte)(color.B * num2), color.A);
+        var upwardBrightness = LightingManager.CalculateLighting(Vector3.UnitY);
+        var color2 = new Color(
+            (byte)(color.R * upwardBrightness),
+            (byte)(color.G * upwardBrightness),
+            (byte)(color.B * upwardBrightness),
+            color.A
+        );
         var count = vertices.Count;
         vertices.Count += 8;
         var textureSlotCount = block.GetTextureSlotCount(value);
@@ -1638,8 +1648,8 @@ public partial class BlockGeometryGenerator
 
             for (var k = 0; k < blockMesh.Indices.Count / 3; k++)
             {
-                var num3 = blockMesh.Sides == null ? -1 : blockMesh.Sides.Array[k];
-                if (num3 >= 0 && !_visibleSides[num3])
+                var meshSide = blockMesh.Sides == null ? -1 : blockMesh.Sides.Array[k];
+                if (meshSide >= 0 && !_visibleSides[meshSide])
                 {
                     continue;
                 }
@@ -1727,8 +1737,8 @@ public partial class BlockGeometryGenerator
 
             for (var k = 0; k < blockMesh.Indices.Count / 3; k++)
             {
-                var num2 = blockMesh.Sides == null ? -1 : blockMesh.Sides.Array[k];
-                if (num2 < 0 || _visibleSides[facesMap.Length != 0 ? facesMap[num2] : num2])
+                var meshSide = blockMesh.Sides == null ? -1 : blockMesh.Sides.Array[k];
+                if (meshSide < 0 || _visibleSides[facesMap.Length != 0 ? facesMap[meshSide] : meshSide])
                 {
                     indices.Add(blockMesh.Indices.Array[3 * k] + count);
                     indices.Add(blockMesh.Indices.Array[3 * k + 1] + count);
@@ -1757,8 +1767,8 @@ public partial class BlockGeometryGenerator
     )
     {
         var color = WireBlock.WireColor;
-        var num = Terrain.ExtractContents(value);
-        if (num == 133)
+        var ownerContents = Terrain.ExtractContents(value);
+        if (ownerContents == 133)
         {
             var color2 = WireBlock.GetColor(Terrain.ExtractData(value));
             if (color2.HasValue)
@@ -1770,41 +1780,41 @@ public partial class BlockGeometryGenerator
         var ownerLight = ReadLight(x, y, z);
         var ownerSample = _recordLighting ? PackLightCell(x, y, z) : 0;
         var ownerResponse = TerrainLightResponse.FromChannels(ownerLight);
-        var v = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) - 0.5f * CellFace.FaceToVector3(mountingFace);
-        var vector = CellFace.FaceToVector3(mountingFace);
-        var v2 = new Vector2(0.9376f, 0.0001f);
-        var v3 = new Vector2(0.03125f, 0.00550781237f);
+        var mountCenter = new Vector3(x + 0.5f, y + 0.5f, z + 0.5f) - 0.5f * CellFace.FaceToVector3(mountingFace);
+        var mountNormal = CellFace.FaceToVector3(mountingFace);
+        var uvOrigin = new Vector2(0.9376f, 0.0001f);
+        var uvScale = new Vector2(0.03125f, 0.00550781237f);
         var point = CellFace.FaceToPoint3(mountingFace);
         var cellContents = Terrain.ExtractContents(_readGeometryCell(x - point.X, y - point.Y, z - point.Z));
-        var flag = cellContents == 2 ||
-                   cellContents == 7 ||
-                   cellContents == 8 ||
-                   cellContents == 6 ||
-                   cellContents == 62 ||
-                   cellContents == 72;
-        var v4 = CellFace.FaceToVector3(
+        var jitterOnSurface = cellContents == 2 ||
+                              cellContents == 7 ||
+                              cellContents == 8 ||
+                              cellContents == 6 ||
+                              cellContents == 62 ||
+                              cellContents == 72;
+        var mountUp = CellFace.FaceToVector3(
             SubsystemElectricity.GetConnectorFace(mountingFace, ElectricConnectorDirection.Top)
         );
-        var vector2 =
+        var centerDisplacement =
             CellFace.FaceToVector3(
                 SubsystemElectricity.GetConnectorFace(mountingFace, ElectricConnectorDirection.Left)
             ) *
             centerOffset.X +
-            v4 * centerOffset.Y;
-        var num4 = 0;
+            mountUp * centerOffset.Y;
+        var connectedFaceMask = 0;
         _tmpConnectionPaths.Clear();
         _subsystemElectricity.GetAllConnectedNeighbors(x, y, z, mountingFace, _tmpConnectionPaths, _readGeometryCell);
         foreach (var tmpConnectionPath in _tmpConnectionPaths)
         {
-            if ((num4 & (1 << tmpConnectionPath.ConnectorFace)) == 0)
+            if ((connectedFaceMask & (1 << tmpConnectionPath.ConnectorFace)) == 0)
             {
                 var connectorDirection =
                     SubsystemElectricity.GetConnectorDirection(mountingFace, 0, tmpConnectionPath.ConnectorFace);
                 if (!(centerOffset == Vector2.Zero) || connectorDirection != ElectricConnectorDirection.In)
                 {
-                    num4 |= 1 << tmpConnectionPath.ConnectorFace;
+                    connectedFaceMask |= 1 << tmpConnectionPath.ConnectorFace;
                     var color3 = color;
-                    if (num != 133)
+                    if (ownerContents != 133)
                     {
                         var cellValue = _readGeometryCell(
                             x + tmpConnectionPath.NeighborOffsetX,
@@ -1821,39 +1831,50 @@ public partial class BlockGeometryGenerator
                         }
                     }
 
-                    var vector3 = connectorDirection != ElectricConnectorDirection.In
+                    var wireDirection = connectorDirection != ElectricConnectorDirection.In
                         ? CellFace.FaceToVector3(tmpConnectionPath.ConnectorFace)
-                        : -Vector3.Normalize(vector2);
-                    var vector4 = Vector3.Cross(vector, vector3);
-                    var s = centerBoxSize >= 0f ? MathUtils.Max(0.03125f, centerBoxSize / 2f) : centerBoxSize / 2f;
-                    var num5 = connectorDirection == ElectricConnectorDirection.In ? 0.03125f : 0.5f;
-                    var num6 = connectorDirection == ElectricConnectorDirection.In
+                        : -Vector3.Normalize(centerDisplacement);
+                    var wireSide = Vector3.Cross(mountNormal, wireDirection);
+                    var startDistance = centerBoxSize >= 0f
+                        ? MathUtils.Max(0.03125f, centerBoxSize / 2f)
+                        : centerBoxSize / 2f;
+                    var endDistance = connectorDirection == ElectricConnectorDirection.In ? 0.03125f : 0.5f;
+                    var ridgeEndDistance = connectorDirection == ElectricConnectorDirection.In
                         ? 0f
                         : tmpConnectionPath.ConnectorFace == tmpConnectionPath.NeighborFace
-                            ? num5 + 0.03125f
+                            ? endDistance + 0.03125f
                             : tmpConnectionPath.ConnectorFace != CellFace.OppositeFace(tmpConnectionPath.NeighborFace)
-                                ? num5
-                                : num5 - 0.03125f;
-                    var v5 = v - vector4 * 0.03125f + vector3 * s + vector2;
-                    var vector5 = v - vector4 * 0.03125f + vector3 * num5;
-                    var vector6 = v + vector4 * 0.03125f + vector3 * num5;
-                    var v6 = v + vector4 * 0.03125f + vector3 * s + vector2;
-                    var vector7 = v + vector * 0.03125f + vector3 * (centerBoxSize / 2f) + vector2;
-                    var vector8 = v + vector * 0.03125f + vector3 * num6;
-                    if (flag && centerBoxSize == 0f)
+                                ? endDistance
+                                : endDistance - 0.03125f;
+                    var startLeft = mountCenter -
+                                    wireSide * 0.03125f +
+                                    wireDirection * startDistance +
+                                    centerDisplacement;
+                    var endLeft = mountCenter - wireSide * 0.03125f + wireDirection * endDistance;
+                    var endRight = mountCenter + wireSide * 0.03125f + wireDirection * endDistance;
+                    var startRight = mountCenter +
+                                     wireSide * 0.03125f +
+                                     wireDirection * startDistance +
+                                     centerDisplacement;
+                    var startRidge = mountCenter +
+                                     mountNormal * 0.03125f +
+                                     wireDirection * (centerBoxSize / 2f) +
+                                     centerDisplacement;
+                    var endRidge = mountCenter + mountNormal * 0.03125f + wireDirection * ridgeEndDistance;
+                    if (jitterOnSurface && centerBoxSize == 0f)
                     {
-                        var vector9 = 0.25f * GetRandomWireOffset(0.5f * (v5 + v6), vector);
-                        v5 += vector9;
-                        v6 += vector9;
-                        vector7 += vector9;
+                        var startJitter = 0.25f * GetRandomWireOffset(0.5f * (startLeft + startRight), mountNormal);
+                        startLeft += startJitter;
+                        startRight += startJitter;
+                        startRidge += startJitter;
                     }
 
-                    var vector10 = v2 + v3 * new Vector2(MathUtils.Max(0.0625f, centerBoxSize), 0f);
-                    var vector11 = v2 + v3 * new Vector2(num5 * 2f, 0f);
-                    var vector12 = v2 + v3 * new Vector2(num5 * 2f, 1f);
-                    var vector13 = v2 + v3 * new Vector2(MathUtils.Max(0.0625f, centerBoxSize), 1f);
-                    var vector14 = v2 + v3 * new Vector2(centerBoxSize, 0.5f);
-                    var vector15 = v2 + v3 * new Vector2(num6 * 2f, 0.5f);
+                    var startLeftUv = uvOrigin + uvScale * new Vector2(MathUtils.Max(0.0625f, centerBoxSize), 0f);
+                    var endLeftUv = uvOrigin + uvScale * new Vector2(endDistance * 2f, 0f);
+                    var endRightUv = uvOrigin + uvScale * new Vector2(endDistance * 2f, 1f);
+                    var startRightUv = uvOrigin + uvScale * new Vector2(MathUtils.Max(0.0625f, centerBoxSize), 1f);
+                    var startRidgeUv = uvOrigin + uvScale * new Vector2(centerBoxSize, 0.5f);
+                    var endRidgeUv = uvOrigin + uvScale * new Vector2(ridgeEndDistance * 2f, 0.5f);
                     var neighborLight = ReadLight(
                         x + tmpConnectionPath.NeighborOffsetX,
                         y + tmpConnectionPath.NeighborOffsetY,
@@ -1862,44 +1883,44 @@ public partial class BlockGeometryGenerator
                     ReadOnlySpan<TerrainLightChannels> wireSamples = [ownerLight, neighborLight];
                     ReadOnlySpan<float> wireWeights = [0.5f, 0.5f];
                     var middleResponse = TerrainLightResponse.FromSamples(wireSamples, wireWeights);
-                    var num10 = LightingManager.CalculateLighting(-vector4);
-                    var num11 = LightingManager.CalculateLighting(vector4);
-                    var num12 = LightingManager.CalculateLighting(vector);
-                    var num13 = num10;
-                    var num14 = num10;
-                    var num15 = num11;
-                    var num16 = num11;
-                    var num17 = num12;
-                    var num18 = num12;
+                    var leftBrightness = LightingManager.CalculateLighting(-wireSide);
+                    var rightBrightness = LightingManager.CalculateLighting(wireSide);
+                    var ridgeBrightness = LightingManager.CalculateLighting(mountNormal);
+                    var startLeftBrightness = leftBrightness;
+                    var endLeftBrightness = leftBrightness;
+                    var endRightBrightness = rightBrightness;
+                    var startRightBrightness = rightBrightness;
+                    var startRidgeBrightness = ridgeBrightness;
+                    var endRidgeBrightness = ridgeBrightness;
                     var color5 = new Color(
-                        (byte)(color3.R * num13),
-                        (byte)(color3.G * num13),
-                        (byte)(color3.B * num13)
+                        (byte)(color3.R * startLeftBrightness),
+                        (byte)(color3.G * startLeftBrightness),
+                        (byte)(color3.B * startLeftBrightness)
                     );
                     var color6 = new Color(
-                        (byte)(color3.R * num14),
-                        (byte)(color3.G * num14),
-                        (byte)(color3.B * num14)
+                        (byte)(color3.R * endLeftBrightness),
+                        (byte)(color3.G * endLeftBrightness),
+                        (byte)(color3.B * endLeftBrightness)
                     );
                     var color7 = new Color(
-                        (byte)(color3.R * num15),
-                        (byte)(color3.G * num15),
-                        (byte)(color3.B * num15)
+                        (byte)(color3.R * endRightBrightness),
+                        (byte)(color3.G * endRightBrightness),
+                        (byte)(color3.B * endRightBrightness)
                     );
                     var color8 = new Color(
-                        (byte)(color3.R * num16),
-                        (byte)(color3.G * num16),
-                        (byte)(color3.B * num16)
+                        (byte)(color3.R * startRightBrightness),
+                        (byte)(color3.G * startRightBrightness),
+                        (byte)(color3.B * startRightBrightness)
                     );
                     var color9 = new Color(
-                        (byte)(color3.R * num17),
-                        (byte)(color3.G * num17),
-                        (byte)(color3.B * num17)
+                        (byte)(color3.R * startRidgeBrightness),
+                        (byte)(color3.G * startRidgeBrightness),
+                        (byte)(color3.B * startRidgeBrightness)
                     );
                     var color10 = new Color(
-                        (byte)(color3.R * num18),
-                        (byte)(color3.G * num18),
-                        (byte)(color3.B * num18)
+                        (byte)(color3.R * endRidgeBrightness),
+                        (byte)(color3.G * endRidgeBrightness),
+                        (byte)(color3.B * endRidgeBrightness)
                     );
                     var count = subset.Vertices.Count;
                     subset.Vertices.Count += 6;
@@ -1915,12 +1936,60 @@ public partial class BlockGeometryGenerator
                     }
 
                     var array = subset.Vertices.Array;
-                    SetupVertex(v5.X, v5.Y, v5.Z, color5, vector10.X, vector10.Y, ref array[count]);
-                    SetupVertex(vector5.X, vector5.Y, vector5.Z, color6, vector11.X, vector11.Y, ref array[count + 1]);
-                    SetupVertex(vector6.X, vector6.Y, vector6.Z, color7, vector12.X, vector12.Y, ref array[count + 2]);
-                    SetupVertex(v6.X, v6.Y, v6.Z, color8, vector13.X, vector13.Y, ref array[count + 3]);
-                    SetupVertex(vector7.X, vector7.Y, vector7.Z, color9, vector14.X, vector14.Y, ref array[count + 4]);
-                    SetupVertex(vector8.X, vector8.Y, vector8.Z, color10, vector15.X, vector15.Y, ref array[count + 5]);
+                    SetupVertex(
+                        startLeft.X,
+                        startLeft.Y,
+                        startLeft.Z,
+                        color5,
+                        startLeftUv.X,
+                        startLeftUv.Y,
+                        ref array[count]
+                    );
+                    SetupVertex(
+                        endLeft.X,
+                        endLeft.Y,
+                        endLeft.Z,
+                        color6,
+                        endLeftUv.X,
+                        endLeftUv.Y,
+                        ref array[count + 1]
+                    );
+                    SetupVertex(
+                        endRight.X,
+                        endRight.Y,
+                        endRight.Z,
+                        color7,
+                        endRightUv.X,
+                        endRightUv.Y,
+                        ref array[count + 2]
+                    );
+                    SetupVertex(
+                        startRight.X,
+                        startRight.Y,
+                        startRight.Z,
+                        color8,
+                        startRightUv.X,
+                        startRightUv.Y,
+                        ref array[count + 3]
+                    );
+                    SetupVertex(
+                        startRidge.X,
+                        startRidge.Y,
+                        startRidge.Z,
+                        color9,
+                        startRidgeUv.X,
+                        startRidgeUv.Y,
+                        ref array[count + 4]
+                    );
+                    SetupVertex(
+                        endRidge.X,
+                        endRidge.Y,
+                        endRidge.Z,
+                        color10,
+                        endRidgeUv.X,
+                        endRidgeUv.Y,
+                        ref array[count + 5]
+                    );
                     array[count].Lighting = ownerResponse;
                     array[count + 1].Lighting = middleResponse;
                     array[count + 2].Lighting = middleResponse;
@@ -1952,49 +2021,65 @@ public partial class BlockGeometryGenerator
             }
         }
 
-        if (centerBoxSize != 0f || (num4 == 0 && num != 133))
+        if (centerBoxSize != 0f || (connectedFaceMask == 0 && ownerContents != 133))
         {
             return;
         }
 
         for (var i = 0; i < 6; i++)
         {
-            if (i != mountingFace && i != CellFace.OppositeFace(mountingFace) && (num4 & (1 << i)) == 0)
+            if (i != mountingFace && i != CellFace.OppositeFace(mountingFace) && (connectedFaceMask & (1 << i)) == 0)
             {
-                var vector16 = CellFace.FaceToVector3(i);
-                var v7 = Vector3.Cross(vector, vector16);
-                var v8 = v - v7 * 0.03125f + vector16 * 0.03125f;
-                var v9 = v + v7 * 0.03125f + vector16 * 0.03125f;
-                var vector17 = v + vector * 0.03125f;
-                if (flag)
+                var capDirection = CellFace.FaceToVector3(i);
+                var capSide = Vector3.Cross(mountNormal, capDirection);
+                var capLeft = mountCenter - capSide * 0.03125f + capDirection * 0.03125f;
+                var capRight = mountCenter + capSide * 0.03125f + capDirection * 0.03125f;
+                var capRidge = mountCenter + mountNormal * 0.03125f;
+                if (jitterOnSurface)
                 {
-                    var vector18 = 0.25f * GetRandomWireOffset(0.5f * (v8 + v9), vector);
-                    v8 += vector18;
-                    v9 += vector18;
-                    vector17 += vector18;
+                    var capJitter = 0.25f * GetRandomWireOffset(0.5f * (capLeft + capRight), mountNormal);
+                    capLeft += capJitter;
+                    capRight += capJitter;
+                    capRidge += capJitter;
                 }
 
-                var vector19 = v2 + v3 * new Vector2(0.0625f, 0f);
-                var vector20 = v2 + v3 * new Vector2(0.0625f, 1f);
-                var vector21 = v2 + v3 * new Vector2(0f, 0.5f);
-                var num19 = LightingManager.CalculateLighting(vector16);
-                var num20 = LightingManager.CalculateLighting(vector);
-                var color11 = new Color((byte)(color.R * num19), (byte)(color.G * num19), (byte)(color.B * num19));
-                var color12 = new Color((byte)(color.R * num20), (byte)(color.G * num20), (byte)(color.B * num20));
+                var capLeftUv = uvOrigin + uvScale * new Vector2(0.0625f, 0f);
+                var capRightUv = uvOrigin + uvScale * new Vector2(0.0625f, 1f);
+                var capRidgeUv = uvOrigin + uvScale * new Vector2(0f, 0.5f);
+                var capBrightness = LightingManager.CalculateLighting(capDirection);
+                var capRidgeBrightness = LightingManager.CalculateLighting(mountNormal);
+                var color11 = new Color(
+                    (byte)(color.R * capBrightness),
+                    (byte)(color.G * capBrightness),
+                    (byte)(color.B * capBrightness)
+                );
+                var color12 = new Color(
+                    (byte)(color.R * capRidgeBrightness),
+                    (byte)(color.G * capRidgeBrightness),
+                    (byte)(color.B * capRidgeBrightness)
+                );
                 var count3 = subset.Vertices.Count;
                 subset.Vertices.Count += 3;
                 if (_recordLighting) { subset.RecordLighting(count3, 3, ownerSample); }
 
                 var array3 = subset.Vertices.Array;
-                SetupVertex(v8.X, v8.Y, v8.Z, color11, vector19.X, vector19.Y, ref array3[count3]);
-                SetupVertex(v9.X, v9.Y, v9.Z, color11, vector20.X, vector20.Y, ref array3[count3 + 1]);
+                SetupVertex(capLeft.X, capLeft.Y, capLeft.Z, color11, capLeftUv.X, capLeftUv.Y, ref array3[count3]);
                 SetupVertex(
-                    vector17.X,
-                    vector17.Y,
-                    vector17.Z,
+                    capRight.X,
+                    capRight.Y,
+                    capRight.Z,
+                    color11,
+                    capRightUv.X,
+                    capRightUv.Y,
+                    ref array3[count3 + 1]
+                );
+                SetupVertex(
+                    capRidge.X,
+                    capRidge.Y,
+                    capRidge.Z,
                     color12,
-                    vector21.X,
-                    vector21.Y,
+                    capRidgeUv.X,
+                    capRidgeUv.Y,
                     ref array3[count3 + 2]
                 );
                 array3[count3].Lighting = ownerResponse;
@@ -2012,15 +2097,15 @@ public partial class BlockGeometryGenerator
 
     private void CalculateCubeVertexLight(LitCell cell, ref TerrainLightChannels light, ref int shadow)
     {
-        var num = Terrain.ExtractContents(cell.Value);
-        if (num == 0)
+        var contents = Terrain.ExtractContents(cell.Value);
+        if (contents == 0)
         {
             light = light.Max(cell.Light);
             return;
         }
 
         light = light.Max(cell.Light);
-        shadow += Presentations.Get(num).GetShadowStrength(cell.Value);
+        shadow += Presentations.Get(contents).GetShadowStrength(cell.Value);
     }
 
     private static TerrainLightChannels CombineLightAndShadow(TerrainLightChannels light, int shadow)
@@ -2033,15 +2118,15 @@ public partial class BlockGeometryGenerator
         var light = default(TerrainLightChannels);
         var shadow = 0;
         var chunkAtCell = GetGeometryChunk(x - 1, z);
-        var num = TerrainChunk.CalculateCellIndex((x - 1) & 0xF, y, z & 0xF);
-        var cellValueFast = ReadLitCell(chunkAtCell, num - 1);
-        var cellValueFast2 = ReadLitCell(chunkAtCell, num);
+        var westIndex = TerrainChunk.CalculateCellIndex((x - 1) & 0xF, y, z & 0xF);
+        var cellValueFast = ReadLitCell(chunkAtCell, westIndex - 1);
+        var cellValueFast2 = ReadLitCell(chunkAtCell, westIndex);
         CalculateCubeVertexLight(cellValueFast, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast2, ref light, ref shadow);
         var chunkAtCell2 = GetGeometryChunk(x, z);
-        var num2 = TerrainChunk.CalculateCellIndex(x & 0xF, y, z & 0xF);
-        var cellValueFast3 = ReadLitCell(chunkAtCell2, num2 - 1);
-        var cellValueFast4 = ReadLitCell(chunkAtCell2, num2);
+        var centerIndex = TerrainChunk.CalculateCellIndex(x & 0xF, y, z & 0xF);
+        var cellValueFast3 = ReadLitCell(chunkAtCell2, centerIndex - 1);
+        var cellValueFast4 = ReadLitCell(chunkAtCell2, centerIndex);
         CalculateCubeVertexLight(cellValueFast3, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast4, ref light, ref shadow);
         return CombineLightAndShadow(light, shadow);
@@ -2052,15 +2137,15 @@ public partial class BlockGeometryGenerator
         var light = default(TerrainLightChannels);
         var shadow = 0;
         var chunkAtCell = GetGeometryChunk(x, z - 1);
-        var num = TerrainChunk.CalculateCellIndex(x & 0xF, y, (z - 1) & 0xF);
-        var cellValueFast = ReadLitCell(chunkAtCell, num - 1);
-        var cellValueFast2 = ReadLitCell(chunkAtCell, num);
+        var negativeZIndex = TerrainChunk.CalculateCellIndex(x & 0xF, y, (z - 1) & 0xF);
+        var cellValueFast = ReadLitCell(chunkAtCell, negativeZIndex - 1);
+        var cellValueFast2 = ReadLitCell(chunkAtCell, negativeZIndex);
         CalculateCubeVertexLight(cellValueFast, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast2, ref light, ref shadow);
         var chunkAtCell2 = GetGeometryChunk(x, z);
-        var num2 = TerrainChunk.CalculateCellIndex(x & 0xF, y, z & 0xF);
-        var cellValueFast3 = ReadLitCell(chunkAtCell2, num2 - 1);
-        var cellValueFast4 = ReadLitCell(chunkAtCell2, num2);
+        var centerIndex = TerrainChunk.CalculateCellIndex(x & 0xF, y, z & 0xF);
+        var cellValueFast3 = ReadLitCell(chunkAtCell2, centerIndex - 1);
+        var cellValueFast4 = ReadLitCell(chunkAtCell2, centerIndex);
         CalculateCubeVertexLight(cellValueFast3, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast4, ref light, ref shadow);
         return CombineLightAndShadow(light, shadow);
@@ -2071,15 +2156,15 @@ public partial class BlockGeometryGenerator
         var light = default(TerrainLightChannels);
         var shadow = 0;
         var chunkAtCell = GetGeometryChunk(x - 1, z - 1);
-        var num = TerrainChunk.CalculateCellIndex((x - 1) & 0xF, y, (z - 1) & 0xF);
-        var cellValueFast = ReadLitCell(chunkAtCell, num - 1);
-        var cellValueFast2 = ReadLitCell(chunkAtCell, num);
+        var negativeXZIndex = TerrainChunk.CalculateCellIndex((x - 1) & 0xF, y, (z - 1) & 0xF);
+        var cellValueFast = ReadLitCell(chunkAtCell, negativeXZIndex - 1);
+        var cellValueFast2 = ReadLitCell(chunkAtCell, negativeXZIndex);
         CalculateCubeVertexLight(cellValueFast, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast2, ref light, ref shadow);
         var chunkAtCell2 = GetGeometryChunk(x, z - 1);
-        var num2 = TerrainChunk.CalculateCellIndex(x & 0xF, y, (z - 1) & 0xF);
-        var cellValueFast3 = ReadLitCell(chunkAtCell2, num2 - 1);
-        var cellValueFast4 = ReadLitCell(chunkAtCell2, num2);
+        var negativeZIndex = TerrainChunk.CalculateCellIndex(x & 0xF, y, (z - 1) & 0xF);
+        var cellValueFast3 = ReadLitCell(chunkAtCell2, negativeZIndex - 1);
+        var cellValueFast4 = ReadLitCell(chunkAtCell2, negativeZIndex);
         CalculateCubeVertexLight(cellValueFast3, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast4, ref light, ref shadow);
         return CombineLightAndShadow(light, shadow);
@@ -2090,15 +2175,15 @@ public partial class BlockGeometryGenerator
         var light = default(TerrainLightChannels);
         var shadow = 0;
         var chunkAtCell = GetGeometryChunk(x - 1, z - 1);
-        var num = TerrainChunk.CalculateCellIndex((x - 1) & 0xF, y, (z - 1) & 0xF);
-        var cellValueFast = ReadLitCell(chunkAtCell, num - 1);
-        var cellValueFast2 = ReadLitCell(chunkAtCell, num);
+        var negativeXZIndex = TerrainChunk.CalculateCellIndex((x - 1) & 0xF, y, (z - 1) & 0xF);
+        var cellValueFast = ReadLitCell(chunkAtCell, negativeXZIndex - 1);
+        var cellValueFast2 = ReadLitCell(chunkAtCell, negativeXZIndex);
         CalculateCubeVertexLight(cellValueFast, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast2, ref light, ref shadow);
         var chunkAtCell2 = GetGeometryChunk(x - 1, z);
-        var num2 = TerrainChunk.CalculateCellIndex((x - 1) & 0xF, y, z & 0xF);
-        var cellValueFast3 = ReadLitCell(chunkAtCell2, num2 - 1);
-        var cellValueFast4 = ReadLitCell(chunkAtCell2, num2);
+        var negativeXIndex = TerrainChunk.CalculateCellIndex((x - 1) & 0xF, y, z & 0xF);
+        var cellValueFast3 = ReadLitCell(chunkAtCell2, negativeXIndex - 1);
+        var cellValueFast4 = ReadLitCell(chunkAtCell2, negativeXIndex);
         CalculateCubeVertexLight(cellValueFast3, ref light, ref shadow);
         CalculateCubeVertexLight(cellValueFast4, ref light, ref shadow);
         return CombineLightAndShadow(light, shadow);

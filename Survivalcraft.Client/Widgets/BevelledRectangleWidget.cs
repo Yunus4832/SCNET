@@ -205,7 +205,7 @@ public class BevelledRectangleWidget : Widget
         var centerColor = CenterColor * new Vector4(0.6f, 0.6f, 0.6f, 1f);
         var bevelColor = BevelColor;
         var shadowColor = ShadowColor;
-        var flag = shadowColor != Color.Transparent && BevelSize > 0f;
+        var drawShadow = shadowColor != Color.Transparent && BevelSize > 0f;
         var globalScale = GlobalScale;
         if (globalScale.UncloseTo(_cachedPixelsPerUnit))
         {
@@ -229,7 +229,7 @@ public class BevelledRectangleWidget : Widget
                 _cachedShadowBatch.Clear();
                 _cachedTexturedBatch.Clear();
                 _cachedTexturedBatch.Texture = Texture;
-                if (flag)
+                if (drawShadow)
                 {
                     BevelledShapeRenderer.QueueShapeShadow(
                         _cachedShadowBatch,
@@ -257,7 +257,7 @@ public class BevelledRectangleWidget : Widget
                 _cachedBatchesValid = true;
             }
 
-            if (flag)
+            if (drawShadow)
             {
                 if (_flatBatch == null)
                 {
@@ -293,7 +293,7 @@ public class BevelledRectangleWidget : Widget
             var flatShading2 = _points.Any(p => p.RoundingCount == 0);
             _cachedShadowBatch.Clear();
             _cachedFlatBatch.Clear();
-            if (flag)
+            if (drawShadow)
             {
                 BevelledShapeRenderer.QueueShapeShadow(
                     _cachedShadowBatch,
@@ -324,7 +324,7 @@ public class BevelledRectangleWidget : Widget
             _flatBatch = dc.PrimitivesRenderer2D.FlatBatch(0, DepthStencilState.None);
         }
 
-        if (flag)
+        if (drawShadow)
         {
             _flatBatch.QueueBatch(
                 _cachedShadowBatch,
@@ -345,13 +345,13 @@ public class BevelledRectangleWidget : Widget
     public override void ArrangeOverride()
     {
         var vector = new Vector2(0f, 0f);
-        var vector2 = new Vector2(ActualSize.X, 0f);
-        var vector3 = new Vector2(ActualSize.X, ActualSize.Y);
-        var vector4 = new Vector2(0f, ActualSize.Y);
+        var topRight = new Vector2(ActualSize.X, 0f);
+        var bottomRight = new Vector2(ActualSize.X, ActualSize.Y);
+        var bottomLeft = new Vector2(0f, ActualSize.Y);
         if (vector != _points[0].Position ||
-            vector2 != _points[1].Position ||
-            vector3 != _points[2].Position ||
-            vector4 != _points[3].Position)
+            topRight != _points[1].Position ||
+            bottomRight != _points[2].Position ||
+            bottomLeft != _points[3].Position)
         {
             _points[0] = new BevelledShapeRenderer.Point
             {
@@ -361,19 +361,19 @@ public class BevelledRectangleWidget : Widget
             };
             _points[1] = new BevelledShapeRenderer.Point
             {
-                Position = vector2,
+                Position = topRight,
                 RoundingRadius = RoundingRadius,
                 RoundingCount = RoundingCount
             };
             _points[2] = new BevelledShapeRenderer.Point
             {
-                Position = vector3,
+                Position = bottomRight,
                 RoundingRadius = RoundingRadius,
                 RoundingCount = RoundingCount
             };
             _points[3] = new BevelledShapeRenderer.Point
             {
-                Position = vector4,
+                Position = bottomLeft,
                 RoundingRadius = RoundingRadius,
                 RoundingCount = RoundingCount
             };
@@ -396,66 +396,71 @@ public class BevelledRectangleWidget : Widget
         float textureScale
     )
     {
-        var num = MathUtils.Abs(bevelSize);
+        var bevelWidth = MathUtils.Abs(bevelSize);
         var vector = c1;
-        var vector2 = c1 + new Vector2(num);
-        var vector3 = c2 - new Vector2(num);
-        var vector4 = c2;
-        var vector5 = c2 + new Vector2(1.5f * num);
+        var innerTopLeft = c1 + new Vector2(bevelWidth);
+        var innerBottomRight = c2 - new Vector2(bevelWidth);
+        var outerBottomRight = c2;
+        var shadowBottomRight = c2 + new Vector2(1.5f * bevelWidth);
         var x = vector.X;
-        var x2 = vector2.X;
-        var x3 = vector3.X;
-        var x4 = vector4.X;
-        var x5 = vector5.X;
+        var x2 = innerTopLeft.X;
+        var x3 = innerBottomRight.X;
+        var x4 = outerBottomRight.X;
+        var x5 = shadowBottomRight.X;
         var y = vector.Y;
-        var y2 = vector2.Y;
-        var y3 = vector3.Y;
-        var y4 = vector4.Y;
-        var y5 = vector5.Y;
-        var num2 = MathUtils.Saturate((bevelSize > 0f ? 1f : -0.75f) * directionalLight + ambientLight);
-        var num3 = MathUtils.Saturate((bevelSize > 0f ? -0.75f : 1f) * directionalLight + ambientLight);
-        var num4 = MathUtils.Saturate((bevelSize > 0f ? -0.375f : 0.5f) * directionalLight + ambientLight);
-        var num5 = MathUtils.Saturate((bevelSize > 0f ? 0.5f : -0.375f) * directionalLight + ambientLight);
-        var num6 = MathUtils.Saturate(0f * directionalLight + ambientLight);
+        var y2 = innerTopLeft.Y;
+        var y3 = innerBottomRight.Y;
+        var y4 = outerBottomRight.Y;
+        var y5 = shadowBottomRight.Y;
+        var topBrightness = MathUtils.Saturate((bevelSize > 0f ? 1f : -0.75f) * directionalLight + ambientLight);
+        var bottomBrightness = MathUtils.Saturate((bevelSize > 0f ? -0.75f : 1f) * directionalLight + ambientLight);
+        var leftBrightness = MathUtils.Saturate((bevelSize > 0f ? -0.375f : 0.5f) * directionalLight + ambientLight);
+        var rightBrightness = MathUtils.Saturate((bevelSize > 0f ? 0.5f : -0.375f) * directionalLight + ambientLight);
+        var centerBrightness = MathUtils.Saturate(0f * directionalLight + ambientLight);
         var color2 = new Color(
-            (byte)(num4 * bevelColor.R),
-            (byte)(num4 * bevelColor.G),
-            (byte)(num4 * bevelColor.B),
+            (byte)(leftBrightness * bevelColor.R),
+            (byte)(leftBrightness * bevelColor.G),
+            (byte)(leftBrightness * bevelColor.B),
             bevelColor.A
         );
         var color3 = new Color(
-            (byte)(num5 * bevelColor.R),
-            (byte)(num5 * bevelColor.G),
-            (byte)(num5 * bevelColor.B),
+            (byte)(rightBrightness * bevelColor.R),
+            (byte)(rightBrightness * bevelColor.G),
+            (byte)(rightBrightness * bevelColor.B),
             bevelColor.A
         );
         var color4 = new Color(
-            (byte)(num2 * bevelColor.R),
-            (byte)(num2 * bevelColor.G),
-            (byte)(num2 * bevelColor.B),
+            (byte)(topBrightness * bevelColor.R),
+            (byte)(topBrightness * bevelColor.G),
+            (byte)(topBrightness * bevelColor.B),
             bevelColor.A
         );
         var color5 = new Color(
-            (byte)(num3 * bevelColor.R),
-            (byte)(num3 * bevelColor.G),
-            (byte)(num3 * bevelColor.B),
+            (byte)(bottomBrightness * bevelColor.R),
+            (byte)(bottomBrightness * bevelColor.G),
+            (byte)(bottomBrightness * bevelColor.B),
             bevelColor.A
         );
-        var color6 = new Color((byte)(num6 * color.R), (byte)(num6 * color.G), (byte)(num6 * color.B), color.A);
+        var color6 = new Color(
+            (byte)(centerBrightness * color.R),
+            (byte)(centerBrightness * color.G),
+            (byte)(centerBrightness * color.B),
+            color.A
+        );
         if (texturedBatch != null)
         {
-            var num7 = textureScale / texturedBatch.Texture.Width;
-            var num8 = textureScale / texturedBatch.Texture.Height;
-            var num9 = x * num7;
-            var num10 = y * num8;
-            var x6 = num9;
-            var x7 = (x2 - x) * num7 + num9;
-            var x8 = (x3 - x) * num7 + num9;
-            var x9 = (x4 - x) * num7 + num9;
-            var y6 = num10;
-            var y7 = (y2 - y) * num8 + num10;
-            var y8 = (y3 - y) * num8 + num10;
-            var y9 = (y4 - y) * num8 + num10;
+            var uScale = textureScale / texturedBatch.Texture.Width;
+            var vScale = textureScale / texturedBatch.Texture.Height;
+            var originU = x * uScale;
+            var originV = y * vScale;
+            var x6 = originU;
+            var x7 = (x2 - x) * uScale + originU;
+            var x8 = (x3 - x) * uScale + originU;
+            var x9 = (x4 - x) * uScale + originU;
+            var y6 = originV;
+            var y7 = (y2 - y) * vScale + originV;
+            var y8 = (y3 - y) * vScale + originV;
+            var y9 = (y4 - y) * vScale + originV;
             if (bevelColor.A > 0)
             {
                 texturedBatch.QueueQuad(

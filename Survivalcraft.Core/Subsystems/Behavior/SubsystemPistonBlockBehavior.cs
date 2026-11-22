@@ -114,9 +114,9 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             return;
         }
 
-        var num = Terrain.ExtractContents(value);
+        var removedContents = Terrain.ExtractContents(value);
         var data = Terrain.ExtractData(value);
-        switch (num)
+        switch (removedContents)
         {
             case var pistonContents when pistonContents == BuiltInBlockRegistry.GetIndex<PistonBlock>():
             {
@@ -124,9 +124,10 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 var face2 = PistonBlock.GetFace(data);
                 var point2 = CellFace.FaceToPoint3(face2);
                 var cellValue3 = _subsystemTerrain.Terrain.GetCellValue(x + point2.X, y + point2.Y, z + point2.Z);
-                var num4 = Terrain.ExtractContents(cellValue3);
+                var neighborContents = Terrain.ExtractContents(cellValue3);
                 var data4 = Terrain.ExtractData(cellValue3);
-                if (num4 == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>() && PistonHeadBlock.GetFace(data4) == face2)
+                if (neighborContents == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>() &&
+                    PistonHeadBlock.GetFace(data4) == face2)
                 {
                     _subsystemTerrain.DestroyCell(0, x + point2.X, y + point2.Y, z + point2.Z, 0, false, false);
                 }
@@ -140,18 +141,19 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     var point = CellFace.FaceToPoint3(face);
                     var cellValue = _subsystemTerrain.Terrain.GetCellValue(x + point.X, y + point.Y, z + point.Z);
                     var cellValue2 = _subsystemTerrain.Terrain.GetCellValue(x - point.X, y - point.Y, z - point.Z);
-                    var num2 = Terrain.ExtractContents(cellValue);
-                    var num3 = Terrain.ExtractContents(cellValue2);
+                    var frontContents = Terrain.ExtractContents(cellValue);
+                    var rearContents = Terrain.ExtractContents(cellValue2);
                     var data2 = Terrain.ExtractData(cellValue);
                     var data3 = Terrain.ExtractData(cellValue2);
-                    if (num2 == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>() &&
+                    if (frontContents == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>() &&
                         PistonHeadBlock.GetFace(data2) == face)
                     {
                         _subsystemTerrain.DestroyCell(0, x + point.X, y + point.Y, z + point.Z, 0, false, false);
                     }
 
-                    if (num3 == BuiltInBlockRegistry.GetIndex<PistonBlock>() && PistonBlock.GetFace(data3) == face ||
-                        num3 == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>() &&
+                    if (rearContents == BuiltInBlockRegistry.GetIndex<PistonBlock>() &&
+                        PistonBlock.GetFace(data3) == face ||
+                        rearContents == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>() &&
                         PistonHeadBlock.GetFace(data3) == face)
                     {
                         _subsystemTerrain.DestroyCell(0, x - point.X, y - point.Y, z - point.Z, 0, false, false);
@@ -218,7 +220,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 continue;
             }
 
-            var flag = true;
+            var surroundingChunksReady = true;
             for (var i = -1; i <= 1; i++)
             {
                 for (var j = -1; j <= 1; j++)
@@ -226,12 +228,12 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(key2.X + i * 16, key2.Z + j * 16, false);
                     if (chunkAtCell is not { HasContents: true })
                     {
-                        flag = false;
+                        surroundingChunksReady = false;
                     }
                 }
             }
 
-            if (flag && MovePiston(key2, value2.Move.Value))
+            if (surroundingChunksReady && MovePiston(key2, value2.Move.Value))
             {
                 value2.Move = null;
             }
@@ -266,22 +268,25 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             var mode = PistonBlock.GetMode(data);
             var face = PistonBlock.GetFace(data);
             var p = CellFace.FaceToPoint3(face);
-            var num = int.MaxValue;
+            var minOffsetAlongAxis = int.MaxValue;
             foreach (var block in movingBlockSet.Blocks)
             {
-                num = MathUtils.Min(num, block.Offset.X * p.X + block.Offset.Y * p.Y + block.Offset.Z * p.Z);
+                minOffsetAlongAxis = MathUtils.Min(
+                    minOffsetAlongAxis,
+                    block.Offset.X * p.X + block.Offset.Y * p.Y + block.Offset.Z * p.Z
+                );
             }
 
-            var num2 = movingBlockSet.Position.X * p.X +
-                       movingBlockSet.Position.Y * p.Y +
-                       movingBlockSet.Position.Z * p.Z;
-            float num3 = point.X * p.X + point.Y * p.Y + point.Z * p.Z;
-            if (num2 > num3)
+            var movingPositionAlongAxis = movingBlockSet.Position.X * p.X +
+                                          movingBlockSet.Position.Y * p.Y +
+                                          movingBlockSet.Position.Z * p.Z;
+            float basePositionAlongAxis = point.X * p.X + point.Y * p.Y + point.Z * p.Z;
+            if (movingPositionAlongAxis > basePositionAlongAxis)
             {
-                if (num + num2 - num3 > 1f)
+                if (minOffsetAlongAxis + movingPositionAlongAxis - basePositionAlongAxis > 1f)
                 {
                     movingBlockSet.SetBlock(
-                        p * (num - 1),
+                        p * (minOffsetAlongAxis - 1),
                         Terrain.MakeBlockValue(
                             238,
                             PistonHeadBlock.SetFace(
@@ -292,9 +297,10 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     );
                 }
             }
-            else if (num2 < num3 && num + num2 - num3 <= 0f)
+            else if (movingPositionAlongAxis < basePositionAlongAxis &&
+                     minOffsetAlongAxis + movingPositionAlongAxis - basePositionAlongAxis <= 0f)
             {
-                movingBlockSet.SetBlock(p * num, 0);
+                movingBlockSet.SetBlock(p * minOffsetAlongAxis, 0);
             }
         }
     }
@@ -338,16 +344,16 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
         var speed = PistonBlock.GetSpeed(data);
         var point = CellFace.FaceToPoint3(face);
         length = MathUtils.Clamp(length, 0, maxExtension + 1);
-        var num = 0;
+        var currentLength = 0;
         _movingBlocks.Clear();
         var offset = point;
         MovingBlock item;
         while (_movingBlocks.Count < 8)
         {
             var cellValue = terrain.GetCellValue(position.X + offset.X, position.Y + offset.Y, position.Z + offset.Z);
-            var num2 = Terrain.ExtractContents(cellValue);
+            var contents = Terrain.ExtractContents(cellValue);
             var face2 = PistonHeadBlock.GetFace(Terrain.ExtractData(cellValue));
-            if (num2 != BuiltInBlockRegistry.GetIndex<PistonHeadBlock>() || face2 != face)
+            if (contents != BuiltInBlockRegistry.GetIndex<PistonHeadBlock>() || face2 != face)
             {
                 break;
             }
@@ -359,10 +365,10 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             };
             _movingBlocks.Add(item);
             offset += point;
-            num++;
+            currentLength++;
         }
 
-        if (length > num)
+        if (length > currentLength)
         {
             item = new MovingBlock
             {
@@ -370,15 +376,15 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 Value = Terrain.MakeBlockValue(
                     BuiltInBlockRegistry.GetIndex<PistonHeadBlock>(),
                     PistonHeadBlock.SetFace(
-                        PistonHeadBlock.SetMode(PistonHeadBlock.SetIsShaft(0, num > 0), mode),
+                        PistonHeadBlock.SetMode(PistonHeadBlock.SetIsShaft(0, currentLength > 0), mode),
                         face
                     )
                 )
             };
             _movingBlocks.Add(item);
-            var num3 = 0;
+            var pushedBlockCount = 0;
             var pass = true;
-            while (num3 < 8)
+            while (pushedBlockCount < 8)
             {
                 var moving = new PistonBlockMovingContext(this, position, position + offset, false);
                 WorldRuleHooks.For(Project).Invoke(moving);
@@ -406,7 +412,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     Value = cellValue2
                 };
                 _movingBlocks.Add(item);
-                num3++;
+                pushedBlockCount++;
                 offset += point;
                 if (isEnd)
                 {
@@ -427,7 +433,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             }
 
             GetSpeedAndSmoothness(speed, out var speed2, out var smoothness);
-            var p = position + (length - num) * point;
+            var p = position + (length - currentLength) * point;
             if (_subsystemMovingBlocks.AddMovingBlockSet(
                     new Vector3(position) + 0.01f * new Vector3(point),
                     new Vector3(p),
@@ -477,14 +483,14 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
             return false;
         }
 
-        if (length >= num)
+        if (length >= currentLength)
         {
             return true;
         }
 
         if (mode != 0)
         {
-            var num4 = 0;
+            var pulledBlockCount = 0;
             for (var i = 0; i < pullCount + 1; i++)
             {
                 var moving = new PistonBlockMovingContext(this, position, position + offset, true);
@@ -513,14 +519,14 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 };
                 _movingBlocks.Add(item);
                 offset += point;
-                num4++;
+                pulledBlockCount++;
                 if (isEnd2)
                 {
                     break;
                 }
             }
 
-            if (mode == PistonMode.StrictPulling && num4 < pullCount + 1)
+            if (mode == PistonMode.StrictPulling && pulledBlockCount < pullCount + 1)
             {
                 return false;
             }
@@ -528,7 +534,9 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
         GetSpeedAndSmoothness(speed, out var speed3, out var smoothness2);
         var s = length == 0 ? 0.01f : 0f;
-        var targetPosition = new Vector3(position) + (length - num) * new Vector3(point) + s * new Vector3(point);
+        var targetPosition = new Vector3(position) +
+                             (length - currentLength) * new Vector3(point) +
+                             s * new Vector3(point);
         if (_subsystemMovingBlocks.AddMovingBlockSet(
                 new Vector3(position),
                 targetPosition,
@@ -586,9 +594,9 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
         }
 
         var cellValue = _subsystemTerrain.Terrain.GetCellValue(position.X, position.Y, position.Z);
-        var num = Terrain.ExtractContents(cellValue);
+        var baseContents = Terrain.ExtractContents(cellValue);
         var data = Terrain.ExtractData(cellValue);
-        var flag = num == BuiltInBlockRegistry.GetIndex<PistonBlock>();
+        var basePresent = baseContents == BuiltInBlockRegistry.GetIndex<PistonBlock>();
         var isExtended = false;
         _subsystemMovingBlocks.RemoveMovingBlockSet(movingBlockSet);
         foreach (var block in movingBlockSet.Blocks)
@@ -601,20 +609,20 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 continue;
             }
 
-            var num2 = Terrain.ExtractContents(block.Value);
-            if (!flag && num2 == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>())
+            var movingContents = Terrain.ExtractContents(block.Value);
+            if (!basePresent && movingContents == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>())
             {
                 continue;
             }
 
             _subsystemTerrain.DestroyCell(0, x, y, z, block.Value, false, false);
-            if (num2 == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>())
+            if (movingContents == BuiltInBlockRegistry.GetIndex<PistonHeadBlock>())
             {
                 isExtended = true;
             }
         }
 
-        if (flag)
+        if (basePresent)
         {
             _subsystemTerrain.ChangeCell(
                 position.X,
@@ -643,9 +651,9 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
         }
 
         var point2 = CellFace.FaceToPoint3(PistonBlock.GetFace(Terrain.ExtractData(cellValue)));
-        var num = p.X * point2.X + p.Y * point2.Y + p.Z * point2.Z;
-        var num2 = point.X * point2.X + point.Y * point2.Y + point.Z * point2.Z;
-        if (num <= num2)
+        var collisionPositionAlongAxis = p.X * point2.X + p.Y * point2.Y + p.Z * point2.Z;
+        var basePositionAlongAxis = point.X * point2.X + point.Y * point2.Y + point.Z * point2.Z;
+        if (collisionPositionAlongAxis <= basePositionAlongAxis)
         {
             return;
         }
@@ -685,9 +693,9 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
     public static bool IsBlockMovable(BlockContentCatalog catalog, int value, int pistonFace, int y, out bool isEnd)
     {
         isEnd = false;
-        var num = Terrain.ExtractContents(value);
+        var contents = Terrain.ExtractContents(value);
         var data = Terrain.ExtractData(value);
-        switch (num)
+        switch (contents)
         {
             case var craftingTableContents
                 when craftingTableContents == BuiltInBlockRegistry.GetIndex<CraftingTableBlock>():
@@ -713,7 +721,7 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 return y > 1;
             default:
             {
-                var block = catalog.Blocks[num];
+                var block = catalog.Blocks[contents];
                 switch (block)
                 {
                     case BottomSuckerBlock:
@@ -741,8 +749,8 @@ public class SubsystemPistonBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     private bool IsBlockBlocking(int value)
     {
-        var num = Terrain.ExtractContents(value);
-        return WorldContentBinding.For(Project).Catalog.Blocks[num].Collidable;
+        var contents = Terrain.ExtractContents(value);
+        return WorldContentBinding.For(Project).Catalog.Blocks[contents].Collidable;
     }
 
     public class QueuedAction

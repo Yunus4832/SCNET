@@ -75,14 +75,14 @@ public sealed class FlatBatch2D : BaseFlatBatch
     public void QueueLineStrip(IEnumerable<Vector2> points, float depth, Color color)
     {
         var count = LineVertices.Count;
-        var num = 0;
+        var pointCount = 0;
         foreach (var point in points)
         {
             LineVertices.Add(new VertexPositionColor(new Vector3(point, depth), color));
-            num++;
+            pointCount++;
         }
 
-        for (var i = 0; i < num - 1; i++)
+        for (var i = 0; i < pointCount - 1; i++)
         {
             LineIndices.Add((ushort)(count + i));
             LineIndices.Add((ushort)(count + i + 1));
@@ -173,15 +173,15 @@ public sealed class FlatBatch2D : BaseFlatBatch
             var x = MathUtils.Lerp(startAngle, endAngle, i / (float)sides);
             var v = new Vector2(MathUtils.Sin(x), 0f - MathUtils.Cos(x));
             var vector = center + outerRadius * v;
-            var vector2 = center + innerRadius * v;
+            var innerPoint = center + innerRadius * v;
             if (i > 0)
             {
                 QueueTriangle(p, vector, p2, depth, outerColor, outerColor, innerColor);
-                QueueTriangle(vector, vector2, p2, depth, outerColor, innerColor, innerColor);
+                QueueTriangle(vector, innerPoint, p2, depth, outerColor, innerColor, innerColor);
             }
 
             p = vector;
-            p2 = vector2;
+            p2 = innerPoint;
         }
     }
 

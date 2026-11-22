@@ -44,14 +44,17 @@ public class SubsystemGrassBlockBehavior : SubsystemPollableBlockBehavior, IUpda
         }
 
         var environment = SubsystemTerrain.CaptureLightEnvironment();
-        if (!SubsystemTerrain.Terrain.Lighting.TryGetEffectiveLight(x, y + 1, z, environment, out var num)) { return; }
+        if (!SubsystemTerrain.Terrain.Lighting.TryGetEffectiveLight(x, y + 1, z, environment, out var lightAbove))
+        {
+            return;
+        }
 
-        if (num == 0)
+        if (lightAbove == 0)
         {
             _toUpdate[new Point3(x, y, z)] = Terrain.ReplaceContents(value, 8);
         }
 
-        if (num < 13)
+        if (lightAbove < 13)
         {
             return;
         }
@@ -83,16 +86,22 @@ public class SubsystemGrassBlockBehavior : SubsystemPollableBlockBehavior, IUpda
                         continue;
                     }
 
-                    var num2 = Terrain.ReplaceContents(cellValue, 8);
-                    _toUpdate[new Point3(i, k, j)] = num2;
+                    var grassValue = Terrain.ReplaceContents(cellValue, 8);
+                    _toUpdate[new Point3(i, k, j)] = grassValue;
                     if (Terrain.ExtractContents(cellValue2) == 0)
                     {
                         var temperature = SubsystemTerrain.Terrain.GetTemperature(i, j);
                         var humidity = SubsystemTerrain.Terrain.GetHumidity(i, j);
-                        var num3 = PlantsManager.GenerateRandomPlantValue(_random, num2, temperature, humidity, k + 1);
-                        if (num3 != 0)
+                        var plantValue = PlantsManager.GenerateRandomPlantValue(
+                            _random,
+                            grassValue,
+                            temperature,
+                            humidity,
+                            k + 1
+                        );
+                        if (plantValue != 0)
                         {
-                            _toUpdate[new Point3(i, k + 1, j)] = num3;
+                            _toUpdate[new Point3(i, k + 1, j)] = plantValue;
                         }
                     }
                 }
@@ -168,8 +177,8 @@ public class SubsystemGrassBlockBehavior : SubsystemPollableBlockBehavior, IUpda
 
     private bool KillsGrassIfOnTopOfIt(int value)
     {
-        var num = Terrain.ExtractContents(value);
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var contents = Terrain.ExtractContents(value);
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
         if (block is not FluidBlock)
         {
             return !block.IsFaceTransparent(SubsystemTerrain, 5, value) && block.Collidable;

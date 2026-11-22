@@ -40,7 +40,7 @@ public class SubsystemArrowBlockBehavior : SubsystemBlockBehavior
             return false;
         }
 
-        var num = arrowType switch
+        var breakProbability = arrowType switch
         {
             ArrowBlock.ArrowType.FireArrow => 0.5f,
             ArrowBlock.ArrowType.WoodenArrow => 0.2f,
@@ -49,7 +49,7 @@ public class SubsystemArrowBlockBehavior : SubsystemBlockBehavior
             ArrowBlock.ArrowType.DiamondBolt => 0f,
             _ => 0.1f
         };
-        return _random.Float(0f, 1f) < num;
+        return _random.Float(0f, 1f) < breakProbability;
     }
 
     public override void Load(ValuesDictionary valuesDictionary)

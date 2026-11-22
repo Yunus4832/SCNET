@@ -159,10 +159,10 @@ public class ShaderParameter
         if (!isChanged)
         {
             var i = 0;
-            var num = 0;
+            var readIndex = 0;
             for (; i < count; i++)
             {
-                if (value[num++].CloseTo(inputValue[i].X) && value[num++].CloseTo(inputValue[i].Y))
+                if (value[readIndex++].CloseTo(inputValue[i].X) && value[readIndex++].CloseTo(inputValue[i].Y))
                 {
                     continue;
                 }
@@ -173,11 +173,11 @@ public class ShaderParameter
         }
 
         var j = 0;
-        var num2 = 0;
+        var writeIndex = 0;
         for (; j < count; j++)
         {
-            value[num2++] = inputValue[j].X;
-            value[num2++] = inputValue[j].Y;
+            value[writeIndex++] = inputValue[j].X;
+            value[writeIndex++] = inputValue[j].Y;
         }
     }
 
@@ -227,12 +227,12 @@ public class ShaderParameter
         if (!isChanged)
         {
             var i = 0;
-            var num = 0;
+            var readIndex = 0;
             for (; i < count; i++)
             {
-                if (value[num++].CloseTo(inputValue[i].X) &&
-                    value[num++].CloseTo(inputValue[i].Y) &&
-                    value[num++].CloseTo(inputValue[i].Z))
+                if (value[readIndex++].CloseTo(inputValue[i].X) &&
+                    value[readIndex++].CloseTo(inputValue[i].Y) &&
+                    value[readIndex++].CloseTo(inputValue[i].Z))
                 {
                     continue;
                 }
@@ -243,12 +243,12 @@ public class ShaderParameter
         }
 
         var j = 0;
-        var num2 = 0;
+        var writeIndex = 0;
         for (; j < count; j++)
         {
-            value[num2++] = inputValue[j].X;
-            value[num2++] = inputValue[j].Y;
-            value[num2++] = inputValue[j].Z;
+            value[writeIndex++] = inputValue[j].X;
+            value[writeIndex++] = inputValue[j].Y;
+            value[writeIndex++] = inputValue[j].Z;
         }
     }
 
@@ -300,13 +300,13 @@ public class ShaderParameter
         if (!isChanged)
         {
             var i = 0;
-            var num = 0;
+            var readIndex = 0;
             for (; i < count; i++)
             {
-                if (value[num++].CloseTo(inputValue[i].X) &&
-                    value[num++].CloseTo(inputValue[i].Y) &&
-                    value[num++].CloseTo(inputValue[i].Z) &&
-                    value[num++].CloseTo(inputValue[i].W))
+                if (value[readIndex++].CloseTo(inputValue[i].X) &&
+                    value[readIndex++].CloseTo(inputValue[i].Y) &&
+                    value[readIndex++].CloseTo(inputValue[i].Z) &&
+                    value[readIndex++].CloseTo(inputValue[i].W))
                 {
                     continue;
                 }
@@ -317,13 +317,13 @@ public class ShaderParameter
         }
 
         var j = 0;
-        var num2 = 0;
+        var writeIndex = 0;
         for (; j < count; j++)
         {
-            value[num2++] = inputValue[j].X;
-            value[num2++] = inputValue[j].Y;
-            value[num2++] = inputValue[j].Z;
-            value[num2++] = inputValue[j].W;
+            value[writeIndex++] = inputValue[j].X;
+            value[writeIndex++] = inputValue[j].Y;
+            value[writeIndex++] = inputValue[j].Z;
+            value[writeIndex++] = inputValue[j].W;
         }
     }
 
@@ -399,25 +399,25 @@ public class ShaderParameter
         if (!isChanged)
         {
             var i = 0;
-            var num = 0;
+            var readIndex = 0;
             for (; i < count; i++)
             {
-                if (value[num++].CloseTo(inputValue[i].M11) &&
-                    value[num++].CloseTo(inputValue[i].M12) &&
-                    value[num++].CloseTo(inputValue[i].M13) &&
-                    value[num++].CloseTo(inputValue[i].M14) &&
-                    value[num++].CloseTo(inputValue[i].M21) &&
-                    value[num++].CloseTo(inputValue[i].M22) &&
-                    value[num++].CloseTo(inputValue[i].M23) &&
-                    value[num++].CloseTo(inputValue[i].M24) &&
-                    value[num++].CloseTo(inputValue[i].M31) &&
-                    value[num++].CloseTo(inputValue[i].M32) &&
-                    value[num++].CloseTo(inputValue[i].M33) &&
-                    value[num++].CloseTo(inputValue[i].M34) &&
-                    value[num++].CloseTo(inputValue[i].M41) &&
-                    value[num++].CloseTo(inputValue[i].M42) &&
-                    value[num++].CloseTo(inputValue[i].M43) &&
-                    value[num++].CloseTo(inputValue[i].M44))
+                if (value[readIndex++].CloseTo(inputValue[i].M11) &&
+                    value[readIndex++].CloseTo(inputValue[i].M12) &&
+                    value[readIndex++].CloseTo(inputValue[i].M13) &&
+                    value[readIndex++].CloseTo(inputValue[i].M14) &&
+                    value[readIndex++].CloseTo(inputValue[i].M21) &&
+                    value[readIndex++].CloseTo(inputValue[i].M22) &&
+                    value[readIndex++].CloseTo(inputValue[i].M23) &&
+                    value[readIndex++].CloseTo(inputValue[i].M24) &&
+                    value[readIndex++].CloseTo(inputValue[i].M31) &&
+                    value[readIndex++].CloseTo(inputValue[i].M32) &&
+                    value[readIndex++].CloseTo(inputValue[i].M33) &&
+                    value[readIndex++].CloseTo(inputValue[i].M34) &&
+                    value[readIndex++].CloseTo(inputValue[i].M41) &&
+                    value[readIndex++].CloseTo(inputValue[i].M42) &&
+                    value[readIndex++].CloseTo(inputValue[i].M43) &&
+                    value[readIndex++].CloseTo(inputValue[i].M44))
                 {
                     continue;
                 }
@@ -428,25 +428,25 @@ public class ShaderParameter
         }
 
         var j = 0;
-        var num2 = 0;
+        var writeIndex = 0;
         for (; j < count; j++)
         {
-            value[num2++] = inputValue[j].M11;
-            value[num2++] = inputValue[j].M12;
-            value[num2++] = inputValue[j].M13;
-            value[num2++] = inputValue[j].M14;
-            value[num2++] = inputValue[j].M21;
-            value[num2++] = inputValue[j].M22;
-            value[num2++] = inputValue[j].M23;
-            value[num2++] = inputValue[j].M24;
-            value[num2++] = inputValue[j].M31;
-            value[num2++] = inputValue[j].M32;
-            value[num2++] = inputValue[j].M33;
-            value[num2++] = inputValue[j].M34;
-            value[num2++] = inputValue[j].M41;
-            value[num2++] = inputValue[j].M42;
-            value[num2++] = inputValue[j].M43;
-            value[num2++] = inputValue[j].M44;
+            value[writeIndex++] = inputValue[j].M11;
+            value[writeIndex++] = inputValue[j].M12;
+            value[writeIndex++] = inputValue[j].M13;
+            value[writeIndex++] = inputValue[j].M14;
+            value[writeIndex++] = inputValue[j].M21;
+            value[writeIndex++] = inputValue[j].M22;
+            value[writeIndex++] = inputValue[j].M23;
+            value[writeIndex++] = inputValue[j].M24;
+            value[writeIndex++] = inputValue[j].M31;
+            value[writeIndex++] = inputValue[j].M32;
+            value[writeIndex++] = inputValue[j].M33;
+            value[writeIndex++] = inputValue[j].M34;
+            value[writeIndex++] = inputValue[j].M41;
+            value[writeIndex++] = inputValue[j].M42;
+            value[writeIndex++] = inputValue[j].M43;
+            value[writeIndex++] = inputValue[j].M44;
         }
     }
 

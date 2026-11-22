@@ -20,36 +20,36 @@ public class SubsystemMagnetBlockBehavior : SubsystemBlockBehavior
     {
         if (_magnets.Count > 0)
         {
-            var num = float.MaxValue;
+            var closestMagnetDistanceSquared = float.MaxValue;
             var v = Vector3.Zero;
             for (var i = 0; i < _magnets.Count && i < 8; i++)
             {
                 var vector = _magnets.Array[i];
-                var num2 = Vector3.DistanceSquared(compassPosition, vector);
-                if (!(num2 < num))
+                var magnetDistanceSquared = Vector3.DistanceSquared(compassPosition, vector);
+                if (!(magnetDistanceSquared < closestMagnetDistanceSquared))
                 {
                     continue;
                 }
 
-                num = num2;
+                closestMagnetDistanceSquared = magnetDistanceSquared;
                 v = vector;
             }
 
             return v + new Vector3(0.5f);
         }
 
-        var num3 = float.MaxValue;
+        var closestSpawnDistanceSquared = float.MaxValue;
         var v2 = Vector3.Zero;
         foreach (var playersDatum in _subsystemCharacters.Characters)
         {
             var spawnPosition = playersDatum.SpawnPosition;
-            var num4 = Vector3.DistanceSquared(compassPosition, spawnPosition);
-            if (!(num4 < num3))
+            var spawnDistanceSquared = Vector3.DistanceSquared(compassPosition, spawnPosition);
+            if (!(spawnDistanceSquared < closestSpawnDistanceSquared))
             {
                 continue;
             }
 
-            num3 = num4;
+            closestSpawnDistanceSquared = spawnDistanceSquared;
             v2 = spawnPosition;
         }
 

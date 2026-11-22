@@ -43,8 +43,8 @@ public class StoneClubBlockPresentation(StoneClubBlock block, BlockPresentationC
 
     public override void Initialize()
     {
-        var num = 47;
-        var num2 = 1;
+        var handleTextureSlot = 47;
+        var headTextureSlot = 1;
         var model = ContentManager.Get<Model>("Models/StoneClub");
         var handleNode = model.FindNode("Handle")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(handleNode);
@@ -60,7 +60,9 @@ public class StoneClubBlockPresentation(StoneClubBlock block, BlockPresentationC
             false,
             Color.White
         );
-        blockMesh.TransformTextureCoordinates(Matrix.CreateTranslation(num % 16 / 16f, num / 16 / 16f, 0f));
+        blockMesh.TransformTextureCoordinates(
+            Matrix.CreateTranslation(handleTextureSlot % 16 / 16f, handleTextureSlot / 16 / 16f, 0f)
+        );
         var blockMesh2 = new BlockMesh();
         blockMesh2.AppendModelPrimitive(
             spikesNode.RequireMesh().Primitives[0],
@@ -71,7 +73,9 @@ public class StoneClubBlockPresentation(StoneClubBlock block, BlockPresentationC
             false,
             Color.White
         );
-        blockMesh2.TransformTextureCoordinates(Matrix.CreateTranslation(num2 % 16 / 16f, num2 / 16 / 16f, 0f));
+        blockMesh2.TransformTextureCoordinates(
+            Matrix.CreateTranslation(headTextureSlot % 16 / 16f, headTextureSlot / 16 / 16f, 0f)
+        );
         StandaloneBlockMesh.AppendBlockMesh(blockMesh);
         StandaloneBlockMesh.AppendBlockMesh(blockMesh2);
         base.Initialize();

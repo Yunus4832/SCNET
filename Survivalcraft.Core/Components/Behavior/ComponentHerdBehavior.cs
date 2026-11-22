@@ -78,7 +78,7 @@ public class ComponentHerdBehavior : ComponentBehavior, IUpdateable
         }
 
         var position = _componentCreature.ComponentBody.Position;
-        var num = 0;
+        var memberCount = 0;
         var zero = Vector3.Zero;
         foreach (var creature in _subsystemCreatureSpawn.Creatures)
         {
@@ -100,12 +100,12 @@ public class ComponentHerdBehavior : ComponentBehavior, IUpdateable
             }
 
             zero += position2;
-            num++;
+            memberCount++;
         }
 
-        if (num > 0)
+        if (memberCount > 0)
         {
-            return zero / num;
+            return zero / memberCount;
         }
 
         return null;
@@ -131,26 +131,29 @@ public class ComponentHerdBehavior : ComponentBehavior, IUpdateable
             {
                 if (_subsystemTime.PeriodicGameTimeEvent(1.0, 1f * (GetHashCode() % 256 / 256f)))
                 {
-                    var vector2 = FindHerdCenter();
-                    if (vector2.HasValue)
+                    var herdCenter = FindHerdCenter();
+                    if (herdCenter.HasValue)
                     {
-                        var num = Vector3.Distance(vector2.Value, _componentCreature.ComponentBody.Position);
-                        if (num > 10f)
+                        var distanceToHerd = Vector3.Distance(
+                            herdCenter.Value,
+                            _componentCreature.ComponentBody.Position
+                        );
+                        if (distanceToHerd > 10f)
                         {
                             _importanceLevel = 1f;
                         }
 
-                        if (num > 12f)
+                        if (distanceToHerd > 12f)
                         {
                             _importanceLevel = 3f;
                         }
 
-                        if (num > 16f)
+                        if (distanceToHerd > 16f)
                         {
                             _importanceLevel = 50f;
                         }
 
-                        if (num > 20f)
+                        if (distanceToHerd > 20f)
                         {
                             _importanceLevel = 250f;
                         }

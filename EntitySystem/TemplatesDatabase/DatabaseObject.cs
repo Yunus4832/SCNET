@@ -486,16 +486,16 @@ public class DatabaseObject
 
         public bool Contains(string s)
         {
-            var num = Hash(s) & 0x1F;
-            var num2 = 1 << num;
-            return (_mask & num2) != 0 && _list.Contains(s);
+            var hashBit = Hash(s) & 0x1F;
+            var bitMask = 1 << hashBit;
+            return (_mask & bitMask) != 0 && _list.Contains(s);
         }
 
         public void Add(string s)
         {
-            var num = Hash(s) & 0x1F;
-            var num2 = 1 << num;
-            _mask |= num2;
+            var hashBit = Hash(s) & 0x1F;
+            var bitMask = 1 << hashBit;
+            _mask |= bitMask;
             _list.Add(s);
         }
 

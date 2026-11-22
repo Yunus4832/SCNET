@@ -14,14 +14,14 @@ public class SubsystemSnowBlockBehavior : SubsystemBlockBehavior
 
     public static bool CanBeReplacedBySnow(BlockContentCatalog catalog, int value)
     {
-        var num = Terrain.ExtractContents(value);
-        return catalog.Blocks[num] is FallenLeavesBlock;
+        var contents = Terrain.ExtractContents(value);
+        return catalog.Blocks[contents] is FallenLeavesBlock;
     }
 
     public static bool CanSupportSnow(BlockContentCatalog catalog, int value)
     {
-        var num = Terrain.ExtractContents(value);
-        var block = catalog.Blocks[num];
+        var contents = Terrain.ExtractContents(value);
+        var block = catalog.Blocks[contents];
         if (block.Transparent)
         {
             return block is LeavesBlock;

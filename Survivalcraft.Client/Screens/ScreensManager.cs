@@ -128,16 +128,16 @@ public static class ScreensManager
 
     private static void UpdateAnimation()
     {
-        var num = MathUtils.Min(Time.FrameDuration, 0.1f);
+        var frameDelta = MathUtils.Min(Time.FrameDuration, 0.1f);
         var factor = _animationData!.Factor;
-        _animationData.Factor = MathUtils.Min(_animationData.Factor + _animationData.Speed * num, 1f);
+        _animationData.Factor = MathUtils.Min(_animationData.Factor + _animationData.Speed * frameDelta, 1f);
         if (_animationData.Factor < 0.5f)
         {
             if (_animationData.OldScreen != null)
             {
-                var num2 = 2f * (0.5f - _animationData.Factor);
+                var oldOpacity = 2f * (0.5f - _animationData.Factor);
                 var scale = 1f;
-                _animationData.OldScreen.ColorTransform = new Color(num2, num2, num2, num2);
+                _animationData.OldScreen.ColorTransform = new Color(oldOpacity, oldOpacity, oldOpacity, oldOpacity);
                 _animationData.OldScreen.RenderTransform =
                     Matrix.CreateTranslation(
                         (0f - _animationData.OldScreen.ActualSize.X) / 2f,
@@ -163,9 +163,9 @@ public static class ScreensManager
         }
         else if (_animationData.NewScreen != null)
         {
-            var num3 = 2f * (_animationData.Factor - 0.5f);
+            var newOpacity = 2f * (_animationData.Factor - 0.5f);
             var scale2 = 1f;
-            _animationData.NewScreen.ColorTransform = new Color(num3, num3, num3, num3);
+            _animationData.NewScreen.ColorTransform = new Color(newOpacity, newOpacity, newOpacity, newOpacity);
             _animationData.NewScreen.RenderTransform =
                 Matrix.CreateTranslation(
                     (0f - _animationData.NewScreen.ActualSize.X) / 2f,
@@ -239,10 +239,10 @@ public static class ScreensManager
             return;
         }
 
-        const float num = 6f;
+        const float screenDistance = 6f;
         var hmdMatrix = Matrix.Identity;
         var vector = hmdMatrix.Translation +
-                     num *
+                     screenDistance *
                      (Vector3.Normalize(hmdMatrix.Forward * new Vector3(1f, 0f, 1f)) +
                       new Vector3(0f, 0.1f, 0f));
         if (_vrQuadPosition == Vector3.Zero)
@@ -254,29 +254,33 @@ public static class ScreensManager
         {
             var v = vector * new Vector3(1f, 0f, 1f) - _vrQuadPosition * new Vector3(1f, 0f, 1f);
             var v2 = vector * new Vector3(0f, 1f, 0f) - _vrQuadPosition * new Vector3(0f, 1f, 0f);
-            var num2 = v.Length();
-            var num3 = v2.Length();
+            var horizontalDistance = v.Length();
+            var verticalDistance = v2.Length();
             _vrQuadPosition +=
                 v *
                 MathUtils.Min(
-                    0.75f * MathUtils.Pow(MathUtils.Max(num2 - 0.15f * num, 0f), 0.33f) * Time.FrameDuration,
+                    0.75f *
+                    MathUtils.Pow(MathUtils.Max(horizontalDistance - 0.15f * screenDistance, 0f), 0.33f) *
+                    Time.FrameDuration,
                     1f
                 );
             _vrQuadPosition +=
                 v2 *
                 MathUtils.Min(
-                    1.5f * MathUtils.Pow(MathUtils.Max(num3 - 0.05f * num, 0f), 0.33f) * Time.FrameDuration,
+                    1.5f *
+                    MathUtils.Pow(MathUtils.Max(verticalDistance - 0.05f * screenDistance, 0f), 0.33f) *
+                    Time.FrameDuration,
                     1f
                 );
         }
 
-        var vector2 = new Vector2(_uiRenderTarget.Width / (float)_uiRenderTarget.Height, 1f);
-        vector2 /= MathUtils.Max(vector2.X, vector2.Y);
-        vector2 *= 7.5f;
+        var quadSize = new Vector2(_uiRenderTarget.Width / (float)_uiRenderTarget.Height, 1f);
+        quadSize /= MathUtils.Max(quadSize.X, quadSize.Y);
+        quadSize *= 7.5f;
         _vrQuadMatrix.Forward = Vector3.Normalize(hmdMatrix.Translation - _vrQuadPosition);
-        _vrQuadMatrix.Right = Vector3.Normalize(Vector3.Cross(Vector3.UnitY, _vrQuadMatrix.Forward)) * vector2.X;
+        _vrQuadMatrix.Right = Vector3.Normalize(Vector3.Cross(Vector3.UnitY, _vrQuadMatrix.Forward)) * quadSize.X;
         _vrQuadMatrix.Up = Vector3.Normalize(Vector3.Cross(_vrQuadMatrix.Forward, _vrQuadMatrix.Right)) *
-                           vector2.Y;
+                           quadSize.Y;
         _vrQuadMatrix.Translation = _vrQuadPosition - 0.5f * (_vrQuadMatrix.Right + _vrQuadMatrix.Up);
         RootWidget.WidgetsHierarchyInput!.VrQuadMatrix = _vrQuadMatrix;
     }
@@ -314,11 +318,11 @@ public static class ScreensManager
         {
             var f = MathUtils.Pow(_sharedRandom.Float(0f, 1f), 6f);
             var rgb = (MathUtils.Lerp(0.05f, 0.4f, f) * Color.White).RGB;
-            const int num = 6;
+            const int starSize = 6;
             var vector = _sharedRandom.Vector3(500f);
-            var vector2 = Vector3.Normalize(Vector3.Cross(vector, Vector3.UnitY)) * num;
-            var up = Vector3.Normalize(Vector3.Cross(vector2, vector)) * num;
-            QueueQuad(batch, vector + hmdMatrix.Translation, vector2, up, rgb);
+            var starRight = Vector3.Normalize(Vector3.Cross(vector, Vector3.UnitY)) * starSize;
+            var up = Vector3.Normalize(Vector3.Cross(starRight, vector)) * starSize;
+            QueueQuad(batch, vector + hmdMatrix.Translation, starRight, up, rgb);
         }
 
         var batch2 = _pr3.TexturedBatch(
@@ -334,24 +338,24 @@ public static class ScreensManager
         {
             for (var k = -8; k <= 8; k++)
             {
-                var num2 = 1f;
-                var num3 = 1f;
-                var vector3 = new Vector3((j - 0.5f) * num2, 0f, (k - 0.5f) * num2) +
-                              new Vector3(
-                                  MathUtils.Round(hmdMatrix.Translation.X),
-                                  0f,
-                                  MathUtils.Round(hmdMatrix.Translation.Z)
-                              );
-                var num4 = Vector3.Distance(vector3, hmdMatrix.Translation);
-                var num5 = MathUtils.Lerp(1f, 0f, MathUtils.Saturate(num4 / 7f));
-                if (num5 > 0f)
+                var tileSpacing = 1f;
+                var tileSize = 1f;
+                var tilePosition = new Vector3((j - 0.5f) * tileSpacing, 0f, (k - 0.5f) * tileSpacing) +
+                                   new Vector3(
+                                       MathUtils.Round(hmdMatrix.Translation.X),
+                                       0f,
+                                       MathUtils.Round(hmdMatrix.Translation.Z)
+                                   );
+                var viewerDistance = Vector3.Distance(tilePosition, hmdMatrix.Translation);
+                var tileBrightness = MathUtils.Lerp(1f, 0f, MathUtils.Saturate(viewerDistance / 7f));
+                if (tileBrightness > 0f)
                 {
                     QueueQuad(
                         batch2,
-                        vector3,
-                        new Vector3(num3, 0f, 0f),
-                        new Vector3(0f, 0f, num3),
-                        Color.Gray * num5,
+                        tilePosition,
+                        new Vector3(tileSize, 0f, 0f),
+                        new Vector3(0f, 0f, tileSize),
+                        Color.Gray * tileBrightness,
                         new Vector2(0.1875f, 0.25f),
                         new Vector2(0.25f, 0.3125f)
                     );
@@ -367,20 +371,20 @@ public static class ScreensManager
             Display.Clear(Color.Black, 1f, 0);
         }
 
-        var num = 850f /
-                  MathUtils.Clamp(Configuration.ClientConfiguration.Preferences.UIScale, 0.5f, 1.2f) *
-                  _debugUiScale;
+        var logicalWidth = 850f /
+                           MathUtils.Clamp(Configuration.ClientConfiguration.Preferences.UIScale, 0.5f, 1.2f) *
+                           _debugUiScale;
         var vector = new Vector2(Display.Viewport.Width, Display.Viewport.Height);
-        var num2 = vector.X / num;
-        var availableSize = new Vector2(num, num / vector.X * vector.Y);
-        var num3 = num * 9f / 16f;
-        if (vector.Y / num2 < num3)
+        var uiScale = vector.X / logicalWidth;
+        var availableSize = new Vector2(logicalWidth, logicalWidth / vector.X * vector.Y);
+        var minimumHeight = logicalWidth * 9f / 16f;
+        if (vector.Y / uiScale < minimumHeight)
         {
-            num2 = vector.Y / num3;
-            availableSize = new Vector2(num3 / vector.Y * vector.X, num3);
+            uiScale = vector.Y / minimumHeight;
+            availableSize = new Vector2(minimumHeight / vector.Y * vector.X, minimumHeight);
         }
 
-        RootWidget.LayoutTransform = Matrix.CreateScale(num2, num2, 1f);
+        RootWidget.LayoutTransform = Matrix.CreateScale(uiScale, uiScale, 1f);
         if (Configuration.ClientConfiguration.Preferences.UpsideDownLayout)
         {
             RootWidget.LayoutTransform *= new Matrix(-1f, 0f, 0f, 0f, 0f, -1f, 0f, 0f, 0f, 0f, 1f, 0f, 0f, 0f, 0f, 1f);

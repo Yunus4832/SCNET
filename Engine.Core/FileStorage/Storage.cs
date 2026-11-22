@@ -161,29 +161,29 @@ public static class Storage
     public static string GetExtension(string path)
     {
         path = NormalizePath(path);
-        var num = path.LastIndexOf('.');
-        return num >= 0 ? path[num..] : string.Empty;
+        var extensionStart = path.LastIndexOf('.');
+        return extensionStart >= 0 ? path[extensionStart..] : string.Empty;
     }
 
     public static string GetFileName(string path)
     {
         path = NormalizePath(path);
-        var num = path.LastIndexOf(Path.DirectorySeparatorChar);
-        return num >= 0 ? path[(num + 1)..] : path;
+        var separatorIndex = path.LastIndexOf(Path.DirectorySeparatorChar);
+        return separatorIndex >= 0 ? path[(separatorIndex + 1)..] : path;
     }
 
     public static string GetFileNameWithoutExtension(string path)
     {
         var fileName = GetFileName(path);
-        var num = fileName.LastIndexOf('.');
-        return num >= 0 ? fileName[..num] : fileName;
+        var extensionStart = fileName.LastIndexOf('.');
+        return extensionStart >= 0 ? fileName[..extensionStart] : fileName;
     }
 
     public static string GetDirectoryName(string path)
     {
         path = NormalizePath(path);
-        var num = path.LastIndexOf(Path.DirectorySeparatorChar);
-        return num >= 0 ? path[..num].TrimEnd(Path.DirectorySeparatorChar) : string.Empty;
+        var separatorIndex = path.LastIndexOf(Path.DirectorySeparatorChar);
+        return separatorIndex >= 0 ? path[..separatorIndex].TrimEnd(Path.DirectorySeparatorChar) : string.Empty;
     }
 
     public static string CombinePaths(params string[] paths)

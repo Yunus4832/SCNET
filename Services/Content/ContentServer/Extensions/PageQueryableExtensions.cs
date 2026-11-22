@@ -34,17 +34,17 @@ public static class PageQueryableExtensions
             throw new ArgumentOutOfRangeException(nameof(pageSize), "每页条数必须大于 0");
         }
 
-        int num;
+        int matchingCount;
         if (countTotal)
         {
-            num = await query.CountAsync(cancellationToken);
+            matchingCount = await query.CountAsync(cancellationToken);
         }
         else
         {
-            num = 0;
+            matchingCount = 0;
         }
 
-        var totalCount = num;
+        var totalCount = matchingCount;
         return new PagedData<T>(
             await query.Skip((pageIndex - 1) * pageSize)
                 .Take(pageSize)

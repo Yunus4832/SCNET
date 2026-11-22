@@ -42,9 +42,9 @@ public class CairnBlock : Block
         out bool showDebris
     )
     {
-        var num = Terrain.ExtractData(oldValue);
-        var num2 = 10 + 4 * num;
-        var num3 = num >= 3 ? 1 : 0;
+        var cairnData = Terrain.ExtractData(oldValue);
+        var experienceDrops = 10 + 4 * cairnData;
+        var bonusDrops = cairnData >= 3 ? 1 : 0;
         BlockDropValue item;
         for (var i = 0; i < 3; i++)
         {
@@ -56,7 +56,7 @@ public class CairnBlock : Block
             dropValues.Add(item);
         }
 
-        for (var j = 0; j < num2; j++)
+        for (var j = 0; j < experienceDrops; j++)
         {
             item = new BlockDropValue
             {
@@ -66,7 +66,7 @@ public class CairnBlock : Block
             dropValues.Add(item);
         }
 
-        for (var k = 0; k < num3; k++)
+        for (var k = 0; k < bonusDrops; k++)
         {
             item = new BlockDropValue
             {

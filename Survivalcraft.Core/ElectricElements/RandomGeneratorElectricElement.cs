@@ -13,8 +13,8 @@ public class RandomGeneratorElectricElement : RotatableElectricElement
         CellFace cellFace
     ) : base(subsystemElectricity, cellFace)
     {
-        var num = SubsystemElectricity.ReadPersistentVoltage(CellFaces[0].Point);
-        _voltage = num ?? GetRandomVoltage();
+        var storedVoltage = SubsystemElectricity.ReadPersistentVoltage(CellFaces[0].Point);
+        _voltage = storedVoltage ?? GetRandomVoltage();
     }
 
     public override float GetOutputVoltage(int face)
@@ -30,8 +30,8 @@ public class RandomGeneratorElectricElement : RotatableElectricElement
         }
 
         var voltage = _voltage;
-        var flag = false;
-        var flag2 = false;
+        var clockTriggered = false;
+        var hasInput = false;
         _ = Rotation;
         foreach (var connection in Connections)
         {
@@ -42,7 +42,7 @@ public class RandomGeneratorElectricElement : RotatableElectricElement
                 {
                     if (_clockAllowed)
                     {
-                        flag = true;
+                        clockTriggered = true;
                         _clockAllowed = false;
                     }
                 }
@@ -51,13 +51,13 @@ public class RandomGeneratorElectricElement : RotatableElectricElement
                     _clockAllowed = true;
                 }
 
-                flag2 = true;
+                hasInput = true;
             }
         }
 
-        if (flag2)
+        if (hasInput)
         {
-            if (flag)
+            if (clockTriggered)
             {
                 _voltage = GetRandomVoltage();
             }

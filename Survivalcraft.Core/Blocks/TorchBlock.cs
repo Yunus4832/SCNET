@@ -100,7 +100,7 @@ public class TorchBlock : Block
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = Terrain.ExtractData(value);
-        return num < CollisionBoxes.Length ? CollisionBoxes[num] : [];
+        var mountingFace = Terrain.ExtractData(value);
+        return mountingFace < CollisionBoxes.Length ? CollisionBoxes[mountingFace] : [];
     }
 }

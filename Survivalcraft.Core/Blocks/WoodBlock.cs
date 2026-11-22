@@ -10,17 +10,17 @@ public abstract class WoodBlock : CubeBlock
     )
     {
         var forward = eyeForward;
-        var num = float.NegativeInfinity;
+        var bestAlignment = float.NegativeInfinity;
         var cutFace = 0;
         for (var i = 0; i < 6; i++)
         {
-            var num2 = Vector3.Dot(CellFace.FaceToVector3(i), forward);
-            if (!(num2 > num))
+            var alignment = Vector3.Dot(CellFace.FaceToVector3(i), forward);
+            if (!(alignment > bestAlignment))
             {
                 continue;
             }
 
-            num = num2;
+            bestAlignment = alignment;
             cutFace = i;
         }
 

@@ -224,8 +224,8 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         bool includePredictedBlocks = false
     )
     {
-        var num = Vector3.Distance(start, end);
-        if (num > 1000f)
+        var rayLength = Vector3.Distance(start, end);
+        if (rayLength > 1000f)
         {
             Log.Warning("Terrain raycast too long, trimming.");
             end = start + 1000f * Vector3.Normalize(end - start);
@@ -238,104 +238,106 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         var x2 = end.X;
         var y2 = end.Y;
         var z2 = end.Z;
-        var num2 = Terrain.ToCell(x);
-        var num3 = Terrain.ToCell(y);
-        var num4 = Terrain.ToCell(z);
-        var num5 = Terrain.ToCell(x2);
-        var num6 = Terrain.ToCell(y2);
-        var num7 = Terrain.ToCell(z2);
-        var num8 = x < x2 ? 1 : x > x2 ? -1 : 0;
-        var num9 = y < y2 ? 1 : y > y2 ? -1 : 0;
-        var num10 = z < z2 ? 1 : z > z2 ? -1 : 0;
-        var num11 = MathUtils.Floor(x);
-        var num12 = num11 + 1f;
-        var num13 = (x > x2 ? x - num11 : num12 - x) / Math.Abs(x2 - x);
-        var num14 = MathUtils.Floor(y);
-        var num15 = num14 + 1f;
-        var num16 = (y > y2 ? y - num14 : num15 - y) / Math.Abs(y2 - y);
-        var num17 = MathUtils.Floor(z);
-        var num18 = num17 + 1f;
-        var num19 = (z > z2 ? z - num17 : num18 - z) / Math.Abs(z2 - z);
-        var num20 = 1f / Math.Abs(x2 - x);
-        var num21 = 1f / Math.Abs(y2 - y);
-        var num22 = 1f / Math.Abs(z2 - z);
+        var cellX = Terrain.ToCell(x);
+        var cellY = Terrain.ToCell(y);
+        var cellZ = Terrain.ToCell(z);
+        var endCellX = Terrain.ToCell(x2);
+        var endCellY = Terrain.ToCell(y2);
+        var endCellZ = Terrain.ToCell(z2);
+        var stepX = x < x2 ? 1 : x > x2 ? -1 : 0;
+        var stepY = y < y2 ? 1 : y > y2 ? -1 : 0;
+        var stepZ = z < z2 ? 1 : z > z2 ? -1 : 0;
+        var minCellX = MathUtils.Floor(x);
+        var maxCellX = minCellX + 1f;
+        var nextCrossingX = (x > x2 ? x - minCellX : maxCellX - x) / Math.Abs(x2 - x);
+        var minCellY = MathUtils.Floor(y);
+        var maxCellY = minCellY + 1f;
+        var nextCrossingY = (y > y2 ? y - minCellY : maxCellY - y) / Math.Abs(y2 - y);
+        var minCellZ = MathUtils.Floor(z);
+        var maxCellZ = minCellZ + 1f;
+        var nextCrossingZ = (z > z2 ? z - minCellZ : maxCellZ - z) / Math.Abs(z2 - z);
+        var crossingStepX = 1f / Math.Abs(x2 - x);
+        var crossingStepY = 1f / Math.Abs(y2 - y);
+        var crossingStepZ = 1f / Math.Abs(z2 - z);
         while (true)
         {
             BoundingBox boundingBox = default;
             var collisionBoxIndex = 0;
-            float? num23 = null;
-            var cellValue = Terrain.GetCellValue(num2, num3, num4);
+            float? hitDistance = null;
+            var cellValue = Terrain.GetCellValue(cellX, cellY, cellZ);
             if (includePredictedBlocks)
             {
-                var predictedValue = Terrain.GetCellValueForGeometry(num2, num3, num4);
+                var predictedValue = Terrain.GetCellValueForGeometry(cellX, cellY, cellZ);
                 if (Terrain.ExtractContents(predictedValue) != 0)
                 {
                     cellValue = predictedValue;
                 }
             }
 
-            var num24 = Terrain.ExtractContents(cellValue);
-            if (num24 != 0 || !skipAirBlocks)
+            var contents = Terrain.ExtractContents(cellValue);
+            if (contents != 0 || !skipAirBlocks)
             {
-                var ray2 = new Ray3(ray.Position - new Vector3(num2, num3, num4), ray.Direction);
-                var num25 = Catalog.Blocks[num24].Raycast(
-                    ray2,
+                var localRay = new Ray3(ray.Position - new Vector3(cellX, cellY, cellZ), ray.Direction);
+                var boxHitDistance = Catalog.Blocks[contents].Raycast(
+                    localRay,
                     this,
                     cellValue,
                     useInteractionBoxes,
                     out var nearestBoxIndex,
                     out var nearestBox
                 );
-                if (num25.HasValue && (!num23.HasValue || num25.Value < num23.Value))
+                if (boxHitDistance.HasValue && (!hitDistance.HasValue || boxHitDistance.Value < hitDistance.Value))
                 {
-                    num23 = num25;
+                    hitDistance = boxHitDistance;
                     collisionBoxIndex = nearestBoxIndex;
                     boundingBox = nearestBox;
                 }
             }
 
-            if (num23.HasValue && num23.Value <= num && (action == null || action(cellValue, num23.Value)))
+            if (hitDistance.HasValue &&
+                hitDistance.Value <= rayLength &&
+                (action == null || action(cellValue, hitDistance.Value)))
             {
                 var face = 0;
-                var vector = start - new Vector3(num2, num3, num4) + num23.Value * ray.Direction;
-                var num26 = float.MaxValue;
-                var num27 = MathUtils.Abs(vector.X - boundingBox.Min.X);
-                if (num27 < num26)
+                var localHitPosition = start - new Vector3(cellX, cellY, cellZ) + hitDistance.Value * ray.Direction;
+                var closestFaceDistance = float.MaxValue;
+                var faceDistance = MathUtils.Abs(localHitPosition.X - boundingBox.Min.X);
+                if (faceDistance < closestFaceDistance)
                 {
-                    num26 = num27;
+                    closestFaceDistance = faceDistance;
                     face = 3;
                 }
 
-                num27 = MathUtils.Abs(vector.X - boundingBox.Max.X);
-                if (num27 < num26)
+                faceDistance = MathUtils.Abs(localHitPosition.X - boundingBox.Max.X);
+                if (faceDistance < closestFaceDistance)
                 {
-                    num26 = num27;
+                    closestFaceDistance = faceDistance;
                     face = 1;
                 }
 
-                num27 = MathUtils.Abs(vector.Y - boundingBox.Min.Y);
-                if (num27 < num26)
+                faceDistance = MathUtils.Abs(localHitPosition.Y - boundingBox.Min.Y);
+                if (faceDistance < closestFaceDistance)
                 {
-                    num26 = num27;
+                    closestFaceDistance = faceDistance;
                     face = 5;
                 }
 
-                num27 = MathUtils.Abs(vector.Y - boundingBox.Max.Y);
-                if (num27 < num26)
+                faceDistance = MathUtils.Abs(localHitPosition.Y - boundingBox.Max.Y);
+                if (faceDistance < closestFaceDistance)
                 {
-                    num26 = num27;
+                    closestFaceDistance = faceDistance;
                     face = 4;
                 }
 
-                num27 = MathUtils.Abs(vector.Z - boundingBox.Min.Z);
-                if (num27 < num26)
+                faceDistance = MathUtils.Abs(localHitPosition.Z - boundingBox.Min.Z);
+                if (faceDistance < closestFaceDistance)
                 {
-                    num26 = num27;
+                    closestFaceDistance = faceDistance;
                     face = 2;
                 }
 
-                num27 = MathUtils.Abs(vector.Z - boundingBox.Max.Z);
-                if (num27 < num26)
+                faceDistance = MathUtils.Abs(localHitPosition.Z - boundingBox.Max.Z);
+                if (faceDistance < closestFaceDistance)
                 {
                     face = 0;
                 }
@@ -345,45 +347,45 @@ public class SubsystemTerrain : Subsystem, IUpdateable
                 value.Value = cellValue;
                 value.CellFace = new CellFace
                 {
-                    X = num2,
-                    Y = num3,
-                    Z = num4,
+                    X = cellX,
+                    Y = cellY,
+                    Z = cellZ,
                     Face = face
                 };
                 value.CollisionBoxIndex = collisionBoxIndex;
-                value.Distance = num23.Value;
+                value.Distance = hitDistance.Value;
                 return value;
             }
 
-            if (num13 <= num16 && num13 <= num19)
+            if (nextCrossingX <= nextCrossingY && nextCrossingX <= nextCrossingZ)
             {
-                if (num2 == num5)
+                if (cellX == endCellX)
                 {
                     break;
                 }
 
-                num13 += num20;
-                num2 += num8;
+                nextCrossingX += crossingStepX;
+                cellX += stepX;
             }
-            else if (num16 <= num13 && num16 <= num19)
+            else if (nextCrossingY <= nextCrossingX && nextCrossingY <= nextCrossingZ)
             {
-                if (num3 == num6)
+                if (cellY == endCellY)
                 {
                     break;
                 }
 
-                num16 += num21;
-                num3 += num9;
+                nextCrossingY += crossingStepY;
+                cellY += stepY;
             }
             else
             {
-                if (num4 == num7)
+                if (cellZ == endCellZ)
                 {
                     break;
                 }
 
-                num19 += num22;
-                num4 += num10;
+                nextCrossingZ += crossingStepZ;
+                cellZ += stepZ;
             }
         }
 
@@ -404,11 +406,11 @@ public class SubsystemTerrain : Subsystem, IUpdateable
             viewPosition + 6f * viewDirection + 2f * v
         };
         var list = new List<TerrainChunk>();
-        foreach (var vector2 in obj)
+        foreach (var samplePosition in obj)
         {
             var chunkAtCell = Terrain.GetChunkAtCell(
-                Terrain.ToCell(vector2.X),
-                Terrain.ToCell(vector2.Z),
+                Terrain.ToCell(samplePosition.X),
+                Terrain.ToCell(samplePosition.Z),
                 false
             );
             if (chunkAtCell is { HasCurrentLight: true } && !list.Contains(chunkAtCell))
@@ -518,9 +520,9 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         }
         finally { WorkExecutor.LeaveMain(); }
 
-        var num = Terrain.ExtractContents(cellValueFast);
-        var num2 = Terrain.ExtractContents(value);
-        if (num2 != num)
+        var oldContents = Terrain.ExtractContents(cellValueFast);
+        var newContents = Terrain.ExtractContents(value);
+        if (newContents != oldContents)
         {
             var removedContext = new BlockRemovedContext(this, x, y, z, cellValueFast, value, miner);
             WorldRuleHooks.For(Project).Invoke(removedContext);
@@ -528,7 +530,7 @@ public class SubsystemTerrain : Subsystem, IUpdateable
 
             if (!removedContext.Cancel)
             {
-                var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num);
+                var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(oldContents);
                 foreach (var behavior in blockBehaviors)
                 {
                     behavior.OnBlockRemoved(cellValueFast, value, x, y, z);
@@ -545,7 +547,7 @@ public class SubsystemTerrain : Subsystem, IUpdateable
             }
 
             {
-                var blockBehaviors2 = _subsystemBlockBehaviors.GetBlockBehaviors(num2);
+                var blockBehaviors2 = _subsystemBlockBehaviors.GetBlockBehaviors(newContents);
                 foreach (var behavior in blockBehaviors2)
                 {
                     behavior.OnBlockAdded(value, cellValueFast, x, y, z);
@@ -567,7 +569,7 @@ public class SubsystemTerrain : Subsystem, IUpdateable
                 return;
             }
 
-            var blockBehaviors3 = _subsystemBlockBehaviors.GetBlockBehaviors(num2);
+            var blockBehaviors3 = _subsystemBlockBehaviors.GetBlockBehaviors(newContents);
             foreach (var behavior in blockBehaviors3)
             {
                 behavior.OnBlockModified(value, cellValueFast, x, y, z);
@@ -679,9 +681,9 @@ public class SubsystemTerrain : Subsystem, IUpdateable
         }
 
         var cellValue = Terrain.GetCellValue(x, y, z);
-        var num = Terrain.ExtractContents(cellValue);
-        var block = Catalog.Blocks[num];
-        if (num != 0)
+        var contents = Terrain.ExtractContents(cellValue);
+        var block = Catalog.Blocks[contents];
+        if (contents != 0)
         {
             var showDebris = true;
             if (!noDrop)

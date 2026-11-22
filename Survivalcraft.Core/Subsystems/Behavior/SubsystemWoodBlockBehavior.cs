@@ -29,8 +29,8 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
             return;
         }
 
-        var num = MathUtils.Min(MathUtils.Max((int)(_leavesToCheck.Count * 0.1f), 10), 200);
-        for (var i = 0; i < num; i++)
+        var checkBudget = MathUtils.Min(MathUtils.Max((int)(_leavesToCheck.Count * 0.1f), 10), 200);
+        for (var i = 0; i < checkBudget; i++)
         {
             if (_leavesToCheck.Count <= 0)
             {
@@ -51,15 +51,15 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
             return;
         }
 
-        var num = x - 3;
-        var num2 = MathUtils.Max(y - 3, 0);
-        var num3 = z - 3;
-        var num4 = x + 3;
-        var num5 = MathUtils.Min(y + 3, 255);
-        var num6 = z + 3;
-        for (var i = num; i <= num4; i++)
+        var minX = x - 3;
+        var minY = MathUtils.Max(y - 3, 0);
+        var minZ = z - 3;
+        var maxX = x + 3;
+        var maxY = MathUtils.Min(y + 3, 255);
+        var maxZ = z + 3;
+        for (var i = minX; i <= maxX; i++)
         {
-            for (var j = num3; j <= num6; j++)
+            for (var j = minZ; j <= maxZ; j++)
             {
                 var chunkAtCell = SubsystemTerrain.Terrain.GetChunkAtCell(i, j, false);
                 if (chunkAtCell == null)
@@ -67,12 +67,12 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     continue;
                 }
 
-                var num7 = TerrainChunk.CalculateCellIndex(i & 0xF, 0, j & 0xF);
-                for (var k = num2; k <= num5; k++)
+                var columnIndex = TerrainChunk.CalculateCellIndex(i & 0xF, 0, j & 0xF);
+                for (var k = minY; k <= maxY; k++)
                 {
-                    var num8 = Terrain.ExtractContents(chunkAtCell.GetCellValueFast(num7 + k));
-                    if (num8 != 0 &&
-                        WorldContentBinding.For(Project).Catalog.Blocks[num8] is LeavesBlock)
+                    var contents = Terrain.ExtractContents(chunkAtCell.GetCellValueFast(columnIndex + k));
+                    if (contents != 0 &&
+                        WorldContentBinding.For(Project).Catalog.Blocks[contents] is LeavesBlock)
                     {
                         _leavesToCheck.Add(new Point3(i, k, j));
                     }
@@ -83,14 +83,14 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     public override void OnChunkDiscarding(TerrainChunk chunk)
     {
-        var num = chunk.Origin.X - 16;
-        var num2 = chunk.Origin.Y - 16;
-        var num3 = chunk.Origin.X + 32;
-        var num4 = chunk.Origin.Y + 32;
+        var minX = chunk.Origin.X - 16;
+        var minZ = chunk.Origin.Y - 16;
+        var endX = chunk.Origin.X + 32;
+        var endZ = chunk.Origin.Y + 32;
         var list = new List<Point3>();
         foreach (var item in _leavesToCheck)
         {
-            if (item.X >= num && item.X < num3 && item.Z >= num2 && item.Z < num4)
+            if (item.X >= minX && item.X < endX && item.Z >= minZ && item.Z < endZ)
             {
                 list.Add(item);
             }
@@ -131,16 +131,16 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
             return;
         }
 
-        var flag = false;
-        var num = p.X - 3;
-        var num2 = MathUtils.Max(p.Y - 3, 0);
-        var num3 = p.Z - 3;
-        var num4 = p.X + 3;
-        var num5 = MathUtils.Min(p.Y + 3, 255);
-        var num6 = p.Z + 3;
-        for (var i = num; i <= num4; i++)
+        var foundWood = false;
+        var minX = p.X - 3;
+        var minY = MathUtils.Max(p.Y - 3, 0);
+        var minZ = p.Z - 3;
+        var maxX = p.X + 3;
+        var maxY = MathUtils.Min(p.Y + 3, 255);
+        var maxZ = p.Z + 3;
+        for (var i = minX; i <= maxX; i++)
         {
-            for (var j = num3; j <= num6; j++)
+            for (var j = minZ; j <= maxZ; j++)
             {
                 var chunkAtCell = SubsystemTerrain.Terrain.GetChunkAtCell(i, j, false);
                 if (chunkAtCell == null)
@@ -148,15 +148,15 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
                     continue;
                 }
 
-                var num7 = TerrainChunk.CalculateCellIndex(i & 0xF, 0, j & 0xF);
-                var num8 = num2;
-                while (num8 <= num5)
+                var columnIndex = TerrainChunk.CalculateCellIndex(i & 0xF, 0, j & 0xF);
+                var cellY = minY;
+                while (cellY <= maxY)
                 {
-                    var num9 = Terrain.ExtractContents(chunkAtCell.GetCellValueFast(num7 + num8));
-                    if (num9 == 0 ||
-                        WorldContentBinding.For(Project).Catalog.Blocks[num9] is not WoodBlock)
+                    var contents = Terrain.ExtractContents(chunkAtCell.GetCellValueFast(columnIndex + cellY));
+                    if (contents == 0 ||
+                        WorldContentBinding.For(Project).Catalog.Blocks[contents] is not WoodBlock)
                     {
-                        num8++;
+                        cellY++;
                         continue;
                     }
 
@@ -166,11 +166,11 @@ public class SubsystemWoodBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
             continue;
             IL_00e8:
-            flag = true;
+            foundWood = true;
             break;
         }
 
-        if (!flag)
+        if (!foundWood)
         {
             SubsystemTerrain.ChangeCell(p.X, p.Y, p.Z, 0);
         }

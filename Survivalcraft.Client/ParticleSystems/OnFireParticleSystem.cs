@@ -25,21 +25,21 @@ public class OnFireParticleSystem : ParticleSystem<OnFireParticleSystem.Particle
 
     public override bool Simulate(float dt)
     {
-        var flag = false;
+        var hasActiveParticles = false;
         if (_visible)
         {
             _toGenerate += 20f * dt;
-            var num = MathUtils.Pow(0.02f, dt);
+            var velocityDamping = MathUtils.Pow(0.02f, dt);
             foreach (var particle in Particles)
             {
                 if (particle.IsActive)
                 {
-                    flag = true;
+                    hasActiveParticles = true;
                     particle.Time += dt;
                     if (particle.Time <= particle.Duration)
                     {
                         particle.Position += particle.Velocity * dt;
-                        particle.Velocity *= num;
+                        particle.Velocity *= velocityDamping;
                         particle.Velocity.Y += 10f * dt;
                         particle.TextureSlot = (int)MathUtils.Min(9f * particle.Time / particle.Duration * 1.2f, 8f);
                     }
@@ -75,13 +75,13 @@ public class OnFireParticleSystem : ParticleSystem<OnFireParticleSystem.Particle
             _visible = false;
         }
 
-        return IsStopped && !flag;
+        return IsStopped && !hasActiveParticles;
     }
 
     public override void Draw(Camera camera)
     {
-        var num = Vector3.Dot(Position - camera.ViewPosition, camera.ViewDirection);
-        if (num is <= -5f or > 48f)
+        var viewDepth = Vector3.Dot(Position - camera.ViewPosition, camera.ViewDirection);
+        if (viewDepth is <= -5f or > 48f)
         {
             return;
         }

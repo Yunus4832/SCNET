@@ -650,15 +650,15 @@ public class SubsystemElectricity : Subsystem, IUpdateable
         CircuitStep = valuesDictionary.GetValue("Step", 0);
         var array = valuesDictionary.GetValue<string>("VoltagesByCell")
             .Split([';'], StringSplitOptions.RemoveEmptyEntries);
-        var num = 0;
+        var recordIndex = 0;
         while (true)
         {
-            if (num >= array.Length)
+            if (recordIndex >= array.Length)
             {
                 return;
             }
 
-            var array2 = array[num].Split(',');
+            var array2 = array[recordIndex].Split(',');
             if (array2.Length != 4)
             {
                 break;
@@ -669,7 +669,7 @@ public class SubsystemElectricity : Subsystem, IUpdateable
             var z = int.Parse(array2[2], CultureInfo.InvariantCulture);
             var value = float.Parse(array2[3], CultureInfo.InvariantCulture);
             _persistentElementsVoltages[new Point3(x, y, z)] = value;
-            num++;
+            recordIndex++;
         }
 
         throw new InvalidOperationException("Invalid number of tokens.");
@@ -684,11 +684,11 @@ public class SubsystemElectricity : Subsystem, IUpdateable
             return;
         }
 
-        var num = 0;
+        var savedVoltageCount = 0;
         var stringBuilder = new StringBuilder();
         foreach (var persistentElementsVoltage in _persistentElementsVoltages)
         {
-            if (num > 500)
+            if (savedVoltageCount > 500)
             {
                 break;
             }
@@ -701,7 +701,7 @@ public class SubsystemElectricity : Subsystem, IUpdateable
             stringBuilder.Append(',');
             stringBuilder.Append(persistentElementsVoltage.Value.ToString(CultureInfo.InvariantCulture));
             stringBuilder.Append(';');
-            num++;
+            savedVoltageCount++;
         }
 
         valuesDictionary.SetValue("VoltagesByCell", stringBuilder.ToString());
@@ -748,9 +748,9 @@ public class SubsystemElectricity : Subsystem, IUpdateable
                 }
 
                 var cellValue = SubsystemTerrain.Terrain.GetCellValue(cellFace2.X, cellFace2.Y, cellFace2.Z);
-                var num = Terrain.ExtractContents(cellValue);
+                var ownerContents = Terrain.ExtractContents(cellValue);
                 var value2 =
-                    ((IElectricElementBlock)WorldContentBinding.For(Project).Catalog.Blocks[num])
+                    ((IElectricElementBlock)WorldContentBinding.For(Project).Catalog.Blocks[ownerContents])
                     .GetConnectorType(
                         SubsystemTerrain,
                         cellValue,
@@ -761,9 +761,9 @@ public class SubsystemElectricity : Subsystem, IUpdateable
                         cellFace2.Z
                     );
                 var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
-                var num2 = Terrain.ExtractContents(cellValue2);
+                var neighborContents = Terrain.ExtractContents(cellValue2);
                 var value3 =
-                    ((IElectricElementBlock)WorldContentBinding.For(Project).Catalog.Blocks[num2])
+                    ((IElectricElementBlock)WorldContentBinding.For(Project).Catalog.Blocks[neighborContents])
                     .GetConnectorType(
                         SubsystemTerrain,
                         cellValue2,
@@ -817,12 +817,12 @@ public class SubsystemElectricity : Subsystem, IUpdateable
 
         foreach (var connection in electricElement.Connections)
         {
-            var num = connection.NeighborElectricElement.Connections.FirstIndex(c =>
+            var reverseConnectionIndex = connection.NeighborElectricElement.Connections.FirstIndex(c =>
                 c.NeighborElectricElement == electricElement
             );
-            if (num >= 0)
+            if (reverseConnectionIndex >= 0)
             {
-                connection.NeighborElectricElement.Connections.RemoveAt(num);
+                connection.NeighborElectricElement.Connections.RemoveAt(reverseConnectionIndex);
             }
         }
     }
@@ -854,15 +854,15 @@ public class SubsystemElectricity : Subsystem, IUpdateable
                 _persistentElementsVoltages.Remove(key);
             }
 
-            var num = Terrain.ExtractContents(cellValue);
-            if (WorldContentBinding.For(Project).Catalog.Blocks[num] is IElectricWireElementBlock)
+            var contents = Terrain.ExtractContents(cellValue);
+            if (WorldContentBinding.For(Project).Catalog.Blocks[contents] is IElectricWireElementBlock)
             {
                 _wiresToUpdate[key] = true;
             }
             else
             {
                 var electricElementBlock =
-                    WorldContentBinding.For(Project).Catalog.Blocks[num] as IElectricElementBlock;
+                    WorldContentBinding.For(Project).Catalog.Blocks[contents] as IElectricElementBlock;
                 if (electricElementBlock != null)
                 {
                     var electricElement2 =
@@ -967,9 +967,9 @@ public class SubsystemElectricity : Subsystem, IUpdateable
             }
 
             var cellValue = SubsystemTerrain.Terrain.GetCellValue(key.X, key.Y, key.Z);
-            var num = Terrain.ExtractContents(cellValue);
+            var contents = Terrain.ExtractContents(cellValue);
             var electricWireElementBlock =
-                WorldContentBinding.For(Project).Catalog.Blocks[num] as IElectricWireElementBlock;
+                WorldContentBinding.For(Project).Catalog.Blocks[contents] as IElectricWireElementBlock;
             if (electricWireElementBlock == null)
             {
                 continue;

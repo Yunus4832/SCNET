@@ -45,10 +45,10 @@ public class ComponentDamage : Component, IUpdateable
             return;
         }
 
-        var num = MathUtils.Abs(_componentBody.CollisionVelocityChange.Y);
-        if (num > _fallResilience)
+        var verticalImpactSpeed = MathUtils.Abs(_componentBody.CollisionVelocityChange.Y);
+        if (verticalImpactSpeed > _fallResilience)
         {
-            var amount = MathUtils.Sqr(MathUtils.Max(num - _fallResilience, 0f)) / 15f;
+            var amount = MathUtils.Sqr(MathUtils.Max(verticalImpactSpeed - _fallResilience, 0f)) / 15f;
             Damage(amount);
         }
 

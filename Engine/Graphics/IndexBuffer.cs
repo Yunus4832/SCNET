@@ -39,16 +39,16 @@ public sealed class IndexBuffer : GraphicsResource
         var gCHandle = GCHandle.Alloc(source, GCHandleType.Pinned);
         try
         {
-            var num = Marshal.SizeOf<T>();
+            var elementSize = Marshal.SizeOf<T>();
             var size = IndexFormat.GetSize();
-            var data = gCHandle.AddrOfPinnedObject() + sourceStartIndex * num;
+            var data = gCHandle.AddrOfPinnedObject() + sourceStartIndex * elementSize;
             GLWrapper.BindBuffer(BufferTargetARB.ElementArrayBuffer, buffer);
             unsafe
             {
                 GLWrapper.GL.BufferSubData(
                     BufferTargetARB.ElementArrayBuffer,
                     new IntPtr(targetStartIndex * size),
-                    new UIntPtr((uint)(num * sourceCount)),
+                    new UIntPtr((uint)(elementSize * sourceCount)),
                     data.ToPointer()
                 );
             }
@@ -122,14 +122,14 @@ public sealed class IndexBuffer : GraphicsResource
         where T : struct
     {
         VerifyNotDisposed();
-        var num = Marshal.SizeOf<T>();
+        var elementSize = Marshal.SizeOf<T>();
         var size = IndexFormat.GetSize();
         if (sourceStartIndex < 0 || sourceCount < 0 || sourceStartIndex + sourceCount > source.Length)
         {
             throw new ArgumentException("Range is out of source bounds.");
         }
 
-        if (targetStartIndex < 0 || targetStartIndex * size + sourceCount * num > IndicesCount * size)
+        if (targetStartIndex < 0 || targetStartIndex * size + sourceCount * elementSize > IndicesCount * size)
         {
             throw new ArgumentException("Range is out of target bounds.");
         }

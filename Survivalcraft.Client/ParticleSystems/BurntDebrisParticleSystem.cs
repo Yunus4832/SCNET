@@ -51,8 +51,8 @@ public class BurntDebrisParticleSystem : ParticleSystem<BurntDebrisParticleSyste
     public override bool Simulate(float dt)
     {
         dt = MathUtils.Clamp(dt, 0f, 0.1f);
-        var num = MathUtils.Pow(0.04f, dt);
-        var flag = false;
+        var velocityDamping = MathUtils.Pow(0.04f, dt);
+        var hasActiveParticles = false;
         foreach (var particle in Particles)
         {
             if (!particle.IsActive)
@@ -60,7 +60,7 @@ public class BurntDebrisParticleSystem : ParticleSystem<BurntDebrisParticleSyste
                 continue;
             }
 
-            flag = true;
+            hasActiveParticles = true;
             particle.TimeToLive -= dt;
             if (particle.TimeToLive > 0f)
             {
@@ -96,7 +96,7 @@ public class BurntDebrisParticleSystem : ParticleSystem<BurntDebrisParticleSyste
 
                 particle.Position = vector;
                 particle.Velocity.Y += -10f * dt;
-                particle.Velocity *= num;
+                particle.Velocity *= velocityDamping;
                 particle.Color *= MathUtils.Saturate(particle.TimeToLive);
                 particle.TextureSlot = (int)(8.99f * MathUtils.Saturate(2f - particle.TimeToLive));
             }
@@ -106,7 +106,7 @@ public class BurntDebrisParticleSystem : ParticleSystem<BurntDebrisParticleSyste
             }
         }
 
-        return !flag;
+        return !hasActiveParticles;
     }
 
     public class Particle : Game.ParticleSystems.Particle

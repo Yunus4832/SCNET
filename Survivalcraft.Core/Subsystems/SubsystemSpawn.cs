@@ -280,7 +280,7 @@ public class SubsystemSpawn : Subsystem, IUpdateable
                 continue;
             }
 
-            var flag = true;
+            var shouldDespawn = true;
             var position = key.ComponentFrame.Position;
             var v = new Vector2(position.X, position.Z);
             foreach (var componentCharacter in _subsystemCharacters.ComponentCharacters)
@@ -292,11 +292,11 @@ public class SubsystemSpawn : Subsystem, IUpdateable
                     continue;
                 }
 
-                flag = false;
+                shouldDespawn = false;
                 break;
             }
 
-            if (flag)
+            if (shouldDespawn)
             {
                 list.Add(key);
             }
@@ -345,15 +345,15 @@ public class SubsystemSpawn : Subsystem, IUpdateable
     private void LoadSpawnsData(string data, List<SpawnEntityData> creaturesData)
     {
         var array = data.Split([';'], StringSplitOptions.RemoveEmptyEntries);
-        var num = 0;
+        var entryIndex = 0;
         while (true)
         {
-            if (num >= array.Length)
+            if (entryIndex >= array.Length)
             {
                 return;
             }
 
-            var array2 = array[num].Split([','], StringSplitOptions.RemoveEmptyEntries);
+            var array2 = array[entryIndex].Split([','], StringSplitOptions.RemoveEmptyEntries);
             if (array2.Length < 4)
             {
                 break;
@@ -375,7 +375,7 @@ public class SubsystemSpawn : Subsystem, IUpdateable
             }
 
             creaturesData.Add(spawnEntityData);
-            num++;
+            entryIndex++;
         }
 
         throw new InvalidOperationException("Invalid spawn data string.");

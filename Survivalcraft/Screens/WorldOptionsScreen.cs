@@ -522,15 +522,15 @@ public class WorldOptionsScreen : Screen
 
     private static int FindNearestIndex(float[] list, float v)
     {
-        var num = 0;
+        var nearestIndex = 0;
         for (var i = 0; i < list.Length; i++)
         {
-            if (MathUtils.Abs(list[i] - v) < MathUtils.Abs(list[num] - v))
+            if (MathUtils.Abs(list[i] - v) < MathUtils.Abs(list[nearestIndex] - v))
             {
-                num = i;
+                nearestIndex = i;
             }
         }
 
-        return num;
+        return nearestIndex;
     }
 }

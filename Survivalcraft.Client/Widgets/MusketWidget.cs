@@ -35,10 +35,10 @@ public class MusketWidget : CanvasWidget
             }
         }
 
-        var num = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
+        var backpackSlot = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
         foreach (var child in _inventoryGrid.Children)
         {
-            (child as InventorySlotWidget)?.AssignInventorySlot(inventory, num++);
+            (child as InventorySlotWidget)?.AssignInventorySlot(inventory, backpackSlot++);
         }
 
         _inventorySlotWidget.AssignInventorySlot(inventory, slotIndex);

@@ -300,30 +300,30 @@ public struct Color : IEquatable<Color>
 
     public static Vector3 RgbToHsv(Vector3 rgb)
     {
-        var num = MathUtils.Min(rgb.X, rgb.Y, rgb.Z);
-        var num2 = MathUtils.Max(rgb.X, rgb.Y, rgb.Z);
-        var z = num2;
-        var num3 = num2 - num;
+        var minChannel = MathUtils.Min(rgb.X, rgb.Y, rgb.Z);
+        var maxChannel = MathUtils.Max(rgb.X, rgb.Y, rgb.Z);
+        var z = maxChannel;
+        var chroma = maxChannel - minChannel;
         float y;
-        float num4;
-        if (num2 != 0f)
+        float hue;
+        if (maxChannel != 0f)
         {
-            y = num3 / num2;
-            num4 = num3 == 0f ? 0f :
-                rgb.X.CloseTo(num2) ? (rgb.Y - rgb.Z) / num3 :
-                rgb.Y.CloseTo(num2) ? 4f + (rgb.X - rgb.Y) / num3 : 2f + (rgb.Z - rgb.X) / num3;
-            num4 *= 60f;
-            if (num4 < 0f)
+            y = chroma / maxChannel;
+            hue = chroma == 0f ? 0f :
+                rgb.X.CloseTo(maxChannel) ? (rgb.Y - rgb.Z) / chroma :
+                rgb.Y.CloseTo(maxChannel) ? 4f + (rgb.X - rgb.Y) / chroma : 2f + (rgb.Z - rgb.X) / chroma;
+            hue *= 60f;
+            if (hue < 0f)
             {
-                num4 += 360f;
+                hue += 360f;
             }
 
-            return new Vector3(num4, y, z);
+            return new Vector3(hue, y, z);
         }
 
         y = 0f;
-        num4 = -1f;
-        return new Vector3(num4, y, z);
+        hue = -1f;
+        return new Vector3(hue, y, z);
     }
 
     public static Vector3 HsvToRgb(Vector3 hsv)
@@ -334,45 +334,45 @@ public struct Color : IEquatable<Color>
         }
 
         hsv.X /= 60f;
-        var num = (int)MathUtils.Floor(hsv.X);
-        var num2 = hsv.X - num;
-        var num3 = hsv.Z * (1f - hsv.Y);
-        var num4 = hsv.Z * (1f - hsv.Y * num2);
-        var num5 = hsv.Z * (1f - hsv.Y * (1f - num2));
+        var sector = (int)MathUtils.Floor(hsv.X);
+        var sectorFraction = hsv.X - sector;
+        var lowChannel = hsv.Z * (1f - hsv.Y);
+        var fallingChannel = hsv.Z * (1f - hsv.Y * sectorFraction);
+        var risingChannel = hsv.Z * (1f - hsv.Y * (1f - sectorFraction));
         float x;
         float y;
         float z;
-        switch (num)
+        switch (sector)
         {
             case 0:
                 x = hsv.Z;
-                y = num5;
-                z = num3;
+                y = risingChannel;
+                z = lowChannel;
                 break;
             case 1:
-                x = num4;
+                x = fallingChannel;
                 y = hsv.Z;
-                z = num3;
+                z = lowChannel;
                 break;
             case 2:
-                x = num3;
+                x = lowChannel;
                 y = hsv.Z;
-                z = num5;
+                z = risingChannel;
                 break;
             case 3:
-                x = num3;
-                y = num4;
+                x = lowChannel;
+                y = fallingChannel;
                 z = hsv.Z;
                 break;
             case 4:
-                x = num5;
-                y = num3;
+                x = risingChannel;
+                y = lowChannel;
                 z = hsv.Z;
                 break;
             default:
                 x = hsv.Z;
-                y = num3;
-                z = num4;
+                y = lowChannel;
+                z = fallingChannel;
                 break;
         }
 
@@ -431,12 +431,12 @@ public struct Color : IEquatable<Color>
 
     public static Color operator /(Color c, float s)
     {
-        var num = 1f / s;
+        var inverseDivisor = 1f / s;
         return new Color(
-            (byte)MathUtils.Clamp(c.R * num, 0f, 255f),
-            (byte)MathUtils.Clamp(c.G * num, 0f, 255f),
-            (byte)MathUtils.Clamp(c.B * num, 0f, 255f),
-            (byte)MathUtils.Clamp(c.A * num, 0f, 255f)
+            (byte)MathUtils.Clamp(c.R * inverseDivisor, 0f, 255f),
+            (byte)MathUtils.Clamp(c.G * inverseDivisor, 0f, 255f),
+            (byte)MathUtils.Clamp(c.B * inverseDivisor, 0f, 255f),
+            (byte)MathUtils.Clamp(c.A * inverseDivisor, 0f, 255f)
         );
     }
 

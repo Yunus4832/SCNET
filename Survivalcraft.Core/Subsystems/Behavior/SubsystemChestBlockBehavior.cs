@@ -69,20 +69,20 @@ public class SubsystemChestBlockBehavior : SubsystemBlockBehavior
 
         var inventory = blockEntity.Entity.FindComponent<ComponentChest>(true)!;
         var pickable = worldItem as Pickable;
-        var num = pickable?.Count ?? 1;
-        var num2 = ComponentInventoryBase.AcquireItems(inventory, worldItem.Value, num);
-        if (num2 < num)
+        var incomingCount = pickable?.Count ?? 1;
+        var remainingCount = ComponentInventoryBase.AcquireItems(inventory, worldItem.Value, incomingCount);
+        if (remainingCount < incomingCount)
         {
             _soundRequests.RequestSound("Audio/PickableCollected", 1f, 0f, worldItem.Position, 3f, true);
         }
 
-        if (num2 <= 0)
+        if (remainingCount <= 0)
         {
             worldItem.ToRemove = true;
         }
         else
         {
-            pickable?.Count = num2;
+            pickable?.Count = remainingCount;
         }
     }
 }

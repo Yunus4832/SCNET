@@ -17,8 +17,8 @@ public class SubsystemSoundMaterials : Subsystem
 
     public void PlayImpactSound(int value, Vector3 position, float loudnessMultiplier)
     {
-        var num = Terrain.ExtractContents(value);
-        var soundMaterialName = WorldContentBinding.For(Project).Catalog.Blocks[num]
+        var contents = Terrain.ExtractContents(value);
+        var soundMaterialName = WorldContentBinding.For(Project).Catalog.Blocks[contents]
             .GetSoundMaterialName(_subsystemTerrain, value);
         if (string.IsNullOrEmpty(soundMaterialName))
         {
@@ -122,8 +122,8 @@ public class SubsystemSoundMaterials : Subsystem
             Terrain.ToCell(position.Y + 0.1f),
             Terrain.ToCell(position.Z)
         );
-        var num = Terrain.ExtractContents(cellValue);
-        var soundMaterialName = WorldContentBinding.For(Project).Catalog.Blocks[num]
+        var groundContents = Terrain.ExtractContents(cellValue);
+        var soundMaterialName = WorldContentBinding.For(Project).Catalog.Blocks[groundContents]
             .GetSoundMaterialName(_subsystemTerrain, cellValue);
         if (string.IsNullOrEmpty(soundMaterialName) && componentCreature.ComponentBody.StandingOnValue.HasValue)
         {

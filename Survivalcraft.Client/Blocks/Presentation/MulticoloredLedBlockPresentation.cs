@@ -24,8 +24,8 @@ public class MulticoloredLedBlockPresentation(MulticoloredLedBlock block, BlockP
         int z
     )
     {
-        var num = Terrain.ExtractData(value);
-        if (num >= BlockMeshesByData.Length)
+        var blockData = Terrain.ExtractData(value);
+        if (blockData >= BlockMeshesByData.Length)
         {
             return;
         }
@@ -35,7 +35,7 @@ public class MulticoloredLedBlockPresentation(MulticoloredLedBlock block, BlockP
             x,
             y,
             z,
-            BlockMeshesByData[num],
+            BlockMeshesByData[blockData],
             Color.White,
             null,
             geometry.SubsetOpaque
@@ -100,7 +100,7 @@ public class MulticoloredLedBlockPresentation(MulticoloredLedBlock block, BlockP
         );
         for (var i = 0; i < 6; i++)
         {
-            var num = SetMountingFace(0, i);
+            var blockData = SetMountingFace(0, i);
             var m2 = i >= 4
                 ? i != 4
                     ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
@@ -109,8 +109,8 @@ public class MulticoloredLedBlockPresentation(MulticoloredLedBlock block, BlockP
                   Matrix.CreateTranslation(0f, 0f, -0.5f) *
                   Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
                   Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-            BlockMeshesByData[num] = new BlockMesh();
-            BlockMeshesByData[num].AppendModelPrimitive(
+            BlockMeshesByData[blockData] = new BlockMesh();
+            BlockMeshesByData[blockData].AppendModelPrimitive(
                 ledNode.RequireMesh().Primitives[0],
                 nodeAbsoluteTransform * m2,
                 false,
@@ -119,7 +119,7 @@ public class MulticoloredLedBlockPresentation(MulticoloredLedBlock block, BlockP
                 false,
                 Color.White
             );
-            BlockMeshesByData[num].AppendModelPrimitive(
+            BlockMeshesByData[blockData].AppendModelPrimitive(
                 ledBulbNode.RequireMesh().Primitives[0],
                 nodeAbsoluteTransform2 * m2,
                 false,

@@ -169,23 +169,29 @@ public class ComponentRunAwayBehavior : ComponentBehavior, IUpdateable, INoiseLi
             herdPosition = null;
         }
 
-        var num = float.NegativeInfinity;
+        var bestScore = float.NegativeInfinity;
         var result = position;
         for (var i = 0; i < 30; i++)
         {
-            var num2 = Terrain.ToCell(position.X + _random.Float(-25f, 25f));
-            var num3 = Terrain.ToCell(position.Z + _random.Float(-25f, 25f));
-            for (var num4 = 255; num4 >= 0; num4--)
+            var sampleX = Terrain.ToCell(position.X + _random.Float(-25f, 25f));
+            var sampleZ = Terrain.ToCell(position.Z + _random.Float(-25f, 25f));
+            for (var sampleY = 255; sampleY >= 0; sampleY--)
             {
-                var cellContents = _subsystemTerrain.Terrain.GetCellContents(num2, num4, num3);
+                var cellContents = _subsystemTerrain.Terrain.GetCellContents(sampleX, sampleY, sampleZ);
                 if (WorldContentBinding.For(Project).Catalog.Blocks[cellContents].Collidable ||
                     cellContents == 18)
                 {
-                    var vector = new Vector3(num2 + 0.5f, num4 + 1.1f, num3 + 0.5f);
-                    var num5 = ScoreSafePlace(position, vector, herdPosition, _lastNoiseSourcePosition, cellContents);
-                    if (num5 > num)
+                    var vector = new Vector3(sampleX + 0.5f, sampleY + 1.1f, sampleZ + 0.5f);
+                    var candidateScore = ScoreSafePlace(
+                        position,
+                        vector,
+                        herdPosition,
+                        _lastNoiseSourcePosition,
+                        cellContents
+                    );
+                    if (candidateScore > bestScore)
                     {
-                        num = num5;
+                        bestScore = candidateScore;
                         result = vector;
                     }
 
@@ -205,38 +211,38 @@ public class ComponentRunAwayBehavior : ComponentBehavior, IUpdateable, INoiseLi
         int contents
     )
     {
-        var num = 0f;
+        var score = 0f;
         var vector = new Vector2(currentPosition.X, currentPosition.Z);
-        var vector2 = new Vector2(safePosition.X, safePosition.Z);
-        var s = new Segment2(vector, vector2);
+        var candidateXZ = new Vector2(safePosition.X, safePosition.Z);
+        var s = new Segment2(vector, candidateXZ);
         if (_attacker != null)
         {
             var position = _attacker.Position;
-            var vector3 = new Vector2(position.X, position.Z);
-            var num2 = Vector2.Distance(vector3, vector2);
-            var num3 = Segment2.Distance(s, vector3);
-            num += num2 + 3f * num3;
+            var attackerXZ = new Vector2(position.X, position.Z);
+            var distanceFromAttacker = Vector2.Distance(attackerXZ, candidateXZ);
+            var pathDistanceFromAttacker = Segment2.Distance(s, attackerXZ);
+            score += distanceFromAttacker + 3f * pathDistanceFromAttacker;
         }
         else
         {
-            num += 2f * Vector2.Distance(vector, vector2);
+            score += 2f * Vector2.Distance(vector, candidateXZ);
         }
 
-        var vector4 = herdPosition.HasValue
+        var herdXZ = herdPosition.HasValue
             ? new Vector2?(new Vector2(herdPosition.Value.X, herdPosition.Value.Z))
             : null;
-        var num4 = vector4.HasValue ? Segment2.Distance(s, vector4.Value) : 0f;
-        num -= num4;
-        var vector5 = noiseSourcePosition.HasValue
+        var pathDistanceFromHerd = herdXZ.HasValue ? Segment2.Distance(s, herdXZ.Value) : 0f;
+        score -= pathDistanceFromHerd;
+        var noiseXZ = noiseSourcePosition.HasValue
             ? new Vector2?(new Vector2(noiseSourcePosition.Value.X, noiseSourcePosition.Value.Z))
             : null;
-        var num5 = vector5.HasValue ? Segment2.Distance(s, vector5.Value) : 0f;
-        num += 1.5f * num5;
+        var pathDistanceFromNoise = noiseXZ.HasValue ? Segment2.Distance(s, noiseXZ.Value) : 0f;
+        score += 1.5f * pathDistanceFromNoise;
         if (contents == 18)
         {
-            num -= 4f;
+            score -= 4f;
         }
 
-        return num;
+        return score;
     }
 }

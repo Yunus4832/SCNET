@@ -97,10 +97,10 @@ public class ModelWidget : Widget
 
         litShader.Transforms.View = Matrix.CreateLookAt(ViewPosition, ViewTarget, Vector3.UnitY);
         var viewport = Display.Viewport;
-        var num = ActualSize.X / ActualSize.Y;
+        var aspectRatio = ActualSize.X / ActualSize.Y;
         if (IsPerspective)
         {
-            litShader.Transforms.Projection = Matrix.CreatePerspectiveFieldOfView(ViewFov, num, 0.1f, 100f) *
+            litShader.Transforms.Projection = Matrix.CreatePerspectiveFieldOfView(ViewFov, aspectRatio, 0.1f, 100f) *
                                               MatrixUtils.CreateScaleTranslation(
                                                   0.5f * ActualSize.X,
                                                   -0.5f * ActualSize.Y,
@@ -120,11 +120,11 @@ public class ModelWidget : Widget
             var orthographicFrustumSize = OrthographicFrustumSize;
             if (orthographicFrustumSize.X < 0f)
             {
-                orthographicFrustumSize.X = orthographicFrustumSize.Y / num;
+                orthographicFrustumSize.X = orthographicFrustumSize.Y / aspectRatio;
             }
             else if (orthographicFrustumSize.Y < 0f)
             {
-                orthographicFrustumSize.Y = orthographicFrustumSize.X * num;
+                orthographicFrustumSize.Y = orthographicFrustumSize.X * aspectRatio;
             }
 
             litShader.Transforms.Projection =
@@ -148,9 +148,12 @@ public class ModelWidget : Widget
         Display.BlendState = BlendState.AlphaBlend;
         Display.RasterizerState = RasterizerState.CullNoneScissor;
         Pose.CalculateAbsoluteTransforms(Matrix.Identity);
-        var num2 = (float)Time.RealTime + GetHashCode() % 1000 / 100f;
+        var animationTime = (float)Time.RealTime + GetHashCode() % 1000 / 100f;
         var m = AutoRotationVector.LengthSquared() > 0f
-            ? Matrix.CreateFromAxisAngle(Vector3.Normalize(AutoRotationVector), AutoRotationVector.Length() * num2)
+            ? Matrix.CreateFromAxisAngle(
+                Vector3.Normalize(AutoRotationVector),
+                AutoRotationVector.Length() * animationTime
+            )
             : Matrix.Identity;
         foreach (var node in Model.MeshNodes)
         {

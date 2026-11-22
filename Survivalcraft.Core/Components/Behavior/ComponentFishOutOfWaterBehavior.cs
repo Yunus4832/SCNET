@@ -166,21 +166,21 @@ public class ComponentFishOutOfWaterBehavior : ComponentBehavior, IUpdateable
             var vector = _random.Vector2(1f, 1f);
             var y = 0.2f * _random.Float(-0.8f, 1f);
             var v = Vector3.Normalize(new Vector3(vector.X, y, vector.Y));
-            var vector2 = _componentCreature.ComponentBody.Position + _random.Float(8f, 16f) * v;
+            var candidatePosition = _componentCreature.ComponentBody.Position + _random.Float(8f, 16f) * v;
             var terrainRaycastResult = _subsystemTerrain.Raycast(
                 _componentCreature.ComponentBody.Position,
-                vector2,
+                candidatePosition,
                 false,
                 false,
                 delegate(int value, float _)
                 {
-                    var num = Terrain.ExtractContents(value);
-                    return WorldContentBinding.For(Project).Catalog.Blocks[num] is not WaterBlock;
+                    var contents = Terrain.ExtractContents(value);
+                    return WorldContentBinding.For(Project).Catalog.Blocks[contents] is not WaterBlock;
                 }
             );
             if (!terrainRaycastResult.HasValue)
             {
-                return vector2;
+                return candidatePosition;
             }
 
             if (terrainRaycastResult.Value.Distance > 4f)

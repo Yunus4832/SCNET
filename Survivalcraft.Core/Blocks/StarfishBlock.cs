@@ -52,10 +52,10 @@ public class StarfishBlock : BottomSuckerBlock
                         Matrix.CreateRotationX(zero.X) *
                         Matrix.CreateRotationY(zero.Y) *
                         Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-                var num2 = 4 * i + j;
-                blockPositions[num2] = new CollisionGeometryBuilder();
-                blockPositions[num2].Append(starfishNode.Primitives[0], nodeAbsoluteTransform * m);
-                CollisionBoxes[num2] = [blockPositions[num2].GetBounds()];
+                var meshIndex = 4 * i + j;
+                blockPositions[meshIndex] = new CollisionGeometryBuilder();
+                blockPositions[meshIndex].Append(starfishNode.Primitives[0], nodeAbsoluteTransform * m);
+                CollisionBoxes[meshIndex] = [blockPositions[meshIndex].GetBounds()];
             }
         }
 

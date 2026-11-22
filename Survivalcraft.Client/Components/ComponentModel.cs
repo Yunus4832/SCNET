@@ -64,10 +64,10 @@ public class ComponentModel : Component
             return;
         }
 
-        var num = MathUtils.Sqr(subsystemSky.VisibilityRange);
+        var visibilityRangeSquared = MathUtils.Sqr(subsystemSky.VisibilityRange);
         var vector = componentFrame.Position - camera.ViewPosition;
         vector.Y *= subsystemSky.VisibilityRangeYMultiplier;
-        if (vector.LengthSquared() < num)
+        if (vector.LengthSquared() < visibilityRangeSquared)
         {
             var sphere = new BoundingSphere(componentFrame.Position, _boundingSphereRadius);
             IsVisibleForCamera = camera.ViewFrustum.Intersection(sphere);

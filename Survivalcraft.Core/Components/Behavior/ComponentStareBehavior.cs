@@ -122,7 +122,7 @@ public class ComponentStareBehavior : ComponentBehavior, IUpdateable
         _componentBodies.Clear();
         _subsystemBodies.FindBodiesAroundPoint(new Vector2(position.X, position.Z), _stareRange, _componentBodies);
         ComponentCreature? result = null;
-        var num = 0f;
+        var bestScore = 0f;
         for (var i = 0; i < _componentBodies.Count; i++)
         {
             var componentCreature = _componentBodies.Array[i].Entity.FindComponent<ComponentCreature>();
@@ -131,14 +131,14 @@ public class ComponentStareBehavior : ComponentBehavior, IUpdateable
                 continue;
             }
 
-            var num2 = ScoreTarget(componentCreature);
-            if (!(num2 > num))
+            var candidateScore = ScoreTarget(componentCreature);
+            if (!(candidateScore > bestScore))
             {
                 continue;
             }
 
             result = componentCreature;
-            num = num2;
+            bestScore = candidateScore;
         }
 
         return result;
@@ -151,27 +151,27 @@ public class ComponentStareBehavior : ComponentBehavior, IUpdateable
             return 0f;
         }
 
-        var num = Vector3.Distance(
+        var distance = Vector3.Distance(
             _componentCreature.ComponentBody.Position,
             componentCreature.ComponentBody.Position
         );
-        var num2 = _stareRange - num;
+        var proximityScore = _stareRange - distance;
         if (_random.Float(0f, 1f) < 0.66f &&
             componentCreature.Entity.FindComponent<ComponentCharacter>() != null)
         {
-            num2 *= 100f;
+            proximityScore *= 100f;
         }
 
-        if (num2 <= 0f)
+        if (proximityScore <= 0f)
         {
-            return num2;
+            return proximityScore;
         }
 
         var context = new CreatureTargetScoringContext(
             _componentCreature,
             componentCreature,
             CreatureTargetingKind.Stare,
-            num2
+            proximityScore
         );
         WorldRuleHooks.For(Project).Invoke(context);
         if (!WorldRuntimeContext.IsProjectActive(context.Project)) { return 0f; }

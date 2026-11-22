@@ -90,29 +90,29 @@ public struct Box(int left, int top, int near, int width, int height, int depth)
 
     public static Box Intersection(Box b1, Box b2)
     {
-        var num = MathUtils.Max(b1.Left, b2.Left);
-        var num2 = MathUtils.Max(b1.Top, b2.Top);
-        var num3 = MathUtils.Min(b1.Near, b2.Near);
-        var num4 = MathUtils.Min(b1.Left + b1.Width, b2.Left + b2.Width);
-        var num5 = MathUtils.Min(b1.Top + b1.Height, b2.Top + b2.Height);
-        var num6 = MathUtils.Min(b1.Near + b1.Depth, b2.Near + b2.Depth);
-        if (num4 <= num || num5 <= num2 || num6 <= num3)
+        var left = MathUtils.Max(b1.Left, b2.Left);
+        var top = MathUtils.Max(b1.Top, b2.Top);
+        var near = MathUtils.Min(b1.Near, b2.Near);
+        var right = MathUtils.Min(b1.Left + b1.Width, b2.Left + b2.Width);
+        var bottom = MathUtils.Min(b1.Top + b1.Height, b2.Top + b2.Height);
+        var far = MathUtils.Min(b1.Near + b1.Depth, b2.Near + b2.Depth);
+        if (right <= left || bottom <= top || far <= near)
         {
             return Empty;
         }
 
-        return new Box(num, num2, num3, num4 - num, num5 - num2, num6 - num3);
+        return new Box(left, top, near, right - left, bottom - top, far - near);
     }
 
     public static Box Union(Box b1, Box b2)
     {
-        var num = MathUtils.Min(b1.Left, b2.Left);
-        var num2 = MathUtils.Min(b1.Top, b2.Top);
-        var num3 = MathUtils.Min(b1.Near, b2.Near);
-        var num4 = MathUtils.Max(b1.Left + b1.Width, b2.Left + b2.Width);
-        var num5 = MathUtils.Max(b1.Top + b1.Height, b2.Top + b2.Height);
-        var num6 = MathUtils.Max(b1.Near + b1.Depth, b2.Near + b2.Depth);
-        return new Box(num, num2, num3, num4 - num, num5 - num2, num6 - num3);
+        var left = MathUtils.Min(b1.Left, b2.Left);
+        var top = MathUtils.Min(b1.Top, b2.Top);
+        var near = MathUtils.Min(b1.Near, b2.Near);
+        var right = MathUtils.Max(b1.Left + b1.Width, b2.Left + b2.Width);
+        var bottom = MathUtils.Max(b1.Top + b1.Height, b2.Top + b2.Height);
+        var far = MathUtils.Max(b1.Near + b1.Depth, b2.Near + b2.Depth);
+        return new Box(left, top, near, right - left, bottom - top, far - near);
     }
 
     public static bool operator ==(Box b1, Box b2)

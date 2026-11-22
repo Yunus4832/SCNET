@@ -74,30 +74,31 @@ public class ComponentMoveAwayBehavior : ComponentBehavior, IUpdateable
 
                 var vector = _target.Position + 0.5f * _target.Velocity;
                 var v = Vector2.Normalize(_componentCreature.ComponentBody.Position.XZ - vector.XZ);
-                var vector2 = Vector2.Zero;
-                var num = float.MinValue;
-                for (var num2 = 0f; num2 < (float)Math.PI * 2f; num2 += 0.1f)
+                var chosenDirection = Vector2.Zero;
+                var bestAlignment = float.MinValue;
+                for (var angle = 0f; angle < (float)Math.PI * 2f; angle += 0.1f)
                 {
-                    var vector3 = Vector2.CreateFromAngle(num2);
-                    if (!(Vector2.Dot(vector3, v) > 0.2f))
+                    var candidateDirection = Vector2.CreateFromAngle(angle);
+                    if (!(Vector2.Dot(candidateDirection, v) > 0.2f))
                     {
                         continue;
                     }
 
-                    var num3 = Vector2.Dot(_componentCreature.ComponentBody.Matrix.Forward.XZ, vector3);
-                    if (!(num3 > num))
+                    var alignment = Vector2.Dot(_componentCreature.ComponentBody.Matrix.Forward.XZ, candidateDirection);
+                    if (!(alignment > bestAlignment))
                     {
                         continue;
                     }
 
-                    vector2 = vector3;
-                    num = num3;
+                    chosenDirection = candidateDirection;
+                    bestAlignment = alignment;
                 }
 
                 var s = _random.Float(1.5f, 2f);
                 var speed = _isFast ? 0.7f : 0.35f;
                 _componentPathfinding.SetDestination(
-                    _componentCreature.ComponentBody.Position + s * new Vector3(vector2.X, 0f, vector2.Y),
+                    _componentCreature.ComponentBody.Position +
+                    s * new Vector3(chosenDirection.X, 0f, chosenDirection.Y),
                     speed,
                     1f,
                     0,

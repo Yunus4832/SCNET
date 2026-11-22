@@ -22,15 +22,15 @@ public class CampfireBlockPresentation(CampfireBlock block, BlockPresentationCat
         int z
     )
     {
-        var num = Terrain.ExtractData(value);
-        if (num < MeshesByData.Length)
+        var fireData = Terrain.ExtractData(value);
+        if (fireData < MeshesByData.Length)
         {
             generator.GenerateMeshVertices(
                 this,
                 x,
                 y,
                 z,
-                MeshesByData[num],
+                MeshesByData[fireData],
                 Color.White,
                 null,
                 geometry.SubsetOpaque

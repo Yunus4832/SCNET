@@ -41,8 +41,8 @@ public class RecipaediaScreen : Screen
         _blocksList.ItemWidgetFactory = delegate(object item)
         {
             var value = (int)item;
-            var num = Terrain.ExtractContents(value);
-            var block = ClientApplication.Content.PreviewCatalog.Get(num);
+            var contents = Terrain.ExtractContents(value);
+            var block = ClientApplication.Content.PreviewCatalog.Get(contents);
             var node2 = ContentManager.Get<XElement>("Widgets/RecipaediaItem");
             var obj = (ContainerWidget)LoadWidget(this, node2, null);
             obj.Children.Find<BlockIconWidget>("RecipaediaItem.Icon")!.Catalog =
@@ -84,19 +84,19 @@ public class RecipaediaScreen : Screen
         _prevCategoryButton.IsEnabled = _categoryIndex > 0;
         _nextCategoryButton.IsEnabled = _categoryIndex < _categories.Count - 1;
         int? value = null;
-        var num = 0;
+        var recipeCount = 0;
         if (_blocksList.SelectedItem is int item)
         {
             value = item;
-            num = ClientApplication.Content.PreviewCatalog.Rules.Recipes.ReadonlyRecipes.Count(r =>
+            recipeCount = ClientApplication.Content.PreviewCatalog.Rules.Recipes.ReadonlyRecipes.Count(r =>
                 r.ResultValue == value
             );
         }
 
-        if (num > 0)
+        if (recipeCount > 0)
         {
             _recipesButton.Text =
-                $"{num} {(num == 1 ? Localization.ClientLanguage.Catalog.Get(GetType().Name, 1) : Localization.ClientLanguage.Catalog.Get(GetType().Name, 2))}";
+                $"{recipeCount} {(recipeCount == 1 ? Localization.ClientLanguage.Catalog.Get(GetType().Name, 1) : Localization.ClientLanguage.Catalog.Get(GetType().Name, 2))}";
             _recipesButton.IsEnabled = true;
         }
         else

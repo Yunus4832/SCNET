@@ -42,14 +42,14 @@ public class SubsystemFallenLeavesBlockBehavior : SubsystemPollableBlockBehavior
 
     public static bool CanSupportFallenLeaves(BlockContentCatalog catalog, int value)
     {
-        var num = Terrain.ExtractContents(value);
-        return !catalog.Blocks[num].Transparent;
+        var contents = Terrain.ExtractContents(value);
+        return !catalog.Blocks[contents].Transparent;
     }
 
     public static bool StopsFallenLeaves(BlockContentCatalog catalog, int value)
     {
-        var num = Terrain.ExtractContents(value);
-        var block = catalog.Blocks[num];
+        var contents = Terrain.ExtractContents(value);
+        var block = catalog.Blocks[contents];
         if (block is not AirBlock)
         {
             return block is not LeavesBlock;

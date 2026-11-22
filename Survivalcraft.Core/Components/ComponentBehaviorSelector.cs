@@ -25,16 +25,16 @@ public class ComponentBehaviorSelector : Component, IUpdateable
         ComponentBehavior? componentBehavior = null;
         if (_componentCreature.ComponentHealth.Health > 0f)
         {
-            var num = 0f;
+            var highestImportance = 0f;
             foreach (var behavior in _behaviors)
             {
                 var importanceLevel = behavior.ImportanceLevel;
-                if (!(importanceLevel > num))
+                if (!(importanceLevel > highestImportance))
                 {
                     continue;
                 }
 
-                num = importanceLevel;
+                highestImportance = importanceLevel;
                 componentBehavior = behavior;
             }
         }

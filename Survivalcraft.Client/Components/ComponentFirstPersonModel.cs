@@ -89,22 +89,22 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
             var identity = Matrix.Identity;
             if (_swapAnimationTime > 0f)
             {
-                var num = MathUtils.Pow(MathUtils.Sin(_swapAnimationTime * (float)Math.PI), 3f);
-                identity *= Matrix.CreateTranslation(0f, -0.8f * num, 0.2f * num);
+                var swapBlend = MathUtils.Pow(MathUtils.Sin(_swapAnimationTime * (float)Math.PI), 3f);
+                identity *= Matrix.CreateTranslation(0f, -0.8f * swapBlend, 0.2f * swapBlend);
             }
 
             if (_pokeAnimationTime > 0f)
             {
-                var num2 = MathUtils.Sin(MathUtils.Sqrt(_pokeAnimationTime) * (float)Math.PI);
+                var pokeBlend = MathUtils.Sin(MathUtils.Sqrt(_pokeAnimationTime) * (float)Math.PI);
                 if (_value != 0)
                 {
-                    identity *= Matrix.CreateRotationX((0f - MathUtils.DegToRad(90f)) * num2);
-                    identity *= Matrix.CreateTranslation(-0.5f * num2, 0.1f * num2, 0f * num2);
+                    identity *= Matrix.CreateRotationX((0f - MathUtils.DegToRad(90f)) * pokeBlend);
+                    identity *= Matrix.CreateTranslation(-0.5f * pokeBlend, 0.1f * pokeBlend, 0f * pokeBlend);
                 }
                 else
                 {
-                    identity *= Matrix.CreateRotationX((0f - MathUtils.DegToRad(45f)) * num2);
-                    identity *= Matrix.CreateTranslation(-0.1f * num2, 0.2f * num2, -0.05f * num2);
+                    identity *= Matrix.CreateRotationX((0f - MathUtils.DegToRad(45f)) * pokeBlend);
+                    identity *= Matrix.CreateTranslation(-0.1f * pokeBlend, 0.2f * pokeBlend, -0.05f * pokeBlend);
                 }
             }
 
@@ -113,46 +113,46 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
                 var componentCreatureModel = _componentRider.Mount.Entity.FindComponent<ComponentCreatureModel>();
                 if (componentCreatureModel != null)
                 {
-                    var num3 = componentCreatureModel.MovementAnimationPhase * (float)Math.PI * 2f + 0.5f;
+                    var mountStrideAngle = componentCreatureModel.MovementAnimationPhase * (float)Math.PI * 2f + 0.5f;
                     Vector3 position = default;
-                    position.Y = 0.02f * MathUtils.Sin(num3);
-                    position.Z = 0.02f * MathUtils.Sin(num3);
-                    identity *= Matrix.CreateRotationX(0.05f * MathUtils.Sin(num3 * 1f)) *
+                    position.Y = 0.02f * MathUtils.Sin(mountStrideAngle);
+                    position.Z = 0.02f * MathUtils.Sin(mountStrideAngle);
+                    identity *= Matrix.CreateRotationX(0.05f * MathUtils.Sin(mountStrideAngle * 1f)) *
                                 Matrix.CreateTranslation(position);
                 }
             }
             else
             {
-                var num4 = _componentCharacter.Entity.FindComponent<ComponentCreatureModel>(true)!
-                               .MovementAnimationPhase *
-                           (float)Math.PI *
-                           2f;
+                var walkStrideAngle = _componentCharacter.Entity.FindComponent<ComponentCreatureModel>(true)!
+                                          .MovementAnimationPhase *
+                                      (float)Math.PI *
+                                      2f;
                 Vector3 position2 = default;
-                position2.X = 0.03f * MathUtils.Sin(num4 * 1f);
-                position2.Y = 0.02f * MathUtils.Sin(num4 * 2f);
-                position2.Z = 0.02f * MathUtils.Sin(num4 * 1f);
+                position2.X = 0.03f * MathUtils.Sin(walkStrideAngle * 1f);
+                position2.Y = 0.02f * MathUtils.Sin(walkStrideAngle * 2f);
+                position2.Z = 0.02f * MathUtils.Sin(walkStrideAngle * 1f);
                 identity *= Matrix.CreateRotationZ(1f * position2.X) * Matrix.CreateTranslation(position2);
             }
 
             var eyePosition = _componentCharacter.ComponentCreaturePose.EyePosition;
             var x = Terrain.ToCell(eyePosition.X);
-            var num5 = Terrain.ToCell(eyePosition.Y);
+            var eyeCellY = Terrain.ToCell(eyePosition.Y);
             var z = Terrain.ToCell(eyePosition.Z);
             var m = Matrix.CreateFromQuaternion(_componentCharacter.ComponentCreaturePose.EyeRotation);
             m.Translation = _componentCharacter.ComponentCreaturePose.EyePosition;
             if (_value != 0)
             {
-                if (num5 is >= 0 and <= 255)
+                if (eyeCellY is >= 0 and <= 255)
                 {
                     var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
                     if (chunkAtCell is { HasContents: true })
                     {
-                        _itemLight = (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, num5, z) ?? 0);
+                        _itemLight = (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, eyeCellY, z) ?? 0);
                     }
                 }
 
-                var num6 = Terrain.ExtractContents(_value);
-                var block = _blockPresentations.Get(num6);
+                var itemContents = Terrain.ExtractContents(_value);
+                var block = _blockPresentations.Get(itemContents);
                 var vector = block.GetFirstPersonRotation(_value) * ((float)Math.PI / 180f) + _itemRotation;
                 var position3 = block.GetFirstPersonOffset(_value) + _itemOffset;
                 position3 += _itemOffset;
@@ -167,7 +167,7 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
                 _drawBlockEnvironmentData.Light = _itemLight;
                 _drawBlockEnvironmentData.Humidity = _subsystemTerrain.Terrain.GetSeasonalHumidity(x, z);
                 _drawBlockEnvironmentData.Temperature = _subsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
-                                                        SubsystemWeather.GetTemperatureAdjustmentAtHeight(num5);
+                                                        SubsystemWeather.GetTemperatureAdjustmentAtHeight(eyeCellY);
                 block.DrawBlock(
                     PrimitivesRenderer,
                     _value,
@@ -182,11 +182,11 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
             {
                 if (Time.FrameStartTime >= _nextHandLightTime)
                 {
-                    var num7 = LightingManager.CalculateSmoothLight(_subsystemTerrain, eyePosition);
-                    if (num7.HasValue)
+                    var sampledHandLight = LightingManager.CalculateSmoothLight(_subsystemTerrain, eyePosition);
+                    if (sampledHandLight.HasValue)
                     {
                         _nextHandLightTime = Time.FrameStartTime + 0.1;
-                        _handLight = num7.Value;
+                        _handLight = sampledHandLight.Value;
                     }
                 }
 
@@ -251,9 +251,17 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
         _lagAngles *= MathUtils.Pow(0.2f, dt);
         if (_lastYpr.HasValue)
         {
-            var vector2 = vector - _lastYpr.Value;
-            _lagAngles.X = MathUtils.Clamp(_lagAngles.X - 0.08f * MathUtils.NormalizeAngle(vector2.X), -0.1f, 0.1f);
-            _lagAngles.Y = MathUtils.Clamp(_lagAngles.Y - 0.08f * MathUtils.NormalizeAngle(vector2.Y), -0.1f, 0.1f);
+            var viewAngleDelta = vector - _lastYpr.Value;
+            _lagAngles.X = MathUtils.Clamp(
+                _lagAngles.X - 0.08f * MathUtils.NormalizeAngle(viewAngleDelta.X),
+                -0.1f,
+                0.1f
+            );
+            _lagAngles.Y = MathUtils.Clamp(
+                _lagAngles.Y - 0.08f * MathUtils.NormalizeAngle(viewAngleDelta.Y),
+                -0.1f,
+                0.1f
+            );
         }
 
         _lastYpr = vector;

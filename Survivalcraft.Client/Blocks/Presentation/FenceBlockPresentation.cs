@@ -160,10 +160,10 @@ public abstract class FenceBlockPresentation(
         var nodeAbsoluteTransform2 = BlockMesh.GetNodeAbsoluteTransform(planksNode);
         for (var i = 0; i < 16; i++)
         {
-            var num = (i & 1) != 0;
-            var flag = (i & 2) != 0;
-            var flag2 = (i & 4) != 0;
-            var flag3 = (i & 8) != 0;
+            var connectsPositiveX = (i & 1) != 0;
+            var connectsNegativeX = (i & 2) != 0;
+            var connectsPositiveZ = (i & 4) != 0;
+            var connectsNegativeZ = (i & 8) != 0;
             var m = Matrix.CreateTranslation(0.5f, 0f, 0.5f);
             var blockMesh = new BlockMesh();
             blockMesh.AppendModelPrimitive(
@@ -176,7 +176,7 @@ public abstract class FenceBlockPresentation(
                 Color.White
             );
             var blockMesh2 = new BlockMesh();
-            if (num)
+            if (connectsPositiveX)
             {
                 var blockMesh3 = new BlockMesh();
                 var m2 = Matrix.CreateRotationY(0f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
@@ -205,7 +205,7 @@ public abstract class FenceBlockPresentation(
                 blockMesh2.AppendBlockMesh(blockMesh3);
             }
 
-            if (flag)
+            if (connectsNegativeX)
             {
                 var blockMesh4 = new BlockMesh();
                 var m3 = Matrix.CreateRotationY((float)Math.PI) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
@@ -234,7 +234,7 @@ public abstract class FenceBlockPresentation(
                 blockMesh2.AppendBlockMesh(blockMesh4);
             }
 
-            if (flag2)
+            if (connectsPositiveZ)
             {
                 var blockMesh5 = new BlockMesh();
                 var m4 = Matrix.CreateRotationY(4.712389f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
@@ -263,7 +263,7 @@ public abstract class FenceBlockPresentation(
                 blockMesh2.AppendBlockMesh(blockMesh5);
             }
 
-            if (flag3)
+            if (connectsNegativeZ)
             {
                 var blockMesh6 = new BlockMesh();
                 var m5 = Matrix.CreateRotationY((float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);

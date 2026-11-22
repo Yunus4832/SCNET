@@ -21,13 +21,13 @@ public class VertexElement : IEquatable<VertexElement>
             throw new ArgumentException("semantic cannot be empty or null.");
         }
 
-        var num = semantic.Length;
-        while (num > 0 && char.IsDigit(semantic[num - 1]))
+        var semanticNameLength = semantic.Length;
+        while (semanticNameLength > 0 && char.IsDigit(semantic[semanticNameLength - 1]))
         {
-            num--;
+            semanticNameLength--;
         }
 
-        if (num == 0)
+        if (semanticNameLength == 0)
         {
             throw new ArgumentException("semantic cannot start with a digit.");
         }
@@ -35,8 +35,8 @@ public class VertexElement : IEquatable<VertexElement>
         Offset = offset;
         Format = format;
         Semantic = semantic;
-        SemanticName = semantic.Substring(0, num);
-        SemanticIndex = num < semantic.Length ? int.Parse(semantic.Substring(num)) : 0;
+        SemanticName = semantic.Substring(0, semanticNameLength);
+        SemanticIndex = semanticNameLength < semantic.Length ? int.Parse(semantic.Substring(semanticNameLength)) : 0;
         HashCode = Offset.GetHashCode() + Format.GetHashCode() + Semantic.GetHashCode();
     }
 

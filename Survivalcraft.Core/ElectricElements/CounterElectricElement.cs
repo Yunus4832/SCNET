@@ -15,14 +15,14 @@ public class CounterElectricElement : RotatableElectricElement
     public CounterElectricElement(SubsystemElectricity subsystemElectricity, CellFace cellFace)
         : base(subsystemElectricity, cellFace)
     {
-        var num = subsystemElectricity.ReadPersistentVoltage(cellFace.Point);
-        if (!num.HasValue)
+        var storedVoltage = subsystemElectricity.ReadPersistentVoltage(cellFace.Point);
+        if (!storedVoltage.HasValue)
         {
             return;
         }
 
-        _counter = (int)MathUtils.Round(MathUtils.Abs(num.Value) * 15f);
-        _overflow = num.Value < 0f;
+        _counter = (int)MathUtils.Round(MathUtils.Abs(storedVoltage.Value) * 15f);
+        _overflow = storedVoltage.Value < 0f;
     }
 
     public override float GetOutputVoltage(int face)
@@ -49,9 +49,9 @@ public class CounterElectricElement : RotatableElectricElement
 
         var counter = _counter;
         var overflow = _overflow;
-        var flag = false;
-        var flag2 = false;
-        var flag3 = false;
+        var plusHigh = false;
+        var minusHigh = false;
+        var resetHigh = false;
         var rotation = Rotation;
         foreach (var connection in Connections)
         {
@@ -66,26 +66,26 @@ public class CounterElectricElement : RotatableElectricElement
 
                 if (connectorDirection == ElectricConnectorDirection.Right)
                 {
-                    flag = IsSignalHigh(
+                    plusHigh = IsSignalHigh(
                         connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
                     );
                 }
                 else if (connectorDirection == ElectricConnectorDirection.Left)
                 {
-                    flag2 = IsSignalHigh(
+                    minusHigh = IsSignalHigh(
                         connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
                     );
                 }
                 else if (connectorDirection == ElectricConnectorDirection.In)
                 {
-                    flag3 = IsSignalHigh(
+                    resetHigh = IsSignalHigh(
                         connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
                     );
                 }
             }
         }
 
-        if (flag && _plusAllowed)
+        if (plusHigh && _plusAllowed)
         {
             _plusAllowed = false;
             if (_counter < 15)
@@ -99,7 +99,7 @@ public class CounterElectricElement : RotatableElectricElement
                 _overflow = true;
             }
         }
-        else if (flag2 && _minusAllowed)
+        else if (minusHigh && _minusAllowed)
         {
             _minusAllowed = false;
             if (_counter > 0)
@@ -113,23 +113,23 @@ public class CounterElectricElement : RotatableElectricElement
                 _overflow = true;
             }
         }
-        else if (flag3 && _resetAllowed)
+        else if (resetHigh && _resetAllowed)
         {
             _counter = 0;
             _overflow = false;
         }
 
-        if (!flag)
+        if (!plusHigh)
         {
             _plusAllowed = true;
         }
 
-        if (!flag2)
+        if (!minusHigh)
         {
             _minusAllowed = true;
         }
 
-        if (!flag3)
+        if (!resetHigh)
         {
             _resetAllowed = true;
         }

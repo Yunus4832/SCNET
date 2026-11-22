@@ -59,8 +59,8 @@ public sealed class SubsystemDeciduousLeavesPresentation : Subsystem, IUpdateabl
                         leafParticle.Position.Y,
                         leafParticle.Position.Z
                     );
-                    var num = Terrain.ExtractContents(cellValue);
-                    if (Modding.Blocks.WorldContentBinding.For(Project).Catalog.Blocks[num] is DeciduousLeavesBlock
+                    var contents = Terrain.ExtractContents(cellValue);
+                    if (Modding.Blocks.WorldContentBinding.For(Project).Catalog.Blocks[contents] is DeciduousLeavesBlock
                             deciduousLeavesBlock &&
                         deciduousLeavesBlock.GetLeafDropProbability(cellValue) > 0f)
                     {

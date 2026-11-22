@@ -14,8 +14,8 @@ public class SubsystemDoorBlockBehavior : SubsystemBlockBehavior
     public bool OpenCloseDoor(int x, int y, int z, bool open)
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
-        var num = Terrain.ExtractContents(cellValue);
-        if (WorldContentBinding.For(Project).Catalog.Blocks[num] is not DoorBlock)
+        var contents = Terrain.ExtractContents(cellValue);
+        if (WorldContentBinding.For(Project).Catalog.Blocks[contents] is not DoorBlock)
         {
             return false;
         }
@@ -38,15 +38,15 @@ public class SubsystemDoorBlockBehavior : SubsystemBlockBehavior
     private bool IsDoorElectricallyConnected(int x, int y, int z)
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
-        var num = Terrain.ExtractContents(cellValue);
+        var contents = Terrain.ExtractContents(cellValue);
         var data = Terrain.ExtractData(cellValue);
-        if (WorldContentBinding.For(Project).Catalog.Blocks[num] is not DoorBlock)
+        if (WorldContentBinding.For(Project).Catalog.Blocks[contents] is not DoorBlock)
         {
             return false;
         }
 
-        var num2 = DoorBlock.IsBottomPart(SubsystemTerrain.Terrain, SubsystemTerrain.Catalog, x, y, z) ? y : y - 1;
-        for (var i = num2; i <= num2 + 1; i++)
+        var bottomY = DoorBlock.IsBottomPart(SubsystemTerrain.Terrain, SubsystemTerrain.Catalog, x, y, z) ? y : y - 1;
+        for (var i = bottomY; i <= bottomY + 1; i++)
         {
             var electricElement = _subsystemElectricity.GetElectricElement(x, i, z, DoorBlock.GetHingeFace(data));
             if (electricElement is { Connections.Count: > 0 })
@@ -62,9 +62,9 @@ public class SubsystemDoorBlockBehavior : SubsystemBlockBehavior
     {
         var cellFace = raycastResult.CellFace;
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
-        var num = Terrain.ExtractContents(cellValue);
+        var contents = Terrain.ExtractContents(cellValue);
         var data = Terrain.ExtractData(cellValue);
-        if (num == BuiltInBlockRegistry.GetIndex<WoodenDoorBlock>() ||
+        if (contents == BuiltInBlockRegistry.GetIndex<WoodenDoorBlock>() ||
             !IsDoorElectricallyConnected(cellFace.X, cellFace.Y, cellFace.Z))
         {
             var open = DoorBlock.GetOpen(data);
@@ -101,8 +101,8 @@ public class SubsystemDoorBlockBehavior : SubsystemBlockBehavior
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
-        var num = Terrain.ExtractContents(cellValue);
-        var obj = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var contents = Terrain.ExtractContents(cellValue);
+        var obj = WorldContentBinding.For(Project).Catalog.Blocks[contents];
         var data = Terrain.ExtractData(cellValue);
         if (!(obj is DoorBlock))
         {

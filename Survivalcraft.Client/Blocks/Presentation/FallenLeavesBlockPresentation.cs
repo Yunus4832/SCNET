@@ -86,7 +86,7 @@ public class FallenLeavesBlockPresentation(FallenLeavesBlock block, BlockPresent
 
     private static Color GetColor(int x, int y, int z)
     {
-        var num = (uint)MathUtils.Hash(x + y * 59 + z * 2411);
-        return Color.Lerp(new Color(128, 110, 110), new Color(255, 255, 220), num / 4.2949673E+09f);
+        var positionHash = (uint)MathUtils.Hash(x + y * 59 + z * 2411);
+        return Color.Lerp(new Color(128, 110, 110), new Color(255, 255, 220), positionHash / 4.2949673E+09f);
     }
 }

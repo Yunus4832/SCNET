@@ -152,7 +152,7 @@ public class ComponentFindCharacterBehavior : ComponentBehavior, IUpdateable
     {
         var position = _componentCreature.ComponentBody.Position;
         ComponentCreature? result = null;
-        var num = 0f;
+        var bestScore = 0f;
         _componentBodies.Clear();
         _subsystemBodies.FindBodiesAroundPoint(
             new Vector2(position.X, position.Z),
@@ -167,13 +167,13 @@ public class ComponentFindCharacterBehavior : ComponentBehavior, IUpdateable
                 continue;
             }
 
-            var num2 = ScoreTarget(componentCreature);
-            if (!(num2 > num))
+            var candidateScore = ScoreTarget(componentCreature);
+            if (!(candidateScore > bestScore))
             {
                 continue;
             }
 
-            num = num2;
+            bestScore = candidateScore;
             result = componentCreature;
         }
 
@@ -182,7 +182,7 @@ public class ComponentFindCharacterBehavior : ComponentBehavior, IUpdateable
 
     public float ScoreTarget(ComponentCreature target)
     {
-        var num = _subsystemSky.SkyLightIntensity > 0.2f ? _dayRange : _nightRange;
+        var detectionRange = _subsystemSky.SkyLightIntensity > 0.2f ? _dayRange : _nightRange;
         if (!target.IsAddedToProject ||
             target.ComponentHealth.Health <= 0f ||
             target.Entity.FindComponent<ComponentCharacter>() == null)
@@ -190,13 +190,16 @@ public class ComponentFindCharacterBehavior : ComponentBehavior, IUpdateable
             return 0f;
         }
 
-        var num2 = Vector3.DistanceSquared(target.ComponentBody.Position, _componentCreature.ComponentBody.Position);
-        if (num2 < _minRange * _minRange)
+        var distanceSquared = Vector3.DistanceSquared(
+            target.ComponentBody.Position,
+            _componentCreature.ComponentBody.Position
+        );
+        if (distanceSquared < _minRange * _minRange)
         {
             return 0f;
         }
 
-        var score = num * num - num2;
+        var score = detectionRange * detectionRange - distanceSquared;
         if (score <= 0f)
         {
             return score;

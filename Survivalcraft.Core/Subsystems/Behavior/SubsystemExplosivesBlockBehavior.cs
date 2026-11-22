@@ -114,8 +114,8 @@ public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdatea
     {
         if (!WorldRuntimeContext.For(Project).IsAuthority) { return; }
 
-        var num = Terrain.ExtractContents(value);
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var contents = Terrain.ExtractContents(value);
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
         if (block.GetExplosionPressure(value) > 0f &&
             MathUtils.Saturate(damage / block.ExplosionResilience) > 0.01f &&
             SubsystemExplosions.SharedRandom.Float(0f, 1f) < 0.5f)
@@ -145,13 +145,13 @@ public class SubsystemExplosivesBlockBehavior : SubsystemBlockBehavior, IUpdatea
         base.Save(valuesDictionary);
         if (!WorldRuntimeContext.For(Project).IsAuthority) { return; }
 
-        var num = 0;
+        var entryIndex = 0;
         var valuesDictionary2 = new ValuesDictionary();
         valuesDictionary.SetValue("Explosives", valuesDictionary2);
         foreach (var value in _explosiveDataByPoint.Values)
         {
             var valuesDictionary3 = new ValuesDictionary();
-            valuesDictionary2.SetValue(num++.ToString(CultureInfo.InvariantCulture), valuesDictionary3);
+            valuesDictionary2.SetValue(entryIndex++.ToString(CultureInfo.InvariantCulture), valuesDictionary3);
             valuesDictionary3.SetValue("Point", value.Point);
             valuesDictionary3.SetValue("TimeToExplosion", value.TimeToExplosion);
         }

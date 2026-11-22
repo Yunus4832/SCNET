@@ -24,22 +24,22 @@ public class SoundParticleSystem : ParticleSystem<SoundParticleSystem.Particle>
 
     public void AddNote(Color color)
     {
-        var num = 0;
+        var particleIndex = 0;
         Particle particle;
         while (true)
         {
-            if (num >= Particles.Length)
+            if (particleIndex >= Particles.Length)
             {
                 return;
             }
 
-            particle = Particles[num];
-            if (!Particles[num].IsActive)
+            particle = Particles[particleIndex];
+            if (!Particles[particleIndex].IsActive)
             {
                 break;
             }
 
-            num++;
+            particleIndex++;
         }
 
         particle.IsActive = true;
@@ -56,8 +56,8 @@ public class SoundParticleSystem : ParticleSystem<SoundParticleSystem.Particle>
     public override bool Simulate(float dt)
     {
         dt = MathUtils.Clamp(dt, 0f, 0.1f);
-        var num = MathUtils.Pow(0.02f, dt);
-        var flag = false;
+        var velocityDamping = MathUtils.Pow(0.02f, dt);
+        var hasActiveParticles = false;
         foreach (var particle in Particles)
         {
             if (!particle.IsActive)
@@ -65,12 +65,12 @@ public class SoundParticleSystem : ParticleSystem<SoundParticleSystem.Particle>
                 continue;
             }
 
-            flag = true;
+            hasActiveParticles = true;
             particle.TimeToLive -= dt;
             if (particle.TimeToLive > 0f)
             {
                 particle.Velocity += new Vector3(0f, 5f, 0f) * dt;
-                particle.Velocity *= num;
+                particle.Velocity *= velocityDamping;
                 particle.Position += particle.Velocity * dt;
                 particle.Color = particle.BaseColor * MathUtils.Saturate(2f * particle.TimeToLive);
             }
@@ -80,7 +80,7 @@ public class SoundParticleSystem : ParticleSystem<SoundParticleSystem.Particle>
             }
         }
 
-        return !flag;
+        return !hasActiveParticles;
     }
 
     public class Particle : Game.ParticleSystems.Particle

@@ -58,8 +58,8 @@ public class SevenSegmentDisplayBlock : MountedElectricElementBlock
                 }
             };
             yield return craftingRecipe;
-            var num = color + 1;
-            color = num;
+            var nextColor = color + 1;
+            color = nextColor;
         }
     }
 
@@ -81,8 +81,8 @@ public class SevenSegmentDisplayBlock : MountedElectricElementBlock
         while (i < 8)
         {
             yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, i));
-            var num = i + 1;
-            i = num;
+            var nextColor = i + 1;
+            i = nextColor;
         }
     }
 

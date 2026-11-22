@@ -125,13 +125,13 @@ public class ParticleSystem<T> : ParticleSystemBase where T : Particle, new()
             else if (particle.BillboardingMode == ParticleBillboardingMode.Horizontal && rotation != 0f)
             {
                 var vector = new Vector3(MathUtils.Cos(rotation), 0f, MathUtils.Sin(rotation));
-                var vector2 = new Vector3(vector.Z, 0f, 0f - vector.X);
-                vector2 *= size.Y;
+                var perpendicularExtent = new Vector3(vector.Z, 0f, 0f - vector.X);
+                perpendicularExtent *= size.Y;
                 vector *= size.X;
-                p = position + (-vector2 - vector);
-                p2 = position + (vector2 - vector);
-                p3 = position + (vector2 + vector);
-                p4 = position + (-vector2 + vector);
+                p = position + (-perpendicularExtent - vector);
+                p2 = position + (perpendicularExtent - vector);
+                p3 = position + (perpendicularExtent + vector);
+                p4 = position + (-perpendicularExtent + vector);
             }
             else if (rotation != 0f)
             {
@@ -139,49 +139,49 @@ public class ParticleSystem<T> : ParticleSystemBase where T : Particle, new()
                 var v2 = v.X * v.X > v.Z * v.Z
                     ? new Vector3(0f, MathUtils.Cos(rotation), MathUtils.Sin(rotation))
                     : new Vector3(MathUtils.Sin(rotation), MathUtils.Cos(rotation), 0f);
-                var vector3 = Vector3.Normalize(Vector3.Cross(v, v2));
-                v2 = Vector3.Normalize(Vector3.Cross(v, vector3));
-                vector3 *= size.Y;
+                var rotatedUp = Vector3.Normalize(Vector3.Cross(v, v2));
+                v2 = Vector3.Normalize(Vector3.Cross(v, rotatedUp));
+                rotatedUp *= size.Y;
                 v2 *= size.X;
-                p = position + (-vector3 - v2);
-                p2 = position + (vector3 - v2);
-                p3 = position + (vector3 + v2);
-                p4 = position + (-vector3 + v2);
+                p = position + (-rotatedUp - v2);
+                p2 = position + (rotatedUp - v2);
+                p3 = position + (rotatedUp + v2);
+                p4 = position + (-rotatedUp + v2);
             }
             else
             {
-                var vector4 = _right[(uint)particle.BillboardingMode];
-                var vector5 = _up[(uint)particle.BillboardingMode];
-                var vector6 = vector4 * size.X;
-                var vector7 = vector5 * size.Y;
-                p = position + (-vector6 - vector7);
-                p2 = position + (vector6 - vector7);
-                p3 = position + (vector6 + vector7);
-                p4 = position + (-vector6 + vector7);
+                var billboardRight = _right[(uint)particle.BillboardingMode];
+                var billboardUp = _up[(uint)particle.BillboardingMode];
+                var horizontalExtent = billboardRight * size.X;
+                var verticalExtent = billboardUp * size.Y;
+                p = position + (-horizontalExtent - verticalExtent);
+                p2 = position + (horizontalExtent - verticalExtent);
+                p3 = position + (horizontalExtent + verticalExtent);
+                p4 = position + (-horizontalExtent + verticalExtent);
             }
 
             var obj = particle.UseAdditiveBlending ? _additiveBatch : _alphaBlendedBatch;
             var v3 = new Vector2(textureSlot % TextureSlotsCount, textureSlot / TextureSlotsCount);
-            var num = 0f;
-            var num2 = 1f;
-            var num3 = 1f;
-            var num4 = 0f;
+            var leftU = 0f;
+            var rightU = 1f;
+            var bottomV = 1f;
+            var topV = 0f;
             if (particle.FlipX)
             {
-                num = 1f - num;
-                num2 = 1f - num2;
+                leftU = 1f - leftU;
+                rightU = 1f - rightU;
             }
 
             if (particle.FlipY)
             {
-                num3 = 1f - num3;
-                num4 = 1f - num4;
+                bottomV = 1f - bottomV;
+                topV = 1f - topV;
             }
 
-            var texCoord = (v3 + new Vector2(num, num3)) * s;
-            var texCoord2 = (v3 + new Vector2(num2, num3)) * s;
-            var texCoord3 = (v3 + new Vector2(num2, num4)) * s;
-            var texCoord4 = (v3 + new Vector2(num, num4)) * s;
+            var texCoord = (v3 + new Vector2(leftU, bottomV)) * s;
+            var texCoord2 = (v3 + new Vector2(rightU, bottomV)) * s;
+            var texCoord3 = (v3 + new Vector2(rightU, topV)) * s;
+            var texCoord4 = (v3 + new Vector2(leftU, topV)) * s;
             obj.QueueQuad(
                 p,
                 p2,

@@ -57,8 +57,9 @@ public class MulticoloredLedElectricElement(
             return false;
         }
 
-        var num = (int)MathUtils.Round(_voltage * 15f);
-        _glowPoint.Color = num >= 8 ? LedBlock.LedColors[MathUtils.Clamp(num - 8, 0, 7)] : Color.Transparent;
+        var inputLevel = (int)MathUtils.Round(_voltage * 15f);
+        _glowPoint.Color =
+            inputLevel >= 8 ? LedBlock.LedColors[MathUtils.Clamp(inputLevel - 8, 0, 7)] : Color.Transparent;
 
         return false;
     }

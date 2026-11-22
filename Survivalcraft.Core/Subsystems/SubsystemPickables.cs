@@ -63,8 +63,8 @@ public class SubsystemPickables : Subsystem, IUpdateable
     public void Update(float dt)
     {
         var totalElapsedGameTime = _subsystemGameInfo.TotalElapsedGameTime;
-        var num = MathUtils.Pow(0.5f, dt);
-        var num2 = MathUtils.Pow(0.001f, dt);
+        var airDamping = MathUtils.Pow(0.5f, dt);
+        var fluidVerticalDamping = MathUtils.Pow(0.001f, dt);
         _tmpPlayers.Clear();
         foreach (var componentCharacter in _subsystemCharacters.ComponentCharacters)
         {
@@ -97,10 +97,10 @@ public class SubsystemPickables : Subsystem, IUpdateable
 
             var block = WorldContentBinding.For(Project).Catalog
                 .Blocks[Terrain.ExtractContents(pickable.Value)];
-            var num3 = _pickables.Count - PickablesToRemove.Count;
-            var num4 = MathUtils.Lerp(300f, 90f, MathUtils.Saturate(num3 / 60f));
-            var num5 = totalElapsedGameTime - pickable.CreationTime;
-            if (num5 > num4)
+            var activeItemCount = _pickables.Count - PickablesToRemove.Count;
+            var lifetime = MathUtils.Lerp(300f, 90f, MathUtils.Saturate(activeItemCount / 60f));
+            var itemAge = totalElapsedGameTime - pickable.CreationTime;
+            if (itemAge > lifetime)
             {
                 pickable.ToRemove = true;
             }
@@ -118,14 +118,14 @@ public class SubsystemPickables : Subsystem, IUpdateable
 
                 var position = pickable.Position;
                 var vector = position + pickable.Velocity * dt;
-                if (!pickable.FlyToPosition.HasValue && num5 > 0.5)
+                if (!pickable.FlyToPosition.HasValue && itemAge > 0.5)
                 {
                     foreach (var tmpPlayer in _tmpPlayers)
                     {
                         var componentBody = tmpPlayer.ComponentBody;
                         var v = componentBody.Position + new Vector3(0f, 0.75f, 0f);
-                        var num6 = (v - pickable.Position).LengthSquared();
-                        if (!(num6 < 3.0625f))
+                        var playerDistanceSquared = (v - pickable.Position).LengthSquared();
+                        if (!(playerDistanceSquared < 3.0625f))
                         {
                             continue;
                         }
@@ -133,10 +133,10 @@ public class SubsystemPickables : Subsystem, IUpdateable
                         //玩家获取到Pickable
                         pickable.GetPickPlayer = tmpPlayer.CharacterData.ClientId;
                         pickable.PositionFix = v;
-                        pickable.Distance = num6;
+                        pickable.Distance = playerDistanceSquared;
                         if (WorldRuntimeContext.For(Project).IsAuthority)
                         {
-                            OnPlayerGetPickable(pickable, tmpPlayer, v, num6);
+                            OnPlayerGetPickable(pickable, tmpPlayer, v, playerDistanceSquared);
                         }
                     }
                 }
@@ -144,10 +144,10 @@ public class SubsystemPickables : Subsystem, IUpdateable
                 if (pickable.FlyToPosition.HasValue)
                 {
                     var v2 = pickable.FlyToPosition.Value - pickable.Position;
-                    var num7 = v2.LengthSquared();
-                    if (num7 >= 0.25f)
+                    var targetDistanceSquared = v2.LengthSquared();
+                    if (targetDistanceSquared >= 0.25f)
                     {
-                        pickable.Velocity = 6f * v2 / MathUtils.Sqrt(num7);
+                        pickable.Velocity = 6f * v2 / MathUtils.Sqrt(targetDistanceSquared);
                     }
                     else
                     {
@@ -156,7 +156,7 @@ public class SubsystemPickables : Subsystem, IUpdateable
                 }
                 else
                 {
-                    var vector2 = _subsystemFluidBlockBehavior.CalculateFlowSpeed(
+                    var flowVelocity = _subsystemFluidBlockBehavior.CalculateFlowSpeed(
                         Terrain.ToCell(pickable.Position.X),
                         Terrain.ToCell(pickable.Position.Y + 0.1f),
                         Terrain.ToCell(pickable.Position.Z),
@@ -199,13 +199,13 @@ public class SubsystemPickables : Subsystem, IUpdateable
                                 )
                                 .HasValue)
                             {
-                                var num8 = Terrain.ToCell(position.X);
-                                var num9 = Terrain.ToCell(position.Y);
-                                var num10 = Terrain.ToCell(position.Z);
-                                var num11 = 0;
-                                var num12 = 0;
-                                var num13 = 0;
-                                int? num14 = null;
+                                var cellX = Terrain.ToCell(position.X);
+                                var cellY = Terrain.ToCell(position.Y);
+                                var cellZ = Terrain.ToCell(position.Z);
+                                var escapeX = 0;
+                                var escapeY = 0;
+                                var escapeZ = 0;
+                                int? nearestDistanceSquared = null;
                                 for (var j = -3; j <= 3; j++)
                                 {
                                     for (var k = -3; k <= 3; k++)
@@ -214,32 +214,32 @@ public class SubsystemPickables : Subsystem, IUpdateable
                                         {
                                             if (WorldContentBinding.For(Project).Catalog.Blocks[
                                                     _subsystemTerrain.Terrain.GetCellContents(
-                                                        j + num8,
-                                                        k + num9,
-                                                        l + num10
+                                                        j + cellX,
+                                                        k + cellY,
+                                                        l + cellZ
                                                     )]
                                                 .Collidable)
                                             {
                                                 continue;
                                             }
 
-                                            var num15 = j * j + k * k + l * l;
-                                            if (num15 >= num14)
+                                            var candidateDistanceSquared = j * j + k * k + l * l;
+                                            if (candidateDistanceSquared >= nearestDistanceSquared)
                                             {
                                                 continue;
                                             }
 
-                                            num11 = j + num8;
-                                            num12 = k + num9;
-                                            num13 = l + num10;
-                                            num14 = num15;
+                                            escapeX = j + cellX;
+                                            escapeY = k + cellY;
+                                            escapeZ = l + cellZ;
+                                            nearestDistanceSquared = candidateDistanceSquared;
                                         }
                                     }
                                 }
 
-                                if (num14.HasValue)
+                                if (nearestDistanceSquared.HasValue)
                                 {
-                                    pickable.FlyToPosition = new Vector3(num11, num12, num13) + new Vector3(0.5f);
+                                    pickable.FlyToPosition = new Vector3(escapeX, escapeY, escapeZ) + new Vector3(0.5f);
                                 }
                                 else
                                 {
@@ -249,32 +249,32 @@ public class SubsystemPickables : Subsystem, IUpdateable
                             else
                             {
                                 var plane = terrainRaycastResult.Value.CellFace.CalculatePlane();
-                                var flag2 = vector2.HasValue && vector2.Value != Vector2.Zero;
+                                var hasFlow = flowVelocity.HasValue && flowVelocity.Value != Vector2.Zero;
                                 if (plane.Normal.X != 0f)
                                 {
-                                    var num16 = flag2 ||
-                                                MathUtils.Sqrt(
-                                                    MathUtils.Sqr(pickable.Velocity.Y) +
-                                                    MathUtils.Sqr(pickable.Velocity.Z)
-                                                ) >
-                                                10f
+                                    var bounceFactorX = hasFlow ||
+                                                        MathUtils.Sqrt(
+                                                            MathUtils.Sqr(pickable.Velocity.Y) +
+                                                            MathUtils.Sqr(pickable.Velocity.Z)
+                                                        ) >
+                                                        10f
                                         ? 0.95f
                                         : 0.25f;
-                                    pickable.Velocity *= new Vector3(0f - num16, num16, num16);
+                                    pickable.Velocity *= new Vector3(0f - bounceFactorX, bounceFactorX, bounceFactorX);
                                 }
 
                                 if (plane.Normal.Y != 0f)
                                 {
-                                    var num17 = flag2 ||
-                                                MathUtils.Sqrt(
-                                                    MathUtils.Sqr(pickable.Velocity.X) +
-                                                    MathUtils.Sqr(pickable.Velocity.Z)
-                                                ) >
-                                                10f
+                                    var bounceFactorY = hasFlow ||
+                                                        MathUtils.Sqrt(
+                                                            MathUtils.Sqr(pickable.Velocity.X) +
+                                                            MathUtils.Sqr(pickable.Velocity.Z)
+                                                        ) >
+                                                        10f
                                         ? 0.95f
                                         : 0.25f;
-                                    pickable.Velocity *= new Vector3(num17, 0f - num17, num17);
-                                    if (flag2)
+                                    pickable.Velocity *= new Vector3(bounceFactorY, 0f - bounceFactorY, bounceFactorY);
+                                    if (hasFlow)
                                     {
                                         pickable.Velocity.Y += 0.1f * plane.Normal.Y;
                                     }
@@ -282,15 +282,15 @@ public class SubsystemPickables : Subsystem, IUpdateable
 
                                 if (plane.Normal.Z != 0f)
                                 {
-                                    var num18 = flag2 ||
-                                                MathUtils.Sqrt(
-                                                    MathUtils.Sqr(pickable.Velocity.X) +
-                                                    MathUtils.Sqr(pickable.Velocity.Y)
-                                                ) >
-                                                10f
+                                    var bounceFactorZ = hasFlow ||
+                                                        MathUtils.Sqrt(
+                                                            MathUtils.Sqr(pickable.Velocity.X) +
+                                                            MathUtils.Sqr(pickable.Velocity.Y)
+                                                        ) >
+                                                        10f
                                         ? 0.95f
                                         : 0.25f;
-                                    pickable.Velocity *= new Vector3(num18, num18, 0f - num18);
+                                    pickable.Velocity *= new Vector3(bounceFactorZ, bounceFactorZ, 0f - bounceFactorZ);
                                 }
 
                                 vector = position;
@@ -299,11 +299,11 @@ public class SubsystemPickables : Subsystem, IUpdateable
                     }
                     else
                     {
-                        var vector3 = pickable.StuckMatrix.Value.Translation +
-                                      pickable.StuckMatrix.Value.Up * block.ProjectileTipOffset;
+                        var embeddedTip = pickable.StuckMatrix.Value.Translation +
+                                          pickable.StuckMatrix.Value.Up * block.ProjectileTipOffset;
                         if (!_subsystemTerrain.Raycast(
-                                vector3,
-                                vector3,
+                                embeddedTip,
+                                embeddedTip,
                                 false,
                                 true,
                                 (value, _) =>
@@ -353,20 +353,20 @@ public class SubsystemPickables : Subsystem, IUpdateable
 
                     if (!pickable.StuckMatrix.HasValue)
                     {
-                        if (vector2.HasValue && surfaceHeight.HasValue)
+                        if (flowVelocity.HasValue && surfaceHeight.HasValue)
                         {
-                            var num19 = surfaceHeight.Value - pickable.Position.Y;
-                            var num20 = MathUtils.Saturate(3f * num19);
-                            pickable.Velocity.X += 4f * dt * (vector2.Value.X - pickable.Velocity.X);
+                            var immersionDepth = surfaceHeight.Value - pickable.Position.Y;
+                            var immersionFactor = MathUtils.Saturate(3f * immersionDepth);
+                            pickable.Velocity.X += 4f * dt * (flowVelocity.Value.X - pickable.Velocity.X);
                             pickable.Velocity.Y -= 10f * dt;
-                            pickable.Velocity.Y += 10f * (1f / block.Density * num20) * dt;
-                            pickable.Velocity.Z += 4f * dt * (vector2.Value.Y - pickable.Velocity.Z);
-                            pickable.Velocity.Y *= num2;
+                            pickable.Velocity.Y += 10f * (1f / block.Density * immersionFactor) * dt;
+                            pickable.Velocity.Z += 4f * dt * (flowVelocity.Value.Y - pickable.Velocity.Z);
+                            pickable.Velocity.Y *= fluidVerticalDamping;
                         }
                         else
                         {
                             pickable.Velocity.Y -= 10f * dt;
-                            pickable.Velocity *= num;
+                            pickable.Velocity *= airDamping;
                         }
                     }
                 }
@@ -525,16 +525,16 @@ public class SubsystemPickables : Subsystem, IUpdateable
         float distance
     )
     {
-        var flag = Terrain.ExtractContents(pickable.Value) == 248;
+        var isExperience = Terrain.ExtractContents(pickable.Value) == 248;
         var inventory = tmpPlayer.ComponentMiner.Inventory;
-        if (!flag && ComponentInventoryBase.FindAcquireSlotForItem(inventory, pickable.Value) < 0)
+        if (!isExperience && ComponentInventoryBase.FindAcquireSlotForItem(inventory, pickable.Value) < 0)
         {
             return;
         }
 
         if (distance < 1f)
         {
-            if (flag)
+            if (isExperience)
             {
                 tmpPlayer.ComponentLevel.AddExperience(pickable.Count, true);
                 pickable.ToRemove = true;
@@ -793,11 +793,11 @@ public class SubsystemPickables : Subsystem, IUpdateable
             return;
         }
 
-        var num = 0;
+        var entryIndex = 0;
         foreach (var pickable in _pickables)
         {
             var valuesDictionary3 = new ValuesDictionary();
-            valuesDictionary2.SetValue(num.ToString(), valuesDictionary3);
+            valuesDictionary2.SetValue(entryIndex.ToString(), valuesDictionary3);
             valuesDictionary3.SetValue("Id", pickable.Id);
             valuesDictionary3.SetValue("Value", pickable.Value);
             valuesDictionary3.SetValue("Count", pickable.Count);
@@ -809,7 +809,7 @@ public class SubsystemPickables : Subsystem, IUpdateable
                 valuesDictionary3.SetValue("StuckMatrix", pickable.StuckMatrix.Value);
             }
 
-            num++;
+            entryIndex++;
         }
     }
 }

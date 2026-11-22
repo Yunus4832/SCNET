@@ -10,8 +10,8 @@ public class PaintBucketBlock : BucketBlock
         while (i < 16)
         {
             yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, i));
-            var num = i + 1;
-            i = num;
+            var nextColor = i + 1;
+            i = nextColor;
         }
     }
 
@@ -27,18 +27,18 @@ public class PaintBucketBlock : BucketBlock
         var color = 0;
         while (color < 16)
         {
-            int num2;
-            for (var additive = 0; additive < 4; additive = num2)
+            int nextVariant;
+            for (var additive = 0; additive < 4; additive = nextVariant)
             {
-                var num = CombineColors(color, 1 << additive);
-                if (num != color)
+                var mixedColor = CombineColors(color, 1 << additive);
+                if (mixedColor != color)
                 {
                     var craftingRecipe = new CraftingRecipe
                     {
                         Description = new LocalizedText(nameof(PaintBucketBlock), "CraftingPrefix", "Make"),
-                        DescriptionColor = num,
+                        DescriptionColor = mixedColor,
                         DescriptionSuffix = new LocalizedText(nameof(PaintBucketBlock), "CraftingSuffix", "paint"),
-                        ResultValue = Terrain.MakeBlockValue(BlockIndex, num),
+                        ResultValue = Terrain.MakeBlockValue(BlockIndex, mixedColor),
                         ResultCount = 1,
                         RequiredHeatLevel = 1f,
                         Ingredients =
@@ -52,11 +52,11 @@ public class PaintBucketBlock : BucketBlock
                     yield return craftingRecipe;
                 }
 
-                num2 = additive + 1;
+                nextVariant = additive + 1;
             }
 
-            num2 = color + 1;
-            color = num2;
+            nextVariant = color + 1;
+            color = nextVariant;
         }
     }
 
@@ -78,22 +78,22 @@ public class PaintBucketBlock : BucketBlock
 
     public static Vector4 ColorToCmyk(int color)
     {
-        var num = color & 1;
-        var num2 = (color >> 1) & 1;
-        var num3 = (color >> 2) & 1;
-        var num4 = (color >> 3) & 1;
-        return new Vector4(num, num2, num3, num4);
+        var cyan = color & 1;
+        var magenta = (color >> 1) & 1;
+        var yellow = (color >> 2) & 1;
+        var black = (color >> 3) & 1;
+        return new Vector4(cyan, magenta, yellow, black);
     }
 
     public static int CmykToColor(Vector4 cmyk)
     {
         if (cmyk.W <= 1f)
         {
-            var num = (int)MathUtils.Round(MathUtils.Saturate(cmyk.X));
-            var num2 = (int)MathUtils.Round(MathUtils.Saturate(cmyk.Y));
-            var num3 = (int)MathUtils.Round(MathUtils.Saturate(cmyk.Z));
-            var num4 = (int)MathUtils.Round(MathUtils.Saturate(cmyk.W));
-            return num | (num2 << 1) | (num3 << 2) | (num4 << 3);
+            var cyan = (int)MathUtils.Round(MathUtils.Saturate(cmyk.X));
+            var magenta = (int)MathUtils.Round(MathUtils.Saturate(cmyk.Y));
+            var yellow = (int)MathUtils.Round(MathUtils.Saturate(cmyk.Z));
+            var black = (int)MathUtils.Round(MathUtils.Saturate(cmyk.W));
+            return cyan | (magenta << 1) | (yellow << 2) | (black << 3);
         }
 
         return 15;

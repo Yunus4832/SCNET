@@ -256,30 +256,30 @@ public sealed class SubsystemSignBlockPresentation : Subsystem, IDrawable, IUpda
             return;
         }
 
-        var num = list.Max(l => l.Length) * Font.GlyphHeight;
-        var num2 = list.Count * Font.GlyphHeight;
-        var num3 = 4f;
-        float num4;
-        float num5;
-        if (num / num2 < num3)
+        var textWidth = list.Max(l => l.Length) * Font.GlyphHeight;
+        var textHeight = list.Count * Font.GlyphHeight;
+        var signAspect = 4f;
+        float textureWidth;
+        float textureHeight;
+        if (textWidth / textHeight < signAspect)
         {
-            num4 = num2 * num3;
-            num5 = num2;
+            textureWidth = textHeight * signAspect;
+            textureHeight = textHeight;
         }
         else
         {
-            num4 = num;
-            num5 = num / num3;
+            textureWidth = textWidth;
+            textureHeight = textWidth / signAspect;
         }
 
         for (var j = 0; j < list.Count; j++)
         {
             fontBatch.QueueText(
                 position: new Vector2(
-                    num4 / 2f,
+                    textureWidth / 2f,
                     j * Font.GlyphHeight +
                     textData.TextureLocation.Value * (4f * Font.GlyphHeight) +
-                    (num5 - num2) / 2f
+                    (textureHeight - textHeight) / 2f
                 ),
                 text: list[j],
                 depth: 0f,
@@ -290,16 +290,16 @@ public sealed class SubsystemSignBlockPresentation : Subsystem, IDrawable, IUpda
             );
         }
 
-        textData.UsedTextureWidth = num4;
-        textData.UsedTextureHeight = num5;
+        textData.UsedTextureWidth = textureWidth;
+        textData.UsedTextureHeight = textureHeight;
     }
 
     private void UpdateRenderTarget()
     {
-        var flag = false;
+        var viewsChanged = false;
         foreach (var gameWidget in _subsystemViews.GameWidgets)
         {
-            var flag2 = false;
+            var nearPreviousPosition = false;
             foreach (var lastUpdatePosition in _lastUpdatePositions)
             {
                 if (!(Vector3.DistanceSquared(gameWidget.ActiveCamera.ViewPosition, lastUpdatePosition) < 4f))
@@ -307,20 +307,20 @@ public sealed class SubsystemSignBlockPresentation : Subsystem, IDrawable, IUpda
                     continue;
                 }
 
-                flag2 = true;
+                nearPreviousPosition = true;
                 break;
             }
 
-            if (flag2)
+            if (nearPreviousPosition)
             {
                 continue;
             }
 
-            flag = true;
+            viewsChanged = true;
             break;
         }
 
-        if (!flag)
+        if (!viewsChanged)
         {
             return;
         }
@@ -331,13 +331,13 @@ public sealed class SubsystemSignBlockPresentation : Subsystem, IDrawable, IUpda
         foreach (var value in _textsByPoint.Values)
         {
             var point = value.Point;
-            var num = _subsystemViews.CalculateSquaredDistanceFromNearestView(new Vector3(point));
-            if (!(num <= 400f))
+            var distanceSquared = _subsystemViews.CalculateSquaredDistanceFromNearestView(new Vector3(point));
+            if (!(distanceSquared <= 400f))
             {
                 continue;
             }
 
-            value.Distance = num;
+            value.Distance = distanceSquared;
             _nearTexts.Add(value);
         }
 
@@ -352,7 +352,7 @@ public sealed class SubsystemSignBlockPresentation : Subsystem, IDrawable, IUpda
             nearText.ToBeRenderedFrame = Time.FrameIndex;
         }
 
-        var flag3 = false;
+        var textureSlotsChanged = false;
         for (var i = 0; i < MathUtils.Min(_nearTexts.Count, 32); i++)
         {
             var textData = _nearTexts[i];
@@ -361,30 +361,30 @@ public sealed class SubsystemSignBlockPresentation : Subsystem, IDrawable, IUpda
                 continue;
             }
 
-            var num2 = _textureLocations.FirstIndex(d => d == null);
-            if (num2 < 0)
+            var textureSlot = _textureLocations.FirstIndex(d => d == null);
+            if (textureSlot < 0)
             {
-                num2 = _textureLocations.FirstIndex(d => d?.ToBeRenderedFrame != Time.FrameIndex);
+                textureSlot = _textureLocations.FirstIndex(d => d?.ToBeRenderedFrame != Time.FrameIndex);
             }
 
-            if (num2 < 0)
+            if (textureSlot < 0)
             {
                 continue;
             }
 
-            var textData2 = _textureLocations[num2];
+            var textData2 = _textureLocations[textureSlot];
             if (textData2 != null)
             {
                 textData2.TextureLocation = null;
-                _textureLocations[num2] = null;
+                _textureLocations[textureSlot] = null;
             }
 
-            _textureLocations[num2] = textData;
-            textData.TextureLocation = num2;
-            flag3 = true;
+            _textureLocations[textureSlot] = textData;
+            textData.TextureLocation = textureSlot;
+            textureSlotsChanged = true;
         }
 
-        if (!flag3)
+        if (!textureSlotsChanged)
         {
             return;
         }
@@ -444,15 +444,15 @@ public sealed class SubsystemSignBlockPresentation : Subsystem, IDrawable, IUpda
 
             var cellValue =
                 _subsystemTerrain.Terrain.GetCellValue(nearText.Point.X, nearText.Point.Y, nearText.Point.Z);
-            var num = Terrain.ExtractContents(cellValue);
-            if (Modding.Blocks.WorldContentBinding.For(Project).Catalog.Blocks[num] is not SignBlock signBlock)
+            var contents = Terrain.ExtractContents(cellValue);
+            if (Modding.Blocks.WorldContentBinding.For(Project).Catalog.Blocks[contents] is not SignBlock signBlock)
             {
                 continue;
             }
 
             var data = Terrain.ExtractData(cellValue);
             var signSurfaceBlockMesh =
-                ((SignBlockPresentation)Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(num))
+                ((SignBlockPresentation)Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(contents))
                 .GetSignSurfaceBlockMesh(data);
             var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(nearText.Point.X, nearText.Point.Z, false);
             if (chunkAtCell is { HasContents: true })
@@ -466,8 +466,8 @@ public sealed class SubsystemSignBlockPresentation : Subsystem, IDrawable, IUpda
                                  nearText.Light;
             }
 
-            var num2 = LightingManager.GetBrightness(nearText.Light);
-            var color = new Color(num2, num2, num2);
+            var brightness = LightingManager.GetBrightness(nearText.Light);
+            var color = new Color(brightness, brightness, brightness);
             var x = 0f;
             var x2 = nearText.UsedTextureWidth / (Font.GlyphHeight * 16f);
             var x3 = nearText.TextureLocation.Value / 32f;
@@ -475,8 +475,8 @@ public sealed class SubsystemSignBlockPresentation : Subsystem, IDrawable, IUpda
                      32f;
             var signSurfaceNormal = signBlock.GetSignSurfaceNormal(data);
             var vector = new Vector3(nearText.Point.X, nearText.Point.Y, nearText.Point.Z);
-            var num3 = Vector3.Dot(camera.ViewPosition - (vector + new Vector3(0.5f)), signSurfaceNormal);
-            var vector2 = MathUtils.Max(0.01f * num3, 0.005f) * signSurfaceNormal;
+            var normalDistance = Vector3.Dot(camera.ViewPosition - (vector + new Vector3(0.5f)), signSurfaceNormal);
+            var surfaceOffset = MathUtils.Max(0.01f * normalDistance, 0.005f) * signSurfaceNormal;
             for (var i = 0; i < signSurfaceBlockMesh.Indices.Count / 3; i++)
             {
                 var blockMeshVertex =
@@ -485,9 +485,9 @@ public sealed class SubsystemSignBlockPresentation : Subsystem, IDrawable, IUpda
                     signSurfaceBlockMesh.Vertices.Array[signSurfaceBlockMesh.Indices.Array[i * 3 + 1]];
                 var blockMeshVertex3 =
                     signSurfaceBlockMesh.Vertices.Array[signSurfaceBlockMesh.Indices.Array[i * 3 + 2]];
-                var p = blockMeshVertex.Position + vector + vector2;
-                var p2 = blockMeshVertex2.Position + vector + vector2;
-                var p3 = blockMeshVertex3.Position + vector + vector2;
+                var p = blockMeshVertex.Position + vector + surfaceOffset;
+                var p2 = blockMeshVertex2.Position + vector + surfaceOffset;
+                var p3 = blockMeshVertex3.Position + vector + surfaceOffset;
                 var textureCoordinates = blockMeshVertex.TextureCoordinates;
                 var textureCoordinates2 = blockMeshVertex2.TextureCoordinates;
                 var textureCoordinates3 = blockMeshVertex3.TextureCoordinates;

@@ -26,12 +26,13 @@ public class PaintParticleSystem : ParticleSystem<PaintParticleSystem.Particle>
         foreach (var particle in Particles)
         {
             particle.IsActive = true;
-            var vector2 = new Vector2(_random.Float(-1f, 1f), _random.Float(-1f, 1f));
-            particle.Position = position + 0.4f * (vector2.X * vector + vector2.Y * v) + 0.03f * normal;
+            var tangentOffset = new Vector2(_random.Float(-1f, 1f), _random.Float(-1f, 1f));
+            particle.Position = position + 0.4f * (tangentOffset.X * vector + tangentOffset.Y * v) + 0.03f * normal;
             particle.Color = _color;
             particle.Size = new Vector2(_random.Float(0.025f, 0.035f));
             particle.TimeToLive = _random.Float(0.5f, 1.5f);
-            particle.Velocity = 1f * (vector2.X * vector + vector2.Y * v) + _random.Float(-3f, 0.5f) * normal;
+            particle.Velocity = 1f * (tangentOffset.X * vector + tangentOffset.Y * v) +
+                                _random.Float(-3f, 0.5f) * normal;
             particle.TextureSlot = 15;
             particle.Alpha = _random.Float(0.3f, 0.6f);
         }
@@ -40,9 +41,9 @@ public class PaintParticleSystem : ParticleSystem<PaintParticleSystem.Particle>
     public override bool Simulate(float dt)
     {
         dt = MathUtils.Clamp(dt, 0f, 0.1f);
-        var num = MathUtils.Pow(0.2f, dt);
-        var num2 = MathUtils.Pow(1E-07f, dt);
-        var flag = false;
+        var velocityDamping = MathUtils.Pow(0.2f, dt);
+        var strongDamping = MathUtils.Pow(1E-07f, dt);
+        var hasActiveParticles = false;
         foreach (var particle in Particles)
         {
             if (!particle.IsActive)
@@ -50,7 +51,7 @@ public class PaintParticleSystem : ParticleSystem<PaintParticleSystem.Particle>
                 continue;
             }
 
-            flag = true;
+            hasActiveParticles = true;
             particle.TimeToLive -= dt;
             if (particle.TimeToLive > 0f)
             {
@@ -84,7 +85,9 @@ public class PaintParticleSystem : ParticleSystem<PaintParticleSystem.Particle>
                     particle.Velocity.Y += -9.81f * dt;
                 }
 
-                particle.Velocity *= particle.HighDampingFactor > 0f ? num2 * particle.HighDampingFactor : num;
+                particle.Velocity *= particle.HighDampingFactor > 0f
+                    ? strongDamping * particle.HighDampingFactor
+                    : velocityDamping;
                 particle.Color = _color * MathUtils.Saturate(1.5f * particle.TimeToLive * particle.Alpha);
             }
             else
@@ -93,7 +96,7 @@ public class PaintParticleSystem : ParticleSystem<PaintParticleSystem.Particle>
             }
         }
 
-        return !flag;
+        return !hasActiveParticles;
     }
 
     public class Particle : Game.ParticleSystems.Particle

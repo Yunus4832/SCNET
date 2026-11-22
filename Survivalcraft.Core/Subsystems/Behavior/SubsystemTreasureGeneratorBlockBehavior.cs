@@ -459,33 +459,33 @@ public class SubsystemTreasureGeneratorBlockBehavior : SubsystemBlockBehavior
             return;
         }
 
-        var num = 0;
-        var num2 = 0;
+        var treasureValue = 0;
+        var treasureCount = 0;
         var max = _treasureData.Sum(t => t.Probability);
-        var num3 = _random.Float(0f, max);
+        var selectionRoll = _random.Float(0f, max);
         var treasureData = _treasureData;
         foreach (var treasureData2 in treasureData)
         {
-            num3 -= treasureData2.Probability;
-            if (!(num3 <= 0f))
+            selectionRoll -= treasureData2.Probability;
+            if (!(selectionRoll <= 0f))
             {
                 continue;
             }
 
-            num = treasureData2.Value;
-            num2 = _random.Int(1, treasureData2.MaxCount);
+            treasureValue = treasureData2.Value;
+            treasureCount = _random.Int(1, treasureData2.MaxCount);
             break;
         }
 
-        if (num == 0 || num2 <= 0)
+        if (treasureValue == 0 || treasureCount <= 0)
         {
             return;
         }
 
-        for (var j = 0; j < num2; j++)
+        for (var j = 0; j < treasureCount; j++)
         {
             _subsystemPickables.AddPickable(
-                num,
+                treasureValue,
                 1,
                 new Vector3(x, y, z) + _random.Vector3(0.1f, 0.4f) + new Vector3(0.5f),
                 Vector3.Zero,
@@ -493,8 +493,8 @@ public class SubsystemTreasureGeneratorBlockBehavior : SubsystemBlockBehavior
             );
         }
 
-        var num4 = _random.Int(3, 6);
-        for (var k = 0; k < num4; k++)
+        var experienceDrops = _random.Int(3, 6);
+        for (var k = 0; k < experienceDrops; k++)
         {
             _subsystemPickables.AddPickable(
                 248,

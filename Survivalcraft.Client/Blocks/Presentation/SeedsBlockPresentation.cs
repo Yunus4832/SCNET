@@ -27,8 +27,8 @@ public class SeedsBlockPresentation(SeedsBlock block, BlockPresentationCatalog c
 
     public override int GetFaceTextureSlot(int face, int value)
     {
-        var num = Terrain.ExtractData(value);
-        return num is 5 or 4 ? 74 : 75;
+        var seedData = Terrain.ExtractData(value);
+        return seedData is 5 or 4 ? 74 : 75;
     }
 
     public override void DrawBlock(

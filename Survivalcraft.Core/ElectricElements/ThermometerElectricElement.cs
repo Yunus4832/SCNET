@@ -28,10 +28,10 @@ public class ThermometerElectricElement : ElectricElement
         _voltage = MathUtils.Saturate(
             _subsystemMetersBlockBehavior.GetThermometerReading(cellFace.X, cellFace.Y, cellFace.Z) / 15f
         );
-        var num = 0.5f * (0.9f + 0.000200000009f * (GetHashCode() % 1000));
+        var sampleInterval = 0.5f * (0.9f + 0.000200000009f * (GetHashCode() % 1000));
         SubsystemElectricity.QueueElectricElementForSimulation(
             this,
-            SubsystemElectricity.CircuitStep + MathUtils.Max((int)(num / 0.01f), 1)
+            SubsystemElectricity.CircuitStep + MathUtils.Max((int)(sampleInterval / 0.01f), 1)
         );
         return _voltage.UncloseTo(voltage);
     }

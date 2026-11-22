@@ -831,17 +831,17 @@ internal static class GLWrapper
             _lastAdditionalVertexDeclaration = additionalDeclaration;
         }
 
-        var num = 0;
-        var num2 = 0;
+        var textureUnitIndex = 0;
+        var parameterIndex = 0;
         ShaderParameter shaderParameter;
         while (true)
         {
-            if (num2 >= shader.Parameters.Length)
+            if (parameterIndex >= shader.Parameters.Length)
             {
                 return;
             }
 
-            shaderParameter = shader.Parameters[num2];
+            shaderParameter = shader.Parameters[parameterIndex];
             if (shaderParameter.isChanged)
             {
                 switch (shaderParameter.Type)
@@ -881,18 +881,18 @@ internal static class GLWrapper
 
             if (shaderParameter.Type == ShaderParameterType.Texture2D)
             {
-                if (num >= 8)
+                if (textureUnitIndex >= 8)
                 {
                     throw new InvalidOperationException("Too many simultaneous textures.");
                 }
 
-                ActiveTexture((TextureUnit)(33984 + num));
+                ActiveTexture((TextureUnit)(33984 + textureUnitIndex));
                 if (shaderParameter.isChanged)
                 {
-                    GL.Uniform1(shaderParameter.location, num);
+                    GL.Uniform1(shaderParameter.location, textureUnitIndex);
                 }
 
-                var obj = shader.Parameters[num2 + 1];
+                var obj = shader.Parameters[parameterIndex + 1];
                 var texture2D = (Texture2D?)shaderParameter.resource;
                 var samplerState = (SamplerState?)obj.resource;
                 if (texture2D != null)
@@ -902,7 +902,7 @@ internal static class GLWrapper
                         break;
                     }
 
-                    if (_activeTexturesByUnit[num] != texture2D.texture)
+                    if (_activeTexturesByUnit[textureUnitIndex] != texture2D.texture)
                     {
                         BindTexture(TextureTarget.Texture2D, (uint)texture2D.texture, true);
                     }
@@ -955,16 +955,16 @@ internal static class GLWrapper
                         _textureSamplerStates[texture2D.texture] = samplerState;
                     }
                 }
-                else if (_activeTexturesByUnit[num] != 0)
+                else if (_activeTexturesByUnit[textureUnitIndex] != 0)
                 {
                     BindTexture(TextureTarget.Texture2D, 0, true);
                 }
 
-                num++;
+                textureUnitIndex++;
                 shaderParameter.isChanged = false;
             }
 
-            num2++;
+            parameterIndex++;
         }
 
         throw new InvalidOperationException(

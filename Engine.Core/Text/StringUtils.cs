@@ -28,26 +28,26 @@ public static class StringUtils
 
     public static int Compare(StringBuilder s1, string s2)
     {
-        var num = 0;
+        var charIndex = 0;
         while (true)
         {
-            if (num >= s1.Length && num >= s2.Length)
+            if (charIndex >= s1.Length && charIndex >= s2.Length)
             {
                 return 0;
             }
 
-            if (num > s1.Length)
+            if (charIndex > s1.Length)
             {
                 return -1;
             }
 
-            if (num > s2.Length)
+            if (charIndex > s2.Length)
             {
                 return 1;
             }
 
-            var c = s1[num];
-            var c2 = s2[num];
+            var c = s1[charIndex];
+            var c2 = s2[charIndex];
             if (c < c2)
             {
                 return -1;
@@ -58,7 +58,7 @@ public static class StringUtils
                 break;
             }
 
-            num++;
+            charIndex++;
         }
 
         return 1;
@@ -71,14 +71,14 @@ public static class StringUtils
             throw new ArgumentException("Number base is out of range.");
         }
 
-        var num = 0;
+        var digitCount = 0;
         do
         {
-            num++;
+            digitCount++;
             value /= (uint)numberBase;
         } while (value != 0);
 
-        return num;
+        return digitCount;
     }
 
     public static int CalculateNumberLength(int value, int numberBase)
@@ -98,14 +98,14 @@ public static class StringUtils
             throw new ArgumentException("Number base is out of range.");
         }
 
-        var num = 0;
+        var digitCount = 0;
         do
         {
-            num++;
+            digitCount++;
             value /= (uint)numberBase;
         } while (value != 0);
 
-        return num;
+        return digitCount;
     }
 
     public static int CalculateNumberLength(long value, int numberBase)
@@ -129,13 +129,13 @@ public static class StringUtils
         var val = CalculateNumberLength(value, numberBase);
         var repeatCount = Math.Max(padding, val);
         stringBuilder.Append(paddingCharacter, repeatCount);
-        var num = 0;
+        var digitsWritten = 0;
         do
         {
             var value2 = _digits[value % (uint)numberBase];
-            stringBuilder[stringBuilder.Length - num - 1] = value2;
+            stringBuilder[stringBuilder.Length - digitsWritten - 1] = value2;
             value /= (uint)numberBase;
-            num++;
+            digitsWritten++;
         } while (value != 0);
     }
 
@@ -168,13 +168,13 @@ public static class StringUtils
         var val = CalculateNumberLength(value, numberBase);
         var repeatCount = Math.Max(padding, val);
         stringBuilder.Append(paddingCharacter, repeatCount);
-        var num = 0;
+        var digitsWritten = 0;
         do
         {
             var value2 = _digits[value % (uint)numberBase];
-            stringBuilder[stringBuilder.Length - num - 1] = value2;
+            stringBuilder[stringBuilder.Length - digitsWritten - 1] = value2;
             value /= (uint)numberBase;
-            num++;
+            digitsWritten++;
         } while (value != 0);
     }
 
@@ -217,20 +217,20 @@ public static class StringUtils
             return;
         }
 
-        var num = Math.Abs(value);
-        if (num > 1E+19f)
+        var magnitude = Math.Abs(value);
+        if (magnitude > 1E+19f)
         {
             stringBuilder.Append("NumberTooLarge");
             return;
         }
 
-        var num2 = MathUtils.Pow(10f, Math.Abs(precision));
-        var num3 = (ulong)MathUtils.Floor(num);
-        var num4 = (ulong)MathUtils.Round((num - MathUtils.Floor(num)) * num2);
-        if ((float)(double)num4 >= num2)
+        var decimalScale = MathUtils.Pow(10f, Math.Abs(precision));
+        var integerPart = (ulong)MathUtils.Floor(magnitude);
+        var fractionalDigits = (ulong)MathUtils.Round((magnitude - MathUtils.Floor(magnitude)) * decimalScale);
+        if ((float)(double)fractionalDigits >= decimalScale)
         {
-            num3++;
-            num4 = 0uL;
+            integerPart++;
+            fractionalDigits = 0uL;
         }
 
         if (value < 0f)
@@ -238,16 +238,16 @@ public static class StringUtils
             stringBuilder.Append('-');
         }
 
-        stringBuilder.AppendNumber(num3, 0, '0');
+        stringBuilder.AppendNumber(integerPart, 0, '0');
         if (precision > 0)
         {
             stringBuilder.Append('.');
-            stringBuilder.AppendNumber(num4, precision, '0');
+            stringBuilder.AppendNumber(fractionalDigits, precision, '0');
         }
         else if (precision < 0)
         {
             stringBuilder.Append('.');
-            stringBuilder.AppendNumber(num4, -precision, '0');
+            stringBuilder.AppendNumber(fractionalDigits, -precision, '0');
             while (stringBuilder[^1] == '0')
             {
                 _ = --stringBuilder.Length;

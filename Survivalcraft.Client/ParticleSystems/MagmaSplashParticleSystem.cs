@@ -25,27 +25,27 @@ public class MagmaSplashParticleSystem : ParticleSystem<MagmaSplashParticleSyste
         SetLightOrigin(terrain, position);
         var white = Color.White;
         white.A = 255;
-        var num5 = large ? 1.5f : 1f;
+        var splashScale = large ? 1.5f : 1f;
         foreach (var particle in Particles)
         {
             particle.IsActive = true;
             particle.Position = position;
             particle.Color = white;
-            particle.Size = new Vector2(0.2f * num5);
+            particle.Size = new Vector2(0.2f * splashScale);
             particle.TimeToLive = particle.Duration = _random.Float(0.5f, 3.5f);
             var v = 4f *
                     _random.Float(0.1f, 1f) *
                     Vector3.Normalize(new Vector3(_random.Float(-1f, 1f), 0f, _random.Float(-1f, 1f)));
-            particle.Velocity = num5 * (v + new Vector3(0f, _random.Float(0f, 4f), 0f));
+            particle.Velocity = splashScale * (v + new Vector3(0f, _random.Float(0f, 4f), 0f));
         }
     }
 
     public override bool Simulate(float dt)
     {
         dt = MathUtils.Clamp(dt, 0f, 0.1f);
-        var num = MathUtils.Pow(0.015f, dt);
+        var velocityDamping = MathUtils.Pow(0.015f, dt);
         _time += dt;
-        var flag = false;
+        var hasActiveParticles = false;
         foreach (var particle in Particles)
         {
             if (!particle.IsActive)
@@ -53,10 +53,10 @@ public class MagmaSplashParticleSystem : ParticleSystem<MagmaSplashParticleSyste
                 continue;
             }
 
-            flag = true;
+            hasActiveParticles = true;
             particle.Position += particle.Velocity * dt;
             particle.Velocity.Y += -10f * dt;
-            particle.Velocity *= num;
+            particle.Velocity *= velocityDamping;
             particle.Color *= MathUtils.Saturate(particle.TimeToLive);
             particle.TimeToLive -= dt;
             particle.TextureSlot = (int)(3.99f * particle.TimeToLive / particle.Duration);
@@ -73,13 +73,13 @@ public class MagmaSplashParticleSystem : ParticleSystem<MagmaSplashParticleSyste
                 Terrain.ToCell(particle.Position.Y),
                 Terrain.ToCell(particle.Position.Z)
             );
-            var num2 = Terrain.ExtractContents(cellValue);
-            if (num2 == 0)
+            var contents = Terrain.ExtractContents(cellValue);
+            if (contents == 0)
             {
                 continue;
             }
 
-            var block = _subsystemTerrain.Catalog.Blocks[num2];
+            var block = _subsystemTerrain.Catalog.Blocks[contents];
             if (block.Collidable)
             {
                 particle.IsActive = true;
@@ -94,18 +94,18 @@ public class MagmaSplashParticleSystem : ParticleSystem<MagmaSplashParticleSyste
                 }
 
                 particle.Velocity.Y = 0f;
-                var num3 = Vector2.Distance(
+                var distanceFromSplash = Vector2.Distance(
                     new Vector2(particle.Position.X, particle.Position.Z),
                     new Vector2(_position.X, _position.Z)
                 );
-                var num4 = 0.02f * MathUtils.Sin(2f * num3 + 10f * _time);
-                particle.Position.Y = MathUtils.Floor(particle.Position.Y) + levelHeight + num4;
+                var waveOffset = 0.02f * MathUtils.Sin(2f * distanceFromSplash + 10f * _time);
+                particle.Position.Y = MathUtils.Floor(particle.Position.Y) + levelHeight + waveOffset;
                 particle.TimeToLive -= 1f * dt;
                 particle.Size -= new Vector2(0.04f * dt);
             }
         }
 
-        return !flag;
+        return !hasActiveParticles;
     }
 
     public class Particle : Game.ParticleSystems.Particle

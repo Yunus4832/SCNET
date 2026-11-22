@@ -210,10 +210,16 @@ public abstract class ComponentInventoryBase : Component, IInventory
         }
 
         var slotValue = GetSlotValue(slotIndex);
-        var num = RemoveSlotItems(slotIndex, slotCount);
-        if (num > 0)
+        var removedCount = RemoveSlotItems(slotIndex, slotCount);
+        if (removedCount > 0)
         {
-            Project.FindSubsystem<SubsystemPickables>(true)!.AddPickable(slotValue, num, position, velocity, null);
+            Project.FindSubsystem<SubsystemPickables>(true)!.AddPickable(
+                slotValue,
+                removedCount,
+                position,
+                velocity,
+                null
+            );
         }
     }
 
@@ -248,13 +254,13 @@ public abstract class ComponentInventoryBase : Component, IInventory
         {
             while (count > 0)
             {
-                var num = FindAcquireSlotForItem(inventory, value);
-                if (num < 0)
+                var destinationSlot = FindAcquireSlotForItem(inventory, value);
+                if (destinationSlot < 0)
                 {
                     break;
                 }
 
-                inventory.AddSlotItems(num, value, 1);
+                inventory.AddSlotItems(destinationSlot, value, 1);
                 count--;
             }
 

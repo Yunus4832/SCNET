@@ -48,17 +48,17 @@ public static class PlantsManager
                 3,
                 delegate(int y, int _)
                 {
-                    var num7 = 0.4f;
+                    var leafChance = 0.4f;
                     if (y < 0.2f * height4)
                     {
-                        num7 = 0f;
+                        leafChance = 0f;
                     }
                     else if (y >= 0.2f * height4 && y <= height4)
                     {
-                        num7 *= 1.5f;
+                        leafChance *= 1.5f;
                     }
 
-                    return num7;
+                    return leafChance;
                 },
                 delegate(int y)
                 {
@@ -67,8 +67,8 @@ public static class PlantsManager
                         return 0f;
                     }
 
-                    var num6 = y < height4 * 0.7f ? 0.5f * height4 : 0.35f * height4;
-                    return random.Float(0.33f, 1f) * num6;
+                    var maxBranchLength = y < height4 * 0.7f ? 0.5f * height4 : 0.35f * height4;
+                    return random.Float(0.33f, 1f) * maxBranchLength;
                 }
             );
             _treeBrushesByType[0].Add(item);
@@ -92,17 +92,17 @@ public static class PlantsManager
                 3,
                 delegate(int y, int _)
                 {
-                    var num5 = 0.66f;
+                    var leafChance = 0.66f;
                     if (y < height3 / 2 - 1)
                     {
-                        num5 = 0f;
+                        leafChance = 0f;
                     }
                     else if (y > height3 / 2 && y <= height3)
                     {
-                        num5 *= 1.5f;
+                        leafChance *= 1.5f;
                     }
 
-                    return num5;
+                    return leafChance;
                 },
                 y => y < height3 * 0.35f || y > height3 * 0.75f ? 0f : random.Float(0f, 0.33f * height3)
             );
@@ -127,18 +127,18 @@ public static class PlantsManager
                 3,
                 delegate(int y, int _)
                 {
-                    var num4 = MathUtils.Lerp(1.4f, 0.3f, y / (float)height2);
+                    var leafChance = MathUtils.Lerp(1.4f, 0.3f, y / (float)height2);
                     if (y < 3)
                     {
-                        num4 = 0f;
+                        leafChance = 0f;
                     }
 
                     if (y % 2 == 0)
                     {
-                        num4 *= 0.3f;
+                        leafChance *= 0.3f;
                     }
 
-                    return num4;
+                    return leafChance;
                 },
                 delegate(int y)
                 {
@@ -172,23 +172,23 @@ public static class PlantsManager
                 3,
                 delegate(int y, int _)
                 {
-                    var num2 = MathUtils.Saturate(y / (float)height);
-                    var num3 = MathUtils.Lerp(1.5f, 0f, MathUtils.Saturate((num2 - 0.6f) / 0.4f));
+                    var relativeHeight = MathUtils.Saturate(y / (float)height);
+                    var leafChance = MathUtils.Lerp(1.5f, 0f, MathUtils.Saturate((relativeHeight - 0.6f) / 0.4f));
                     if (y < startHeight)
                     {
-                        num3 = 0f;
+                        leafChance = 0f;
                     }
 
                     if (y % 3 != 0 && y < height - 4)
                     {
-                        num3 *= 0.2f;
+                        leafChance *= 0.2f;
                     }
 
-                    return num3;
+                    return leafChance;
                 },
                 delegate(int y)
                 {
-                    var num = MathUtils.Saturate(y / (float)height);
+                    var relativeHeight = MathUtils.Saturate(y / (float)height);
                     if (y % 3 != 0)
                     {
                         return 0f;
@@ -196,7 +196,7 @@ public static class PlantsManager
 
                     return y < startHeight
                         ? !(y < startHeight - 4f) ? 0.1f * height : 0f
-                        : MathUtils.Lerp(0.18f * height, 0f, MathUtils.Saturate((num - 0.6f) / 0.4f));
+                        : MathUtils.Lerp(0.18f * height, 0f, MathUtils.Saturate((relativeHeight - 0.6f) / 0.4f));
                 }
             );
             _treeBrushesByType[3].Add(item4);
@@ -226,8 +226,8 @@ public static class PlantsManager
                 2,
                 delegate(int y, int round)
                 {
-                    var num8 = height5 < 14 ? 1 : 2;
-                    if (y < num8)
+                    var canopyBaseY = height5 < 14 ? 1 : 2;
+                    if (y < canopyBaseY)
                     {
                         return 0f;
                     }
@@ -237,12 +237,12 @@ public static class PlantsManager
                         return 1f;
                     }
 
-                    if (y == num8)
+                    if (y == canopyBaseY)
                     {
                         return 0f;
                     }
 
-                    return y == num8 + 1 ? 0.5f : MathUtils.LinearStep(height5 - 1, num8 + 2, y);
+                    return y == canopyBaseY + 1 ? 0.5f : MathUtils.LinearStep(height5 - 1, canopyBaseY + 2, y);
                 },
                 _ => 0f
             );
@@ -284,8 +284,8 @@ public static class PlantsManager
                         return result;
                     }
 
-                    var num = random.Float(0f, 1f);
-                    result = num switch
+                    var plantRoll = random.Float(0f, 1f);
+                    result = plantRoll switch
                     {
                         < 0.04f => Terrain.MakeBlockValue(20),
                         < 0.07f => Terrain.MakeBlockValue(24),
@@ -328,41 +328,45 @@ public static class PlantsManager
     )
     {
         TreeType? result = null;
-        var num = random.Float() * CalculateTreeProbability(TreeType.Oak, temperature, humidity, y);
-        var num2 = random.Float() * CalculateTreeProbability(TreeType.Birch, temperature, humidity, y);
-        var num3 = random.Float() * CalculateTreeProbability(TreeType.Spruce, temperature, humidity, y);
-        var num4 = random.Float() * CalculateTreeProbability(TreeType.TallSpruce, temperature, humidity, y);
-        var num5 = random.Float() * CalculateTreeProbability(TreeType.Mimosa, temperature, humidity, y);
-        var num7 = random.Float() * CalculateTreeProbability(TreeType.Poplar, temperature, humidity, y);
-        var num6 = MathUtils.Max(MathUtils.Max(num, num2, num3, num4), num5, num7);
-        if (num6 > 0f)
+        var oakScore = random.Float() * CalculateTreeProbability(TreeType.Oak, temperature, humidity, y);
+        var birchScore = random.Float() * CalculateTreeProbability(TreeType.Birch, temperature, humidity, y);
+        var spruceScore = random.Float() * CalculateTreeProbability(TreeType.Spruce, temperature, humidity, y);
+        var tallSpruceScore = random.Float() * CalculateTreeProbability(TreeType.TallSpruce, temperature, humidity, y);
+        var mimosaScore = random.Float() * CalculateTreeProbability(TreeType.Mimosa, temperature, humidity, y);
+        var poplarScore = random.Float() * CalculateTreeProbability(TreeType.Poplar, temperature, humidity, y);
+        var bestScore = MathUtils.Max(
+            MathUtils.Max(oakScore, birchScore, spruceScore, tallSpruceScore),
+            mimosaScore,
+            poplarScore
+        );
+        if (bestScore > 0f)
         {
-            if (num6.CloseTo(num))
+            if (bestScore.CloseTo(oakScore))
             {
                 result = TreeType.Oak;
             }
 
-            if (num6.CloseTo(num2))
+            if (bestScore.CloseTo(birchScore))
             {
                 result = TreeType.Birch;
             }
 
-            if (num6.CloseTo(num3))
+            if (bestScore.CloseTo(spruceScore))
             {
                 result = TreeType.Spruce;
             }
 
-            if (num6.CloseTo(num4))
+            if (bestScore.CloseTo(tallSpruceScore))
             {
                 result = TreeType.TallSpruce;
             }
 
-            if (num6.CloseTo(num5))
+            if (bestScore.CloseTo(mimosaScore))
             {
                 result = TreeType.Mimosa;
             }
 
-            if (num6.CloseTo(num7))
+            if (bestScore.CloseTo(poplarScore))
             {
                 result = TreeType.Poplar;
             }
@@ -459,14 +463,14 @@ public static class PlantsManager
         for (var i = 0; i < branchesCount; i++)
         {
             var x = 0;
-            var num = random.Int(0, height);
+            var branchBaseY = random.Int(0, height);
             var z = 0;
-            var s = branchesLength(num);
+            var s = branchesLength(branchBaseY);
             var vector =
                 Vector3.Normalize(new Vector3(random.Float(-1f, 1f), random.Float(0f, 0.33f), random.Float(-1f, 1f))) *
                 s;
             var x2 = (int)MathUtils.Round(vector.X);
-            var y = num + (int)MathUtils.Round(vector.Y);
+            var y = branchBaseY + (int)MathUtils.Round(vector.Y);
             var z2 = (int)MathUtils.Round(vector.Z);
             var cutFace = 0;
             if (MathUtils.Abs(vector.X).CloseTo(
@@ -484,7 +488,7 @@ public static class PlantsManager
 
             terrainBrush.AddRay(
                 x,
-                num,
+                branchBaseY,
                 z,
                 x2,
                 y,
@@ -508,8 +512,8 @@ public static class PlantsManager
                 {
                     for (var m = 1; m <= max.Y + 1; m++)
                     {
-                        var num2 = leavesProbability(m, j);
-                        if (random.Float(0f, 1f) < num2 &&
+                        var leafChance = leavesProbability(m, j);
+                        if (random.Float(0f, 1f) < leafChance &&
                             !terrainBrush.GetValue(k, m, l).HasValue &&
                             (terrainBrush.CountNonDiagonalNeighbors(k, m, l, leavesIndex) != 0 ||
                              terrainBrush.CountNonDiagonalNeighbors(
@@ -542,35 +546,36 @@ public static class PlantsManager
         var value2 = _treeLeavesByType[4];
         terrainBrush.AddRay(0, -1, 0, 0, 0, 0, 1, 1, 1, value);
         var list = new List<Point3>();
-        var num = random.Float(0f, (float)Math.PI * 2f);
+        var azimuthOffset = random.Float(0f, (float)Math.PI * 2f);
         for (var i = 0; i < 3; i++)
         {
-            var radians = num + i * MathUtils.DegToRad(120f);
+            var radians = azimuthOffset + i * MathUtils.DegToRad(120f);
             var v = Vector3.Transform(
                 Vector3.Normalize(new Vector3(1f, random.Float(1f, 1.5f), 0f)),
                 Matrix.CreateRotationY(radians)
             );
-            var num2 = random.Int((int)(0.7f * size), (int)size);
+            var branchLength = random.Int((int)(0.7f * size), (int)size);
             var p = new Point3(0, 0, 0);
-            var item = new Point3(Vector3.Round(new Vector3(p) + v * num2));
+            var item = new Point3(Vector3.Round(new Vector3(p) + v * branchLength));
             terrainBrush.AddRay(p.X, p.Y, p.Z, item.X, item.Y, item.Z, 1, 1, 1, value);
             list.Add(item);
         }
 
         foreach (var item2 in list)
         {
-            var num3 = random.Float(0.3f * size, 0.45f * size);
-            var num4 = (int)MathUtils.Ceiling(num3);
-            for (var j = item2.X - num4; j <= item2.X + num4; j++)
+            var crownRadius = random.Float(0.3f * size, 0.45f * size);
+            var searchRadius = (int)MathUtils.Ceiling(crownRadius);
+            for (var j = item2.X - searchRadius; j <= item2.X + searchRadius; j++)
             {
-                for (var k = item2.Y - num4; k <= item2.Y + num4; k++)
+                for (var k = item2.Y - searchRadius; k <= item2.Y + searchRadius; k++)
                 {
-                    for (var l = item2.Z - num4; l <= item2.Z + num4; l++)
+                    for (var l = item2.Z - searchRadius; l <= item2.Z + searchRadius; l++)
                     {
-                        var num5 = Math.Abs(j - item2.X) + Math.Abs(k - item2.Y) + Math.Abs(l - item2.Z);
-                        var num6 = ((new Vector3(j, k, l) - new Vector3(item2)) * new Vector3(1f, 1.7f, 1f)).Length();
-                        if (num6 <= num3 &&
-                            (num3 - num6 > 1f || num5 <= 2 || random.Bool(0.7f)) &&
+                        var manhattanDistance = Math.Abs(j - item2.X) + Math.Abs(k - item2.Y) + Math.Abs(l - item2.Z);
+                        var scaledDistance = ((new Vector3(j, k, l) - new Vector3(item2)) * new Vector3(1f, 1.7f, 1f))
+                            .Length();
+                        if (scaledDistance <= crownRadius &&
+                            (crownRadius - scaledDistance > 1f || manhattanDistance <= 2 || random.Bool(0.7f)) &&
                             !terrainBrush.GetValue(j, k, l).HasValue)
                         {
                             terrainBrush.AddCell(j, k, l, value2);

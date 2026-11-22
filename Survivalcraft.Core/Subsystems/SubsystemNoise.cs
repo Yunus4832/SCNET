@@ -26,14 +26,14 @@ public class SubsystemNoise : Subsystem
 
     private void MakeNoisepublic(ComponentBody? sourceBody, Vector3 position, float loudness, float range)
     {
-        var num = range * range;
+        var rangeSquared = range * range;
         _componentBodies.Clear();
         _subsystemBodies.FindBodiesAroundPoint(new Vector2(position.X, position.Z), range, _componentBodies);
         for (var i = 0; i < _componentBodies.Count; i++)
         {
             var componentBody = _componentBodies.Array[i];
             if (componentBody == sourceBody ||
-                !(Vector3.DistanceSquared(componentBody.Position, position) < num))
+                !(Vector3.DistanceSquared(componentBody.Position, position) < rangeSquared))
             {
                 continue;
             }

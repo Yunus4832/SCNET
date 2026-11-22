@@ -229,13 +229,13 @@ public class ComponentClothing : Component, IUpdateable, IInventory
         {
             foreach (var enumValue in EnumUtils.GetEnumValues(typeof(ClothingSlot)))
             {
-                var flag = false;
+                var removedClothes = false;
                 _clothesList.Clear();
                 _clothesList.AddRange(GetClothes((ClothingSlot)enumValue));
-                var num = 0;
-                while (num < _clothesList.Count)
+                var clothingIndex = 0;
+                while (clothingIndex < _clothesList.Count)
                 {
-                    var value = _clothesList[num];
+                    var value = _clothesList[clothingIndex];
                     var clothingData = WorldContentBinding.For(Project).Catalog
                         .Blocks[Terrain.ExtractContents(value)]
                         .GetClothingData(Terrain.ExtractData(value));
@@ -243,16 +243,16 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                     {
                         PublishEffect(ClothingEffectKind.LevelRequired, value);
                         _subsystemPickables.AddPickable(value, 1, _componentBody.Position, null, null);
-                        _clothesList.RemoveAt(num);
-                        flag = true;
+                        _clothesList.RemoveAt(clothingIndex);
+                        removedClothes = true;
                     }
                     else
                     {
-                        num++;
+                        clothingIndex++;
                     }
                 }
 
-                if (flag)
+                if (removedClothes)
                 {
                     var slot = (ClothingSlot)enumValue;
                     SetClothes(slot, _clothesList);
@@ -275,7 +275,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             {
                 foreach (var enumValue2 in EnumUtils.GetEnumValues(typeof(ClothingSlot)))
                 {
-                    var flag2 = false;
+                    var clothingDamaged = false;
                     _clothesList.Clear();
                     _clothesList.AddRange(GetClothes((ClothingSlot)enumValue2));
                     for (var i = 0; i < _clothesList.Count; i++)
@@ -284,35 +284,36 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                         var clothingData2 = WorldContentBinding.For(Project).Catalog
                             .Blocks[Terrain.ExtractContents(value2)]
                             .GetClothingData(Terrain.ExtractData(value2));
-                        var num2 = _componentVitalStats.Wetness > 0f
+                        var wearInterval = _componentVitalStats.Wetness > 0f
                             ? 10f * clothingData2.Sturdiness
                             : 20f * clothingData2.Sturdiness;
-                        var num3 = MathUtils.Floor(_lastTotalElapsedGameTime.Value / num2);
-                        if (MathUtils.Floor(_subsystemGameInfo.TotalElapsedGameTime / num2) > num3 &&
+                        var previousWearPeriod = MathUtils.Floor(_lastTotalElapsedGameTime.Value / wearInterval);
+                        if (MathUtils.Floor(_subsystemGameInfo.TotalElapsedGameTime / wearInterval) >
+                            previousWearPeriod &&
                             _random.Float(0f, 1f) < 0.75f)
                         {
                             _clothesList[i] = WorldContentBinding.For(Project).Catalog
                                 .DamageItem(value2, 1);
-                            flag2 = true;
+                            clothingDamaged = true;
                         }
                     }
 
-                    var num4 = 0;
-                    while (num4 < _clothesList.Count)
+                    var wornItemIndex = 0;
+                    while (wornItemIndex < _clothesList.Count)
                     {
-                        if (Terrain.ExtractContents(_clothesList[num4]) != 203)
+                        if (Terrain.ExtractContents(_clothesList[wornItemIndex]) != 203)
                         {
-                            _clothesList.RemoveAt(num4);
+                            _clothesList.RemoveAt(wornItemIndex);
                             PublishEffect(ClothingEffectKind.WornOut);
                         }
                         else
                         {
-                            num4++;
+                            wornItemIndex++;
                         }
                     }
 
                     //服务器计算耐久
-                    if (!flag2)
+                    if (!clothingDamaged)
                     {
                         continue;
                     }
@@ -343,21 +344,21 @@ public class ComponentClothing : Component, IUpdateable, IInventory
         _clothes[slot].Clear();
         _clothes[slot].AddRange(clothesArray);
         SanitizeInvalidClothes();
-        var num = (from clothe in _clothes
+        var densityModifier = (from clothe in _clothes
             from item in clothe.Value
             select GetClothingDataSafe(item)
             into clothingData
             where clothingData != null
             select clothingData.DensityModifier).Sum();
 
-        var num2 = num - _densityModifierApplied;
-        _densityModifierApplied += num2;
-        _componentBody.Density += num2;
+        var densityChange = densityModifier - _densityModifierApplied;
+        _densityModifierApplied += densityChange;
+        _componentBody.Density += densityChange;
         SteedMovementSpeedFactor = 1f;
-        var num3 = 2f;
-        var num4 = 0.2f;
-        var num5 = 0.4f;
-        var num6 = 2f;
+        var headInsulation = 2f;
+        var torsoInsulation = 0.2f;
+        var legInsulation = 0.4f;
+        var footInsulation = 2f;
         foreach (var clothe2 in GetClothes(ClothingSlot.Head))
         {
             var clothingData2 = GetClothingDataSafe(clothe2);
@@ -366,7 +367,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                 continue;
             }
 
-            num3 += clothingData2.Insulation;
+            headInsulation += clothingData2.Insulation;
             SteedMovementSpeedFactor *= clothingData2.SteedMovementSpeedFactor;
         }
 
@@ -378,7 +379,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                 continue;
             }
 
-            num4 += clothingData3.Insulation;
+            torsoInsulation += clothingData3.Insulation;
             SteedMovementSpeedFactor *= clothingData3.SteedMovementSpeedFactor;
         }
 
@@ -390,7 +391,7 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                 continue;
             }
 
-            num5 += clothingData4.Insulation;
+            legInsulation += clothingData4.Insulation;
             SteedMovementSpeedFactor *= clothingData4.SteedMovementSpeedFactor;
         }
 
@@ -402,25 +403,25 @@ public class ComponentClothing : Component, IUpdateable, IInventory
                 continue;
             }
 
-            num6 += clothingData5.Insulation;
+            footInsulation += clothingData5.Insulation;
             SteedMovementSpeedFactor *= clothingData5.SteedMovementSpeedFactor;
         }
 
-        Insulation = 1f / (1f / num3 + 1f / num4 + 1f / num5 + 1f / num6);
-        var num7 = MathUtils.Min(num3, num4, num5, num6);
-        if (num3.CloseTo(num7))
+        Insulation = 1f / (1f / headInsulation + 1f / torsoInsulation + 1f / legInsulation + 1f / footInsulation);
+        var minimumInsulation = MathUtils.Min(headInsulation, torsoInsulation, legInsulation, footInsulation);
+        if (headInsulation.CloseTo(minimumInsulation))
         {
             LeastInsulatedSlot = ClothingSlot.Head;
         }
-        else if (num4.CloseTo(num7))
+        else if (torsoInsulation.CloseTo(minimumInsulation))
         {
             LeastInsulatedSlot = ClothingSlot.Torso;
         }
-        else if (num5.CloseTo(num7))
+        else if (legInsulation.CloseTo(minimumInsulation))
         {
             LeastInsulatedSlot = ClothingSlot.Legs;
         }
-        else if (num6.CloseTo(num7))
+        else if (footInsulation.CloseTo(minimumInsulation))
         {
             LeastInsulatedSlot = ClothingSlot.Feet;
         }
@@ -468,13 +469,13 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             return attackPower;
         }
 
-        var num = _random.Float(0f, 1f);
-        var slot = num < 0.1f ? ClothingSlot.Feet :
-            num < 0.3f ? ClothingSlot.Legs :
-            num < 0.9f ? ClothingSlot.Torso : ClothingSlot.Head;
-        float num2 = ((ClothingBlock)WorldContentBinding.For(Project).Catalog.Blocks[203])
-                     .Durability +
-                     1;
+        var slotRoll = _random.Float(0f, 1f);
+        var slot = slotRoll < 0.1f ? ClothingSlot.Feet :
+            slotRoll < 0.3f ? ClothingSlot.Legs :
+            slotRoll < 0.9f ? ClothingSlot.Torso : ClothingSlot.Head;
+        float durabilityRange = ((ClothingBlock)WorldContentBinding.For(Project).Catalog.Blocks[203])
+                                .Durability +
+                                1;
         var list = new List<int>(GetClothes(slot));
         for (var i = 0; i < list.Count; i++)
         {
@@ -482,19 +483,19 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             var clothingData = WorldContentBinding.For(Project).Catalog
                 .Blocks[Terrain.ExtractContents(value)]
                 .GetClothingData(Terrain.ExtractData(value));
-            var x = (num2 - WorldContentBinding.For(Project).Catalog.Blocks[203].GetDamage(value)) /
-                    num2 *
+            var x = (durabilityRange - WorldContentBinding.For(Project).Catalog.Blocks[203].GetDamage(value)) /
+                    durabilityRange *
                     clothingData.Sturdiness;
-            var num3 = MathUtils.Min(attackPower * MathUtils.Saturate(clothingData.ArmorProtection), x);
-            if (!(num3 > 0f))
+            var absorbedPower = MathUtils.Min(attackPower * MathUtils.Saturate(clothingData.ArmorProtection), x);
+            if (!(absorbedPower > 0f))
             {
                 continue;
             }
 
-            attackPower -= num3;
+            attackPower -= absorbedPower;
             if (_subsystemGameInfo.WorldSettings.GameMode != 0)
             {
-                var x2 = num3 / clothingData.Sturdiness * num2 + 0.001f;
+                var x2 = absorbedPower / clothingData.Sturdiness * durabilityRange + 0.001f;
                 var damageCount =
                     (int)(MathUtils.Floor(x2) + (_random.Bool(MathUtils.Remainder(x2, 1f)) ? 1 : 0));
                 list[i] = WorldContentBinding.For(Project).Catalog.DamageItem(value, damageCount);
@@ -506,17 +507,17 @@ public class ComponentClothing : Component, IUpdateable, IInventory
             }
         }
 
-        var num4 = 0;
-        while (num4 < list.Count)
+        var clothingIndex = 0;
+        while (clothingIndex < list.Count)
         {
-            if (Terrain.ExtractContents(list[num4]) != 203)
+            if (Terrain.ExtractContents(list[clothingIndex]) != 203)
             {
-                list.RemoveAt(num4);
+                list.RemoveAt(clothingIndex);
                 PublishEffect(ClothingEffectKind.Broken);
                 continue;
             }
 
-            num4++;
+            clothingIndex++;
         }
 
         SetClothes(slot, list);

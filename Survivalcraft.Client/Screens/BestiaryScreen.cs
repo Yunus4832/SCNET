@@ -252,7 +252,7 @@ public class BestiaryScreen : Screen
             return;
         }
 
-        var num = MathUtils.Clamp(boundingBox.Size().XZ.Length() / boundingBox.Size().Y, 1f, 1.5f);
-        modelWidget.Size = new Vector2(modelWidget.Size.Y * num, modelWidget.Size.Y);
+        var modelAspectFactor = MathUtils.Clamp(boundingBox.Size().XZ.Length() / boundingBox.Size().Y, 1f, 1.5f);
+        modelWidget.Size = new Vector2(modelWidget.Size.Y * modelAspectFactor, modelWidget.Size.Y);
     }
 }

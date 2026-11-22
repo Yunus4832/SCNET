@@ -71,8 +71,8 @@ public class Random
 
     public int Int()
     {
-        var num = UInt();
-        return (int)(num & 0x7FFFFFFF);
+        var bits = UInt();
+        return (int)(bits & 0x7FFFFFFF);
     }
 
     public int Int(int bound)
@@ -97,41 +97,55 @@ public class Random
 
     public float NormalFloat(float mean, float stdDev)
     {
-        var num = Float();
-        if (num < 0.5)
+        var probability = Float();
+        if (probability < 0.5)
         {
-            var num2 = MathUtils.Sqrt(-2f * MathUtils.Log(num));
-            var num3 = 0.322232425f + num2 * (1f + num2 * (0.3422421f + num2 * (0.0204231218f + num2 * 4.536422E-05f)));
-            var num4 = 0.09934846f +
-                       num2 * (0.588581562f + num2 * (0.5311035f + num2 * (0.103537753f + num2 * 0.00385607f)));
-            return mean + stdDev * (num3 / num4 - num2);
+            var lowerTailScale = MathUtils.Sqrt(-2f * MathUtils.Log(probability));
+            var lowerNumerator = 0.322232425f +
+                                 lowerTailScale *
+                                 (1f +
+                                  lowerTailScale *
+                                  (0.3422421f + lowerTailScale * (0.0204231218f + lowerTailScale * 4.536422E-05f)));
+            var lowerDenominator = 0.09934846f +
+                                   lowerTailScale *
+                                   (0.588581562f +
+                                    lowerTailScale *
+                                    (0.5311035f + lowerTailScale * (0.103537753f + lowerTailScale * 0.00385607f)));
+            return mean + stdDev * (lowerNumerator / lowerDenominator - lowerTailScale);
         }
 
-        var num5 = MathUtils.Sqrt(-2f * MathUtils.Log(1f - num));
-        var num6 = 0.322232425f + num5 * (1f + num5 * (0.3422421f + num5 * (0.0204231218f + num5 * 4.536422E-05f)));
-        var num7 = 0.09934846f +
-                   num5 * (0.588581562f + num5 * (0.5311035f + num5 * (0.103537753f + num5 * 0.00385607f)));
-        return mean - stdDev * (num6 / num7 - num5);
+        var upperTailScale = MathUtils.Sqrt(-2f * MathUtils.Log(1f - probability));
+        var upperNumerator = 0.322232425f +
+                             upperTailScale *
+                             (1f +
+                              upperTailScale *
+                              (0.3422421f + upperTailScale * (0.0204231218f + upperTailScale * 4.536422E-05f)));
+        var upperDenominator = 0.09934846f +
+                               upperTailScale *
+                               (0.588581562f +
+                                upperTailScale *
+                                (0.5311035f + upperTailScale * (0.103537753f + upperTailScale * 0.00385607f)));
+        return mean - stdDev * (upperNumerator / upperDenominator - upperTailScale);
     }
 
     public Vector2 Vector2()
     {
-        float num;
-        float num2;
-        float num3;
-        float num4;
-        float num5;
+        float sampleX;
+        float sampleY;
+        float xSquared;
+        float ySquared;
+        float radiusSquared;
         do
         {
-            num = 2f * Float() - 1f;
-            num2 = 2f * Float() - 1f;
-            num3 = num * num;
-            num4 = num2 * num2;
-            num5 = num3 + num4;
-        } while (!(num5 < 1f));
+            sampleX = 2f * Float() - 1f;
+            sampleY = 2f * Float() - 1f;
+            xSquared = sampleX * sampleX;
+            ySquared = sampleY * sampleY;
+            radiusSquared = xSquared + ySquared;
+        } while (!(radiusSquared < 1f));
 
-        var num6 = 1f / num5;
-        return new Vector2((num3 - num4) * num6, 2f * num * num2 * num6);
+        var inverseRadiusSquared = 1f / radiusSquared;
+        return new Vector2((xSquared - ySquared) * inverseRadiusSquared, 2f * sampleX * sampleY * inverseRadiusSquared);
     }
 
     public Vector2 Vector2(float length)
@@ -146,18 +160,18 @@ public class Random
 
     public Vector3 Vector3()
     {
-        float num;
-        float num2;
-        float num3;
+        float sampleX;
+        float sampleY;
+        float radiusSquared;
         do
         {
-            num = 2f * Float() - 1f;
-            num2 = 2f * Float() - 1f;
-            num3 = num * num + num2 * num2;
-        } while (!(num3 < 1f));
+            sampleX = 2f * Float() - 1f;
+            sampleY = 2f * Float() - 1f;
+            radiusSquared = sampleX * sampleX + sampleY * sampleY;
+        } while (!(radiusSquared < 1f));
 
-        var num4 = MathUtils.Sqrt(1f - num3);
-        return new Vector3(2f * num * num4, 2f * num2 * num4, 1f - 2f * num3);
+        var projectionScale = MathUtils.Sqrt(1f - radiusSquared);
+        return new Vector3(2f * sampleX * projectionScale, 2f * sampleY * projectionScale, 1f - 2f * radiusSquared);
     }
 
     public Vector3 Vector3(float length)

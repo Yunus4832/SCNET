@@ -185,9 +185,13 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
                             NeedsInteractiveMesh(chunk)
             )
             .OrderBy(chunk => Vector2.DistanceSquared(chunk.Center, viewPosition.XZ)).ToList();
-        foreach (var vector2 in obj)
+        foreach (var samplePosition in obj)
         {
-            var chunkAtCell = _terrain.GetChunkAtCell(Terrain.ToCell(vector2.X), Terrain.ToCell(vector2.Z), false);
+            var chunkAtCell = _terrain.GetChunkAtCell(
+                Terrain.ToCell(samplePosition.X),
+                Terrain.ToCell(samplePosition.Z),
+                false
+            );
             if (chunkAtCell != null &&
                 !list.Contains(chunkAtCell) &&
                 (!chunkAtCell.HasCurrentLight ||

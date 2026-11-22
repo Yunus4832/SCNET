@@ -37,19 +37,19 @@ public class TppCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidget
             _position = vector;
         }
 
-        var vector2 = _position - matrix.Translation;
-        float? num = null;
-        var vector3 = Vector3.Normalize(Vector3.Cross(vector2, Vector3.UnitY));
-        var v3 = Vector3.Normalize(Vector3.Cross(vector2, vector3));
+        var cameraOffset = _position - matrix.Translation;
+        float? nearestObstacleDistance = null;
+        var cameraRight = Vector3.Normalize(Vector3.Cross(cameraOffset, Vector3.UnitY));
+        var v3 = Vector3.Normalize(Vector3.Cross(cameraOffset, cameraRight));
         for (var i = 0; i <= 0; i++)
         {
             for (var j = 0; j <= 0; j++)
             {
-                var v4 = 0.5f * (vector3 * i + v3 * j);
-                var vector4 = matrix.Translation + v4;
-                var end = vector4 + vector2 + Vector3.Normalize(vector2) * 0.5f;
+                var v4 = 0.5f * (cameraRight * i + v3 * j);
+                var rayStart = matrix.Translation + v4;
+                var end = rayStart + cameraOffset + Vector3.Normalize(cameraOffset) * 0.5f;
                 var terrainRaycastResult = GameWidget.SubsystemGameWidgets.SubsystemTerrain.Raycast(
-                    vector4,
+                    rayStart,
                     end,
                     false,
                     true,
@@ -59,16 +59,17 @@ public class TppCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidget
                 );
                 if (terrainRaycastResult.HasValue)
                 {
-                    num = num.HasValue
-                        ? MathUtils.Min(num.Value, terrainRaycastResult.Value.Distance)
+                    nearestObstacleDistance = nearestObstacleDistance.HasValue
+                        ? MathUtils.Min(nearestObstacleDistance.Value, terrainRaycastResult.Value.Distance)
                         : terrainRaycastResult.Value.Distance;
                 }
             }
         }
 
-        var vector5 = !num.HasValue
-            ? matrix.Translation + vector2
-            : matrix.Translation + Vector3.Normalize(vector2) * MathUtils.Max(num.Value - 0.5f, 0.2f);
-        SetupPerspectiveCamera(vector5, matrix.Translation - vector5, Vector3.UnitY);
+        var cameraPosition = !nearestObstacleDistance.HasValue
+            ? matrix.Translation + cameraOffset
+            : matrix.Translation +
+              Vector3.Normalize(cameraOffset) * MathUtils.Max(nearestObstacleDistance.Value - 0.5f, 0.2f);
+        SetupPerspectiveCamera(cameraPosition, matrix.Translation - cameraPosition, Vector3.UnitY);
     }
 }

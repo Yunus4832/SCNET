@@ -156,10 +156,10 @@ public class DynamicArray<T> : IList<T>
 
     public bool Remove(T item)
     {
-        var num = IndexOf(item);
-        if (num >= 0)
+        var itemIndex = IndexOf(item);
+        if (itemIndex >= 0)
         {
-            RemoveAt(num);
+            RemoveAt(itemIndex);
             return true;
         }
 
@@ -301,13 +301,13 @@ public class DynamicArray<T> : IList<T>
 
     public void Reverse()
     {
-        var num = 0;
-        var num2 = _count - 1;
-        while (num < num2)
+        var leftIndex = 0;
+        var rightIndex = _count - 1;
+        while (leftIndex < rightIndex)
         {
-            (Array[num], Array[num2]) = (Array[num2], Array[num]);
-            num++;
-            num2--;
+            (Array[leftIndex], Array[rightIndex]) = (Array[rightIndex], Array[leftIndex]);
+            leftIndex++;
+            rightIndex--;
         }
     }
 

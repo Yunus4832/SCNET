@@ -31,8 +31,8 @@ public class FurnitureBlockPresentation(FurnitureBlock block, BlockPresentationC
         var mountingFacesMask = design.MountingFacesMask;
         for (var i = 0; i < 6; i++)
         {
-            var num = CellFace.OppositeFace(i < 4 ? (i + rotation) % 4 : i);
-            var b = (byte)(LightingManager.LightIntensityByLightValueAndFace[15 + 16 * num] * 255f);
+            var worldOppositeFace = CellFace.OppositeFace(i < 4 ? (i + rotation) % 4 : i);
+            var b = (byte)(LightingManager.LightIntensityByLightValueAndFace[15 + 16 * worldOppositeFace] * 255f);
             var color = new Color(b, b, b);
             generator.GenerateShadedMeshVertices(
                 this,
@@ -43,7 +43,7 @@ public class FurnitureBlockPresentation(FurnitureBlock block, BlockPresentationC
                 color,
                 Block.Matrices[rotation],
                 Block.FacesMaps[rotation],
-                geometry.OpaqueSubsetsByFace[num]
+                geometry.OpaqueSubsetsByFace[worldOppositeFace]
             );
             generator.GenerateShadedMeshVertices(
                 this,
@@ -54,10 +54,10 @@ public class FurnitureBlockPresentation(FurnitureBlock block, BlockPresentationC
                 color,
                 Block.Matrices[rotation],
                 Block.FacesMaps[rotation],
-                geometry.AlphaTestSubsetsByFace[num]
+                geometry.AlphaTestSubsetsByFace[worldOppositeFace]
             );
-            var num2 = CellFace.OppositeFace(i < 4 ? (i - rotation + 4) % 4 : i);
-            if ((mountingFacesMask & (1 << num2)) != 0)
+            var designOppositeFace = CellFace.OppositeFace(i < 4 ? (i - rotation + 4) % 4 : i);
+            if ((mountingFacesMask & (1 << designOppositeFace)) != 0)
             {
                 generator.GenerateWireVertices(value, x, y, z, i, 0f, Vector2.Zero, geometry.SubsetOpaque);
             }
@@ -162,8 +162,8 @@ public class FurnitureBlockPresentation(FurnitureBlock block, BlockPresentationC
         }
 
         var mainValue = design.MainValue;
-        var num = Terrain.ExtractContents(mainValue);
-        return Catalog.Get(num)
+        var mainContents = Terrain.ExtractContents(mainValue);
+        return Catalog.Get(mainContents)
             .CreateDebrisParticleSystem(subsystemTerrain, position, mainValue, strength);
     }
 
@@ -181,8 +181,8 @@ public class FurnitureBlockPresentation(FurnitureBlock block, BlockPresentationC
             return base.GetIconViewScale(value, environmentData);
         }
 
-        var num = design.Resolution /
-                  (float)MathUtils.Max(design.Box.Width, design.Box.Height, design.Box.Depth);
-        return IconViewScale * num;
+        var iconScale = design.Resolution /
+                        (float)MathUtils.Max(design.Box.Width, design.Box.Height, design.Box.Depth);
+        return IconViewScale * iconScale;
     }
 }

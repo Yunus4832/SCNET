@@ -90,8 +90,10 @@ public class ComponentFlyAroundBehavior : ComponentBehavior, IUpdateable
                 var position = _componentCreature.ComponentBody.Position;
                 if (!_componentPathfinding.Destination.HasValue)
                 {
-                    var num = _random.Float(0f, 1f) < 0.2f ? _random.Float(0.4f, 0.6f) : 0f - _random.Float(0.4f, 0.6f);
-                    _angle = MathUtils.NormalizeAngle(_angle + num);
+                    var headingChange = _random.Float(0f, 1f) < 0.2f
+                        ? _random.Float(0.4f, 0.6f)
+                        : 0f - _random.Float(0.4f, 0.6f);
+                    _angle = MathUtils.NormalizeAngle(_angle + headingChange);
                     var vector = Vector2.CreateFromAngle(_angle);
                     var value = position + new Vector3(vector.X, 0f, vector.Y) * 10f;
                     value.Y = EstimateHeight(new Vector2(value.X, value.Z), 8) + _random.Float(3f, 5f);
@@ -121,14 +123,14 @@ public class ComponentFlyAroundBehavior : ComponentBehavior, IUpdateable
 
     public float EstimateHeight(Vector2 position, int radius)
     {
-        var num = 0;
+        var highestGroundY = 0;
         for (var i = 0; i < 15; i++)
         {
             var x = Terrain.ToCell(position.X) + _random.Int(-radius, radius);
             var z = Terrain.ToCell(position.Y) + _random.Int(-radius, radius);
-            num = MathUtils.Max(num, _subsystemTerrain.Terrain.GetTopHeight(x, z));
+            highestGroundY = MathUtils.Max(highestGroundY, _subsystemTerrain.Terrain.GetTopHeight(x, z));
         }
 
-        return num;
+        return highestGroundY;
     }
 }

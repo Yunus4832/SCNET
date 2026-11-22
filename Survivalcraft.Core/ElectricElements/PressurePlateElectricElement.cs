@@ -76,8 +76,8 @@ public class PressurePlateElectricElement(
 
     public override void OnHitByProjectile(CellFace cellFace, WorldItem worldItem)
     {
-        var num = Terrain.ExtractContents(worldItem.Value);
-        var block = SubsystemElectricity.SubsystemTerrain.Catalog.Blocks[num];
+        var itemContents = Terrain.ExtractContents(worldItem.Value);
+        var block = SubsystemElectricity.SubsystemTerrain.Catalog.Blocks[itemContents];
         Press(1f * block.Density);
     }
 

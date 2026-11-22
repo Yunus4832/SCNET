@@ -86,15 +86,15 @@ public abstract class SubsystemFluidBlockBehavior(
             var chunkAtCell = SubsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
             if (chunkAtCell != null)
             {
-                var num = TerrainChunk.CalculateCellIndex(x & 0xF, 0, z & 0xF);
+                var columnIndex = TerrainChunk.CalculateCellIndex(x & 0xF, 0, z & 0xF);
                 while (y < 255)
                 {
-                    var num2 = Terrain.ExtractContents(chunkAtCell.GetCellValueFast(num + y + 1));
-                    if (WorldContentBinding.For(Project).Catalog.FluidBlocks[num2] == null)
+                    var contentsAbove = Terrain.ExtractContents(chunkAtCell.GetCellValueFast(columnIndex + y + 1));
+                    if (WorldContentBinding.For(Project).Catalog.FluidBlocks[contentsAbove] == null)
                     {
-                        var cellValueFast = chunkAtCell.GetCellValueFast(num + y);
-                        var num3 = Terrain.ExtractContents(cellValueFast);
-                        var block = WorldContentBinding.For(Project).Catalog.FluidBlocks[num3];
+                        var cellValueFast = chunkAtCell.GetCellValueFast(columnIndex + y);
+                        var contents = Terrain.ExtractContents(cellValueFast);
+                        var block = WorldContentBinding.For(Project).Catalog.FluidBlocks[contents];
                         if (block != null)
                         {
                             surfaceFluidBlock = block;
@@ -130,8 +130,8 @@ public abstract class SubsystemFluidBlockBehavior(
 
         y = (int)surfaceHeight.Value;
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
-        var num = Terrain.ExtractContents(cellValue);
-        if (WorldContentBinding.For(Project).Catalog.Blocks[num] is not FluidBlock)
+        var fluidContents = Terrain.ExtractContents(cellValue);
+        if (WorldContentBinding.For(Project).Catalog.Blocks[fluidContents] is not FluidBlock)
         {
             return null;
         }
@@ -140,18 +140,26 @@ public abstract class SubsystemFluidBlockBehavior(
         var cellValue3 = SubsystemTerrain.Terrain.GetCellValue(x + 1, y, z);
         var cellValue4 = SubsystemTerrain.Terrain.GetCellValue(x, y, z - 1);
         var cellValue5 = SubsystemTerrain.Terrain.GetCellValue(x, y, z + 1);
-        var num2 = Terrain.ExtractContents(cellValue2);
-        var num3 = Terrain.ExtractContents(cellValue3);
-        var num4 = Terrain.ExtractContents(cellValue4);
-        var num5 = Terrain.ExtractContents(cellValue5);
+        var negativeXContents = Terrain.ExtractContents(cellValue2);
+        var positiveXContents = Terrain.ExtractContents(cellValue3);
+        var negativeZContents = Terrain.ExtractContents(cellValue4);
+        var positiveZContents = Terrain.ExtractContents(cellValue5);
         var level = FluidBlock.GetLevel(Terrain.ExtractData(cellValue));
-        var num6 = num2 == num ? FluidBlock.GetLevel(Terrain.ExtractData(cellValue2)) : level;
-        var num7 = num3 == num ? FluidBlock.GetLevel(Terrain.ExtractData(cellValue3)) : level;
-        var num8 = num4 == num ? FluidBlock.GetLevel(Terrain.ExtractData(cellValue4)) : level;
-        var num9 = num5 == num ? FluidBlock.GetLevel(Terrain.ExtractData(cellValue5)) : level;
+        var negativeXLevel = negativeXContents == fluidContents
+            ? FluidBlock.GetLevel(Terrain.ExtractData(cellValue2))
+            : level;
+        var positiveXLevel = positiveXContents == fluidContents
+            ? FluidBlock.GetLevel(Terrain.ExtractData(cellValue3))
+            : level;
+        var negativeZLevel = negativeZContents == fluidContents
+            ? FluidBlock.GetLevel(Terrain.ExtractData(cellValue4))
+            : level;
+        var positiveZLevel = positiveZContents == fluidContents
+            ? FluidBlock.GetLevel(Terrain.ExtractData(cellValue5))
+            : level;
         Vector2 vector = default;
-        vector.X = MathUtils.Sign(level - num6) - MathUtils.Sign(level - num7);
-        vector.Y = MathUtils.Sign(level - num8) - MathUtils.Sign(level - num9);
+        vector.X = MathUtils.Sign(level - negativeXLevel) - MathUtils.Sign(level - positiveXLevel);
+        vector.Y = MathUtils.Sign(level - negativeZLevel) - MathUtils.Sign(level - positiveZLevel);
         var v = vector;
         if (v.LengthSquared() > 1f)
         {
@@ -229,8 +237,8 @@ public abstract class SubsystemFluidBlockBehavior(
                     var contents2 = Terrain.ExtractContents(cellValue2);
                     var data2 = Terrain.ExtractData(cellValue2);
                     var level2 = FluidBlock.GetLevel(data2);
-                    var num = _fluidBlock.MaxLevel + 1;
-                    var num2 = 0;
+                    var minNeighborLevel = _fluidBlock.MaxLevel + 1;
+                    var adjacentSourceCount = 0;
                     for (var j = 0; j < 4; j++)
                     {
                         var cellValue3 =
@@ -243,33 +251,38 @@ public abstract class SubsystemFluidBlockBehavior(
                         if (_fluidBlock.IsTheSameFluid(contents3))
                         {
                             var level3 = FluidBlock.GetLevel(Terrain.ExtractData(cellValue3));
-                            num = MathUtils.Min(num, level3);
+                            minNeighborLevel = MathUtils.Min(minNeighborLevel, level3);
                             if (level3 == 0)
                             {
-                                num2++;
+                                adjacentSourceCount++;
                             }
                         }
                     }
 
-                    if (level != 0 && level <= num)
+                    if (level != 0 && level <= minNeighborLevel)
                     {
                         var contents4 = Terrain.ExtractContents(SubsystemTerrain.Terrain.GetCellValue(x, y + 1, z));
                         if (!_fluidBlock.IsTheSameFluid(contents4))
                         {
-                            if (num + 1 > _fluidBlock.MaxLevel)
+                            if (minNeighborLevel + 1 > _fluidBlock.MaxLevel)
                             {
                                 Set(x, y, z, 0);
                             }
                             else
                             {
-                                Set(x, y, z, Terrain.MakeBlockValue(contents, FluidBlock.SetLevel(data, num + 1)));
+                                Set(
+                                    x,
+                                    y,
+                                    z,
+                                    Terrain.MakeBlockValue(contents, FluidBlock.SetLevel(data, minNeighborLevel + 1))
+                                );
                             }
 
                             continue;
                         }
                     }
 
-                    if (_generateSources && level != 0 && num2 >= 2)
+                    if (_generateSources && level != 0 && adjacentSourceCount >= 2)
                     {
                         Set(x, y, z, Terrain.MakeBlockValue(contents, FluidBlock.SetLevel(data, 0)));
                     }
@@ -290,33 +303,38 @@ public abstract class SubsystemFluidBlockBehavior(
                              level < _fluidBlock.MaxLevel)
                     {
                         _visited.Clear();
-                        var num3 = LevelAtNearestFall(x + 1, y, z, level + 1, _visited);
-                        var num4 = LevelAtNearestFall(x - 1, y, z, level + 1, _visited);
-                        var num5 = LevelAtNearestFall(x, y, z + 1, level + 1, _visited);
-                        var num6 = LevelAtNearestFall(x, y, z - 1, level + 1, _visited);
-                        var num7 = MathUtils.Min(num3, num4, num5, num6);
-                        if (num3 == num7)
+                        var positiveXFallLevel = LevelAtNearestFall(x + 1, y, z, level + 1, _visited);
+                        var negativeXFallLevel = LevelAtNearestFall(x - 1, y, z, level + 1, _visited);
+                        var positiveZFallLevel = LevelAtNearestFall(x, y, z + 1, level + 1, _visited);
+                        var negativeZFallLevel = LevelAtNearestFall(x, y, z - 1, level + 1, _visited);
+                        var nearestFallLevel = MathUtils.Min(
+                            positiveXFallLevel,
+                            negativeXFallLevel,
+                            positiveZFallLevel,
+                            negativeZFallLevel
+                        );
+                        if (positiveXFallLevel == nearestFallLevel)
                         {
                             FlowTo(x + 1, y, z, level + 1);
                             FlowTo(x, y, z - 1, _fluidBlock.MaxLevel);
                             FlowTo(x, y, z + 1, _fluidBlock.MaxLevel);
                         }
 
-                        if (num4 == num7)
+                        if (negativeXFallLevel == nearestFallLevel)
                         {
                             FlowTo(x - 1, y, z, level + 1);
                             FlowTo(x, y, z - 1, _fluidBlock.MaxLevel);
                             FlowTo(x, y, z + 1, _fluidBlock.MaxLevel);
                         }
 
-                        if (num5 == num7)
+                        if (positiveZFallLevel == nearestFallLevel)
                         {
                             FlowTo(x, y, z + 1, level + 1);
                             FlowTo(x - 1, y, z, _fluidBlock.MaxLevel);
                             FlowTo(x + 1, y, z, _fluidBlock.MaxLevel);
                         }
 
-                        if (num6 == num7)
+                        if (negativeZFallLevel == nearestFallLevel)
                         {
                             FlowTo(x, y, z - 1, level + 1);
                             FlowTo(x - 1, y, z, _fluidBlock.MaxLevel);
@@ -368,17 +386,17 @@ public abstract class SubsystemFluidBlockBehavior(
 
     public float? CalculateDistanceToFluid(Vector3 p, int radius, bool flowingFluidOnly)
     {
-        var num = float.MaxValue;
+        var nearestDistanceSquared = float.MaxValue;
         var terrain = SubsystemTerrain.Terrain;
-        var num2 = Terrain.ToCell(p.X) - radius;
-        var num3 = Terrain.ToCell(p.X) + radius;
-        var num4 = MathUtils.Clamp(Terrain.ToCell(p.Y) - radius, 0, 254);
-        var num5 = MathUtils.Clamp(Terrain.ToCell(p.Y) + radius, 0, 254);
-        var num6 = Terrain.ToCell(p.Z) - radius;
-        var num7 = Terrain.ToCell(p.Z) + radius;
-        for (var i = num6; i <= num7; i++)
+        var minX = Terrain.ToCell(p.X) - radius;
+        var maxX = Terrain.ToCell(p.X) + radius;
+        var minY = MathUtils.Clamp(Terrain.ToCell(p.Y) - radius, 0, 254);
+        var maxY = MathUtils.Clamp(Terrain.ToCell(p.Y) + radius, 0, 254);
+        var minZ = Terrain.ToCell(p.Z) - radius;
+        var maxZ = Terrain.ToCell(p.Z) + radius;
+        for (var i = minZ; i <= maxZ; i++)
         {
-            for (var j = num2; j <= num3; j++)
+            for (var j = minX; j <= maxX; j++)
             {
                 var chunkAtCell = terrain.GetChunkAtCell(j, i, false);
                 if (chunkAtCell == null)
@@ -386,8 +404,8 @@ public abstract class SubsystemFluidBlockBehavior(
                     continue;
                 }
 
-                var k = TerrainChunk.CalculateCellIndex(j & 0xF, num4, i & 0xF);
-                for (var l = num4; l <= num5; l++, k++)
+                var k = TerrainChunk.CalculateCellIndex(j & 0xF, minY, i & 0xF);
+                for (var l = minY; l <= maxY; l++, k++)
                 {
                     var cellValueFast = chunkAtCell.GetCellValueFast(k);
                     var contents = Terrain.ExtractContents(cellValueFast);
@@ -410,24 +428,24 @@ public abstract class SubsystemFluidBlockBehavior(
                         }
                     }
 
-                    var num8 = p.X - (j + 0.5f);
-                    var num9 = p.Y - (l + 1f);
-                    var num10 = p.Z - (i + 0.5f);
-                    var num11 = num8 * num8 + num9 * num9 + num10 * num10;
-                    if (num11 < num)
+                    var offsetX = p.X - (j + 0.5f);
+                    var offsetY = p.Y - (l + 1f);
+                    var offsetZ = p.Z - (i + 0.5f);
+                    var distanceSquared = offsetX * offsetX + offsetY * offsetY + offsetZ * offsetZ;
+                    if (distanceSquared < nearestDistanceSquared)
                     {
-                        num = num11;
+                        nearestDistanceSquared = distanceSquared;
                     }
                 }
             }
         }
 
-        if (num.CloseTo(float.MaxValue))
+        if (nearestDistanceSquared.CloseTo(float.MaxValue))
         {
             return null;
         }
 
-        return MathUtils.Sqrt(num);
+        return MathUtils.Sqrt(nearestDistanceSquared);
     }
 
     public void Set(int x, int y, int z, int value)
@@ -489,22 +507,22 @@ public abstract class SubsystemFluidBlockBehavior(
 
         levels[new Point3(x, y, z)] = level;
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
-        var num = Terrain.ExtractContents(cellValue);
-        if (_fluidBlock.IsTheSameFluid(num))
+        var contents = Terrain.ExtractContents(cellValue);
+        if (_fluidBlock.IsTheSameFluid(contents))
         {
             if (FluidBlock.GetLevel(Terrain.ExtractData(cellValue)) < level)
             {
                 return int.MaxValue;
             }
         }
-        else if (WorldContentBinding.For(Project).Catalog.Blocks[num].FluidBlocker)
+        else if (WorldContentBinding.For(Project).Catalog.Blocks[contents].FluidBlocker)
         {
             return int.MaxValue;
         }
 
-        var num2 = Terrain.ExtractContents(SubsystemTerrain.Terrain.GetCellValue(x, y - 1, z));
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num2];
-        if (_fluidBlock.IsTheSameFluid(num2) || !block.FluidBlocker)
+        var contentsBelow = Terrain.ExtractContents(SubsystemTerrain.Terrain.GetCellValue(x, y - 1, z));
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[contentsBelow];
+        if (_fluidBlock.IsTheSameFluid(contentsBelow) || !block.FluidBlocker)
         {
             return level;
         }

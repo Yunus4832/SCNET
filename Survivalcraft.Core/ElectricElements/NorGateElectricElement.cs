@@ -15,18 +15,18 @@ public class NorGateElectricElement(
     public override bool Simulate()
     {
         var voltage = _voltage;
-        var num = 0;
+        var combinedBits = 0;
         foreach (var connection in Connections)
         {
             if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0)
             {
-                num |= (int)MathUtils.Round(
+                combinedBits |= (int)MathUtils.Round(
                     connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace) * 15f
                 );
             }
         }
 
-        _voltage = (~num & 0xF) / 15f;
+        _voltage = (~combinedBits & 0xF) / 15f;
         return _voltage.UncloseTo(voltage);
     }
 }

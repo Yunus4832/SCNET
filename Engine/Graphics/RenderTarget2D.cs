@@ -168,13 +168,13 @@ public sealed class RenderTarget2D : Texture2D
     {
         VerifyNotDisposed();
         var size = ColorFormat.GetSize();
-        var num = Marshal.SizeOf<T>();
-        if (num > size)
+        var elementSize = Marshal.SizeOf<T>();
+        if (elementSize > size)
         {
             throw new InvalidOperationException("Target array element size can not greater than Pixel size");
         }
 
-        if (size % num != 0)
+        if (size % elementSize != 0)
         {
             throw new InvalidOperationException("Pixel size is not an integer multiple of target array element size.");
         }
@@ -194,7 +194,7 @@ public sealed class RenderTarget2D : Texture2D
             throw new ArgumentOutOfRangeException(nameof(targetStartIndex));
         }
 
-        if ((target.Length - targetStartIndex) * num < sourceRectangle.Width * sourceRectangle.Height * size)
+        if ((target.Length - targetStartIndex) * elementSize < sourceRectangle.Width * sourceRectangle.Height * size)
         {
             throw new InvalidOperationException("Not enough space in target array.");
         }

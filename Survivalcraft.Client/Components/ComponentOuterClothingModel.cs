@@ -30,9 +30,9 @@ public class ComponentOuterClothingModel : ComponentModel
 
         if (Opacity is < 1f)
         {
-            var num = _componentCreature.ComponentBody.ImmersionFactor >= 1f;
-            var flag = subsystemSky.ViewUnderWaterDepth > 0f;
-            RenderingMode = num == flag
+            var isCreatureSubmerged = _componentCreature.ComponentBody.ImmersionFactor >= 1f;
+            var isCameraSubmerged = subsystemSky.ViewUnderWaterDepth > 0f;
+            RenderingMode = isCreatureSubmerged == isCameraSubmerged
                 ? ModelRenderingMode.TransparentAfterWater
                 : ModelRenderingMode.TransparentBeforeWater;
         }

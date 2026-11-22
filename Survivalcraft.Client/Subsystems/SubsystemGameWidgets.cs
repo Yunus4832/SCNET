@@ -33,17 +33,17 @@ public class SubsystemGameWidgets : Subsystem, IUpdateable
 
     public float CalculateSquaredDistanceFromNearestView(Vector3 p)
     {
-        var num = float.MaxValue;
+        var nearestDistanceSquared = float.MaxValue;
         foreach (var gameWidget in _gameWidgets)
         {
-            var num2 = Vector3.DistanceSquared(p, gameWidget.ActiveCamera.ViewPosition);
-            if (num2 < num)
+            var distanceSquared = Vector3.DistanceSquared(p, gameWidget.ActiveCamera.ViewPosition);
+            if (distanceSquared < nearestDistanceSquared)
             {
-                num = num2;
+                nearestDistanceSquared = distanceSquared;
             }
         }
 
-        return num;
+        return nearestDistanceSquared;
     }
 
     public float CalculateDistanceFromNearestView(Vector3 p)

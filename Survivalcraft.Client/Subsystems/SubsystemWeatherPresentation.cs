@@ -72,20 +72,20 @@ public sealed class SubsystemWeatherPresentation : Subsystem, IDrawable, IUpdate
         SnowColor = new Color(b2, b2, b2);
         if (Time.PeriodicEvent(0.5, 0.0))
         {
-            var num4 = 0f;
+            var rainVolume = 0f;
             if (Weather.PrecipitationIntensity > 0f)
             {
-                var num5 = 0f;
+                var accumulatedVolume = 0f;
                 foreach (var listenerPosition in _subsystemAudio.ListenerPositions)
                 {
-                    var num6 = Terrain.ToCell(listenerPosition.X) - 5;
-                    var num7 = Terrain.ToCell(listenerPosition.Z) - 5;
-                    var num8 = Terrain.ToCell(listenerPosition.X) + 5;
-                    var num9 = Terrain.ToCell(listenerPosition.Z) + 5;
-                    Vector3 vector2 = default;
-                    for (var l = num6; l <= num8; l++)
+                    var minX = Terrain.ToCell(listenerPosition.X) - 5;
+                    var minZ = Terrain.ToCell(listenerPosition.Z) - 5;
+                    var maxX = Terrain.ToCell(listenerPosition.X) + 5;
+                    var maxZ = Terrain.ToCell(listenerPosition.Z) + 5;
+                    Vector3 rainPosition = default;
+                    for (var l = minX; l <= maxX; l++)
                     {
-                        for (var m = num7; m <= num9; m++)
+                        for (var m = minZ; m <= maxZ; m++)
                         {
                             var precipitationShaftInfo = Weather.GetPrecipitationShaftInfo(l, m);
                             if (precipitationShaftInfo is not { Type: PrecipitationType.Rain, Intensity: > 0f })
@@ -93,22 +93,25 @@ public sealed class SubsystemWeatherPresentation : Subsystem, IDrawable, IUpdate
                                 continue;
                             }
 
-                            vector2.X = l + 0.5f;
-                            vector2.Y = MathUtils.Max(precipitationShaftInfo.YLimit, listenerPosition.Y);
-                            vector2.Z = m + 0.5f;
-                            var num10 = vector2.X - listenerPosition.X;
-                            var num11 = 8f * (vector2.Y - listenerPosition.Y);
-                            var num12 = vector2.Z - listenerPosition.Z;
-                            var distance = MathUtils.Sqrt(num10 * num10 + num11 * num11 + num12 * num12);
-                            num5 += _subsystemAudio.CalculateVolume(distance, 1.5f) * precipitationShaftInfo.Intensity;
+                            rainPosition.X = l + 0.5f;
+                            rainPosition.Y = MathUtils.Max(precipitationShaftInfo.YLimit, listenerPosition.Y);
+                            rainPosition.Z = m + 0.5f;
+                            var offsetX = rainPosition.X - listenerPosition.X;
+                            var weightedOffsetY = 8f * (rainPosition.Y - listenerPosition.Y);
+                            var offsetZ = rainPosition.Z - listenerPosition.Z;
+                            var distance = MathUtils.Sqrt(
+                                offsetX * offsetX + weightedOffsetY * weightedOffsetY + offsetZ * offsetZ
+                            );
+                            accumulatedVolume += _subsystemAudio.CalculateVolume(distance, 1.5f) *
+                                                 precipitationShaftInfo.Intensity;
                         }
                     }
                 }
 
-                num4 = MathUtils.Max(num4, num5);
+                rainVolume = MathUtils.Max(rainVolume, accumulatedVolume);
             }
 
-            _targetRainSoundVolume = MathUtils.Saturate(1.5f * num4 / _rainVolumeFactor);
+            _targetRainSoundVolume = MathUtils.Saturate(1.5f * rainVolume / _rainVolumeFactor);
         }
 
         _rainSound.Volume = MathUtils.Saturate(
@@ -166,9 +169,9 @@ public sealed class SubsystemWeatherPresentation : Subsystem, IDrawable, IUpdate
             return;
         }
 
-        var num = Configuration.ClientConfiguration.Preferences.VisibilityRange > 128 ? 9 :
+        var shaftRadius = Configuration.ClientConfiguration.Preferences.VisibilityRange > 128 ? 9 :
             Configuration.ClientConfiguration.Preferences.VisibilityRange <= 64 ? 7 : 8;
-        var num2 = num * num;
+        var shaftRadiusSquared = shaftRadius * shaftRadius;
         var activeShafts = GetActiveShafts(camera.GameWidget);
         var vector = new Vector2(camera.ViewPosition.X, camera.ViewPosition.Z);
         var point = Terrain.ToCell(vector);
@@ -183,7 +186,7 @@ public sealed class SubsystemWeatherPresentation : Subsystem, IDrawable, IUpdate
         foreach (var value2 in activeShafts.Values)
         {
             if (MathUtils.Sqr(value2.Point.X + 0.5f - vector.X) + MathUtils.Sqr(value2.Point.Y + 0.5f - vector.Y) >
-                num2 + 1f)
+                shaftRadiusSquared + 1f)
             {
                 _toRemove.Add(value2);
             }
@@ -199,11 +202,11 @@ public sealed class SubsystemWeatherPresentation : Subsystem, IDrawable, IUpdate
             activeShafts.Remove(item.Point);
         }
 
-        for (var i = point.X - num; i <= point.X + num; i++)
+        for (var i = point.X - shaftRadius; i <= point.X + shaftRadius; i++)
         {
-            for (var j = point.Y - num; j <= point.Y + num; j++)
+            for (var j = point.Y - shaftRadius; j <= point.Y + shaftRadius; j++)
             {
-                if (!(MathUtils.Sqr(i + 0.5f - vector.X) + MathUtils.Sqr(j + 0.5f - vector.Y) <= num2))
+                if (!(MathUtils.Sqr(i + 0.5f - vector.X) + MathUtils.Sqr(j + 0.5f - vector.Y) <= shaftRadiusSquared))
                 {
                     continue;
                 }

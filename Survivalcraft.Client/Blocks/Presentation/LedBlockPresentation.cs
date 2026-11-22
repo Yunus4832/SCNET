@@ -35,8 +35,8 @@ public class LedBlockPresentation(LedBlock block, BlockPresentationCatalog catal
         int z
     )
     {
-        var num = Terrain.ExtractData(value);
-        if (num >= BlockMeshesByData.Length)
+        var blockData = Terrain.ExtractData(value);
+        if (blockData >= BlockMeshesByData.Length)
         {
             return;
         }
@@ -46,7 +46,7 @@ public class LedBlockPresentation(LedBlock block, BlockPresentationCatalog catal
             x,
             y,
             z,
-            BlockMeshesByData[num],
+            BlockMeshesByData[blockData],
             Color.White,
             null,
             geometry.SubsetOpaque
@@ -117,7 +117,7 @@ public class LedBlockPresentation(LedBlock block, BlockPresentationCatalog catal
             );
             for (var j = 0; j < 6; j++)
             {
-                var num = SetMountingFace(SetColor(0, i), j);
+                var blockData = SetMountingFace(SetColor(0, i), j);
                 var m2 = j >= 4
                     ? j != 4
                         ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
@@ -126,8 +126,8 @@ public class LedBlockPresentation(LedBlock block, BlockPresentationCatalog catal
                       Matrix.CreateTranslation(0f, 0f, -0.5f) *
                       Matrix.CreateRotationY(j * (float)Math.PI / 2f) *
                       Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-                BlockMeshesByData[num] = new BlockMesh();
-                BlockMeshesByData[num].AppendModelPrimitive(
+                BlockMeshesByData[blockData] = new BlockMesh();
+                BlockMeshesByData[blockData].AppendModelPrimitive(
                     ledNode.RequireMesh().Primitives[0],
                     nodeAbsoluteTransform * m2,
                     false,
@@ -136,7 +136,7 @@ public class LedBlockPresentation(LedBlock block, BlockPresentationCatalog catal
                     false,
                     Color.White
                 );
-                BlockMeshesByData[num].AppendModelPrimitive(
+                BlockMeshesByData[blockData].AppendModelPrimitive(
                     ledBulbNode.RequireMesh().Primitives[0],
                     nodeAbsoluteTransform2 * m2,
                     false,

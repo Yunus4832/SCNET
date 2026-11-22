@@ -30,7 +30,7 @@ public class ComponentCraftingTable : ComponentInventoryBase
 
     public override int RemoveSlotItems(int slotIndex, int count)
     {
-        var num = 0;
+        var removedCount = 0;
         if (slotIndex == ResultSlotIndex)
         {
             if (_matchedRecipe != null)
@@ -40,11 +40,14 @@ public class ComponentCraftingTable : ComponentInventoryBase
                     if (slots[RemainsSlotIndex].Count == 0 ||
                         slots[RemainsSlotIndex].Value == _matchedRecipe.RemainsValue)
                     {
-                        var num2 = WorldContentBinding.For(Project).Catalog
-                                       .Blocks[Terrain.ExtractContents(_matchedRecipe.RemainsValue)]
-                                       .GetMaxStacking(_matchedRecipe.RemainsValue) -
-                                   slots[RemainsSlotIndex].Count;
-                        count = MathUtils.Min(count, num2 / _matchedRecipe.RemainsCount * _matchedRecipe.ResultCount);
+                        var remainsCapacity = WorldContentBinding.For(Project).Catalog
+                                                  .Blocks[Terrain.ExtractContents(_matchedRecipe.RemainsValue)]
+                                                  .GetMaxStacking(_matchedRecipe.RemainsValue) -
+                                              slots[RemainsSlotIndex].Count;
+                        count = MathUtils.Min(
+                            count,
+                            remainsCapacity / _matchedRecipe.RemainsCount * _matchedRecipe.ResultCount
+                        );
                     }
                     else
                     {
@@ -53,8 +56,8 @@ public class ComponentCraftingTable : ComponentInventoryBase
                 }
 
                 count = count / _matchedRecipe.ResultCount * _matchedRecipe.ResultCount;
-                num = base.RemoveSlotItems(slotIndex, count);
-                if (num > 0)
+                removedCount = base.RemoveSlotItems(slotIndex, count);
+                if (removedCount > 0)
                 {
                     for (var i = 0; i < 9; i++)
                     {
@@ -62,7 +65,7 @@ public class ComponentCraftingTable : ComponentInventoryBase
                         {
                             var index = i % 3 + _craftingGridSize * (i / 3);
                             slots[index].Count =
-                                MathUtils.Max(slots[index].Count - num / _matchedRecipe.ResultCount, 0);
+                                MathUtils.Max(slots[index].Count - removedCount / _matchedRecipe.ResultCount, 0);
                             OnSlotChange(index);
                         }
                     }
@@ -71,22 +74,22 @@ public class ComponentCraftingTable : ComponentInventoryBase
                     {
                         slots[RemainsSlotIndex].Value = _matchedRecipe.RemainsValue;
                         slots[RemainsSlotIndex].Count +=
-                            num / _matchedRecipe.ResultCount * _matchedRecipe.RemainsCount;
+                            removedCount / _matchedRecipe.ResultCount * _matchedRecipe.RemainsCount;
                         OnSlotChange(RemainsSlotIndex);
                     }
 
                     var componentCharacter = FindInteractingPlayer();
-                    componentCharacter?.CharacterStats?.ItemsCrafted += num;
+                    componentCharacter?.CharacterStats?.ItemsCrafted += removedCount;
                 }
             }
         }
         else
         {
-            num = base.RemoveSlotItems(slotIndex, count);
+            removedCount = base.RemoveSlotItems(slotIndex, count);
         }
 
         UpdateCraftingResult();
-        return num;
+        return removedCount;
     }
 
     public override void Load(ValuesDictionary valuesDictionary, IdToEntityMap idToEntityMap)
@@ -102,26 +105,27 @@ public class ComponentCraftingTable : ComponentInventoryBase
             return;
         }
 
-        var num = int.MaxValue;
+        var availableBatches = int.MaxValue;
         for (var i = 0; i < _craftingGridSize; i++)
         {
             for (var j = 0; j < _craftingGridSize; j++)
             {
-                var num2 = i + j * 3;
+                var ingredientIndex = i + j * 3;
                 var slotIndex = i + j * _craftingGridSize;
                 var slotValue = GetSlotValue(slotIndex);
-                var num3 = Terrain.ExtractContents(slotValue);
-                var num4 = Terrain.ExtractData(slotValue);
+                var contents = Terrain.ExtractContents(slotValue);
+                var itemData = Terrain.ExtractData(slotValue);
                 var slotCount = GetSlotCount(slotIndex);
                 if (slotCount > 0)
                 {
-                    var block = WorldContentBinding.For(Project).Catalog.Blocks[num3];
-                    _matchedIngredients[num2] = block.CraftingId + ":" + num4.ToString(CultureInfo.InvariantCulture);
-                    num = MathUtils.Min(num, slotCount);
+                    var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
+                    _matchedIngredients[ingredientIndex] =
+                        block.CraftingId + ":" + itemData.ToString(CultureInfo.InvariantCulture);
+                    availableBatches = MathUtils.Min(availableBatches, slotCount);
                 }
                 else
                 {
-                    _matchedIngredients[num2] = string.Empty;
+                    _matchedIngredients[ingredientIndex] = string.Empty;
                 }
             }
         }
@@ -137,7 +141,7 @@ public class ComponentCraftingTable : ComponentInventoryBase
         {
             _matchedRecipe = craftingRecipe;
             slots[ResultSlotIndex].Value = craftingRecipe.ResultValue;
-            slots[ResultSlotIndex].Count = craftingRecipe.ResultCount * num;
+            slots[ResultSlotIndex].Count = craftingRecipe.ResultCount * availableBatches;
         }
         else
         {

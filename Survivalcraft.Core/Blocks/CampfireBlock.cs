@@ -70,8 +70,8 @@ public class CampfireBlock : Block
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = Terrain.ExtractData(value);
-        return num < CollisionBoxesByData.Length ? CollisionBoxesByData[num] : [];
+        var fireData = Terrain.ExtractData(value);
+        return fireData < CollisionBoxesByData.Length ? CollisionBoxesByData[fireData] : [];
     }
 
 
@@ -95,8 +95,8 @@ public class CampfireBlock : Block
 
     public override int GetEmittedLightAmount(int value)
     {
-        var num = Terrain.ExtractData(value);
-        return num > 0 ? MathUtils.Min(8 + num / 2, 15) : 0;
+        var fireData = Terrain.ExtractData(value);
+        return fireData > 0 ? MathUtils.Min(8 + fireData / 2, 15) : 0;
     }
 
     public override float GetHeat(int value)

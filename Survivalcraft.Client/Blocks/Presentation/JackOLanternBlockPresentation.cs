@@ -22,15 +22,15 @@ public class JackOLanternBlockPresentation(JackOLanternBlock block, BlockPresent
         int z
     )
     {
-        var num = Terrain.ExtractData(value);
-        if (num < BlockMeshesByData.Length)
+        var rotation = Terrain.ExtractData(value);
+        if (rotation < BlockMeshesByData.Length)
         {
             generator.GenerateMeshVertices(
                 this,
                 x,
                 y,
                 z,
-                BlockMeshesByData[num],
+                BlockMeshesByData[rotation],
                 Color.White,
                 null,
                 geometry.SubsetAlphaTest

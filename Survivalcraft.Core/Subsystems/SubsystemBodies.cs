@@ -48,10 +48,10 @@ public class SubsystemBodies : Subsystem, IUpdateable
     {
         if (WorldRuntimeContext.For(Project).IsAuthority)
         {
-            var flag = _subsystemUpdate.IsLastUpdateInTick &&
-                       WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.1, 0.0);
+            var sendBodyUpdates = _subsystemUpdate.IsLastUpdateInTick &&
+                                  WorldRuntimeContext.For(Project).Clock.PeriodicEvent(0.1, 0.0);
             _toSendList.Clear();
-            var eligibleClients = flag
+            var eligibleClients = sendBodyUpdates
                 ? _subsystemCharacters.Characters
                     .Where(player => !player.IsLocalCharacter &&
                                      player.ComponentCharacter is not null &&
@@ -63,7 +63,7 @@ public class SubsystemBodies : Subsystem, IUpdateable
             foreach (var body in Bodies)
             {
                 UpdateBody(body);
-                if (!flag)
+                if (!sendBodyUpdates)
                 {
                     continue;
                 }
@@ -85,7 +85,7 @@ public class SubsystemBodies : Subsystem, IUpdateable
                 }
             }
 
-            if (!flag)
+            if (!sendBodyUpdates)
             {
                 return;
             }
@@ -128,13 +128,13 @@ public class SubsystemBodies : Subsystem, IUpdateable
 
     public void FindBodiesAroundPoint(Vector2 point, float radius, DynamicArray<ComponentBody> result)
     {
-        var num = (int)MathUtils.Floor((point.X - radius) / 8f);
-        var num2 = (int)MathUtils.Floor((point.Y - radius) / 8f);
-        var num3 = (int)MathUtils.Floor((point.X + radius) / 8f);
-        var num4 = (int)MathUtils.Floor((point.Y + radius) / 8f);
-        for (var i = num; i <= num3; i++)
+        var minAreaX = (int)MathUtils.Floor((point.X - radius) / 8f);
+        var minAreaZ = (int)MathUtils.Floor((point.Y - radius) / 8f);
+        var maxAreaX = (int)MathUtils.Floor((point.X + radius) / 8f);
+        var maxAreaZ = (int)MathUtils.Floor((point.Y + radius) / 8f);
+        for (var i = minAreaX; i <= maxAreaX; i++)
         {
-            for (var j = num2; j <= num4; j++)
+            for (var j = minAreaZ; j <= maxAreaZ; j++)
             {
                 if (!_componentBodiesByArea.TryGetValue(new Point2(i, j), out var value))
                 {
@@ -153,13 +153,13 @@ public class SubsystemBodies : Subsystem, IUpdateable
     {
         var point = new Point2((int)MathUtils.Floor(corner1.X / 8f), (int)MathUtils.Floor(corner1.Y / 8f));
         var point2 = new Point2((int)MathUtils.Floor(corner2.X / 8f), (int)MathUtils.Floor(corner2.Y / 8f));
-        var num = MathUtils.Min(point.X, point2.X) - 1;
-        var num2 = MathUtils.Min(point.Y, point2.Y) - 1;
-        var num3 = MathUtils.Max(point.X, point2.X) + 1;
-        var num4 = MathUtils.Max(point.Y, point2.Y) + 1;
-        for (var i = num; i <= num3; i++)
+        var minAreaX = MathUtils.Min(point.X, point2.X) - 1;
+        var minAreaZ = MathUtils.Min(point.Y, point2.Y) - 1;
+        var maxAreaX = MathUtils.Max(point.X, point2.X) + 1;
+        var maxAreaZ = MathUtils.Max(point.Y, point2.Y) + 1;
+        for (var i = minAreaX; i <= maxAreaX; i++)
         {
-            for (var j = num2; j <= num4; j++)
+            for (var j = minAreaZ; j <= maxAreaZ; j++)
             {
                 if (!_componentBodiesByArea.TryGetValue(new Point2(i, j), out var value))
                 {
@@ -181,8 +181,8 @@ public class SubsystemBodies : Subsystem, IUpdateable
         Func<ComponentBody, float, bool> action
     )
     {
-        var num = Vector3.Distance(start, end);
-        var ray = new Ray3(start, num > 0f ? (end - start) / num : Vector3.UnitX);
+        var rayLength = Vector3.Distance(start, end);
+        var ray = new Ray3(start, rayLength > 0f ? (end - start) / rayLength : Vector3.UnitX);
         var corner = new Vector2(start.X, start.Z);
         var corner2 = new Vector2(end.X, end.Z);
         var bodyRaycastResult = default(BodyRaycastResult);
@@ -194,25 +194,27 @@ public class SubsystemBodies : Subsystem, IUpdateable
         for (var i = 0; i < _componentBodies.Count; i++)
         {
             var componentBody = _componentBodies.Array[i];
-            float? num2;
+            float? hitDistance;
             if (inflateAmount > 0f)
             {
                 var boundingBox = componentBody.BoundingBox;
                 boundingBox.Min -= new Vector3(inflateAmount);
                 boundingBox.Max += new Vector3(inflateAmount);
-                num2 = ray.Intersection(boundingBox);
+                hitDistance = ray.Intersection(boundingBox);
             }
             else
             {
-                num2 = ray.Intersection(componentBody.BoundingBox);
+                hitDistance = ray.Intersection(componentBody.BoundingBox);
             }
 
-            if (!(num2 <= num) || !(num2.Value < value.Distance) || !action(componentBody, num2.Value))
+            if (!(hitDistance <= rayLength) ||
+                !(hitDistance.Value < value.Distance) ||
+                !action(componentBody, hitDistance.Value))
             {
                 continue;
             }
 
-            value.Distance = num2.Value;
+            value.Distance = hitDistance.Value;
             value.ComponentBody = componentBody;
         }
 

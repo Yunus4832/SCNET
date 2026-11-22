@@ -87,8 +87,8 @@ public class ResizableListWidget : ScrollPanelWidget
                 return;
             }
 
-            var num = _items.IndexOf(value);
-            SelectedIndex = num;
+            var itemIndex = _items.IndexOf(value);
+            SelectedIndex = itemIndex;
         }
     }
 
@@ -132,10 +132,10 @@ public class ResizableListWidget : ScrollPanelWidget
 
     public void RemoveItem(object item)
     {
-        var num = _items.IndexOf(item);
-        if (num >= 0)
+        var itemIndex = _items.IndexOf(item);
+        if (itemIndex >= 0)
         {
-            RemoveItemAt(num);
+            RemoveItemAt(itemIndex);
         }
     }
 
@@ -208,19 +208,19 @@ public class ResizableListWidget : ScrollPanelWidget
     {
         if (num >= 0 && num < _items.Count)
         {
-            var num2 = GetItemPosition(num);
-            var num3 = Direction == LayoutDirection.Horizontal ? ActualSize.X : ActualSize.Y;
-            if (num2 < ScrollPosition)
+            var itemStart = GetItemPosition(num);
+            var viewportLength = Direction == LayoutDirection.Horizontal ? ActualSize.X : ActualSize.Y;
+            if (itemStart < ScrollPosition)
             {
-                ScrollPosition = num2;
+                ScrollPosition = itemStart;
             }
             else
             {
                 var itemSize = GetItemSize(num);
-                if (num2 > ScrollPosition + num3 - itemSize)
+                if (itemStart > ScrollPosition + viewportLength - itemSize)
                 {
-                    var scrollPosition = num2 - num3 + itemSize;
-                    if (KeepItemsWholeWhenScrolling && itemSize <= num3)
+                    var scrollPosition = itemStart - viewportLength + itemSize;
+                    if (KeepItemsWholeWhenScrolling && itemSize <= viewportLength)
                     {
                         for (var i = 0; i <= num; i++)
                         {
@@ -241,8 +241,8 @@ public class ResizableListWidget : ScrollPanelWidget
 
     public void ScrollToItem(object item)
     {
-        var num = _items.IndexOf(item);
-        ScrollToPosition(num);
+        var itemIndex = _items.IndexOf(item);
+        ScrollToPosition(itemIndex);
     }
 
     protected override void MeasureOverride(Vector2 parentAvailableSize)
@@ -309,11 +309,11 @@ public class ResizableListWidget : ScrollPanelWidget
         }
 
         _lastActualSize = ActualSize;
-        var num = _firstVisibleIndex;
+        var itemIndex = _firstVisibleIndex;
         foreach (var child in Children)
         {
-            var itemSize = GetItemSize(num);
-            var itemPos = GetItemPosition(num);
+            var itemSize = GetItemSize(itemIndex);
+            var itemPos = GetItemPosition(itemIndex);
             if (Direction == LayoutDirection.Horizontal)
             {
                 var vector = new Vector2(itemPos - ScrollPosition, 0f);
@@ -321,21 +321,21 @@ public class ResizableListWidget : ScrollPanelWidget
             }
             else
             {
-                var vector2 = new Vector2(0f, itemPos - ScrollPosition);
-                ArrangeChildWidgetInCell(vector2, vector2 + new Vector2(ActualSize.X, itemSize), child);
+                var childPosition = new Vector2(0f, itemPos - ScrollPosition);
+                ArrangeChildWidgetInCell(childPosition, childPosition + new Vector2(ActualSize.X, itemSize), child);
             }
 
-            num++;
+            itemIndex++;
         }
     }
 
     public override void Update()
     {
-        var flag = ScrollSpeed != 0f;
+        var wasScrolling = ScrollSpeed != 0f;
         base.Update();
         if (Input.Tap.HasValue && HitTestPanel(Input.Tap.Value))
         {
-            _clickAllowed = !flag;
+            _clickAllowed = !wasScrolling;
         }
 
         if (!Input.Click.HasValue ||
@@ -346,13 +346,13 @@ public class ResizableListWidget : ScrollPanelWidget
             return;
         }
 
-        var num = PositionToItemIndex(Input.Click.Value.End);
-        if (ItemClicked != null && num >= 0 && num < _items.Count)
+        var clickedIndex = PositionToItemIndex(Input.Click.Value.End);
+        if (ItemClicked != null && clickedIndex >= 0 && clickedIndex < _items.Count)
         {
-            ItemClicked(Items[num]);
+            ItemClicked(Items[clickedIndex]);
         }
 
-        SelectedIndex = num;
+        SelectedIndex = clickedIndex;
         if (SelectedIndex.HasValue)
         {
             AudioManager.PlaySound("Audio/UI/ButtonClick", 1f, 0f, 0f);

@@ -98,7 +98,8 @@ public class GeneratedTerrainEnvironment : ITerrainEnvironment
             )
             : null;
         var random = new Random(seed);
-        var num = islandSize.HasValue ? MathUtils.Min(islandSize.Value.X, islandSize.Value.Y) : float.MaxValue;
+        var shortestIslandSide =
+            islandSize.HasValue ? MathUtils.Min(islandSize.Value.X, islandSize.Value.Y) : float.MaxValue;
         oceanCorner = new Vector2(-200f, -200f);
         temperatureOffset = new Vector2(random.Float(-3000f, 3000f), random.Float(-3000f, 3000f));
         humidityOffset = new Vector2(random.Float(-3000f, 3000f), random.Float(-3000f, 3000f));
@@ -106,8 +107,8 @@ public class GeneratedTerrainEnvironment : ITerrainEnvironment
         riversOffset = new Vector2(random.Float(-3000f, 3000f), random.Float(-3000f, 3000f));
         tgBiomeScaling = (isIsland ? 1f : 1.75f) *
                          (float)parameters.Get<double>("biomeSize");
-        tgShoreFluctuations = MathUtils.Clamp(2f * num, 0f, 150f);
-        tgShoreFluctuationsScaling = MathUtils.Clamp(0.04f * num, 0.5f, 3f);
+        tgShoreFluctuations = MathUtils.Clamp(2f * shortestIslandSide, 0f, 150f);
+        tgShoreFluctuationsScaling = MathUtils.Clamp(0.04f * shortestIslandSide, 0.5f, 3f);
         tgOceanSlope = 0.006f;
         tgOceanSlopeVariation = 0.004f;
         tgIslandsFrequency = 0.01f;
@@ -142,16 +143,16 @@ public class GeneratedTerrainEnvironment : ITerrainEnvironment
     {
         if (islandSize.HasValue)
         {
-            var num = CalculateOceanShoreX(z);
-            var num2 = CalculateOceanShoreZ(x);
-            var num3 = CalculateOceanShoreX(z + 1000f) + islandSize.Value.X;
-            var num4 = CalculateOceanShoreZ(x + 1000f) + islandSize.Value.Y;
-            return MathUtils.Min(x - num, z - num2, num3 - x, num4 - z);
+            var islandMinX = CalculateOceanShoreX(z);
+            var islandMinZ = CalculateOceanShoreZ(x);
+            var islandMaxX = CalculateOceanShoreX(z + 1000f) + islandSize.Value.X;
+            var islandMaxZ = CalculateOceanShoreZ(x + 1000f) + islandSize.Value.Y;
+            return MathUtils.Min(x - islandMinX, z - islandMinZ, islandMaxX - x, islandMaxZ - z);
         }
 
-        var num5 = CalculateOceanShoreX(z);
-        var num6 = CalculateOceanShoreZ(x);
-        return MathUtils.Min(x - num5, z - num6);
+        var coastX = CalculateOceanShoreX(z);
+        var coastZ = CalculateOceanShoreZ(x);
+        return MathUtils.Min(x - coastX, z - coastZ);
     }
 
     public float CalculateMountainRangeFactor(float x, float z)
@@ -169,61 +170,76 @@ public class GeneratedTerrainEnvironment : ITerrainEnvironment
 
     public float CalculateHeight(float x, float z)
     {
-        var num = tgOceanSlope +
-                  tgOceanSlopeVariation *
-                  MathUtils.PowSign(
-                      2f *
-                      SimplexNoise.OctavedNoise(x + mountainsOffset.X, z + mountainsOffset.Y, 0.01f, 1, 2f, 0.5f) -
-                      1f,
-                      0.5f
-                  );
-        var num2 = CalculateOceanShoreDistance(x, z);
-        var num3 = MathUtils.Saturate(2f - 0.05f * MathUtils.Abs(num2));
-        var num4 = MathUtils.Saturate(MathUtils.Sin(tgIslandsFrequency * num2));
-        var num5 = MathUtils.Saturate(MathUtils.Saturate((0f - num) * num2) - 0.85f * num4);
-        var num6 = MathUtils.Saturate(MathUtils.Saturate(0.05f * (0f - num2 - 10f)) - num4);
-        var v = CalculateMountainRangeFactor(x, z);
-        var f = (1f - num3) * SimplexNoise.OctavedNoise(x, z, 0.001f / tgBiomeScaling, 2, 2f, 0.5f);
-        var f2 = (1f - num3) * SimplexNoise.OctavedNoise(x, z, 0.0017f / tgBiomeScaling, 2, 4f, 0.7f);
-        var num7 = (1f - num6) * (1f - num3) * Squish(v, 1f - tgHillsPercentage, 1f - tgMountainsPercentage);
-        var num8 = (1f - num6) * Squish(v, 1f - tgMountainsPercentage, 1f);
-        var num9 = 1f * SimplexNoise.OctavedNoise(x, z, tgHillsFrequency, tgHillsOctaves, 1.93f, tgHillsPersistence);
+        var oceanSlope = tgOceanSlope +
+                         tgOceanSlopeVariation *
+                         MathUtils.PowSign(
+                             2f *
+                             SimplexNoise.OctavedNoise(
+                                 x + mountainsOffset.X,
+                                 z + mountainsOffset.Y,
+                                 0.01f,
+                                 1,
+                                 2f,
+                                 0.5f
+                             ) -
+                             1f,
+                             0.5f
+                         );
+        var shoreDistance = CalculateOceanShoreDistance(x, z);
+        var shorelineWeight = MathUtils.Saturate(2f - 0.05f * MathUtils.Abs(shoreDistance));
+        var islandWave = MathUtils.Saturate(MathUtils.Sin(tgIslandsFrequency * shoreDistance));
+        var oceanDepthFactor =
+            MathUtils.Saturate(MathUtils.Saturate((0f - oceanSlope) * shoreDistance) - 0.85f * islandWave);
+        var offshoreWeight = MathUtils.Saturate(MathUtils.Saturate(0.05f * (0f - shoreDistance - 10f)) - islandWave);
+        var mountainRange = CalculateMountainRangeFactor(x, z);
+        var riseNoise = (1f - shorelineWeight) * SimplexNoise.OctavedNoise(x, z, 0.001f / tgBiomeScaling, 2, 2f, 0.5f);
+        var depressionNoise = (1f - shorelineWeight) *
+                              SimplexNoise.OctavedNoise(x, z, 0.0017f / tgBiomeScaling, 2, 4f, 0.7f);
+        var hillWeight = (1f - offshoreWeight) *
+                         (1f - shorelineWeight) *
+                         Squish(mountainRange, 1f - tgHillsPercentage, 1f - tgMountainsPercentage);
+        var mountainWeight = (1f - offshoreWeight) * Squish(mountainRange, 1f - tgMountainsPercentage, 1f);
+        var hillNoise =
+            1f * SimplexNoise.OctavedNoise(x, z, tgHillsFrequency, tgHillsOctaves, 1.93f, tgHillsPersistence);
         var amplitudeStep =
-            MathUtils.Lerp(0.75f * tgMountainsDetailPersistence, 1.33f * tgMountainsDetailPersistence, f);
-        var num10 = 1.5f *
-                    SimplexNoise.OctavedNoise(
-                        x,
-                        z,
-                        tgMountainsDetailFreq,
-                        tgMountainsDetailOctaves,
-                        1.98f,
-                        amplitudeStep
-                    ) -
-                    0.5f;
-        var num11 = MathUtils.Lerp(
+            MathUtils.Lerp(0.75f * tgMountainsDetailPersistence, 1.33f * tgMountainsDetailPersistence, riseNoise);
+        var mountainNoise = 1.5f *
+                            SimplexNoise.OctavedNoise(
+                                x,
+                                z,
+                                tgMountainsDetailFreq,
+                                tgMountainsDetailOctaves,
+                                1.98f,
+                                amplitudeStep
+                            ) -
+                            0.5f;
+        var riverNarrowness = MathUtils.Lerp(
             80f,
             35f,
-            MathUtils.Saturate(1f * num8 + 0.5f * num7 + MathUtils.Saturate(1f - num2 / 30f))
+            MathUtils.Saturate(1f * mountainWeight + 0.5f * hillWeight + MathUtils.Saturate(1f - shoreDistance / 30f))
         );
-        var x2 = MathUtils.Lerp(-2f, -4f, MathUtils.Saturate(num8 + 0.5f * num7));
-        var num12 = MathUtils.Saturate(
+        var riverbedOffset = MathUtils.Lerp(-2f, -4f, MathUtils.Saturate(mountainWeight + 0.5f * hillWeight));
+        var riverWeight = MathUtils.Saturate(
             1.5f -
-            num11 *
+            riverNarrowness *
             MathUtils.Abs(
                 2f *
                 SimplexNoise.OctavedNoise(x + riversOffset.X, z + riversOffset.Y, 0.001f, 4, 2f, 0.5f) -
                 1f
             )
         );
-        var num13 = -50f * num5 + tgHeightBias;
-        var num14 = MathUtils.Lerp(0f, 8f, f);
-        var num15 = MathUtils.Lerp(0f, -6f, f2);
-        var num16 = tgHillsStrength * num7 * num9;
-        var num17 = tgMountainsStrength * num8 * num10;
-        var f3 = tgRiversStrength * num12;
-        var num18 = num13 + num14 + num15 + num17 + num16;
-        var num19 = MathUtils.Min(MathUtils.Lerp(num18, x2, f3), num18);
-        return MathUtils.Clamp(64f + num19, 10f, 251f);
+        var baseHeightOffset = -50f * oceanDepthFactor + tgHeightBias;
+        var riseOffset = MathUtils.Lerp(0f, 8f, riseNoise);
+        var depressionOffset = MathUtils.Lerp(0f, -6f, depressionNoise);
+        var hillHeight = tgHillsStrength * hillWeight * hillNoise;
+        var mountainHeight = tgMountainsStrength * mountainWeight * mountainNoise;
+        var riverCarvingWeight = tgRiversStrength * riverWeight;
+        var terrainOffset = baseHeightOffset + riseOffset + depressionOffset + mountainHeight + hillHeight;
+        var carvedHeightOffset = MathUtils.Min(
+            MathUtils.Lerp(terrainOffset, riverbedOffset, riverCarvingWeight),
+            terrainOffset
+        );
+        return MathUtils.Clamp(64f + carvedHeightOffset, 10f, 251f);
     }
 
     public int CalculateTemperature(float x, float z)

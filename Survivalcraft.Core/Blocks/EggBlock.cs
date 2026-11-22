@@ -93,9 +93,9 @@ public class EggBlock : Block
 
     public override int SetDamage(int value, int damage)
     {
-        var num = Terrain.ExtractData(value);
-        num = (num & -65537) | ((damage & 1) << 16);
-        return Terrain.ReplaceData(value, num);
+        var blockData = Terrain.ExtractData(value);
+        blockData = (blockData & -65537) | ((damage & 1) << 16);
+        return Terrain.ReplaceData(value, blockData);
     }
 
     public override int GetDamageDestructionValue(int value)
@@ -153,8 +153,8 @@ public class EggBlock : Block
                     "egg:" + Terrain.ExtractData(value).ToString(CultureInfo.InvariantCulture);
                 craftingRecipe.Ingredients[1] = "waterbucket";
                 yield return craftingRecipe;
-                var num = rot + 1;
-                rot = num;
+                var nextRot = rot + 1;
+                rot = nextRot;
             }
         }
     }

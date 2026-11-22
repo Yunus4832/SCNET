@@ -176,10 +176,10 @@ public static class DialogsManager
         if (animationData.Factor < 1f)
         {
             var factor = animationData.Factor;
-            var num = 0.75f + 0.25f * MathUtils.Pow(animationData.Factor, 0.25f);
+            var panelScale = 0.75f + 0.25f * MathUtils.Pow(animationData.Factor, 0.25f);
             dialog.RenderTransform =
                 Matrix.CreateTranslation((0f - dialog.ActualSize.X) / 2f, (0f - dialog.ActualSize.Y) / 2f, 0f) *
-                Matrix.CreateScale(num, num, 1f) *
+                Matrix.CreateScale(panelScale, panelScale, 1f) *
                 Matrix.CreateTranslation(dialog.ActualSize.X / 2f, dialog.ActualSize.Y / 2f, 0f);
             dialog.ColorTransform = Color.White * factor;
             animationData.CoverRectangle.ColorTransform = Color.White * factor;

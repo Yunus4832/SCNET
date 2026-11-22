@@ -15,19 +15,19 @@ public class XorGateElectricElement(
     public override bool Simulate()
     {
         var voltage = _voltage;
-        int? num = null;
+        int? combinedBits = null;
         foreach (var connection in Connections)
         {
             if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0)
             {
-                var num2 = (int)MathUtils.Round(
+                var inputBits = (int)MathUtils.Round(
                     connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace) * 15f
                 );
-                num = !num.HasValue ? num2 : num ^ num2;
+                combinedBits = !combinedBits.HasValue ? inputBits : combinedBits ^ inputBits;
             }
         }
 
-        _voltage = num.HasValue ? num.Value / 15f : 0f;
+        _voltage = combinedBits.HasValue ? combinedBits.Value / 15f : 0f;
         return _voltage.UncloseTo(voltage);
     }
 }

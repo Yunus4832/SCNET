@@ -87,14 +87,14 @@ public struct Ray3(Vector3 position, Vector3 direction) : IEquatable<Ray3>
                 return null;
             }
 
-            var num = Position.Z + vector.X * Direction.Z;
-            if (num < box.Min.Z || num > box.Max.Z)
+            var zAtXPlane = Position.Z + vector.X * Direction.Z;
+            if (zAtXPlane < box.Min.Z || zAtXPlane > box.Max.Z)
             {
                 return null;
             }
 
-            num = Position.Y + vector.X * Direction.Y;
-            if (num < box.Min.Y || num > box.Max.Y)
+            zAtXPlane = Position.Y + vector.X * Direction.Y;
+            if (zAtXPlane < box.Min.Y || zAtXPlane > box.Max.Y)
             {
                 return null;
             }
@@ -109,14 +109,14 @@ public struct Ray3(Vector3 position, Vector3 direction) : IEquatable<Ray3>
                 return null;
             }
 
-            var num2 = Position.Z + vector.Y * Direction.Z;
-            if (num2 < box.Min.Z || num2 > box.Max.Z)
+            var zAtYPlane = Position.Z + vector.Y * Direction.Z;
+            if (zAtYPlane < box.Min.Z || zAtYPlane > box.Max.Z)
             {
                 return null;
             }
 
-            num2 = Position.X + vector.Y * Direction.X;
-            if (num2 < box.Min.X || num2 > box.Max.X)
+            zAtYPlane = Position.X + vector.Y * Direction.X;
+            if (zAtYPlane < box.Min.X || zAtYPlane > box.Max.X)
             {
                 return null;
             }
@@ -129,14 +129,14 @@ public struct Ray3(Vector3 position, Vector3 direction) : IEquatable<Ray3>
             return null;
         }
 
-        var num3 = Position.X + vector.Z * Direction.X;
-        if (num3 < box.Min.X || num3 > box.Max.X)
+        var xAtZPlane = Position.X + vector.Z * Direction.X;
+        if (xAtZPlane < box.Min.X || xAtZPlane > box.Max.X)
         {
             return null;
         }
 
-        num3 = Position.Y + vector.Z * Direction.Y;
-        if (num3 < box.Min.Y || num3 > box.Max.Y)
+        xAtZPlane = Position.Y + vector.Z * Direction.Y;
+        if (xAtZPlane < box.Min.Y || xAtZPlane > box.Max.Y)
         {
             return null;
         }
@@ -147,23 +147,23 @@ public struct Ray3(Vector3 position, Vector3 direction) : IEquatable<Ray3>
     public float? Intersection(BoundingSphere sphere)
     {
         var v = sphere.Center - Position;
-        var num = v.LengthSquared();
-        var num2 = sphere.Radius * sphere.Radius;
-        if (num < num2)
+        var centerDistanceSquared = v.LengthSquared();
+        var radiusSquared = sphere.Radius * sphere.Radius;
+        if (centerDistanceSquared < radiusSquared)
         {
             return 0f;
         }
 
-        var num3 = Vector3.Dot(Direction, v);
-        if (num3 < 0f)
+        var projectedDistance = Vector3.Dot(Direction, v);
+        if (projectedDistance < 0f)
         {
             return null;
         }
 
-        var num4 = num2 + num3 * num3 - num;
-        if (!(num4 < 0f))
+        var discriminant = radiusSquared + projectedDistance * projectedDistance - centerDistanceSquared;
+        if (!(discriminant < 0f))
         {
-            return num3 - MathUtils.Sqrt(num4);
+            return projectedDistance - MathUtils.Sqrt(discriminant);
         }
 
         return null;
@@ -171,13 +171,13 @@ public struct Ray3(Vector3 position, Vector3 direction) : IEquatable<Ray3>
 
     public float? Intersection(Plane plane)
     {
-        var num = Vector3.Dot(Direction, plane.Normal);
-        if (num == 0f)
+        var normalDotDirection = Vector3.Dot(Direction, plane.Normal);
+        if (normalDotDirection == 0f)
         {
             return null;
         }
 
-        return (0f - (Vector3.Dot(Position, plane.Normal) + plane.D)) / num;
+        return (0f - (Vector3.Dot(Position, plane.Normal) + plane.D)) / normalDotDirection;
     }
 
     public Vector3 Sample(float distance)

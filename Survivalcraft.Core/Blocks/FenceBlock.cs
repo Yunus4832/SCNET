@@ -29,10 +29,10 @@ public abstract class FenceBlock(string modelName) : Block, IPaintableBlock
         var nodeAbsoluteTransform2 = planksNode.AbsoluteTransform;
         for (var i = 0; i < 16; i++)
         {
-            var num = (i & 1) != 0;
-            var flag = (i & 2) != 0;
-            var flag2 = (i & 4) != 0;
-            var flag3 = (i & 8) != 0;
+            var connectsPositiveX = (i & 1) != 0;
+            var connectsNegativeX = (i & 2) != 0;
+            var connectsPositiveZ = (i & 4) != 0;
+            var connectsNegativeZ = (i & 8) != 0;
             var list = new List<BoundingBox>();
             var m = Matrix.CreateTranslation(0.5f, 0f, 0.5f);
             var blockMesh = new CollisionGeometryBuilder();
@@ -47,7 +47,7 @@ public abstract class FenceBlock(string modelName) : Block, IPaintableBlock
             item.Min = min;
             item.Max = max;
             list.Add(item);
-            if (num)
+            if (connectsPositiveX)
             {
                 var blockMesh3 = new CollisionGeometryBuilder();
                 var m2 = Matrix.CreateRotationY(0f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
@@ -57,7 +57,7 @@ public abstract class FenceBlock(string modelName) : Block, IPaintableBlock
                 list.Add(item2);
             }
 
-            if (flag)
+            if (connectsNegativeX)
             {
                 var blockMesh4 = new CollisionGeometryBuilder();
                 var m3 = Matrix.CreateRotationY((float)Math.PI) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
@@ -67,7 +67,7 @@ public abstract class FenceBlock(string modelName) : Block, IPaintableBlock
                 list.Add(item3);
             }
 
-            if (flag2)
+            if (connectsPositiveZ)
             {
                 var blockMesh5 = new CollisionGeometryBuilder();
                 var m4 = Matrix.CreateRotationY(4.712389f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
@@ -77,7 +77,7 @@ public abstract class FenceBlock(string modelName) : Block, IPaintableBlock
                 list.Add(item4);
             }
 
-            if (flag3)
+            if (connectsNegativeZ)
             {
                 var blockMesh6 = new CollisionGeometryBuilder();
                 var m5 = Matrix.CreateRotationY((float)Math.PI / 2f) * Matrix.CreateTranslation(0.5f, 0f, 0.5f);
@@ -101,8 +101,8 @@ public abstract class FenceBlock(string modelName) : Block, IPaintableBlock
         while (i < 16)
         {
             yield return Terrain.MakeBlockValue(BlockIndex, SetColor(0, i));
-            var num = i + 1;
-            i = num;
+            var nextColor = i + 1;
+            i = nextColor;
         }
     }
 
@@ -135,8 +135,8 @@ public abstract class FenceBlock(string modelName) : Block, IPaintableBlock
 
     public virtual bool ShouldConnectTo(int value)
     {
-        var num = Terrain.ExtractContents(value);
-        var block = Catalog.Blocks[num];
+        var neighborContents = Terrain.ExtractContents(value);
+        var block = Catalog.Blocks[neighborContents];
         if (block is not FenceBlock)
         {
             return block is FenceGateBlock;

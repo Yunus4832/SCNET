@@ -23,25 +23,25 @@ public class CraftingTableWidget : CanvasWidget
         _craftingGrid = Children.Find<GridPanelWidget>("CraftingGrid")!;
         _craftingResultSlot = Children.Find<InventorySlotWidget>("CraftingResultSlot")!;
         _craftingRemainsSlot = Children.Find<InventorySlotWidget>("CraftingRemainsSlot")!;
-        var num = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
+        var backpackSlot = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
         for (var i = 0; i < _inventoryGrid.RowsCount; i++)
         {
             for (var j = 0; j < _inventoryGrid.ColumnsCount; j++)
             {
                 var inventorySlotWidget = new InventorySlotWidget();
-                inventorySlotWidget.AssignInventorySlot(inventory, num++);
+                inventorySlotWidget.AssignInventorySlot(inventory, backpackSlot++);
                 _inventoryGrid.Children.Add(inventorySlotWidget);
                 _inventoryGrid.SetWidgetCell(inventorySlotWidget, new Point2(j, i));
             }
         }
 
-        num = 0;
+        backpackSlot = 0;
         for (var k = 0; k < _craftingGrid.RowsCount; k++)
         {
             for (var l = 0; l < _craftingGrid.ColumnsCount; l++)
             {
                 var inventorySlotWidget2 = new InventorySlotWidget();
-                inventorySlotWidget2.AssignInventorySlot(_componentCraftingTable, num++);
+                inventorySlotWidget2.AssignInventorySlot(_componentCraftingTable, backpackSlot++);
                 _craftingGrid.Children.Add(inventorySlotWidget2);
                 _craftingGrid.SetWidgetCell(inventorySlotWidget2, new Point2(l, k));
             }

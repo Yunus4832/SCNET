@@ -20,7 +20,7 @@ public class GravestoneBlock : Block
             var variant = GetVariant(i);
             var radians = GetRotation(i) == 0 ? 0f : (float)Math.PI / 2f;
             var name = "Grave" + (variant % 4 + 1).ToString(CultureInfo.InvariantCulture);
-            var num = variant >= 4;
+            var hasBase = variant >= 4;
             var modelNode = model.GetNode(name)!;
             var nodeAbsoluteTransform = modelNode.AbsoluteTransform;
             blockPositions[i] = new CollisionGeometryBuilder();
@@ -28,7 +28,7 @@ public class GravestoneBlock : Block
                 modelNode.Primitives[0],
                 nodeAbsoluteTransform * Matrix.CreateRotationY(radians) * Matrix.CreateTranslation(0.5f, 0f, 0.5f)
             );
-            if (num)
+            if (hasBase)
             {
                 var nodeAbsoluteTransform2 = model.GetNode("Plinth")!.AbsoluteTransform;
                 blockPositions[i].Append(
@@ -46,10 +46,10 @@ public class GravestoneBlock : Block
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = Terrain.ExtractData(value);
-        if (num < CollisionBoxes.Length)
+        var meshIndex = Terrain.ExtractData(value);
+        if (meshIndex < CollisionBoxes.Length)
         {
-            return CollisionBoxes[num];
+            return CollisionBoxes[meshIndex];
         }
 
         return base.GetCustomCollisionBoxes(terrain, value);
@@ -64,9 +64,9 @@ public class GravestoneBlock : Block
     {
         var data = Terrain.ExtractData(value);
         var forward = eyeForward;
-        var num = MathUtils.Abs(Vector3.Dot(forward, Vector3.UnitX));
+        var xAlignment = MathUtils.Abs(Vector3.Dot(forward, Vector3.UnitX));
         BlockPlacementData result;
-        if (MathUtils.Abs(Vector3.Dot(forward, Vector3.UnitZ)) > num)
+        if (MathUtils.Abs(Vector3.Dot(forward, Vector3.UnitZ)) > xAlignment)
         {
             result = default;
             result.Value = Terrain.MakeBlockValue(BlockIndex, SetRotation(data, 0));
@@ -87,8 +87,8 @@ public class GravestoneBlock : Block
         {
             var data = SetVariant(0, i);
             yield return Terrain.MakeBlockValue(BlockIndex, data);
-            var num = i + 1;
-            i = num;
+            var nextVariant = i + 1;
+            i = nextVariant;
         }
     }
 

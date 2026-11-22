@@ -30,43 +30,43 @@ public class FlyCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidget
     public override void Update(float dt)
     {
         var vector = Vector3.Zero;
-        var vector2 = Vector2.Zero;
+        var lookInput = Vector2.Zero;
         var componentInput = GameWidget.CharacterData.ComponentCharacter?.Entity.FindComponent<ComponentInput>(true)!;
         if (componentInput != null)
         {
             vector = componentInput.PlayerInput.CameraMove * new Vector3(1f, 0f, 1f);
-            vector2 = componentInput.PlayerInput.CameraLook;
+            lookInput = componentInput.PlayerInput.CameraLook;
         }
 
-        var num = Keyboard.IsKeyDown(Key.Shift);
-        var flag = Keyboard.IsKeyDown(Key.Control);
+        var fastMovement = Keyboard.IsKeyDown(Key.Shift);
+        var slowMovement = Keyboard.IsKeyDown(Key.Control);
         var direction = _direction;
         var unitY = Vector3.UnitY;
-        var vector3 = Vector3.Normalize(Vector3.Cross(direction, unitY));
-        var num2 = 10f;
-        if (num)
+        var cameraRight = Vector3.Normalize(Vector3.Cross(direction, unitY));
+        var moveSpeed = 10f;
+        if (fastMovement)
         {
-            num2 *= 5f;
+            moveSpeed *= 5f;
         }
 
-        if (flag)
+        if (slowMovement)
         {
-            num2 /= 5f;
+            moveSpeed /= 5f;
         }
 
         var zero = Vector3.Zero;
-        zero += num2 * vector.X * vector3;
-        zero += num2 * vector.Y * unitY;
-        zero += num2 * vector.Z * direction;
-        _rollSpeed = MathUtils.Lerp(_rollSpeed, -1.5f * vector2.X, 3f * dt);
+        zero += moveSpeed * vector.X * cameraRight;
+        zero += moveSpeed * vector.Y * unitY;
+        zero += moveSpeed * vector.Z * direction;
+        _rollSpeed = MathUtils.Lerp(_rollSpeed, -1.5f * lookInput.X, 3f * dt);
         _rollAngle += _rollSpeed * dt;
         _rollAngle *= MathUtils.Pow(0.33f, dt);
-        _pitchSpeed = MathUtils.Lerp(_pitchSpeed, -0.2f * vector2.Y, 3f * dt);
+        _pitchSpeed = MathUtils.Lerp(_pitchSpeed, -0.2f * lookInput.Y, 3f * dt);
         _pitchSpeed *= MathUtils.Pow(0.33f, dt);
         _velocity += 1.5f * (zero - _velocity) * dt;
         _position += _velocity * dt;
         _direction = Vector3.Transform(_direction, Matrix.CreateFromAxisAngle(unitY, 0.05f * _rollAngle));
-        _direction = Vector3.Transform(_direction, Matrix.CreateFromAxisAngle(vector3, 0.2f * _pitchSpeed));
+        _direction = Vector3.Transform(_direction, Matrix.CreateFromAxisAngle(cameraRight, 0.2f * _pitchSpeed));
         var up = Vector3.TransformNormal(Vector3.UnitY, Matrix.CreateFromAxisAngle(_direction, 0f - _rollAngle));
         SetupPerspectiveCamera(_position, _direction, up);
     }

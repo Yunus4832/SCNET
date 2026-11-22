@@ -19,7 +19,7 @@ public class MulticoloredLedBlock : MountedElectricElementBlock
         var nodeAbsoluteTransform2 = ledBulbNode.AbsoluteTransform;
         for (var i = 0; i < 6; i++)
         {
-            var num = SetMountingFace(0, i);
+            var blockData = SetMountingFace(0, i);
             var m2 = i >= 4
                 ? i != 4
                     ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
@@ -28,12 +28,12 @@ public class MulticoloredLedBlock : MountedElectricElementBlock
                   Matrix.CreateTranslation(0f, 0f, -0.5f) *
                   Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
                   Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-            blockPositionsByData[num] = new CollisionGeometryBuilder();
-            blockPositionsByData[num].Append(ledNode.Primitives[0], nodeAbsoluteTransform * m2);
-            blockPositionsByData[num].Append(ledBulbNode.Primitives[0], nodeAbsoluteTransform2 * m2);
-            CollisionBoxesByData[num] = new BoundingBox[1]
+            blockPositionsByData[blockData] = new CollisionGeometryBuilder();
+            blockPositionsByData[blockData].Append(ledNode.Primitives[0], nodeAbsoluteTransform * m2);
+            blockPositionsByData[blockData].Append(ledBulbNode.Primitives[0], nodeAbsoluteTransform2 * m2);
+            CollisionBoxesByData[blockData] = new BoundingBox[1]
             {
-                blockPositionsByData[num].GetBounds()
+                blockPositionsByData[blockData].GetBounds()
             };
         }
     }
@@ -86,8 +86,8 @@ public class MulticoloredLedBlock : MountedElectricElementBlock
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = Terrain.ExtractData(value);
-        return num >= CollisionBoxesByData.Length ? [] : CollisionBoxesByData[num];
+        var blockData = Terrain.ExtractData(value);
+        return blockData >= CollisionBoxesByData.Length ? [] : CollisionBoxesByData[blockData];
     }
 
 

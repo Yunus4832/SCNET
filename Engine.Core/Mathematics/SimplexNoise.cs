@@ -552,227 +552,229 @@ public static class SimplexNoise
 
     public static float Noise(float x)
     {
-        var num = (int)MathUtils.Floor(x);
-        var x2 = (int)MathUtils.Ceiling(x);
-        var num2 = x - num;
-        var num3 = Hash(num);
-        var num4 = Hash(x2);
-        return num3 + num2 * num2 * (3f - 2f * num2) * (num4 - num3);
+        var leftX = (int)MathUtils.Floor(x);
+        var rightX = (int)MathUtils.Ceiling(x);
+        var fraction = x - leftX;
+        var leftValue = Hash(leftX);
+        var rightValue = Hash(rightX);
+        return leftValue + fraction * fraction * (3f - 2f * fraction) * (rightValue - leftValue);
     }
 
     public static float Noise(float x, float y)
     {
-        var num = (x + y) * 0.366025418f;
-        var num2 = (int)MathUtils.Floor(x + num);
-        var num3 = (int)MathUtils.Floor(y + num);
-        var num4 = (num2 + num3) * 0.211324871f;
-        var num5 = num2 - num4;
-        var num6 = num3 - num4;
-        var num7 = x - num5;
-        var num8 = y - num6;
-        int num9;
-        int num10;
-        if (num7 > num8)
+        var skew = (x + y) * 0.366025418f;
+        var cellX = (int)MathUtils.Floor(x + skew);
+        var cellY = (int)MathUtils.Floor(y + skew);
+        var unskew = (cellX + cellY) * 0.211324871f;
+        var originX = cellX - unskew;
+        var originY = cellY - unskew;
+        var dx0 = x - originX;
+        var dy0 = y - originY;
+        int stepX1;
+        int stepY1;
+        if (dx0 > dy0)
         {
-            num9 = 1;
-            num10 = 0;
+            stepX1 = 1;
+            stepY1 = 0;
         }
         else
         {
-            num9 = 0;
-            num10 = 1;
+            stepX1 = 0;
+            stepY1 = 1;
         }
 
-        var num11 = num7 - num9 + 0.211324871f;
-        var num12 = num8 - num10 + 0.211324871f;
-        var num13 = num7 - 1f + 0.422649741f;
-        var num14 = num8 - 1f + 0.422649741f;
-        var num15 = num2 & 0xFF;
-        var num16 = num3 & 0xFF;
-        var num17 = _permutations[num15 + _permutations[num16]] % 12;
-        var num18 = _permutations[num15 + num9 + _permutations[num16 + num10]] % 12;
-        var num19 = _permutations[num15 + 1 + _permutations[num16 + 1]] % 12;
-        var num20 = 0.5f - num7 * num7 - num8 * num8;
-        float num21;
-        if (num20 < 0f)
+        var dx1 = dx0 - stepX1 + 0.211324871f;
+        var dy1 = dy0 - stepY1 + 0.211324871f;
+        var dx2 = dx0 - 1f + 0.422649741f;
+        var dy2 = dy0 - 1f + 0.422649741f;
+        var wrappedX = cellX & 0xFF;
+        var wrappedY = cellY & 0xFF;
+        var gradient0 = _permutations[wrappedX + _permutations[wrappedY]] % 12;
+        var gradient1 = _permutations[wrappedX + stepX1 + _permutations[wrappedY + stepY1]] % 12;
+        var gradient2 = _permutations[wrappedX + 1 + _permutations[wrappedY + 1]] % 12;
+        var attenuation0 = 0.5f - dx0 * dx0 - dy0 * dy0;
+        float contribution0;
+        if (attenuation0 < 0f)
         {
-            num21 = 0f;
+            contribution0 = 0f;
         }
         else
         {
-            num20 *= num20;
-            num21 = num20 * num20 * Dot(_grad3[num17], num7, num8);
+            attenuation0 *= attenuation0;
+            contribution0 = attenuation0 * attenuation0 * Dot(_grad3[gradient0], dx0, dy0);
         }
 
-        var num22 = 0.5f - num11 * num11 - num12 * num12;
-        float num23;
-        if (num22 < 0f)
+        var attenuation1 = 0.5f - dx1 * dx1 - dy1 * dy1;
+        float contribution1;
+        if (attenuation1 < 0f)
         {
-            num23 = 0f;
+            contribution1 = 0f;
         }
         else
         {
-            num22 *= num22;
-            num23 = num22 * num22 * Dot(_grad3[num18], num11, num12);
+            attenuation1 *= attenuation1;
+            contribution1 = attenuation1 * attenuation1 * Dot(_grad3[gradient1], dx1, dy1);
         }
 
-        var num24 = 0.5f - num13 * num13 - num14 * num14;
-        float num25;
-        if (num24 < 0f)
+        var attenuation2 = 0.5f - dx2 * dx2 - dy2 * dy2;
+        float contribution2;
+        if (attenuation2 < 0f)
         {
-            num25 = 0f;
+            contribution2 = 0f;
         }
         else
         {
-            num24 *= num24;
-            num25 = num24 * num24 * Dot(_grad3[num19], num13, num14);
+            attenuation2 *= attenuation2;
+            contribution2 = attenuation2 * attenuation2 * Dot(_grad3[gradient2], dx2, dy2);
         }
 
-        return 35f * (num21 + num23 + num25) + 0.5f;
+        return 35f * (contribution0 + contribution1 + contribution2) + 0.5f;
     }
 
     public static float Noise(float x, float y, float z)
     {
-        var num = (x + y + z) * 0.333333343f;
-        var num2 = (int)MathUtils.Floor(x + num);
-        var num3 = (int)MathUtils.Floor(y + num);
-        var num4 = (int)MathUtils.Floor(z + num);
-        var num5 = (num2 + num3 + num4) * (355f / (678f * (float)Math.PI));
-        var num6 = num2 - num5;
-        var num7 = num3 - num5;
-        var num8 = num4 - num5;
-        var num9 = x - num6;
-        var num10 = y - num7;
-        var num11 = z - num8;
-        int num12;
-        int num13;
-        int num14;
-        int num15;
-        int num16;
-        int num17;
-        if (num9 >= num10)
+        var skew = (x + y + z) * 0.333333343f;
+        var cellX = (int)MathUtils.Floor(x + skew);
+        var cellY = (int)MathUtils.Floor(y + skew);
+        var cellZ = (int)MathUtils.Floor(z + skew);
+        var unskew = (cellX + cellY + cellZ) * (355f / (678f * (float)Math.PI));
+        var originX = cellX - unskew;
+        var originY = cellY - unskew;
+        var originZ = cellZ - unskew;
+        var dx0 = x - originX;
+        var dy0 = y - originY;
+        var dz0 = z - originZ;
+        int stepX1;
+        int stepY1;
+        int stepZ1;
+        int stepX2;
+        int stepY2;
+        int stepZ2;
+        if (dx0 >= dy0)
         {
-            if (num10 >= num11)
+            if (dy0 >= dz0)
             {
-                num12 = 1;
-                num13 = 0;
-                num14 = 0;
-                num15 = 1;
-                num16 = 1;
-                num17 = 0;
+                stepX1 = 1;
+                stepY1 = 0;
+                stepZ1 = 0;
+                stepX2 = 1;
+                stepY2 = 1;
+                stepZ2 = 0;
             }
-            else if (num9 >= num11)
+            else if (dx0 >= dz0)
             {
-                num12 = 1;
-                num13 = 0;
-                num14 = 0;
-                num15 = 1;
-                num16 = 0;
-                num17 = 1;
+                stepX1 = 1;
+                stepY1 = 0;
+                stepZ1 = 0;
+                stepX2 = 1;
+                stepY2 = 0;
+                stepZ2 = 1;
             }
             else
             {
-                num12 = 0;
-                num13 = 0;
-                num14 = 1;
-                num15 = 1;
-                num16 = 0;
-                num17 = 1;
+                stepX1 = 0;
+                stepY1 = 0;
+                stepZ1 = 1;
+                stepX2 = 1;
+                stepY2 = 0;
+                stepZ2 = 1;
             }
         }
-        else if (num10 < num11)
+        else if (dy0 < dz0)
         {
-            num12 = 0;
-            num13 = 0;
-            num14 = 1;
-            num15 = 0;
-            num16 = 1;
-            num17 = 1;
+            stepX1 = 0;
+            stepY1 = 0;
+            stepZ1 = 1;
+            stepX2 = 0;
+            stepY2 = 1;
+            stepZ2 = 1;
         }
-        else if (num9 < num11)
+        else if (dx0 < dz0)
         {
-            num12 = 0;
-            num13 = 1;
-            num14 = 0;
-            num15 = 0;
-            num16 = 1;
-            num17 = 1;
-        }
-        else
-        {
-            num12 = 0;
-            num13 = 1;
-            num14 = 0;
-            num15 = 1;
-            num16 = 1;
-            num17 = 0;
-        }
-
-        var num18 = num9 - num12 + 355f / (678f * (float)Math.PI);
-        var num19 = num10 - num13 + 355f / (678f * (float)Math.PI);
-        var num20 = num11 - num14 + 355f / (678f * (float)Math.PI);
-        var num21 = num9 - num15 + 0.333333343f;
-        var num22 = num10 - num16 + 0.333333343f;
-        var num23 = num11 - num17 + 0.333333343f;
-        var num24 = num9 - 1f + 0.5f;
-        var num25 = num10 - 1f + 0.5f;
-        var num26 = num11 - 1f + 0.5f;
-        var num27 = num2 & 0xFF;
-        var num28 = num3 & 0xFF;
-        var num29 = num4 & 0xFF;
-        var num30 = _permutations[num27 + _permutations[num28 + _permutations[num29]]] % 12;
-        var num31 = _permutations[num27 + num12 + _permutations[num28 + num13 + _permutations[num29 + num14]]] % 12;
-        var num32 = _permutations[num27 + num15 + _permutations[num28 + num16 + _permutations[num29 + num17]]] % 12;
-        var num33 = _permutations[num27 + 1 + _permutations[num28 + 1 + _permutations[num29 + 1]]] % 12;
-        var num34 = 0.6f - num9 * num9 - num10 * num10 - num11 * num11;
-        float num35;
-        if (num34 < 0f)
-        {
-            num35 = 0f;
+            stepX1 = 0;
+            stepY1 = 1;
+            stepZ1 = 0;
+            stepX2 = 0;
+            stepY2 = 1;
+            stepZ2 = 1;
         }
         else
         {
-            num34 *= num34;
-            num35 = num34 * num34 * Dot(_grad3[num30], num9, num10, num11);
+            stepX1 = 0;
+            stepY1 = 1;
+            stepZ1 = 0;
+            stepX2 = 1;
+            stepY2 = 1;
+            stepZ2 = 0;
         }
 
-        var num36 = 0.6f - num18 * num18 - num19 * num19 - num20 * num20;
-        float num37;
-        if (num36 < 0f)
+        var dx1 = dx0 - stepX1 + 355f / (678f * (float)Math.PI);
+        var dy1 = dy0 - stepY1 + 355f / (678f * (float)Math.PI);
+        var dz1 = dz0 - stepZ1 + 355f / (678f * (float)Math.PI);
+        var dx2 = dx0 - stepX2 + 0.333333343f;
+        var dy2 = dy0 - stepY2 + 0.333333343f;
+        var dz2 = dz0 - stepZ2 + 0.333333343f;
+        var dx3 = dx0 - 1f + 0.5f;
+        var dy3 = dy0 - 1f + 0.5f;
+        var dz3 = dz0 - 1f + 0.5f;
+        var wrappedX = cellX & 0xFF;
+        var wrappedY = cellY & 0xFF;
+        var wrappedZ = cellZ & 0xFF;
+        var gradient0 = _permutations[wrappedX + _permutations[wrappedY + _permutations[wrappedZ]]] % 12;
+        var gradient1 =
+            _permutations[wrappedX + stepX1 + _permutations[wrappedY + stepY1 + _permutations[wrappedZ + stepZ1]]] % 12;
+        var gradient2 =
+            _permutations[wrappedX + stepX2 + _permutations[wrappedY + stepY2 + _permutations[wrappedZ + stepZ2]]] % 12;
+        var gradient3 = _permutations[wrappedX + 1 + _permutations[wrappedY + 1 + _permutations[wrappedZ + 1]]] % 12;
+        var attenuation0 = 0.6f - dx0 * dx0 - dy0 * dy0 - dz0 * dz0;
+        float contribution0;
+        if (attenuation0 < 0f)
         {
-            num37 = 0f;
+            contribution0 = 0f;
         }
         else
         {
-            num36 *= num36;
-            num37 = num36 * num36 * Dot(_grad3[num31], num18, num19, num20);
+            attenuation0 *= attenuation0;
+            contribution0 = attenuation0 * attenuation0 * Dot(_grad3[gradient0], dx0, dy0, dz0);
         }
 
-        var num38 = 0.6f - num21 * num21 - num22 * num22 - num23 * num23;
-        float num39;
-        if (num38 < 0f)
+        var attenuation1 = 0.6f - dx1 * dx1 - dy1 * dy1 - dz1 * dz1;
+        float contribution1;
+        if (attenuation1 < 0f)
         {
-            num39 = 0f;
+            contribution1 = 0f;
         }
         else
         {
-            num38 *= num38;
-            num39 = num38 * num38 * Dot(_grad3[num32], num21, num22, num23);
+            attenuation1 *= attenuation1;
+            contribution1 = attenuation1 * attenuation1 * Dot(_grad3[gradient1], dx1, dy1, dz1);
         }
 
-        var num40 = 0.6f - num24 * num24 - num25 * num25 - num26 * num26;
-        float num41;
-        if (num40 < 0f)
+        var attenuation2 = 0.6f - dx2 * dx2 - dy2 * dy2 - dz2 * dz2;
+        float contribution2;
+        if (attenuation2 < 0f)
         {
-            num41 = 0f;
+            contribution2 = 0f;
         }
         else
         {
-            num40 *= num40;
-            num41 = num40 * num40 * Dot(_grad3[num33], num24, num25, num26);
+            attenuation2 *= attenuation2;
+            contribution2 = attenuation2 * attenuation2 * Dot(_grad3[gradient2], dx2, dy2, dz2);
         }
 
-        return 16f * (num35 + num37 + num39 + num41) + 0.5f;
+        var attenuation3 = 0.6f - dx3 * dx3 - dy3 * dy3 - dz3 * dz3;
+        float contribution3;
+        if (attenuation3 < 0f)
+        {
+            contribution3 = 0f;
+        }
+        else
+        {
+            attenuation3 *= attenuation3;
+            contribution3 = attenuation3 * attenuation3 * Dot(_grad3[gradient3], dx3, dy3, dz3);
+        }
+
+        return 16f * (contribution0 + contribution1 + contribution2 + contribution3) + 0.5f;
     }
 
     public static float OctavedNoise(
@@ -784,23 +786,23 @@ public static class SimplexNoise
         bool ridged = false
     )
     {
-        var num = 0f;
-        var num2 = 0f;
-        var num3 = 1f;
-        for (var i = 0; i < octaves; i++)
+        var weightedSum = 0f;
+        var totalAmplitude = 0f;
+        var amplitude = 1f;
+        for (var octave = 0; octave < octaves; octave++)
         {
-            num += num3 * Noise(x * frequency);
-            num2 += num3;
+            weightedSum += amplitude * Noise(x * frequency);
+            totalAmplitude += amplitude;
             frequency *= frequencyStep;
-            num3 *= amplitudeStep;
+            amplitude *= amplitudeStep;
         }
 
         if (!ridged)
         {
-            return num / num2;
+            return weightedSum / totalAmplitude;
         }
 
-        return 1f - MathUtils.Abs(2f * num / num2 - 1f);
+        return 1f - MathUtils.Abs(2f * weightedSum / totalAmplitude - 1f);
     }
 
     public static float OctavedNoise(
@@ -813,23 +815,23 @@ public static class SimplexNoise
         bool ridged = false
     )
     {
-        var num = 0f;
-        var num2 = 0f;
-        var num3 = 1f;
-        for (var i = 0; i < octaves; i++)
+        var weightedSum = 0f;
+        var totalAmplitude = 0f;
+        var amplitude = 1f;
+        for (var octave = 0; octave < octaves; octave++)
         {
-            num += num3 * Noise(x * frequency, y * frequency);
-            num2 += num3;
+            weightedSum += amplitude * Noise(x * frequency, y * frequency);
+            totalAmplitude += amplitude;
             frequency *= frequencyStep;
-            num3 *= amplitudeStep;
+            amplitude *= amplitudeStep;
         }
 
         if (!ridged)
         {
-            return num / num2;
+            return weightedSum / totalAmplitude;
         }
 
-        return 1f - MathUtils.Abs(2f * num / num2 - 1f);
+        return 1f - MathUtils.Abs(2f * weightedSum / totalAmplitude - 1f);
     }
 
     public static float OctavedNoise(
@@ -843,23 +845,23 @@ public static class SimplexNoise
         bool ridged = false
     )
     {
-        var num = 0f;
-        var num2 = 0f;
-        var num3 = 1f;
-        for (var i = 0; i < octaves; i++)
+        var weightedSum = 0f;
+        var totalAmplitude = 0f;
+        var amplitude = 1f;
+        for (var octave = 0; octave < octaves; octave++)
         {
-            num += num3 * Noise(x * frequency, y * frequency, z * frequency);
-            num2 += num3;
+            weightedSum += amplitude * Noise(x * frequency, y * frequency, z * frequency);
+            totalAmplitude += amplitude;
             frequency *= frequencyStep;
-            num3 *= amplitudeStep;
+            amplitude *= amplitudeStep;
         }
 
         if (!ridged)
         {
-            return num / num2;
+            return weightedSum / totalAmplitude;
         }
 
-        return 1f - MathUtils.Abs(2f * num / num2 - 1f);
+        return 1f - MathUtils.Abs(2f * weightedSum / totalAmplitude - 1f);
     }
 
     public static float NewOctavedNoise(
@@ -873,29 +875,29 @@ public static class SimplexNoise
         bool ridged = false
     )
     {
-        var num = 0f;
-        var num2 = 0f;
-        var num3 = 1f;
-        for (var i = 0; i < octaves; i++)
+        var weightedSum = 0f;
+        var totalAmplitude = 0f;
+        var amplitude = 1f;
+        for (var octave = 0; octave < octaves; octave++)
         {
-            var num4 = Noise(x * frequency, y * frequency, z * frequency);
-            if (i == octaves - 1)
+            var octaveNoise = Noise(x * frequency, y * frequency, z * frequency);
+            if (octave == octaves - 1)
             {
-                num4 = (float)Math.Pow(num4, 3.0); //最后一层八度乘以3次方
+                octaveNoise = (float)Math.Pow(octaveNoise, 3.0); //最后一层八度乘以3次方
             }
 
-            num += num3 * num4;
-            num2 += num3;
+            weightedSum += amplitude * octaveNoise;
+            totalAmplitude += amplitude;
             frequency *= frequencyStep;
-            num3 *= amplitudeStep;
+            amplitude *= amplitudeStep;
         }
 
-        var num5 = num / num2;
+        var normalizedNoise = weightedSum / totalAmplitude;
         if (ridged)
         {
-            num5 = 1f - MathUtils.Abs(2f * num5 - 1f);
+            normalizedNoise = 1f - MathUtils.Abs(2f * normalizedNoise - 1f);
         }
 
-        return num5;
+        return normalizedNoise;
     }
 }

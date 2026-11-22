@@ -15,11 +15,11 @@ public abstract class FluidBlock : CubeBlock
         MaxLevel = maxLevel;
         for (var i = 0; i < BoundingBoxesByLevel.Length; i++)
         {
-            var num = 0.875f * MathUtils.Saturate(1f - i / (float)MaxLevel);
-            HeightByLevel[i] = num;
+            var surfaceHeight = 0.875f * MathUtils.Saturate(1f - i / (float)MaxLevel);
+            HeightByLevel[i] = surfaceHeight;
             BoundingBoxesByLevel[i] =
             [
-                new BoundingBox(new Vector3(0f, 0f, 0f), new Vector3(1f, num, 1f))
+                new BoundingBox(new Vector3(0f, 0f, 0f), new Vector3(1f, surfaceHeight, 1f))
             ];
         }
     }
@@ -76,8 +76,8 @@ public abstract class FluidBlock : CubeBlock
 
     public static float CalculateFluidVertexHeight(float h1, float h2, float h3, float h4)
     {
-        var num = MathUtils.Max(h1, h2, h3, h4);
-        if (!(num < 1f))
+        var maxHeight = MathUtils.Max(h1, h2, h3, h4);
+        if (!(maxHeight < 1f))
         {
             return 1f;
         }
@@ -87,7 +87,7 @@ public abstract class FluidBlock : CubeBlock
             return 0f;
         }
 
-        return num;
+        return maxHeight;
     }
 
     public override BlockPlacementData GetPlacementValue(
@@ -106,10 +106,10 @@ public abstract class FluidBlock : CubeBlock
 
     public float CalculateNeighborHeight(int value)
     {
-        var num = Terrain.ExtractContents(value);
-        if (!IsTheSameFluid(num))
+        var contents = Terrain.ExtractContents(value);
+        if (!IsTheSameFluid(contents))
         {
-            return num == 0 ? 0.01f : 0f;
+            return contents == 0 ? 0.01f : 0f;
         }
 
         var data = Terrain.ExtractData(value);

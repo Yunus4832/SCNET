@@ -108,8 +108,13 @@ public class ComponentRandomPeckBehavior : ComponentBehavior, IUpdateable
             delegate
             {
                 var position = _componentCreature.ComponentBody.Position;
-                var num = _random.Float(0f, 1f) < 0.2f ? 8f : 3f;
-                var value = position + new Vector3(num * _random.Float(-1f, 1f), 0f, num * _random.Float(-1f, 1f));
+                var moveDistance = _random.Float(0f, 1f) < 0.2f ? 8f : 3f;
+                var value = position +
+                            new Vector3(
+                                moveDistance * _random.Float(-1f, 1f),
+                                0f,
+                                moveDistance * _random.Float(-1f, 1f)
+                            );
                 value.Y = _subsystemTerrain.Terrain.GetTopHeight(Terrain.ToCell(value.X), Terrain.ToCell(value.Z)) + 1;
                 _componentPathfinding.SetDestination(value, _random.Float(0.5f, 0.7f), 1f, 0, false, true, false, null);
             },

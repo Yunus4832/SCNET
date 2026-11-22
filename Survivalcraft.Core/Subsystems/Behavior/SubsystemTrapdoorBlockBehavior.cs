@@ -14,9 +14,9 @@ public class SubsystemTrapdoorBlockBehavior : SubsystemBlockBehavior
     public bool IsTrapdoorElectricallyConnected(int x, int y, int z)
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
-        var num = Terrain.ExtractContents(cellValue);
+        var contents = Terrain.ExtractContents(cellValue);
         var data = Terrain.ExtractData(cellValue);
-        if (WorldContentBinding.For(Project).Catalog.Blocks[num] is not TrapdoorBlock)
+        if (WorldContentBinding.For(Project).Catalog.Blocks[contents] is not TrapdoorBlock)
         {
             return false;
         }
@@ -29,8 +29,8 @@ public class SubsystemTrapdoorBlockBehavior : SubsystemBlockBehavior
     public bool OpenCloseTrapdoor(int x, int y, int z, bool open)
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
-        var num = Terrain.ExtractContents(cellValue);
-        if (WorldContentBinding.For(Project).Catalog.Blocks[num] is not TrapdoorBlock)
+        var contents = Terrain.ExtractContents(cellValue);
+        if (WorldContentBinding.For(Project).Catalog.Blocks[contents] is not TrapdoorBlock)
         {
             return false;
         }
@@ -54,9 +54,9 @@ public class SubsystemTrapdoorBlockBehavior : SubsystemBlockBehavior
     {
         var cellFace = raycastResult.CellFace;
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(cellFace.X, cellFace.Y, cellFace.Z);
-        var num = Terrain.ExtractContents(cellValue);
+        var contents = Terrain.ExtractContents(cellValue);
         var data = Terrain.ExtractData(cellValue);
-        if (num != 83 && IsTrapdoorElectricallyConnected(cellFace.X, cellFace.Y, cellFace.Z))
+        if (contents != 83 && IsTrapdoorElectricallyConnected(cellFace.X, cellFace.Y, cellFace.Z))
         {
             return true;
         }
@@ -68,8 +68,8 @@ public class SubsystemTrapdoorBlockBehavior : SubsystemBlockBehavior
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
-        var num = Terrain.ExtractContents(cellValue);
-        var obj = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var contents = Terrain.ExtractContents(cellValue);
+        var obj = WorldContentBinding.For(Project).Catalog.Blocks[contents];
         var data = Terrain.ExtractData(cellValue);
         if (obj is not TrapdoorBlock)
         {
@@ -78,26 +78,26 @@ public class SubsystemTrapdoorBlockBehavior : SubsystemBlockBehavior
 
         var rotation = TrapdoorBlock.GetRotation(data);
         var upsideDown = TrapdoorBlock.GetUpsideDown(data);
-        var flag = false;
+        var hasSupport = false;
         var point = CellFace.FaceToPoint3(rotation);
         var cellContents = SubsystemTerrain.Terrain.GetCellContents(x - point.X, y - point.Y, z - point.Z);
-        flag |= !WorldContentBinding.For(Project).Catalog.Blocks[cellContents].Transparent;
+        hasSupport |= !WorldContentBinding.For(Project).Catalog.Blocks[cellContents].Transparent;
         if (upsideDown)
         {
             var cellContents2 = SubsystemTerrain.Terrain.GetCellContents(x, y + 1, z);
-            flag |= !WorldContentBinding.For(Project).Catalog.Blocks[cellContents2].Transparent;
+            hasSupport |= !WorldContentBinding.For(Project).Catalog.Blocks[cellContents2].Transparent;
             var cellContents3 = SubsystemTerrain.Terrain.GetCellContents(x - point.X, y - point.Y + 1, z - point.Z);
-            flag |= !WorldContentBinding.For(Project).Catalog.Blocks[cellContents3].Transparent;
+            hasSupport |= !WorldContentBinding.For(Project).Catalog.Blocks[cellContents3].Transparent;
         }
         else
         {
             var cellContents4 = SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z);
-            flag |= !WorldContentBinding.For(Project).Catalog.Blocks[cellContents4].Transparent;
+            hasSupport |= !WorldContentBinding.For(Project).Catalog.Blocks[cellContents4].Transparent;
             var cellContents5 = SubsystemTerrain.Terrain.GetCellContents(x - point.X, y - point.Y - 1, z - point.Z);
-            flag |= !WorldContentBinding.For(Project).Catalog.Blocks[cellContents5].Transparent;
+            hasSupport |= !WorldContentBinding.For(Project).Catalog.Blocks[cellContents5].Transparent;
         }
 
-        if (!flag)
+        if (!hasSupport)
         {
             SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
         }

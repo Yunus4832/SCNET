@@ -76,22 +76,22 @@ public class ComponentIntroPresentation : Component, IUpdateable
             _subsystemTerrain.Environment,
             componentBody.Position.XZ
         );
-        var vector2 = componentBody.Position.XZ + 25f * vector;
+        var searchCenter = componentBody.Position.XZ + 25f * vector;
         var isPlayerMounted = _componentCharacter.ComponentRider.Mount != null;
-        var vector3 = vector2;
-        var num = float.MinValue;
-        for (var i = Terrain.ToCell(vector2.Y) - 15; i < Terrain.ToCell(vector2.Y) + 15; i++)
+        var bestPosition = searchCenter;
+        var bestScore = float.MinValue;
+        for (var i = Terrain.ToCell(searchCenter.Y) - 15; i < Terrain.ToCell(searchCenter.Y) + 15; i++)
         {
-            for (var j = Terrain.ToCell(vector2.X) - 15; j < Terrain.ToCell(vector2.X) + 15; j++)
+            for (var j = Terrain.ToCell(searchCenter.X) - 15; j < Terrain.ToCell(searchCenter.X) + 15; j++)
             {
-                var num2 = ScoreShipPosition(componentBody.Position.XZ, j, i);
-                if (!(num2 > num))
+                var candidateScore = ScoreShipPosition(componentBody.Position.XZ, j, i);
+                if (!(candidateScore > bestScore))
                 {
                     continue;
                 }
 
-                num = num2;
-                vector3 = new Vector2(j, i);
+                bestScore = candidateScore;
+                bestPosition = new Vector2(j, i);
             }
         }
 
@@ -103,8 +103,8 @@ public class ComponentIntroPresentation : Component, IUpdateable
         var valuesDictionary = new ValuesDictionary();
         valuesDictionary.PopulateFromDatabaseObject(databaseObject);
         var entity = Project.CreateEntity(valuesDictionary);
-        var vector4 = new Vector3(vector3.X, _subsystemTerrain.Environment.OceanLevel + 0.5f, vector3.Y);
-        entity.FindComponent<ComponentFrame>(true)!.Position = vector4;
+        var shipPosition = new Vector3(bestPosition.X, _subsystemTerrain.Environment.OceanLevel + 0.5f, bestPosition.Y);
+        entity.FindComponent<ComponentFrame>(true)!.Position = shipPosition;
         entity.FindComponent<ComponentIntroShip>(true)!.Heading = Vector2.Angle(vector, -Vector2.UnitY);
         Project.AddEntity(entity);
         _ship = entity;
@@ -151,7 +151,7 @@ public class ComponentIntroPresentation : Component, IUpdateable
         _introCamera = introCamera;
         _componentCharacter.Entity.FindComponent<ComponentCharacterPresentation>(true)!.GameWidget.ActiveCamera =
             introCamera;
-        introCamera.CameraPosition = vector4 +
+        introCamera.CameraPosition = shipPosition +
                                      new Vector3(12f * vector.X, 8f, 12f * vector.Y) +
                                      new Vector3(-5f * vector.Y, 0f, 5f * vector.X);
         introCamera.TargetPosition = _componentCharacter.ComponentCreaturePose.EyePosition +
@@ -182,45 +182,45 @@ public class ComponentIntroPresentation : Component, IUpdateable
 
     private float ScoreShipPosition(Vector2 playerPosition, int x, int z)
     {
-        var num = 0f;
-        var num2 = _subsystemTerrain.Environment.CalculateOceanShoreDistance(x, z);
-        if (num2 > -8f)
+        var score = 0f;
+        var shoreDistance = _subsystemTerrain.Environment.CalculateOceanShoreDistance(x, z);
+        if (shoreDistance > -8f)
         {
-            num -= 100f;
+            score -= 100f;
         }
 
-        num -= 0.25f * num2;
-        var num3 = Vector2.Distance(playerPosition, new Vector2(x, z));
-        num -= MathUtils.Abs(num3 - 20f);
-        var num4 = 0;
+        score -= 0.25f * shoreDistance;
+        var playerDistance = Vector2.Distance(playerPosition, new Vector2(x, z));
+        score -= MathUtils.Abs(playerDistance - 20f);
+        var waterDepth = 0;
         var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
         if (chunkAtCell is { HasCurrentHeightData: true })
         {
             var oceanLevel = _subsystemTerrain.Environment.OceanLevel;
-            var num5 = oceanLevel;
-            while (num5 >= oceanLevel - 5 && num5 >= 0)
+            var sampleY = oceanLevel;
+            while (sampleY >= oceanLevel - 5 && sampleY >= 0)
             {
-                var cellContentsFast = chunkAtCell.GetCellContentsFast(x & 0xF, num5, z & 0xF);
+                var cellContentsFast = chunkAtCell.GetCellContentsFast(x & 0xF, sampleY, z & 0xF);
                 if (cellContentsFast != 18 && cellContentsFast != 92)
                 {
                     break;
                 }
 
-                num5--;
-                num4++;
+                sampleY--;
+                waterDepth++;
             }
         }
         else
         {
-            num4 = 2;
+            waterDepth = 2;
         }
 
-        if (num4 < 2)
+        if (waterDepth < 2)
         {
-            num -= 100f;
+            score -= 100f;
         }
 
-        return num + 2f * num4;
+        return score + 2f * waterDepth;
     }
 
     private void QueueMessage(double delay, Action action)

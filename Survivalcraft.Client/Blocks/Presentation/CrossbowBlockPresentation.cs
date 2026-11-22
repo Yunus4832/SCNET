@@ -56,10 +56,10 @@ public class CrossbowBlockPresentation(CrossbowBlock block, BlockPresentationCat
 
     public override bool IsSwapAnimationNeeded(int oldValue, int newValue)
     {
-        var num = Terrain.ExtractContents(oldValue);
+        var oldContents = Terrain.ExtractContents(oldValue);
         var data = Terrain.ExtractData(oldValue);
         var data2 = Terrain.ExtractData(newValue);
-        return num != 200 || CrossbowBlock.GetArrowType(data) != CrossbowBlock.GetArrowType(data2);
+        return oldContents != 200 || CrossbowBlock.GetArrowType(data) != CrossbowBlock.GetArrowType(data2);
     }
 
     public override void Initialize()

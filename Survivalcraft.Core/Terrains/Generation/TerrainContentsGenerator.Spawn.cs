@@ -43,10 +43,10 @@ public partial class TerrainContentsGenerator
     public float CalculateForestDensity(float x, float z)
     {
         var point = Terrain.ToChunk(new Vector2(x, z));
-        var flag = MathUtils.Hash((uint)(point.X + 1000 * point.Y)) % 1000 < 300;
+        var hasDensityBoost = MathUtils.Hash((uint)(point.X + 1000 * point.Y)) % 1000 < 300;
         return MathUtils.Saturate(
             (SimplexNoise.OctavedNoise(point.X, point.Y, 0.1f, 2, 2f, 0.5f) - 0.25f) / 0.2f +
-            (flag ? 0.6f : 0f)
+            (hasDensityBoost ? 0.6f : 0f)
         );
     }
 

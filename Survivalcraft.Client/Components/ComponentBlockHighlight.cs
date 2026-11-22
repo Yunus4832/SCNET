@@ -99,20 +99,20 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
     public void DrawRayHighlight(Camera camera)
     {
         Ray3 ray;
-        float num;
+        float rayLength;
         switch (_highlightRaycastResult)
         {
             case TerrainRaycastResult result:
                 ray = result.Ray;
-                num = MathUtils.Min(result.Distance, 2f);
+                rayLength = MathUtils.Min(result.Distance, 2f);
                 break;
             case BodyRaycastResult obj2:
                 ray = obj2.Ray;
-                num = MathUtils.Min(obj2.Distance, 2f);
+                rayLength = MathUtils.Min(obj2.Distance, 2f);
                 break;
             case MovingBlocksRaycastResult obj3:
                 ray = obj3.Ray;
-                num = MathUtils.Min(obj3.Distance, 2f);
+                rayLength = MathUtils.Min(obj3.Distance, 2f);
                 break;
             default:
             {
@@ -122,15 +122,15 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
                 }
 
                 ray = ray3;
-                num = 2f;
+                rayLength = 2f;
                 break;
             }
         }
 
         var color = Color.White * 0.5f;
-        var color2 = Color.Lerp(color, Color.Transparent, MathUtils.Saturate(num / 2f));
+        var color2 = Color.Lerp(color, Color.Transparent, MathUtils.Saturate(rayLength / 2f));
         var flatBatch3D = PrimitivesRenderer3D.FlatBatch();
-        flatBatch3D.QueueLine(ray.Position, ray.Position + ray.Direction * num, color, color2);
+        flatBatch3D.QueueLine(ray.Position, ray.Position + ray.Direction * rayLength, color, color2);
         flatBatch3D.Flush(camera.ViewProjectionMatrix);
     }
 
@@ -155,8 +155,8 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
         {
             var value = _componentCharacter.ComponentMiner.DigCellFace.Value;
             var cellFaceBoundingBox = GetCellFaceBoundingBox(value.Point);
-            var num = _subsystemSky.CalculateFog(camera.ViewPosition, cellFaceBoundingBox.Center());
-            var color = Color.MultiplyNotSaturated(Color.Black, 1f - num);
+            var hitFogFactor = _subsystemSky.CalculateFog(camera.ViewPosition, cellFaceBoundingBox.Center());
+            var color = Color.MultiplyNotSaturated(Color.Black, 1f - hitFogFactor);
             DrawBoundingBoxFace(
                 PrimitivesRenderer3D.FlatBatch(0, DepthStencilState.None),
                 value.Face,
@@ -174,8 +174,8 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
             {
                 var cellFace = result.CellFace;
                 var cellFaceBoundingBox2 = GetCellFaceBoundingBox(cellFace.Point);
-                var num2 = _subsystemSky.CalculateFog(camera.ViewPosition, cellFaceBoundingBox2.Center());
-                var color2 = Color.MultiplyNotSaturated(Color.Black, 1f - num2);
+                var placementFogFactor = _subsystemSky.CalculateFog(camera.ViewPosition, cellFaceBoundingBox2.Center());
+                var color2 = Color.MultiplyNotSaturated(Color.Black, 1f - placementFogFactor);
                 DrawBoundingBoxFace(
                     PrimitivesRenderer3D.FlatBatch(0, DepthStencilState.None),
                     cellFace.Face,
@@ -188,8 +188,11 @@ public class ComponentBlockHighlight : Component, IDrawable, IUpdateable
             if (NearbyEditableCell.HasValue)
             {
                 var cellFaceBoundingBox3 = GetCellFaceBoundingBox(NearbyEditableCell.Value);
-                var num3 = _subsystemSky.CalculateFog(camera.ViewPosition, cellFaceBoundingBox3.Center());
-                var color3 = Color.MultiplyNotSaturated(Color.Black, 1f - num3);
+                var interactionFogFactor = _subsystemSky.CalculateFog(
+                    camera.ViewPosition,
+                    cellFaceBoundingBox3.Center()
+                );
+                var color3 = Color.MultiplyNotSaturated(Color.Black, 1f - interactionFogFactor);
                 PrimitivesRenderer3D.FlatBatch(0, DepthStencilState.None)
                     .QueueBoundingBox(cellFaceBoundingBox3, color3);
             }

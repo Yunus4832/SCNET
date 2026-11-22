@@ -61,7 +61,7 @@ public class SnowSplashParticleSystem : ParticleSystem<SnowSplashParticleSystem.
         }
 
         dt = MathUtils.Clamp(dt, 0f, 0.1f);
-        var flag = false;
+        var hasActiveParticles = false;
         foreach (var particle in Particles)
         {
             if (!particle.IsActive)
@@ -77,11 +77,11 @@ public class SnowSplashParticleSystem : ParticleSystem<SnowSplashParticleSystem.
             }
             else
             {
-                flag = true;
+                hasActiveParticles = true;
             }
         }
 
-        if (!flag)
+        if (!hasActiveParticles)
         {
             _isActive = false;
         }

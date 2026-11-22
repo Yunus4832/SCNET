@@ -40,65 +40,65 @@ public class SubsystemStairsBlockBehavior : SubsystemBlockBehavior
         var isUpsideDown = StairsBlock.GetIsUpsideDown(data);
         var point = StairsBlock.RotationToDirection(rotation);
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x + point.X, y + point.Y, z + point.Z);
-        var num = Terrain.ExtractContents(cellValue);
-        if (WorldContentBinding.For(Project).Catalog.Blocks[num] is StairsBlock)
+        var contents = Terrain.ExtractContents(cellValue);
+        if (WorldContentBinding.For(Project).Catalog.Blocks[contents] is StairsBlock)
         {
             var data2 = Terrain.ExtractData(cellValue);
             var isUpsideDown2 = StairsBlock.GetIsUpsideDown(data2);
             var cornerType = StairsBlock.GetCornerType(data2);
-            var num2 = -1;
+            var quarterRotation = -1;
             if (isUpsideDown2 == isUpsideDown)
             {
                 var rotation2 = StairsBlock.GetRotation(data2);
                 if (rotation == 0 && rotation2 == 1 && cornerType != StairsBlock.CornerType.ThreeQuarters)
                 {
-                    num2 = 1;
+                    quarterRotation = 1;
                 }
 
                 if (rotation == 0 && rotation2 == 3 && cornerType != StairsBlock.CornerType.ThreeQuarters)
                 {
-                    num2 = 0;
+                    quarterRotation = 0;
                 }
 
                 if (rotation == 1 && rotation2 == 0 && cornerType != StairsBlock.CornerType.ThreeQuarters)
                 {
-                    num2 = 1;
+                    quarterRotation = 1;
                 }
 
                 if (rotation == 1 && rotation2 == 2 && cornerType != StairsBlock.CornerType.ThreeQuarters)
                 {
-                    num2 = 2;
+                    quarterRotation = 2;
                 }
 
                 if (rotation == 2 && rotation2 == 1 && cornerType != StairsBlock.CornerType.ThreeQuarters)
                 {
-                    num2 = 2;
+                    quarterRotation = 2;
                 }
 
                 if (rotation == 2 && rotation2 == 3 && cornerType != StairsBlock.CornerType.ThreeQuarters)
                 {
-                    num2 = 3;
+                    quarterRotation = 3;
                 }
 
                 if (rotation == 3 && rotation2 == 0 && cornerType != StairsBlock.CornerType.ThreeQuarters)
                 {
-                    num2 = 0;
+                    quarterRotation = 0;
                 }
 
                 if (rotation == 3 && rotation2 == 2 && cornerType != StairsBlock.CornerType.ThreeQuarters)
                 {
-                    num2 = 3;
+                    quarterRotation = 3;
                 }
             }
 
-            if (num2 < 0)
+            if (quarterRotation < 0)
             {
                 return;
             }
 
             var data3 = StairsBlock.SetRotation(
                 StairsBlock.SetCornerType(data, StairsBlock.CornerType.OneQuarter),
-                num2
+                quarterRotation
             );
             var value3 = Terrain.ReplaceData(value, data3);
             SubsystemTerrain.ChangeCellNet(x, y, z, value3, updateModificationCounter);
@@ -107,8 +107,8 @@ public class SubsystemStairsBlockBehavior : SubsystemBlockBehavior
         }
 
         cellValue = SubsystemTerrain.Terrain.GetCellValue(x - point.X, y - point.Y, z - point.Z);
-        num = Terrain.ExtractContents(cellValue);
-        if (WorldContentBinding.For(Project).Catalog.Blocks[num] is not StairsBlock)
+        contents = Terrain.ExtractContents(cellValue);
+        if (WorldContentBinding.For(Project).Catalog.Blocks[contents] is not StairsBlock)
         {
             return;
         }
@@ -116,99 +116,99 @@ public class SubsystemStairsBlockBehavior : SubsystemBlockBehavior
         var data4 = Terrain.ExtractData(cellValue);
         var isUpsideDown3 = StairsBlock.GetIsUpsideDown(data4);
         var cornerType2 = StairsBlock.GetCornerType(data4);
-        var num3 = -1;
+        var cornerRotation = -1;
         if (isUpsideDown3 == isUpsideDown)
         {
             var rotation3 = StairsBlock.GetRotation(data4);
             if (rotation == 0 && rotation3 == 1 && cornerType2 == StairsBlock.CornerType.None)
             {
-                num3 = 1;
+                cornerRotation = 1;
             }
 
             if (rotation == 0 && rotation3 == 3 && cornerType2 == StairsBlock.CornerType.None)
             {
-                num3 = 0;
+                cornerRotation = 0;
             }
 
             if (rotation == 0 && rotation3 == 2 && cornerType2 == StairsBlock.CornerType.ThreeQuarters)
             {
-                num3 = 1;
+                cornerRotation = 1;
             }
 
             if (rotation == 0 && rotation3 == 3 && cornerType2 == StairsBlock.CornerType.ThreeQuarters)
             {
-                num3 = 0;
+                cornerRotation = 0;
             }
 
             if (rotation == 1 && rotation3 == 0 && cornerType2 == StairsBlock.CornerType.None)
             {
-                num3 = 1;
+                cornerRotation = 1;
             }
 
             if (rotation == 1 && rotation3 == 2 && cornerType2 == StairsBlock.CornerType.None)
             {
-                num3 = 2;
+                cornerRotation = 2;
             }
 
             if (rotation == 1 && rotation3 == 3 && cornerType2 == StairsBlock.CornerType.ThreeQuarters)
             {
-                num3 = 2;
+                cornerRotation = 2;
             }
 
             if (rotation == 1 && rotation3 == 0 && cornerType2 == StairsBlock.CornerType.ThreeQuarters)
             {
-                num3 = 1;
+                cornerRotation = 1;
             }
 
             if (rotation == 2 && rotation3 == 1 && cornerType2 == StairsBlock.CornerType.None)
             {
-                num3 = 2;
+                cornerRotation = 2;
             }
 
             if (rotation == 2 && rotation3 == 3 && cornerType2 == StairsBlock.CornerType.None)
             {
-                num3 = 3;
+                cornerRotation = 3;
             }
 
             if (rotation == 2 && rotation3 == 0 && cornerType2 == StairsBlock.CornerType.ThreeQuarters)
             {
-                num3 = 3;
+                cornerRotation = 3;
             }
 
             if (rotation == 2 && rotation3 == 1 && cornerType2 == StairsBlock.CornerType.ThreeQuarters)
             {
-                num3 = 2;
+                cornerRotation = 2;
             }
 
             if (rotation == 3 && rotation3 == 0 && cornerType2 == StairsBlock.CornerType.None)
             {
-                num3 = 0;
+                cornerRotation = 0;
             }
 
             if (rotation == 3 && rotation3 == 2 && cornerType2 == StairsBlock.CornerType.None)
             {
-                num3 = 3;
+                cornerRotation = 3;
             }
 
             if (rotation == 3 && rotation3 == 2 && cornerType2 == StairsBlock.CornerType.ThreeQuarters)
             {
-                num3 = 3;
+                cornerRotation = 3;
             }
 
             if (rotation == 3 && rotation3 == 1 && cornerType2 == StairsBlock.CornerType.ThreeQuarters)
             {
-                num3 = 0;
+                cornerRotation = 0;
             }
         }
 
-        if (num3 < 0)
+        if (cornerRotation < 0)
         {
             return;
         }
 
         var data5 = StairsBlock.SetRotation(
             StairsBlock.SetCornerType(data, StairsBlock.CornerType.ThreeQuarters),
-            num3
+            cornerRotation
         );
         var value4 = Terrain.ReplaceData(value, data5);
         SubsystemTerrain.ChangeCellNet(x, y, z, value4, updateModificationCounter);

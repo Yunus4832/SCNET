@@ -215,24 +215,24 @@ public sealed class SubsystemMovingBlocksPresentation : Subsystem, IDrawable, IU
         state.Indices.Clear();
         for (var n = 1; n < point2.X + 1; n++)
         {
-            for (var num = 1; num < point2.Y + 1; num++)
+            for (var localY = 1; localY < point2.Y + 1; localY++)
             {
-                for (var num2 = 1; num2 < point2.Z + 1; num2++)
+                for (var localZ = 1; localZ < point2.Z + 1; localZ++)
                 {
-                    if (num + numk > 0 && num + numk < 256)
+                    if (localY + numk > 0 && localY + numk < 256)
                     {
-                        var cellValueFast = _blockGeometryGenerator.Terrain.GetCellValueFast(n, num, num2);
-                        var num3 = Terrain.ExtractContents(cellValueFast);
-                        if (num3 != 0)
+                        var cellValueFast = _blockGeometryGenerator.Terrain.GetCellValueFast(n, localY, localZ);
+                        var contents = Terrain.ExtractContents(cellValueFast);
+                        if (contents != 0)
                         {
-                            Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(num3)
+                            Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog.Get(contents)
                                 .GenerateTerrainVertices(
                                     _blockGeometryGenerator,
                                     state.Geometry,
                                     cellValueFast,
                                     n,
-                                    num,
-                                    num2
+                                    localY,
+                                    localZ
                                 );
                         }
                     }

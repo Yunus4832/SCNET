@@ -93,22 +93,22 @@ public class SubsystemElectricBlockBehavior : SubsystemBlockBehavior
         var x = cellFace.X;
         var y = cellFace.Y;
         var z = cellFace.Z;
-        var num = 0;
+        var faceIndex = 0;
         ElectricElement? electricElement;
         while (true)
         {
-            if (num >= 6)
+            if (faceIndex >= 6)
             {
                 return;
             }
 
-            electricElement = _subsystemElectricity.GetElectricElement(x, y, z, num);
+            electricElement = _subsystemElectricity.GetElectricElement(x, y, z, faceIndex);
             if (electricElement != null)
             {
                 break;
             }
 
-            num++;
+            faceIndex++;
         }
 
         electricElement.OnCollide(cellFace, velocity, componentBody);
@@ -119,22 +119,22 @@ public class SubsystemElectricBlockBehavior : SubsystemBlockBehavior
         var x = cellFace.X;
         var y = cellFace.Y;
         var z = cellFace.Z;
-        var num = 0;
+        var faceIndex = 0;
         ElectricElement? electricElement;
         while (true)
         {
-            if (num >= 6)
+            if (faceIndex >= 6)
             {
                 return;
             }
 
-            electricElement = _subsystemElectricity.GetElectricElement(x, y, z, num);
+            electricElement = _subsystemElectricity.GetElectricElement(x, y, z, faceIndex);
             if (electricElement != null)
             {
                 break;
             }
 
-            num++;
+            faceIndex++;
         }
 
         electricElement.OnHitByProjectile(cellFace, worldItem);

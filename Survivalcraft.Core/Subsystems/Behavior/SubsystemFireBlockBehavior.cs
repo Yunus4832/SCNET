@@ -53,11 +53,11 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
         if (_firePointsCopy.Count > 0)
         {
-            var num = MathUtils.Min(1f * dt * _firePointsCopy.Count + _remainderToScan, 50f);
-            var num2 = (int)num;
-            _remainderToScan = num - num2;
-            var num3 = MathUtils.Min(_copyIndex + num2, _firePointsCopy.Count);
-            while (_copyIndex < num3)
+            var scanBudget = MathUtils.Min(1f * dt * _firePointsCopy.Count + _remainderToScan, 50f);
+            var scanCount = (int)scanBudget;
+            _remainderToScan = scanBudget - scanCount;
+            var endIndex = MathUtils.Min(_copyIndex + scanCount, _firePointsCopy.Count);
+            while (_copyIndex < endIndex)
             {
                 if (_fireData.TryGetValue(_firePointsCopy.Array[_copyIndex], out var value))
                 {
@@ -91,8 +91,8 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
                         }
                     }
 
-                    var num4 = Terrain.ExtractData(SubsystemTerrain.Terrain.GetCellValue(x, y, z));
-                    if ((num4 & 1) != 0)
+                    var fireData = Terrain.ExtractData(SubsystemTerrain.Terrain.GetCellValue(x, y, z));
+                    if ((fireData & 1) != 0)
                     {
                         value.Time0 -= _lastScanDuration;
                         if (value.Time0 <= 0f)
@@ -117,7 +117,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
                         }
                     }
 
-                    if ((num4 & 2) != 0)
+                    if ((fireData & 2) != 0)
                     {
                         value.Time1 -= _lastScanDuration;
                         if (value.Time1 <= 0f)
@@ -142,7 +142,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
                         }
                     }
 
-                    if ((num4 & 4) != 0)
+                    if ((fireData & 4) != 0)
                     {
                         value.Time2 -= _lastScanDuration;
                         if (value.Time2 <= 0f)
@@ -167,7 +167,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
                         }
                     }
 
-                    if ((num4 & 8) != 0)
+                    if ((fireData & 8) != 0)
                     {
                         value.Time3 -= _lastScanDuration;
                         if (value.Time3 <= 0f)
@@ -192,7 +192,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
                         }
                     }
 
-                    if (num4 == 0)
+                    if (fireData == 0)
                     {
                         value.Time5 -= _lastScanDuration;
                         if (value.Time5 <= 0f)
@@ -260,9 +260,9 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
             var cellValue = SubsystemTerrain.Terrain.GetCellValue(x + point.X, y + point.Y, z + point.Z);
             if (Terrain.ExtractContents(cellValue) == 104)
             {
-                var num = Terrain.ExtractData(cellValue);
-                var num2 = CellFace.OppositeFace(i);
-                if ((num & (1 << num2)) != 0)
+                var fireData = Terrain.ExtractData(cellValue);
+                var oppositeFace = CellFace.OppositeFace(i);
+                if ((fireData & (1 << oppositeFace)) != 0)
                 {
                     return true;
                 }
@@ -292,8 +292,8 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         }
 
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
-        var num = Terrain.ExtractContents(cellValue);
-        if (WorldContentBinding.For(Project).Catalog.Blocks[num].FireDuration == 0f)
+        var targetContents = Terrain.ExtractContents(cellValue);
+        if (WorldContentBinding.For(Project).Catalog.Blocks[targetContents].FireDuration == 0f)
         {
             return false;
         }
@@ -303,13 +303,13 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         {
             var point = CellFace.FaceToPoint3(i);
             var cellValue2 = SubsystemTerrain.Terrain.GetCellValue(x + point.X, y + point.Y, z + point.Z);
-            var num2 = Terrain.ExtractContents(cellValue2);
-            if (num2 == 0 || num2 == 104 || num2 == 61)
+            var neighborContents = Terrain.ExtractContents(cellValue2);
+            if (neighborContents == 0 || neighborContents == 104 || neighborContents == 61)
             {
-                var num3 = num2 == 104 ? Terrain.ExtractData(cellValue2) : 0;
-                var num4 = CellFace.OppositeFace(i);
-                num3 |= (1 << num4) & 0xF;
-                cellValue = Terrain.ReplaceData(Terrain.ReplaceContents(0, 104), num3);
+                var fireData = neighborContents == 104 ? Terrain.ExtractData(cellValue2) : 0;
+                var oppositeFace = CellFace.OppositeFace(i);
+                fireData |= (1 << oppositeFace) & 0xF;
+                cellValue = Terrain.ReplaceData(Terrain.ReplaceContents(0, 104), fireData);
                 AddFire(x + point.X, y + point.Y, z + point.Z, fireExpandability);
                 SubsystemTerrain.ChangeCell(x + point.X, y + point.Y, z + point.Z, cellValue);
                 result = true;
@@ -323,73 +323,73 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
     {
         if (!WorldRuntimeContext.For(Project).IsAuthority) { return; }
 
-        var num = Terrain.ExtractData(SubsystemTerrain.Terrain.GetCellValue(x, y, z));
-        if ((num & 1) != 0 &&
+        var fireData = Terrain.ExtractData(SubsystemTerrain.Terrain.GetCellValue(x, y, z));
+        if ((fireData & 1) != 0 &&
             WorldContentBinding.For(Project).Catalog
                 .Blocks[SubsystemTerrain.Terrain.GetCellContents(x, y, z + 1)]
                 .FireDuration ==
             0f)
         {
-            num &= -2;
+            fireData &= -2;
         }
 
-        if ((num & 2) != 0 &&
+        if ((fireData & 2) != 0 &&
             WorldContentBinding.For(Project).Catalog
                 .Blocks[SubsystemTerrain.Terrain.GetCellContents(x + 1, y, z)]
                 .FireDuration ==
             0f)
         {
-            num &= -3;
+            fireData &= -3;
         }
 
-        if ((num & 4) != 0 &&
+        if ((fireData & 4) != 0 &&
             WorldContentBinding.For(Project).Catalog
                 .Blocks[SubsystemTerrain.Terrain.GetCellContents(x, y, z - 1)]
                 .FireDuration ==
             0f)
         {
-            num &= -5;
+            fireData &= -5;
         }
 
-        if ((num & 8) != 0 &&
+        if ((fireData & 8) != 0 &&
             WorldContentBinding.For(Project).Catalog
                 .Blocks[SubsystemTerrain.Terrain.GetCellContents(x - 1, y, z)]
                 .FireDuration ==
             0f)
         {
-            num &= -9;
+            fireData &= -9;
         }
 
         if (_fireData.TryGetValue(new Point3(x, y, z), out var value))
         {
-            if ((num & 1) != 0 && neighborX == x && neighborY == y && neighborZ == z + 1)
+            if ((fireData & 1) != 0 && neighborX == x && neighborY == y && neighborZ == z + 1)
             {
                 InitializeFireDataTime(value, 0);
             }
 
-            if ((num & 2) != 0 && neighborX == x + 1 && neighborY == y && neighborZ == z)
+            if ((fireData & 2) != 0 && neighborX == x + 1 && neighborY == y && neighborZ == z)
             {
                 InitializeFireDataTime(value, 1);
             }
 
-            if ((num & 4) != 0 && neighborX == x && neighborY == y && neighborZ == z - 1)
+            if ((fireData & 4) != 0 && neighborX == x && neighborY == y && neighborZ == z - 1)
             {
                 InitializeFireDataTime(value, 2);
             }
 
-            if ((num & 8) != 0 && neighborX == x - 1 && neighborY == y && neighborZ == z)
+            if ((fireData & 8) != 0 && neighborX == x - 1 && neighborY == y && neighborZ == z)
             {
                 InitializeFireDataTime(value, 3);
             }
 
-            if (num == 0 && neighborX == x && neighborY == y - 1 && neighborZ == z)
+            if (fireData == 0 && neighborX == x && neighborY == y - 1 && neighborZ == z)
             {
                 InitializeFireDataTime(value, 5);
             }
         }
 
         var contents = 104;
-        if (num == 0 &&
+        if (fireData == 0 &&
             WorldContentBinding.For(Project).Catalog
                 .Blocks[SubsystemTerrain.Terrain.GetCellContents(x, y - 1, z)].FireDuration ==
             0f)
@@ -397,7 +397,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
             contents = 0;
         }
 
-        var value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, contents), num);
+        var value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, contents), fireData);
         SubsystemTerrain.ChangeCell(x, y, z, value2);
     }
 
@@ -465,12 +465,13 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 {
                     if (i != 0 || j != 0 || k != 0)
                     {
-                        var num = j < 0 ? 1.5f : 2.5f;
-                        if (MathUtils.Sqrt(i * i + j * j + k * k) <= num)
+                        var verticalReach = j < 0 ? 1.5f : 2.5f;
+                        if (MathUtils.Sqrt(i * i + j * j + k * k) <= verticalReach)
                         {
-                            var num2 = MathUtils.Sqrt(i * i + k * k);
-                            var num3 = j > 0 ? 0.5f * j : -j;
-                            _expansionProbabilities[new Point3(i, j, k)] = 0.02f / (num2 + num3);
+                            var horizontalDistance = MathUtils.Sqrt(i * i + k * k);
+                            var verticalDistance = j > 0 ? 0.5f * j : -j;
+                            _expansionProbabilities[new Point3(i, j, k)] =
+                                0.02f / (horizontalDistance + verticalDistance);
                         }
                     }
                 }

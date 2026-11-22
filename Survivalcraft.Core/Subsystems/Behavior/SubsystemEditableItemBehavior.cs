@@ -68,9 +68,9 @@ public abstract class SubsystemEditableItemBehavior<T>(int contents)
 
     public int StoreItemDataAtUniqueId(T t)
     {
-        var num = FindFreeItemId();
-        ItemsData[num] = t;
-        return num;
+        var itemId = FindFreeItemId();
+        ItemsData[itemId] = t;
+        return itemId;
     }
 
     public override void OnBlockPlaced(
@@ -102,16 +102,16 @@ public abstract class SubsystemEditableItemBehavior<T>(int contents)
         var blockData = GetBlockData(new Point3(x, y, z));
         if (blockData != null)
         {
-            var num = FindFreeItemId();
-            ItemsData.Add(num, (T)blockData.Copy());
-            dropValue.Value = Terrain.ReplaceData(dropValue.Value, num);
+            var itemId = FindFreeItemId();
+            ItemsData.Add(itemId, (T)blockData.Copy());
+            dropValue.Value = Terrain.ReplaceData(dropValue.Value, itemId);
             if (WorldRuntimeContext.For(Project).IsAuthority)
             {
                 if (blockData is MemoryBankData memory)
                 {
                     NetworkSender.Send(
                         Project,
-                        EditableBlockPackageBuilder.Capture(num, memory),
+                        EditableBlockPackageBuilder.Capture(itemId, memory),
                         PackageAudience.Global
                     );
                 }
@@ -120,7 +120,7 @@ public abstract class SubsystemEditableItemBehavior<T>(int contents)
                 {
                     NetworkSender.Send(
                         Project,
-                        EditableBlockPackageBuilder.Capture(num, truthTableData),
+                        EditableBlockPackageBuilder.Capture(itemId, truthTableData),
                         PackageAudience.Global
                     );
                 }

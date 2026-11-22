@@ -40,31 +40,31 @@ public class OrbitCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidg
             Matrix.CreateFromYawPitchRoll(_angles.X, 0f, _angles.Y)
         );
         var vector = GameWidget.Target.ComponentBody.BoundingBox.Center();
-        var vector2 = vector + v;
-        if (Vector3.Distance(vector2, _position) < 10f)
+        var desiredPosition = vector + v;
+        if (Vector3.Distance(desiredPosition, _position) < 10f)
         {
-            var v2 = vector2 - _position;
+            var v2 = desiredPosition - _position;
             var s = MathUtils.Saturate(10f * dt);
             _position += s * v2;
         }
         else
         {
-            _position = vector2;
+            _position = desiredPosition;
         }
 
-        var vector3 = _position - vector;
-        float? num = null;
-        var vector4 = Vector3.Normalize(Vector3.Cross(vector3, Vector3.UnitY));
-        var v3 = Vector3.Normalize(Vector3.Cross(vector3, vector4));
+        var cameraOffset = _position - vector;
+        float? nearestObstacleDistance = null;
+        var cameraRight = Vector3.Normalize(Vector3.Cross(cameraOffset, Vector3.UnitY));
+        var v3 = Vector3.Normalize(Vector3.Cross(cameraOffset, cameraRight));
         for (var i = 0; i <= 0; i++)
         {
             for (var j = 0; j <= 0; j++)
             {
-                var v4 = 0.5f * (vector4 * i + v3 * j);
-                var vector5 = vector + v4;
-                var end = vector5 + vector3 + Vector3.Normalize(vector3) * 0.5f;
+                var v4 = 0.5f * (cameraRight * i + v3 * j);
+                var rayStart = vector + v4;
+                var end = rayStart + cameraOffset + Vector3.Normalize(cameraOffset) * 0.5f;
                 var terrainRaycastResult = GameWidget.SubsystemGameWidgets.SubsystemTerrain.Raycast(
-                    vector5,
+                    rayStart,
                     end,
                     false,
                     true,
@@ -74,16 +74,16 @@ public class OrbitCamera(GameWidget gameWidget) : BasePerspectiveCamera(gameWidg
                 );
                 if (terrainRaycastResult.HasValue)
                 {
-                    num = num.HasValue
-                        ? MathUtils.Min(num.Value, terrainRaycastResult.Value.Distance)
+                    nearestObstacleDistance = nearestObstacleDistance.HasValue
+                        ? MathUtils.Min(nearestObstacleDistance.Value, terrainRaycastResult.Value.Distance)
                         : terrainRaycastResult.Value.Distance;
                 }
             }
         }
 
-        var vector6 = !num.HasValue
-            ? vector + vector3
-            : vector + Vector3.Normalize(vector3) * MathUtils.Max(num.Value - 0.5f, 0.2f);
-        SetupPerspectiveCamera(vector6, vector - vector6, Vector3.UnitY);
+        var cameraPosition = !nearestObstacleDistance.HasValue
+            ? vector + cameraOffset
+            : vector + Vector3.Normalize(cameraOffset) * MathUtils.Max(nearestObstacleDistance.Value - 0.5f, 0.2f);
+        SetupPerspectiveCamera(cameraPosition, vector - cameraPosition, Vector3.UnitY);
     }
 }

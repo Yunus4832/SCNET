@@ -69,8 +69,8 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
                 var slot = slots[FuelSlotIndex];
                 if (slot.Count > 0)
                 {
-                    var num = Terrain.ExtractContents(slot.Value);
-                    heatLevel = WorldContentBinding.For(Project).Catalog.Blocks[num].FuelHeatLevel;
+                    var fuelContents = Terrain.ExtractContents(slot.Value);
+                    heatLevel = WorldContentBinding.For(Project).Catalog.Blocks[fuelContents].FuelHeatLevel;
                 }
             }
 
@@ -93,8 +93,8 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
             var slot2 = slots[FuelSlotIndex];
             if (slot2.Count > 0)
             {
-                var num2 = Terrain.ExtractContents(slot2.Value);
-                var block = WorldContentBinding.For(Project).Catalog.Blocks[num2];
+                var fuelContents = Terrain.ExtractContents(slot2.Value);
+                var block = WorldContentBinding.For(Project).Catalog.Blocks[fuelContents];
                 if (block.GetExplosionPressure(slot2.Value) > 0f)
                 {
                     slot2.Count = 0;
@@ -278,12 +278,12 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
         for (var i = 0; i < _furnaceSize; i++)
         {
             var slotValue = GetSlotValue(i);
-            var num = Terrain.ExtractContents(slotValue);
-            var num2 = Terrain.ExtractData(slotValue);
+            var ingredientContents = Terrain.ExtractContents(slotValue);
+            var ingredientData = Terrain.ExtractData(slotValue);
             if (GetSlotCount(i) > 0)
             {
-                var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
-                _matchedIngredients[i] = block.CraftingId + ":" + num2.ToString(CultureInfo.InvariantCulture);
+                var block = WorldContentBinding.For(Project).Catalog.Blocks[ingredientContents];
+                _matchedIngredients[i] = block.CraftingId + ":" + ingredientData.ToString(CultureInfo.InvariantCulture);
             }
             else
             {
@@ -308,11 +308,11 @@ public class ComponentFurnace : ComponentInventoryBase, IUpdateable
             if (craftingRecipe != null)
             {
                 var slot = slots[ResultSlotIndex];
-                var num3 = Terrain.ExtractContents(craftingRecipe.ResultValue);
+                var resultContents = Terrain.ExtractContents(craftingRecipe.ResultValue);
                 if (slot.Count != 0 &&
                     (craftingRecipe.ResultValue != slot.Value ||
                      craftingRecipe.ResultCount + slot.Count >
-                     WorldContentBinding.For(Project).Catalog.Blocks[num3].MaxStacking))
+                     WorldContentBinding.For(Project).Catalog.Blocks[resultContents].MaxStacking))
                 {
                     craftingRecipe = null;
                 }

@@ -92,9 +92,9 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior
     public override void OnNeighborBlockChanged(int x, int y, int z, int neighborX, int neighborY, int neighborZ)
     {
         var cellValueFast = SubsystemTerrain.Terrain.GetCellValueFast(x, y, z);
-        var num = Terrain.ExtractContents(cellValueFast);
+        var contents = Terrain.ExtractContents(cellValueFast);
         var data = Terrain.ExtractData(cellValueFast);
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
         switch (block)
         {
             case AttachedSignBlock:
@@ -115,12 +115,12 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior
             }
             case PostedSignBlock:
             {
-                var num2 = PostedSignBlock.GetHanging(data)
+                var supportOffset = PostedSignBlock.GetHanging(data)
                     ? SubsystemTerrain.Terrain.GetCellValue(x, y + 1, z)
                     : SubsystemTerrain.Terrain.GetCellValue(x, y - 1, z);
 
-                if (!WorldContentBinding.For(Project).Catalog.Blocks[Terrain.ExtractContents(num2)]
-                        .IsCollidable(num2))
+                if (!WorldContentBinding.For(Project).Catalog.Blocks[Terrain.ExtractContents(supportOffset)]
+                        .IsCollidable(supportOffset))
                 {
                     SubsystemTerrain.DestroyCell(0, x, y, z, 0, false, false);
                 }
@@ -223,7 +223,7 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior
 
     public override void Save(ValuesDictionary valuesDictionary)
     {
-        var num = 0;
+        var entryIndex = 0;
         var valuesDictionary2 = new ValuesDictionary();
         valuesDictionary.SetValue("Texts", valuesDictionary2);
         if (Project.SendToClientMode)
@@ -280,7 +280,7 @@ public class SubsystemSignBlockBehavior : SubsystemBlockBehavior
                 valuesDictionary3.SetValue("Url", value.Url);
             }
 
-            valuesDictionary2.SetValue(num++.ToString(CultureInfo.InvariantCulture), valuesDictionary3);
+            valuesDictionary2.SetValue(entryIndex++.ToString(CultureInfo.InvariantCulture), valuesDictionary3);
         }
     }
 

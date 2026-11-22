@@ -110,25 +110,25 @@ public static class LightingManager
     public static float? CalculateSmoothLight(SubsystemTerrain subsystemTerrain, Vector3 p)
     {
         p -= new Vector3(0.5f);
-        var num = (int)MathUtils.Floor(p.X);
-        var num2 = (int)MathUtils.Floor(p.Y);
-        var num3 = (int)MathUtils.Floor(p.Z);
+        var floorX = (int)MathUtils.Floor(p.X);
+        var floorY = (int)MathUtils.Floor(p.Y);
+        var floorZ = (int)MathUtils.Floor(p.Z);
         var x = (int)MathUtils.Ceiling(p.X);
-        var num4 = (int)MathUtils.Ceiling(p.Y);
+        var ceilY = (int)MathUtils.Ceiling(p.Y);
         var z = (int)MathUtils.Ceiling(p.Z);
-        if (num2 < 0 || num4 > 255)
+        if (floorY < 0 || ceilY > 255)
         {
             return null;
         }
 
-        var l000 = SampleSpatialLight(subsystemTerrain, num, num2, num3);
-        var l001 = SampleSpatialLight(subsystemTerrain, num, num2, z);
-        var l010 = SampleSpatialLight(subsystemTerrain, num, num4, num3);
-        var l011 = SampleSpatialLight(subsystemTerrain, num, num4, z);
-        var l100 = SampleSpatialLight(subsystemTerrain, x, num2, num3);
-        var l101 = SampleSpatialLight(subsystemTerrain, x, num2, z);
-        var l110 = SampleSpatialLight(subsystemTerrain, x, num4, num3);
-        var l111 = SampleSpatialLight(subsystemTerrain, x, num4, z);
+        var l000 = SampleSpatialLight(subsystemTerrain, floorX, floorY, floorZ);
+        var l001 = SampleSpatialLight(subsystemTerrain, floorX, floorY, z);
+        var l010 = SampleSpatialLight(subsystemTerrain, floorX, ceilY, floorZ);
+        var l011 = SampleSpatialLight(subsystemTerrain, floorX, ceilY, z);
+        var l100 = SampleSpatialLight(subsystemTerrain, x, floorY, floorZ);
+        var l101 = SampleSpatialLight(subsystemTerrain, x, floorY, z);
+        var l110 = SampleSpatialLight(subsystemTerrain, x, ceilY, floorZ);
+        var l111 = SampleSpatialLight(subsystemTerrain, x, ceilY, z);
         if (!l000.HasValue ||
             !l001.HasValue ||
             !l010.HasValue ||
@@ -139,9 +139,9 @@ public static class LightingManager
             !l111.HasValue) { return null; }
 
         var daylight = CaptureSkyLightValue(subsystemTerrain);
-        var f = p.X - num;
-        var f2 = p.Y - num2;
-        var f3 = p.Z - num3;
+        var f = p.X - floorX;
+        var f2 = p.Y - floorY;
+        var f3 = p.Z - floorZ;
         var x2 = GetEffectiveLight(l000.Value, daylight);
         var x3 = GetEffectiveLight(l001.Value, daylight);
         var x4 = GetEffectiveLight(l010.Value, daylight);
@@ -156,8 +156,8 @@ public static class LightingManager
         var x13 = MathUtils.Lerp(x5, x9, f);
         var x14 = MathUtils.Lerp(x10, x12, f2);
         var x15 = MathUtils.Lerp(x11, x13, f2);
-        var num5 = MathUtils.Lerp(x14, x15, f3);
-        return GetBrightness(Math.Clamp(num5, 0f, 15f));
+        var interpolatedLight = MathUtils.Lerp(x14, x15, f3);
+        return GetBrightness(Math.Clamp(interpolatedLight, 0f, 15f));
     }
 
     private static void CalculateLightingTables()

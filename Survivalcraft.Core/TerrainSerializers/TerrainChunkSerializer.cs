@@ -857,8 +857,8 @@ public class TerrainChunkSerializer : IDisposable
 
         private static DirectoryEntry ReadDirectoryEntry(BinaryReader reader, Point2 chunk)
         {
-            var num = chunk.X + 16 * chunk.Y;
-            reader.BaseStream.Position = 4 + num * 8;
+            var entryIndex = chunk.X + 16 * chunk.Y;
+            reader.BaseStream.Position = 4 + entryIndex * 8;
             return ReadDirectoryEntry(reader);
         }
 
@@ -889,8 +889,8 @@ public class TerrainChunkSerializer : IDisposable
 
         private static void WriteDirectoryEntry(BinaryWriter writer, Point2 chunk, DirectoryEntry entry)
         {
-            var num = chunk.X + 16 * chunk.Y;
-            writer.BaseStream.Position = 4 + num * 8;
+            var entryIndex = chunk.X + 16 * chunk.Y;
+            writer.BaseStream.Position = 4 + entryIndex * 8;
             WriteDirectoryEntry(writer, entry);
         }
 
@@ -916,16 +916,16 @@ public class TerrainChunkSerializer : IDisposable
         private static int FindNextEntryIndex(DirectoryEntry[] entries, int index)
         {
             var result = -1;
-            var num = int.MaxValue;
+            var smallestOffsetDelta = int.MaxValue;
             for (var i = 0; i < entries.Length; i++)
             {
-                var num2 = entries[i].Offset - entries[index].Offset;
-                if (num2 <= 0 || num2 >= num)
+                var offsetDelta = entries[i].Offset - entries[index].Offset;
+                if (offsetDelta <= 0 || offsetDelta >= smallestOffsetDelta)
                 {
                     continue;
                 }
 
-                num = num2;
+                smallestOffsetDelta = offsetDelta;
                 result = i;
             }
 

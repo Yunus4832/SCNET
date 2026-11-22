@@ -374,13 +374,13 @@ public static class MathUtils
 
     public static float CatmullRom(float v1, float v2, float v3, float v4, float f)
     {
-        var num = f * f;
-        var num2 = num * f;
+        var tSquared = f * f;
+        var tCubed = tSquared * f;
         return 0.5f *
                (2f * v2 +
                 (v3 - v1) * f +
-                (2f * v1 - 5f * v2 + 4f * v3 - v4) * num +
-                (3f * v2 - v1 - 3f * v3 + v4) * num2);
+                (2f * v1 - 5f * v2 + 4f * v3 - v4) * tSquared +
+                (3f * v2 - v1 - 3f * v3 + v4) * tCubed);
     }
 
     public static float NormalizeAngle(float angle)
@@ -410,9 +410,9 @@ public static class MathUtils
             return 1f;
         }
 
-        var num = Exp(steepness);
-        var num2 = Exp(2f * steepness * x);
-        return num * (num2 - 1f) / ((num - 1f) * (num2 + num));
+        var expSteepness = Exp(steepness);
+        var expScaledPosition = Exp(2f * steepness * x);
+        return expSteepness * (expScaledPosition - 1f) / ((expSteepness - 1f) * (expScaledPosition + expSteepness));
     }
 
     public static float DegToRad(float degrees)
@@ -598,13 +598,13 @@ public static class MathUtils
 
     public static double CatmullRom(double v1, double v2, double v3, double v4, double f)
     {
-        var num = f * f;
-        var num2 = num * f;
+        var tSquared = f * f;
+        var tCubed = tSquared * f;
         return 0.5 *
                (2.0 * v2 +
                 (v3 - v1) * f +
-                (2.0 * v1 - 5.0 * v2 + 4.0 * v3 - v4) * num +
-                (3.0 * v2 - v1 - 3.0 * v3 + v4) * num2);
+                (2.0 * v1 - 5.0 * v2 + 4.0 * v3 - v4) * tSquared +
+                (3.0 * v2 - v1 - 3.0 * v3 + v4) * tCubed);
     }
 
     public static double NormalizeAngle(double angle)

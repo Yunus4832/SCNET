@@ -4,7 +4,7 @@ public static class CollectionUtils
 {
     public static T ElementAt<T, TE>(TE enumerator, int index) where TE : IEnumerator<T>
     {
-        var num = 0;
+        var currentIndex = 0;
         do
         {
             if (!enumerator.MoveNext())
@@ -12,32 +12,32 @@ public static class CollectionUtils
                 throw new IndexOutOfRangeException("ElementAt() index out of range.");
             }
 
-            num++;
-        } while (num <= index);
+            currentIndex++;
+        } while (currentIndex <= index);
 
         return enumerator.Current;
     }
 
     public static void RandomShuffle<T>(this IList<T> list, Func<int, int> random)
     {
-        for (var num = list.Count - 1; num > 0; num--)
+        for (var lastIndex = list.Count - 1; lastIndex > 0; lastIndex--)
         {
-            var index = random(num + 1);
-            (list[index], list[num]) = (list[num], list[index]);
+            var index = random(lastIndex + 1);
+            (list[index], list[lastIndex]) = (list[lastIndex], list[index]);
         }
     }
 
     public static int FirstIndex<T>(this IEnumerable<T> collection, T value)
     {
-        var num = 0;
+        var currentIndex = 0;
         foreach (var item in collection)
         {
             if (Equals(item, value))
             {
-                return num;
+                return currentIndex;
             }
 
-            num++;
+            currentIndex++;
         }
 
         return -1;
@@ -45,15 +45,15 @@ public static class CollectionUtils
 
     public static int FirstIndex<T>(this IEnumerable<T> collection, Func<T, bool> predicate)
     {
-        var num = 0;
+        var currentIndex = 0;
         foreach (var item in collection)
         {
             if (predicate(item))
             {
-                return num;
+                return currentIndex;
             }
 
-            num++;
+            currentIndex++;
         }
 
         return -1;
@@ -66,38 +66,38 @@ public static class CollectionUtils
             throw new ArgumentException();
         }
 
-        var num = 0;
-        var num2 = list.Count - 1;
-        while (num < num2)
+        var left = 0;
+        var right = list.Count - 1;
+        while (left < right)
         {
-            var num3 = num;
-            var num4 = num2;
-            var y = list[(num3 + num4) / 2];
-            while (num3 < num4)
+            var leftScan = left;
+            var rightScan = right;
+            var y = list[(leftScan + rightScan) / 2];
+            while (leftScan < rightScan)
             {
-                if (comparer.Compare(list[num3], y) >= 0)
+                if (comparer.Compare(list[leftScan], y) >= 0)
                 {
-                    (list[num4], list[num3]) = (list[num3], list[num4]);
-                    num4--;
+                    (list[rightScan], list[leftScan]) = (list[leftScan], list[rightScan]);
+                    rightScan--;
                 }
                 else
                 {
-                    num3++;
+                    leftScan++;
                 }
             }
 
-            if (comparer.Compare(list[num3], y) > 0)
+            if (comparer.Compare(list[leftScan], y) > 0)
             {
-                num3--;
+                leftScan--;
             }
 
-            if (n <= num3)
+            if (n <= leftScan)
             {
-                num2 = num3;
+                right = leftScan;
             }
             else
             {
-                num = num3 + 1;
+                left = leftScan + 1;
             }
         }
 

@@ -63,28 +63,30 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable
             }
 
             var x = Vector3.Distance(movingBlockSet.StartPosition, movingBlockSet.Position);
-            var num = Vector3.Distance(movingBlockSet.TargetPosition, movingBlockSet.Position);
-            var num2 = movingBlockSet.Smoothness.X > 0f
+            var remainingDistance = Vector3.Distance(movingBlockSet.TargetPosition, movingBlockSet.Position);
+            var accelerationFactor = movingBlockSet.Smoothness.X > 0f
                 ? MathUtils.Saturate((MathUtils.Sqrt(x) + 0.05f) / movingBlockSet.Smoothness.X)
                 : 1f;
-            var num3 = movingBlockSet.Smoothness.Y > 0f
-                ? MathUtils.Saturate((num + 0.05f) / movingBlockSet.Smoothness.Y)
+            var decelerationFactor = movingBlockSet.Smoothness.Y > 0f
+                ? MathUtils.Saturate((remainingDistance + 0.05f) / movingBlockSet.Smoothness.Y)
                 : 1f;
-            var num4 = num2 * num3;
-            var flag = false;
-            var vector = num > 0f ? (movingBlockSet.TargetPosition - movingBlockSet.Position) / num : Vector3.Zero;
+            var speedFactor = accelerationFactor * decelerationFactor;
+            var reachedTarget = false;
+            var vector = remainingDistance > 0f
+                ? (movingBlockSet.TargetPosition - movingBlockSet.Position) / remainingDistance
+                : Vector3.Zero;
             var x2 = _subsystemTime.GameTimeDelta > 0f ? 0.95f / _subsystemTime.GameTimeDelta : 0f;
-            var num5 = MathUtils.Min(movingBlockSet.Speed * num4, x2);
-            if (num5 * _subsystemTime.GameTimeDelta >= num)
+            var stepSpeed = MathUtils.Min(movingBlockSet.Speed * speedFactor, x2);
+            if (stepSpeed * _subsystemTime.GameTimeDelta >= remainingDistance)
             {
                 movingBlockSet.Position = movingBlockSet.TargetPosition;
                 movingBlockSet.CurrentVelocity = Vector3.Zero;
-                flag = true;
+                reachedTarget = true;
             }
             else
             {
                 movingBlockSet.CurrentVelocity =
-                    num5 / num * (movingBlockSet.TargetPosition - movingBlockSet.Position);
+                    stepSpeed / remainingDistance * (movingBlockSet.TargetPosition - movingBlockSet.Position);
                 movingBlockSet.Position += movingBlockSet.CurrentVelocity * _subsystemTime.GameTimeDelta;
             }
 
@@ -128,7 +130,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable
                 }
             }
 
-            if (movingBlockSet.Stop | flag)
+            if (movingBlockSet.Stop | reachedTarget)
             {
                 _stopped.Add(movingBlockSet);
             }
@@ -372,19 +374,19 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable
         var boundingBox = new BoundingBox(Vector3.Min(start, end), Vector3.Max(start, end));
         _result.Clear();
         FindMovingBlocks(boundingBox, extendToFillCells, _result);
-        var num = float.MaxValue;
+        var nearestDistance = float.MaxValue;
         MovingBlockSet? movingBlockSet = null;
         foreach (var movingBlockSet1 in _result)
         {
             var item = (MovingBlockSet)movingBlockSet1;
             var box = item.BoundingBox(extendToFillCells);
-            var num2 = ray.Intersection(box);
-            if (!(num2 < num))
+            var hitDistance = ray.Intersection(box);
+            if (!(hitDistance < nearestDistance))
             {
                 continue;
             }
 
-            num = num2.Value;
+            nearestDistance = hitDistance.Value;
             movingBlockSet = item;
         }
 
@@ -395,7 +397,7 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable
 
         var value = default(MovingBlocksRaycastResult);
         value.Ray = ray;
-        value.Distance = num;
+        value.Distance = nearestDistance;
         value.MovingBlockSet = movingBlockSet;
         return value;
     }
@@ -425,10 +427,13 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable
             return;
         }
 
-        var num = 0;
+        var entryIndex = 0;
         foreach (var movingBlockSet in MovingBlockSets)
         {
-            valuesDictionary2.SetValue(num++.ToString(CultureInfo.InvariantCulture), SaveMovingItem(movingBlockSet));
+            valuesDictionary2.SetValue(
+                entryIndex++.ToString(CultureInfo.InvariantCulture),
+                SaveMovingItem(movingBlockSet)
+            );
         }
     }
 
@@ -528,20 +533,20 @@ public class SubsystemMovingBlocks : Subsystem, IUpdateable
         var boundingBox = movingBlockSet.BoundingBox(true);
         _result.Clear();
         FindMovingBlocks(boundingBox, true, _result);
-        var num = 0;
+        var collisionIndex = 0;
         while (true)
         {
-            if (num >= _result.Count)
+            if (collisionIndex >= _result.Count)
             {
                 return;
             }
 
-            if (_result.Array[num] != movingBlockSet)
+            if (_result.Array[collisionIndex] != movingBlockSet)
             {
                 break;
             }
 
-            num++;
+            collisionIndex++;
         }
 
         movingBlockSet.Stop = true;

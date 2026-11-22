@@ -19,27 +19,27 @@ public class LightBulbElectricElement : MountedElectricElement
 
     public override bool Simulate()
     {
-        var num = SubsystemElectricity.CircuitStep - _lastChangeCircuitStep;
-        var num2 = 0f;
+        var stepsSinceChange = SubsystemElectricity.CircuitStep - _lastChangeCircuitStep;
+        var maxInputVoltage = 0f;
         foreach (var connection in Connections)
         {
             if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0)
             {
-                num2 = MathUtils.Max(
-                    num2,
+                maxInputVoltage = MathUtils.Max(
+                    maxInputVoltage,
                     connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace)
                 );
             }
         }
 
         var intensity = _intensity;
-        _intensity = MathUtils.Clamp((int)MathUtils.Round((num2 - 0.5f) * 30f), 0, 15);
+        _intensity = MathUtils.Clamp((int)MathUtils.Round((maxInputVoltage - 0.5f) * 30f), 0, 15);
         if (_intensity != intensity)
         {
             _lastChangeCircuitStep = SubsystemElectricity.CircuitStep;
         }
 
-        if (num >= 10)
+        if (stepsSinceChange >= 10)
         {
             var cellFace = CellFaces[0];
             var cellValue =
@@ -50,7 +50,10 @@ public class LightBulbElectricElement : MountedElectricElement
         }
         else
         {
-            SubsystemElectricity.QueueElectricElementForSimulation(this, SubsystemElectricity.CircuitStep + 10 - num);
+            SubsystemElectricity.QueueElectricElementForSimulation(
+                this,
+                SubsystemElectricity.CircuitStep + 10 - stepsSinceChange
+            );
         }
 
         return false;

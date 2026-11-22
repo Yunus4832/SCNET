@@ -22,12 +22,12 @@ public abstract class BaseDelayGateElectricElement(
     {
         var voltage = _voltage;
         var delaySteps = DelaySteps;
-        var num = 0f;
+        var inputVoltage = 0f;
         foreach (var connection in Connections)
         {
             if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0)
             {
-                num = connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace);
+                inputVoltage = connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace);
                 break;
             }
         }
@@ -40,12 +40,12 @@ public abstract class BaseDelayGateElectricElement(
                 _voltagesHistory.Remove(SubsystemElectricity.CircuitStep);
             }
 
-            if (num.UncloseTo(_lastStoredVoltage))
+            if (inputVoltage.UncloseTo(_lastStoredVoltage))
             {
-                _lastStoredVoltage = num;
+                _lastStoredVoltage = inputVoltage;
                 if (_voltagesHistory.Count < 300)
                 {
-                    _voltagesHistory[SubsystemElectricity.CircuitStep + DelaySteps] = num;
+                    _voltagesHistory[SubsystemElectricity.CircuitStep + DelaySteps] = inputVoltage;
                     SubsystemElectricity.QueueElectricElementForSimulation(
                         this,
                         SubsystemElectricity.CircuitStep + DelaySteps
@@ -55,7 +55,7 @@ public abstract class BaseDelayGateElectricElement(
         }
         else
         {
-            _voltage = num;
+            _voltage = inputVoltage;
         }
 
         return _voltage.UncloseTo(voltage);

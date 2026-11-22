@@ -105,9 +105,9 @@ public struct BoundingRectangle : IEquatable<BoundingRectangle>
 
     public bool Intersection(BoundingCircle circle)
     {
-        var num = circle.Center.X - MathUtils.Clamp(circle.Center.X, Min.X, Max.X);
-        var num2 = circle.Center.Y - MathUtils.Clamp(circle.Center.Y, Min.Y, Max.Y);
-        return num * num + num2 * num2 <= circle.Radius * circle.Radius;
+        var offsetX = circle.Center.X - MathUtils.Clamp(circle.Center.X, Min.X, Max.X);
+        var offsetY = circle.Center.Y - MathUtils.Clamp(circle.Center.Y, Min.Y, Max.Y);
+        return offsetX * offsetX + offsetY * offsetY <= circle.Radius * circle.Radius;
     }
 
     public static BoundingRectangle Intersection(BoundingRectangle r1, BoundingRectangle r2)
@@ -138,9 +138,9 @@ public struct BoundingRectangle : IEquatable<BoundingRectangle>
 
     public static float Distance(BoundingRectangle r, Vector2 p)
     {
-        var num = MathUtils.Max(r.Min.X - p.X, 0f, p.X - r.Max.X);
-        var num2 = MathUtils.Max(r.Min.Y - p.Y, 0f, p.Y - r.Max.Y);
-        return MathUtils.Sqrt(num * num + num2 * num2);
+        var distanceX = MathUtils.Max(r.Min.X - p.X, 0f, p.X - r.Max.X);
+        var distanceY = MathUtils.Max(r.Min.Y - p.Y, 0f, p.Y - r.Max.Y);
+        return MathUtils.Sqrt(distanceX * distanceX + distanceY * distanceY);
     }
 
     public static bool operator ==(BoundingRectangle a, BoundingRectangle b)

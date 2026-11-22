@@ -260,18 +260,18 @@ public class Texture2D : GraphicsResource
 
     public override int GetGpuMemoryUsage()
     {
-        var num = 0;
+        var textureBytes = 0;
         for (var i = 0; i < MipLevelsCount; i++)
         {
-            var num2 = MathUtils.Max(Width >> i, 1);
-            var num3 = MathUtils.Max(Height >> i, 1);
+            var mipWidth = MathUtils.Max(Width >> i, 1);
+            var mipHeight = MathUtils.Max(Height >> i, 1);
             var pixelSize = _depthTextureFormat == DepthFormat.None
                 ? ColorFormat.GetSize()
                 : _depthTextureFormat.GetSize();
-            num += pixelSize * num2 * num3;
+            textureBytes += pixelSize * mipWidth * mipHeight;
         }
 
-        return num;
+        return textureBytes;
     }
 
     public static Texture2D Load(Image image, int mipLevelsCount = 1)
@@ -316,13 +316,13 @@ public class Texture2D : GraphicsResource
         ColorFormat = colorFormat;
         if (mipLevelsCount > 1)
         {
-            var num = 0;
-            for (var num2 = MathUtils.Max(width, height); num2 >= 1; num2 /= 2)
+            var maxMipLevels = 0;
+            for (var mipDimension = MathUtils.Max(width, height); mipDimension >= 1; mipDimension /= 2)
             {
-                num++;
+                maxMipLevels++;
             }
 
-            MipLevelsCount = MathUtils.Min(num, mipLevelsCount);
+            MipLevelsCount = MathUtils.Min(maxMipLevels, mipLevelsCount);
         }
         else
         {
@@ -343,23 +343,23 @@ public class Texture2D : GraphicsResource
         }
 
         VerifyNotDisposed();
-        var num = Marshal.SizeOf<T>();
+        var elementSize = Marshal.SizeOf<T>();
         var size = ColorFormat.GetSize();
-        var num2 = MathUtils.Max(Width >> mipLevel, 1);
-        var num3 = MathUtils.Max(Height >> mipLevel, 1);
-        var num4 = size * num2 * num3;
+        var mipWidth = MathUtils.Max(Width >> mipLevel, 1);
+        var mipHeight = MathUtils.Max(Height >> mipLevel, 1);
+        var requiredBytes = size * mipWidth * mipHeight;
 
-        if (num > size)
+        if (elementSize > size)
         {
             throw new InvalidOperationException("Source array element size is larger than pixel size.");
         }
 
-        if (size % num != 0)
+        if (size % elementSize != 0)
         {
             throw new InvalidOperationException("Pixel size is not an integer multiple of source array element size.");
         }
 
-        if (sourceStartIndex < 0 || (source.Length - sourceStartIndex) * num < num4)
+        if (sourceStartIndex < 0 || (source.Length - sourceStartIndex) * elementSize < requiredBytes)
         {
             throw new InvalidOperationException("Not enough data in source array.");
         }

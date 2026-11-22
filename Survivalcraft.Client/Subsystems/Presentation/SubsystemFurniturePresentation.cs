@@ -171,8 +171,8 @@ public sealed class SubsystemFurniturePresentation : Subsystem, IUpdateable
         var point = start.Point;
         var point2 = start.Point;
         var startValue = _terrain.Terrain.GetCellValue(start.Point.X, start.Point.Y, start.Point.Z);
-        var num = Terrain.ExtractContents(startValue);
-        if (WorldContentBinding.For(Project).Catalog.Blocks[num] is FurnitureBlock)
+        var startContents = Terrain.ExtractContents(startValue);
+        if (WorldContentBinding.For(Project).Catalog.Blocks[startContents] is FurnitureBlock)
         {
             var designIndex = FurnitureBlock.GetDesignIndex(Terrain.ExtractData(startValue));
             furnitureDesign = CopySourceDesign(_furniture.GetDesign(designIndex));
@@ -286,15 +286,16 @@ public sealed class SubsystemFurniturePresentation : Subsystem, IUpdateable
 
             design = new FurnitureDesign(_terrain.Catalog, _terrain);
             var point3 = point2 - point;
-            var num2 = MathUtils.Max(MathUtils.Max(point3.X, point3.Y, point3.Z) + 1, 2);
-            var array = new int[num2 * num2 * num2];
+            var designResolution = MathUtils.Max(MathUtils.Max(point3.X, point3.Y, point3.Z) + 1, 2);
+            var array = new int[designResolution * designResolution * designResolution];
             foreach (var item in valuesDictionary)
             {
                 var point4 = item.Key - point;
-                array[point4.X + point4.Y * num2 + point4.Z * num2 * num2] = item.Value;
+                array[point4.X + point4.Y * designResolution + point4.Z * designResolution * designResolution] =
+                    item.Value;
             }
 
-            design.SetValues(num2, array);
+            design.SetValues(designResolution, array);
             var steps = start.Face > 3 ? CellFace.Vector3ToFace(direction, 3) : CellFace.OppositeFace(start.Face);
             design.Rotate(1, steps);
             var location = design.Box.Location;
@@ -337,9 +338,9 @@ public sealed class SubsystemFurniturePresentation : Subsystem, IUpdateable
 
     private static bool IsValueDisallowed(int value)
     {
-        var num = Terrain.ExtractContents(value);
+        var contents = Terrain.ExtractContents(value);
         var data = Terrain.ExtractData(value);
-        return num is 18 or 92 && FluidBlock.GetLevel(data) != 0 && FluidBlock.GetIsTop(data);
+        return contents is 18 or 92 && FluidBlock.GetLevel(data) != 0 && FluidBlock.GetIsTop(data);
     }
 
     private void AddParticleSystems(int value, int x, int y, int z)
@@ -364,8 +365,8 @@ public sealed class SubsystemFurniturePresentation : Subsystem, IUpdateable
         {
             foreach (var boundingBox in torchPoints)
             {
-                var num = (boundingBox.Size().X + boundingBox.Size().Y + boundingBox.Size().Z) / 3f;
-                var size = MathUtils.Clamp(1.5f * num, 0.1f, 1f);
+                var averageExtent = (boundingBox.Size().X + boundingBox.Size().Y + boundingBox.Size().Z) / 3f;
+                var size = MathUtils.Clamp(1.5f * averageExtent, 0.1f, 1f);
                 var fireParticleSystem = new FireParticleSystem(new Vector3(x, y, z) + boundingBox.Center(), size, 24f);
                 _particles.AddParticleSystem(fireParticleSystem);
                 list.Add(fireParticleSystem);

@@ -103,15 +103,15 @@ public class ComponentAvoidCharacterBehavior : ComponentBehavior, IUpdateable
                 }
                 else
                 {
-                    var num = ScoreTarget(_target);
-                    SetImportanceLevel(num);
+                    var targetScore = ScoreTarget(_target);
+                    SetImportanceLevel(targetScore);
                     var vector =
                         Vector3.Normalize(_componentCreature.ComponentBody.Position - _target.ComponentBody.Position);
                     var value = _componentCreature.ComponentBody.Position +
                                 10f * Vector3.Normalize(new Vector3(vector.X, 0f, vector.Z));
                     _componentPathfinding.SetDestination(
                         value,
-                        MathUtils.Lerp(0.6f, 1f, num),
+                        MathUtils.Lerp(0.6f, 1f, targetScore),
                         1f,
                         0,
                         false,
@@ -140,7 +140,7 @@ public class ComponentAvoidCharacterBehavior : ComponentBehavior, IUpdateable
     {
         var position = _componentCreature.ComponentBody.Position;
         ComponentCreature? result = null;
-        var num = 0f;
+        var bestScore = 0f;
         _componentBodies.Clear();
         _subsystemBodies.FindBodiesAroundPoint(
             new Vector2(position.X, position.Z),
@@ -155,24 +155,24 @@ public class ComponentAvoidCharacterBehavior : ComponentBehavior, IUpdateable
                 continue;
             }
 
-            var num2 = ScoreTarget(componentCreature);
-            if (!(num2 > num))
+            var candidateScore = ScoreTarget(componentCreature);
+            if (!(candidateScore > bestScore))
             {
                 continue;
             }
 
-            num = num2;
+            bestScore = candidateScore;
             result = componentCreature;
         }
 
-        targetScore = num;
+        targetScore = bestScore;
         return result;
     }
 
     public float ScoreTarget(ComponentCreature target)
     {
-        var num = _subsystemSky.SkyLightIntensity > 0.2f ? _dayRange : _nightRange;
-        if (!(num > 0f))
+        var avoidanceRange = _subsystemSky.SkyLightIntensity > 0.2f ? _dayRange : _nightRange;
+        if (!(avoidanceRange > 0f))
         {
             return 0f;
         }
@@ -184,8 +184,8 @@ public class ComponentAvoidCharacterBehavior : ComponentBehavior, IUpdateable
             return 0f;
         }
 
-        var num2 = Vector3.Distance(target.ComponentBody.Position, _componentCreature.ComponentBody.Position);
-        var score = MathUtils.Saturate(1f - num2 / num);
+        var distance = Vector3.Distance(target.ComponentBody.Position, _componentCreature.ComponentBody.Position);
+        var score = MathUtils.Saturate(1f - distance / avoidanceRange);
         if (score <= 0f)
         {
             return score;

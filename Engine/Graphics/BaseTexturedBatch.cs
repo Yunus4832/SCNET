@@ -72,11 +72,11 @@ public abstract class BaseTexturedBatch : BaseBatch
 
     public void FlushWithCurrentStateAndShader(Shader shader, bool clearAfterFlush = true)
     {
-        var num = 0;
-        var num2 = TriangleIndices.Count;
-        while (num2 > 0)
+        var indexOffset = 0;
+        var remainingIndices = TriangleIndices.Count;
+        while (remainingIndices > 0)
         {
-            var num3 = MathUtils.Min(num2, 196605);
+            var indexCount = MathUtils.Min(remainingIndices, 196605);
             Display.DrawUserIndexed(
                 PrimitiveType.TriangleList,
                 shader,
@@ -85,11 +85,11 @@ public abstract class BaseTexturedBatch : BaseBatch
                 0,
                 TriangleVertices.Count,
                 TriangleIndices.Array,
-                num,
-                num3
+                indexOffset,
+                indexCount
             );
-            num += num3;
-            num2 -= num3;
+            indexOffset += indexCount;
+            remainingIndices -= indexCount;
         }
 
         if (clearAfterFlush)
@@ -130,11 +130,11 @@ public abstract class BaseTexturedBatch : BaseBatch
 
     public void FlushWithDeviceState(Shader shader, bool clearAfterFlush = true)
     {
-        var num = 0;
-        var num2 = TriangleIndices.Count;
-        while (num2 > 0)
+        var indexOffset = 0;
+        var remainingIndices = TriangleIndices.Count;
+        while (remainingIndices > 0)
         {
-            var num3 = MathUtils.Min(num2, 196605);
+            var indexCount = MathUtils.Min(remainingIndices, 196605);
             Display.DrawUserIndexed(
                 PrimitiveType.TriangleList,
                 shader,
@@ -143,11 +143,11 @@ public abstract class BaseTexturedBatch : BaseBatch
                 0,
                 TriangleVertices.Count,
                 TriangleIndices.Array,
-                num,
-                num3
+                indexOffset,
+                indexCount
             );
-            num += num3;
-            num2 -= num3;
+            indexOffset += indexCount;
+            remainingIndices -= indexCount;
         }
 
         if (clearAfterFlush)

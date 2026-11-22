@@ -18,7 +18,7 @@ public class ChristmasTreeElectricElement : ElectricElement
 
     public override bool Simulate()
     {
-        var num = SubsystemElectricity.CircuitStep - _lastChangeCircuitStep;
+        var stepsSinceChange = SubsystemElectricity.CircuitStep - _lastChangeCircuitStep;
         float voltage = CalculateHighInputsCount() > 0 ? 1 : 0;
         if (IsSignalHigh(voltage) != IsSignalHigh(_voltage))
         {
@@ -26,7 +26,7 @@ public class ChristmasTreeElectricElement : ElectricElement
         }
 
         _voltage = voltage;
-        if (num >= 10)
+        if (stepsSinceChange >= 10)
         {
             var cellFace = CellFaces[0];
             var cellValue =
@@ -37,7 +37,10 @@ public class ChristmasTreeElectricElement : ElectricElement
         }
         else
         {
-            SubsystemElectricity.QueueElectricElementForSimulation(this, SubsystemElectricity.CircuitStep + 10 - num);
+            SubsystemElectricity.QueueElectricElementForSimulation(
+                this,
+                SubsystemElectricity.CircuitStep + 10 - stepsSinceChange
+            );
         }
 
         return false;

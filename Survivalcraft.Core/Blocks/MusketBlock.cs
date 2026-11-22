@@ -21,10 +21,10 @@ public class MusketBlock : Block
 
     public override int SetDamage(int value, int damage)
     {
-        var num = Terrain.ExtractData(value);
-        num &= -65281;
-        num |= MathUtils.Clamp(damage, 0, 255) << 8;
-        return Terrain.ReplaceData(value, num);
+        var blockData = Terrain.ExtractData(value);
+        blockData &= -65281;
+        blockData |= MathUtils.Clamp(damage, 0, 255) << 8;
+        return Terrain.ReplaceData(value, blockData);
     }
 
     public static LoadState GetLoadState(int data)
@@ -49,10 +49,10 @@ public class MusketBlock : Block
 
     public static BulletBlock.BulletType? GetBulletType(int data)
     {
-        var num = (data >> 4) & 0xF;
-        if (num != 0)
+        var encodedBulletType = (data >> 4) & 0xF;
+        if (encodedBulletType != 0)
         {
-            return (BulletBlock.BulletType)(num - 1);
+            return (BulletBlock.BulletType)(encodedBulletType - 1);
         }
 
         return null;
@@ -60,7 +60,7 @@ public class MusketBlock : Block
 
     public static int SetBulletType(int data, BulletBlock.BulletType? bulletType)
     {
-        var num = (int)(bulletType.HasValue ? bulletType.Value + 1 : BulletBlock.BulletType.MusketBall);
-        return (data & -241) | ((num & 0xF) << 4);
+        var encodedBulletType = (int)(bulletType.HasValue ? bulletType.Value + 1 : BulletBlock.BulletType.MusketBall);
+        return (data & -241) | ((encodedBulletType & 0xF) << 4);
     }
 }

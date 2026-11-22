@@ -32,12 +32,12 @@ public class MemoryBankElectricElement : RotatableElectricElement
     public override bool Simulate()
     {
         var voltage = _voltage;
-        var flag = false;
-        var flag2 = false;
-        var flag3 = false;
-        var num = 0f;
-        var num2 = 0;
-        var num3 = 0;
+        var readHigh = false;
+        var hasControlInput = false;
+        var writeHigh = false;
+        var writeVoltage = 0f;
+        var addressLow = 0;
+        var addressHigh = 0;
         var rotation = Rotation;
         foreach (var connection in Connections)
         {
@@ -49,46 +49,47 @@ public class MemoryBankElectricElement : RotatableElectricElement
                 {
                     if (connectorDirection == ElectricConnectorDirection.Right)
                     {
-                        num2 = (int)MathUtils.Round(
+                        addressLow = (int)MathUtils.Round(
                             connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace) *
                             15f
                         );
                     }
                     else if (connectorDirection == ElectricConnectorDirection.Left)
                     {
-                        num3 = (int)MathUtils.Round(
+                        addressHigh = (int)MathUtils.Round(
                             connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace) *
                             15f
                         );
                     }
                     else if (connectorDirection == ElectricConnectorDirection.Bottom)
                     {
-                        var num4 = (int)MathUtils.Round(
+                        var controlBits = (int)MathUtils.Round(
                             connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace) *
                             15f
                         );
-                        flag = num4 >= 8;
-                        flag3 = num4 is > 0 and < 8;
-                        flag2 = true;
+                        readHigh = controlBits >= 8;
+                        writeHigh = controlBits is > 0 and < 8;
+                        hasControlInput = true;
                     }
                     else if (connectorDirection == ElectricConnectorDirection.In)
                     {
-                        num = connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace);
+                        writeVoltage =
+                            connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace);
                     }
                 }
             }
         }
 
         var memoryBankData = _subsystemMemoryBankBlockBehavior.GetBlockData(CellFaces[0].Point);
-        var address = num2 + (num3 << 4);
-        if (flag2)
+        var address = addressLow + (addressHigh << 4);
+        if (hasControlInput)
         {
-            if (flag && _clockAllowed)
+            if (readHigh && _clockAllowed)
             {
                 _clockAllowed = false;
                 _voltage = memoryBankData != null ? memoryBankData.Read(address) / 15f : 0f;
             }
-            else if (flag3 && _writeAllowed)
+            else if (writeHigh && _writeAllowed)
             {
                 _writeAllowed = false;
                 if (memoryBankData == null)
@@ -97,7 +98,7 @@ public class MemoryBankElectricElement : RotatableElectricElement
                     _subsystemMemoryBankBlockBehavior.SetBlockData(CellFaces[0].Point, memoryBankData);
                 }
 
-                memoryBankData.Write(address, (byte)MathUtils.Round(num * 15f));
+                memoryBankData.Write(address, (byte)MathUtils.Round(writeVoltage * 15f));
             }
         }
         else
@@ -105,12 +106,12 @@ public class MemoryBankElectricElement : RotatableElectricElement
             _voltage = memoryBankData != null ? memoryBankData.Read(address) / 15f : 0f;
         }
 
-        if (!flag)
+        if (!readHigh)
         {
             _clockAllowed = true;
         }
 
-        if (!flag3)
+        if (!writeHigh)
         {
             _writeAllowed = true;
         }

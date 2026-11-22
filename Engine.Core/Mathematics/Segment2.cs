@@ -16,42 +16,42 @@ public struct Segment2(Vector2 start, Vector2 end)
         var v = s.End - s.Start;
         var v2 = s.Start - p;
         var v3 = s.End - p;
-        var num = Vector2.Dot(v2, v);
-        if (!(num * Vector2.Dot(v3, v) <= 0f))
+        var projection = Vector2.Dot(v2, v);
+        if (!(projection * Vector2.Dot(v3, v) <= 0f))
         {
-            return !(num > 0f) ? v3.Length() : v2.Length();
+            return !(projection > 0f) ? v3.Length() : v2.Length();
         }
 
-        var num2 = v.LengthSquared();
-        if (num2 == 0f)
+        var segmentLengthSquared = v.LengthSquared();
+        if (segmentLengthSquared == 0f)
         {
             return Vector2.Distance(p, s.Start);
         }
 
-        return MathUtils.Abs(Vector2.Cross(p - s.Start, v)) / MathUtils.Sqrt(num2);
+        return MathUtils.Abs(Vector2.Cross(p - s.Start, v)) / MathUtils.Sqrt(segmentLengthSquared);
     }
 
     public static bool Intersection(Segment2 s1, Segment2 s2, out Vector2 result)
     {
         var v = s1.End - s1.Start;
         var v2 = s2.End - s2.Start;
-        var num = Vector2.Cross(v, v2);
-        if (num == 0f)
+        var determinant = Vector2.Cross(v, v2);
+        if (determinant == 0f)
         {
             result = Vector2.Zero;
             return false;
         }
 
-        var num2 = 1f / num;
-        var num3 = (v2.X * (s1.Start.Y - s2.Start.Y) - v2.Y * (s1.Start.X - s2.Start.X)) * num2;
-        var num4 = (v.X * (s1.Start.Y - s2.Start.Y) - v.Y * (s1.Start.X - s2.Start.X)) * num2;
-        if (num3 < 0f || num3 > 1f || num4 < 0f || num4 > 1f)
+        var inverseDeterminant = 1f / determinant;
+        var firstFraction = (v2.X * (s1.Start.Y - s2.Start.Y) - v2.Y * (s1.Start.X - s2.Start.X)) * inverseDeterminant;
+        var secondFraction = (v.X * (s1.Start.Y - s2.Start.Y) - v.Y * (s1.Start.X - s2.Start.X)) * inverseDeterminant;
+        if (firstFraction < 0f || firstFraction > 1f || secondFraction < 0f || secondFraction > 1f)
         {
             result = Vector2.Zero;
             return false;
         }
 
-        result = new Vector2(s1.Start.X + num3 * v.X, s1.Start.Y + num3 * v.Y);
+        result = new Vector2(s1.Start.X + firstFraction * v.X, s1.Start.Y + firstFraction * v.Y);
         return true;
     }
 
@@ -60,22 +60,22 @@ public struct Segment2(Vector2 start, Vector2 end)
         var v = s.End - s.Start;
         var v2 = s.Start - p;
         var v3 = s.End - p;
-        var num = Vector2.Dot(v2, v);
-        if (!(num * Vector2.Dot(v3, v) <= 0f))
+        var projection = Vector2.Dot(v2, v);
+        if (!(projection * Vector2.Dot(v3, v) <= 0f))
         {
-            return !(num > 0f) ? s.End : s.Start;
+            return !(projection > 0f) ? s.End : s.Start;
         }
 
-        var num2 = v.Length();
-        if (num2 == 0f)
+        var segmentLength = v.Length();
+        if (segmentLength == 0f)
         {
             return s.Start;
         }
 
-        var num3 = MathUtils.Sqrt(
+        var projectedLength = MathUtils.Sqrt(
             v2.LengthSquared() -
-            MathUtils.Sqr(MathUtils.Abs(Vector2.Cross(p - s.Start, v)) / num2)
+            MathUtils.Sqr(MathUtils.Abs(Vector2.Cross(p - s.Start, v)) / segmentLength)
         );
-        return Vector2.Lerp(s.Start, s.End, num3 / num2);
+        return Vector2.Lerp(s.Start, s.End, projectedLength / segmentLength);
     }
 }

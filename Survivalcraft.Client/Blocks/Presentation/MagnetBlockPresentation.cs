@@ -22,15 +22,15 @@ public class MagnetBlockPresentation(MagnetBlock block, BlockPresentationCatalog
         int z
     )
     {
-        var num = Terrain.ExtractData(value);
-        if (num < Block.CollisionBoxesByData.Length)
+        var blockData = Terrain.ExtractData(value);
+        if (blockData < Block.CollisionBoxesByData.Length)
         {
             generator.GenerateMeshVertices(
                 this,
                 x,
                 y,
                 z,
-                MeshesByData[num],
+                MeshesByData[blockData],
                 Color.White,
                 null,
                 geometry.SubsetOpaque

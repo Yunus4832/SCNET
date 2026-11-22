@@ -340,7 +340,7 @@ public class Project : IDisposable
 
     public virtual void LoadEntityData(EntityDataList entityDataList, List<Entity> entityList)
     {
-        var num = 0;
+        var entityIndex = 0;
         if (entityDataList.EntitiesData.Count == 0)
         {
             return;
@@ -348,8 +348,8 @@ public class Project : IDisposable
 
         foreach (var entitiesDatum2 in entityDataList.EntitiesData)
         {
-            entityList[num].InternalLoadEntity(entitiesDatum2.ValuesDictionary, IdToEntityMap.Default);
-            num++;
+            entityList[entityIndex].InternalLoadEntity(entitiesDatum2.ValuesDictionary, IdToEntityMap.Default);
+            entityIndex++;
         }
     }
 

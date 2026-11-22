@@ -56,15 +56,15 @@ public class ValueBarWidget : Widget
                 TextureLinearFilter ? SamplerState.LinearClamp : SamplerState.PointClamp
             );
         var start = 0;
-        int num;
+        int firstVertex;
         if (baseBatch is TexturedBatch2D texturedBatch2D)
         {
-            num = texturedBatch2D.TriangleVertices.Count;
+            firstVertex = texturedBatch2D.TriangleVertices.Count;
         }
         else
         {
             start = ((FlatBatch2D)baseBatch).LineVertices.Count;
-            num = ((FlatBatch2D)baseBatch).TriangleVertices.Count;
+            firstVertex = ((FlatBatch2D)baseBatch).TriangleVertices.Count;
         }
 
         var zero = Vector2.Zero;
@@ -77,30 +77,30 @@ public class ValueBarWidget : Widget
             zero.Y += Spacing / 2f;
         }
 
-        var num2 = HalfBars ? 1 : 2;
-        for (var i = 0; i < 2 * BarsCount; i += num2)
+        var halfBarStep = HalfBars ? 1 : 2;
+        for (var i = 0; i < 2 * BarsCount; i += halfBarStep)
         {
-            var flag = i % 2 == 0;
-            var num3 = 0.5f * i;
-            var num4 = !FlipDirection
-                ? MathUtils.Clamp((Value - num3 / BarsCount) * BarsCount, 0f, 1f)
-                : MathUtils.Clamp((Value - (BarsCount - num3 - 1f) / BarsCount) * BarsCount, 0f, 1f);
+            var firstHalf = i % 2 == 0;
+            var barPosition = 0.5f * i;
+            var fillFraction = !FlipDirection
+                ? MathUtils.Clamp((Value - barPosition / BarsCount) * BarsCount, 0f, 1f)
+                : MathUtils.Clamp((Value - (BarsCount - barPosition - 1f) / BarsCount) * BarsCount, 0f, 1f);
             if (!BarBlending)
             {
-                num4 = MathUtils.Ceiling(num4);
+                fillFraction = MathUtils.Ceiling(fillFraction);
             }
 
             var s = _flashCount > 0f ? 1f - MathUtils.Abs(MathUtils.Sin(_flashCount * (float)Math.PI)) : 1f;
             var c = LitBarColor;
             if (LitBarColor2 != Color.Transparent && BarsCount > 1)
             {
-                c = Color.Lerp(LitBarColor, LitBarColor2, num3 / (BarsCount - 1));
+                c = Color.Lerp(LitBarColor, LitBarColor2, barPosition / (BarsCount - 1));
             }
 
-            var color = Color.Lerp(UnlitBarColor, c, num4) * s * GlobalColorTransform;
+            var color = Color.Lerp(UnlitBarColor, c, fillFraction) * s * GlobalColorTransform;
             if (HalfBars)
             {
-                if (flag)
+                if (firstHalf)
                 {
                     var zero2 = Vector2.Zero;
                     var v = _layoutDirection == LayoutDirection.Horizontal
@@ -195,7 +195,7 @@ public class ValueBarWidget : Widget
                 }
             }
 
-            if (flag && HalfBars)
+            if (firstHalf && HalfBars)
             {
                 continue;
             }
@@ -212,12 +212,12 @@ public class ValueBarWidget : Widget
 
         if (baseBatch is TexturedBatch2D textureBatch)
         {
-            textureBatch.TransformTriangles(GlobalTransform, num);
+            textureBatch.TransformTriangles(GlobalTransform, firstVertex);
         }
         else
         {
             ((FlatBatch2D)baseBatch).TransformLines(GlobalTransform, start);
-            ((FlatBatch2D)baseBatch).TransformTriangles(GlobalTransform, num);
+            ((FlatBatch2D)baseBatch).TransformTriangles(GlobalTransform, firstVertex);
         }
 
         _flashCount = MathUtils.Max(_flashCount - 4f * Time.FrameDuration, 0f);

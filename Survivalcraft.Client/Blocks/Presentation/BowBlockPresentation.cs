@@ -43,9 +43,9 @@ public class BowBlockPresentation(BowBlock block, BlockPresentationCatalog catal
         );
         if (arrowType.HasValue)
         {
-            var num = MathUtils.Lerp(0.14f, 0.68f, draw / 15f);
+            var arrowDrawOffset = MathUtils.Lerp(0.14f, 0.68f, draw / 15f);
             var matrix2 = Matrix.CreateRotationX(-(float)Math.PI / 2f) *
-                          Matrix.CreateTranslation(0f, 0.4f * size, (-1f + 2f * num) * size) *
+                          Matrix.CreateTranslation(0f, 0.4f * size, (-1f + 2f * arrowDrawOffset) * size) *
                           matrix;
             var value2 = Terrain.MakeBlockValue(192, ArrowBlock.SetArrowType(0, arrowType.Value));
             Catalog.Get(192).DrawBlock(primitivesRenderer, value2, color, size, ref matrix2, environmentData);
@@ -54,10 +54,10 @@ public class BowBlockPresentation(BowBlock block, BlockPresentationCatalog catal
 
     public override bool IsSwapAnimationNeeded(int oldValue, int newValue)
     {
-        var num = Terrain.ExtractContents(oldValue);
+        var oldContents = Terrain.ExtractContents(oldValue);
         var data = Terrain.ExtractData(oldValue);
         var data2 = Terrain.ExtractData(newValue);
-        if (num == 191 && BowBlock.GetArrowType(data) == BowBlock.GetArrowType(data2))
+        if (oldContents == 191 && BowBlock.GetArrowType(data) == BowBlock.GetArrowType(data2))
         {
             return false;
         }

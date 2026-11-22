@@ -65,11 +65,11 @@ public abstract class BaseFlatBatch : BaseBatch
     {
         if (TriangleIndices.Count > 0)
         {
-            var num = 0;
-            var num2 = TriangleIndices.Count;
-            while (num2 > 0)
+            var triangleIndexOffset = 0;
+            var remainingTriangleIndices = TriangleIndices.Count;
+            while (remainingTriangleIndices > 0)
             {
-                var num3 = MathUtils.Min(num2, 196605);
+                var triangleIndexCount = MathUtils.Min(remainingTriangleIndices, 196605);
                 Display.DrawUserIndexed(
                     PrimitiveType.TriangleList,
                     inputShader,
@@ -78,21 +78,21 @@ public abstract class BaseFlatBatch : BaseBatch
                     0,
                     TriangleVertices.Count,
                     TriangleIndices.Array,
-                    num,
-                    num3
+                    triangleIndexOffset,
+                    triangleIndexCount
                 );
-                num += num3;
-                num2 -= num3;
+                triangleIndexOffset += triangleIndexCount;
+                remainingTriangleIndices -= triangleIndexCount;
             }
         }
 
         if (LineIndices.Count > 0)
         {
-            var num4 = 0;
-            var num5 = LineIndices.Count;
-            while (num5 > 0)
+            var lineIndexOffset = 0;
+            var remainingLineIndices = LineIndices.Count;
+            while (remainingLineIndices > 0)
             {
-                var num6 = MathUtils.Min(num5, 131070);
+                var lineIndexCount = MathUtils.Min(remainingLineIndices, 131070);
                 Display.DrawUserIndexed(
                     PrimitiveType.LineList,
                     inputShader,
@@ -101,11 +101,11 @@ public abstract class BaseFlatBatch : BaseBatch
                     0,
                     LineVertices.Count,
                     LineIndices.Array,
-                    num4,
-                    num6
+                    lineIndexOffset,
+                    lineIndexCount
                 );
-                num4 += num6;
-                num5 -= num6;
+                lineIndexOffset += lineIndexCount;
+                remainingLineIndices -= lineIndexCount;
             }
         }
 
@@ -131,11 +131,11 @@ public abstract class BaseFlatBatch : BaseBatch
     {
         if (TriangleIndices.Count > 0)
         {
-            var num = 0;
-            var num2 = TriangleIndices.Count;
-            while (num2 > 0)
+            var triangleIndexOffset = 0;
+            var remainingTriangleIndices = TriangleIndices.Count;
+            while (remainingTriangleIndices > 0)
             {
-                var num3 = Math.Min(num2, 196605);
+                var triangleIndexCount = Math.Min(remainingTriangleIndices, 196605);
                 Display.DrawUserIndexed(
                     PrimitiveType.TriangleList,
                     inputShader,
@@ -144,21 +144,21 @@ public abstract class BaseFlatBatch : BaseBatch
                     0,
                     TriangleVertices.Count,
                     TriangleIndices.Array,
-                    num,
-                    num3
+                    triangleIndexOffset,
+                    triangleIndexCount
                 );
-                num += num3;
-                num2 -= num3;
+                triangleIndexOffset += triangleIndexCount;
+                remainingTriangleIndices -= triangleIndexCount;
             }
         }
 
         if (LineIndices.Count > 0)
         {
-            var num4 = 0;
-            var num5 = LineIndices.Count;
-            while (num5 > 0)
+            var lineIndexOffset = 0;
+            var remainingLineIndices = LineIndices.Count;
+            while (remainingLineIndices > 0)
             {
-                var num6 = Math.Min(num5, 131070);
+                var lineIndexCount = Math.Min(remainingLineIndices, 131070);
                 Display.DrawUserIndexed(
                     PrimitiveType.LineList,
                     inputShader,
@@ -167,11 +167,11 @@ public abstract class BaseFlatBatch : BaseBatch
                     0,
                     LineVertices.Count,
                     LineIndices.Array,
-                    num4,
-                    num6
+                    lineIndexOffset,
+                    lineIndexCount
                 );
-                num4 += num6;
-                num5 -= num6;
+                lineIndexOffset += lineIndexCount;
+                remainingLineIndices -= lineIndexCount;
             }
         }
 

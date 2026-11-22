@@ -385,57 +385,59 @@ public class ComponentBody : ComponentFrame, IUpdateable
             _velocity.Y -= 10f * dt;
             if (ImmersionFactor > 0f)
             {
-                var num = ImmersionFactor *
-                          (1f +
-                           0.03f *
-                           MathUtils.Sin(
-                               (float)MathUtils.Remainder(2.0 * _subsystemTime.GameTime, 6.2831854820251465)
-                           ));
-                _velocity.Y += 10f * (1f / Density * num) * dt;
+                var buoyancyFactor = ImmersionFactor *
+                                     (1f +
+                                      0.03f *
+                                      MathUtils.Sin(
+                                          (float)MathUtils.Remainder(2.0 * _subsystemTime.GameTime, 6.2831854820251465)
+                                      ));
+                _velocity.Y += 10f * (1f / Density * buoyancyFactor) * dt;
             }
         }
 
-        var num2 = MathUtils.Saturate(AirDrag.X * dt);
-        var num3 = MathUtils.Saturate(AirDrag.Y * dt);
-        _velocity.X *= 1f - num2;
-        _velocity.Y *= 1f - num3;
-        _velocity.Z *= 1f - num2;
+        var horizontalAirDrag = MathUtils.Saturate(AirDrag.X * dt);
+        var verticalAirDrag = MathUtils.Saturate(AirDrag.Y * dt);
+        _velocity.X *= 1f - horizontalAirDrag;
+        _velocity.Y *= 1f - verticalAirDrag;
+        _velocity.Z *= 1f - horizontalAirDrag;
         if (IsWaterDragEnabled && ImmersionFactor > 0f && ImmersionFluidBlock != null)
         {
-            var vector = _subsystemFluidBlockBehavior.CalculateFlowSpeed(
+            var flowVelocity = _subsystemFluidBlockBehavior.CalculateFlowSpeed(
                 Terrain.ToCell(position.X),
                 Terrain.ToCell(position.Y),
                 Terrain.ToCell(position.Z)
             );
-            var vector2 = vector.HasValue ? new Vector3(vector.Value.X, 0f, vector.Value.Y) : Vector3.Zero;
-            var num4 = 1f;
+            var fluidVelocity = flowVelocity.HasValue
+                ? new Vector3(flowVelocity.Value.X, 0f, flowVelocity.Value.Y)
+                : Vector3.Zero;
+            var fluidFriction = 1f;
             if (ImmersionFluidBlock.FrictionFactor.UncloseTo(1f))
             {
-                num4 = SimplexNoise.Noise(
-                           (float)MathUtils.Remainder(
-                               6.0 * Time.RealTime + GetHashCode() % 1000,
-                               1000.0
-                           )
-                       ) >
-                       0.5f
+                fluidFriction = SimplexNoise.Noise(
+                                    (float)MathUtils.Remainder(
+                                        6.0 * Time.RealTime + GetHashCode() % 1000,
+                                        1000.0
+                                    )
+                                ) >
+                                0.5f
                     ? ImmersionFluidBlock.FrictionFactor
                     : 1f;
             }
 
-            var f = MathUtils.Saturate(WaterDrag.X * num4 * ImmersionFactor * dt);
-            var f2 = MathUtils.Saturate(WaterDrag.Y * num4 * dt);
-            _velocity.X = MathUtils.Lerp(_velocity.X, vector2.X, f);
-            _velocity.Y = MathUtils.Lerp(_velocity.Y, vector2.Y, f2);
-            _velocity.Z = MathUtils.Lerp(_velocity.Z, vector2.Z, f);
-            if (_parentBody == null && vector.HasValue && !StandingOnValue.HasValue)
+            var f = MathUtils.Saturate(WaterDrag.X * fluidFriction * ImmersionFactor * dt);
+            var f2 = MathUtils.Saturate(WaterDrag.Y * fluidFriction * dt);
+            _velocity.X = MathUtils.Lerp(_velocity.X, fluidVelocity.X, f);
+            _velocity.Y = MathUtils.Lerp(_velocity.Y, fluidVelocity.Y, f2);
+            _velocity.Z = MathUtils.Lerp(_velocity.Z, fluidVelocity.Z, f);
+            if (_parentBody == null && flowVelocity.HasValue && !StandingOnValue.HasValue)
             {
                 if (WaterTurnSpeed > 0f)
                 {
                     var s = MathUtils.Saturate(MathUtils.Lerp(1f, 0f, _velocity.Length()));
-                    var vector3 = Vector2.Normalize(vector.Value) * s;
+                    var turnDirection = Vector2.Normalize(flowVelocity.Value) * s;
                     Rotation *= Quaternion.CreateFromAxisAngle(
                         Vector3.UnitY,
-                        WaterTurnSpeed * (-1f * vector3.X + 0.71f * vector3.Y) * dt
+                        WaterTurnSpeed * (-1f * turnDirection.X + 0.71f * turnDirection.Y) * dt
                     );
                 }
 
@@ -462,32 +464,38 @@ public class ComponentBody : ComponentFrame, IUpdateable
         StandingOnBody = null;
         StandingOnVelocity = Vector3.Zero;
         var velocity = _velocity;
-        var num5 = _velocity.Length();
-        if (num5 > 0f)
+        var speed = _velocity.Length();
+        if (speed > 0f)
         {
-            var x = 0.45f * MathUtils.Min(StanceBoxSize.X, StanceBoxSize.Y, StanceBoxSize.Z) / num5;
-            var num6 = dt;
-            while (num6 > 0f)
+            var x = 0.45f * MathUtils.Min(StanceBoxSize.X, StanceBoxSize.Y, StanceBoxSize.Z) / speed;
+            var remainingTime = dt;
+            while (remainingTime > 0f)
             {
-                var num7 = MathUtils.Min(num6, x);
-                MoveWithCollision(num7, _velocity * num7 + _directMove);
+                var stepTime = MathUtils.Min(remainingTime, x);
+                MoveWithCollision(stepTime, _velocity * stepTime + _directMove);
                 _directMove = Vector3.Zero;
-                num6 -= num7;
+                remainingTime -= stepTime;
             }
         }
 
         CollisionVelocityChange = _velocity - velocity;
         if (_shakingStrength > 1f)
         {
-            var vector4 = default(Vector3);
-            vector4.X = _shakingStrength *
-                        MathUtils.Sin((float)MathUtils.Remainder(31.0 * _subsystemTime.GameTime, Math.PI * 2.0));
-            vector4.Y = 0.4f *
-                        _shakingStrength *
-                        MathUtils.Sin((float)MathUtils.Remainder(23.3 * _subsystemTime.GameTime, Math.PI * 2.0));
-            vector4.Z = _shakingStrength *
-                        MathUtils.Sin((float)MathUtils.Remainder(27.6 * _subsystemTime.GameTime, Math.PI * 2.0));
-            Velocity += vector4 * dt;
+            var shakeAcceleration = default(Vector3);
+            shakeAcceleration.X = _shakingStrength *
+                                  MathUtils.Sin(
+                                      (float)MathUtils.Remainder(31.0 * _subsystemTime.GameTime, Math.PI * 2.0)
+                                  );
+            shakeAcceleration.Y = 0.4f *
+                                  _shakingStrength *
+                                  MathUtils.Sin(
+                                      (float)MathUtils.Remainder(23.3 * _subsystemTime.GameTime, Math.PI * 2.0)
+                                  );
+            shakeAcceleration.Z = _shakingStrength *
+                                  MathUtils.Sin(
+                                      (float)MathUtils.Remainder(27.6 * _subsystemTime.GameTime, Math.PI * 2.0)
+                                  );
+            Velocity += shakeAcceleration * dt;
             _shakingStrength *= MathUtils.Saturate(1f - 3.5f * dt);
         }
         else
@@ -663,15 +671,15 @@ public class ComponentBody : ComponentFrame, IUpdateable
         foreach (var offset in _freeSpaceOffsets)
         {
             Vector3? vector = null;
-            var vector2 = position + offset;
-            if (Terrain.ToCell(vector2) != Terrain.ToCell(position))
+            var candidatePosition = position + offset;
+            if (Terrain.ToCell(candidatePosition) != Terrain.ToCell(position))
             {
                 continue;
             }
 
             var box = new BoundingBox(
-                vector2 - new Vector3(stanceBoxSize.X / 2f, 0f, stanceBoxSize.Z / 2f),
-                vector2 + new Vector3(stanceBoxSize.X / 2f, stanceBoxSize.Y, stanceBoxSize.Z / 2f)
+                candidatePosition - new Vector3(stanceBoxSize.X / 2f, 0f, stanceBoxSize.Z / 2f),
+                candidatePosition + new Vector3(stanceBoxSize.X / 2f, stanceBoxSize.Y, stanceBoxSize.Z / 2f)
             );
             box.Min += new Vector3(0.01f, MaxSmoothRiseHeight + 0.01f, 0.01f);
             box.Max -= new Vector3(0.01f);
@@ -682,53 +690,53 @@ public class ComponentBody : ComponentFrame, IUpdateable
             if (IsColliding(box, _collisionBoxes))
             {
                 _stoppedTime = 0f;
-                var num = CalculatePushBack(box, 0, _collisionBoxes, out _);
-                var num2 = CalculatePushBack(box, 1, _collisionBoxes, out _);
-                var num3 = CalculatePushBack(box, 2, _collisionBoxes, out _);
-                var num4 = num * num;
-                var num5 = num2 * num2;
-                var num6 = num3 * num3;
+                var pushX = CalculatePushBack(box, 0, _collisionBoxes, out _);
+                var pushY = CalculatePushBack(box, 1, _collisionBoxes, out _);
+                var pushZ = CalculatePushBack(box, 2, _collisionBoxes, out _);
+                var squaredPushX = pushX * pushX;
+                var squaredPushY = pushY * pushY;
+                var squaredPushZ = pushZ * pushZ;
                 var list = new List<Vector3>();
-                if (num4 <= num5 && num4 <= num6)
+                if (squaredPushX <= squaredPushY && squaredPushX <= squaredPushZ)
                 {
-                    list.Add(vector2 + new Vector3(num, 0f, 0f));
-                    if (num5 <= num6)
+                    list.Add(candidatePosition + new Vector3(pushX, 0f, 0f));
+                    if (squaredPushY <= squaredPushZ)
                     {
-                        list.Add(vector2 + new Vector3(0f, num2, 0f));
-                        list.Add(vector2 + new Vector3(0f, 0f, num3));
+                        list.Add(candidatePosition + new Vector3(0f, pushY, 0f));
+                        list.Add(candidatePosition + new Vector3(0f, 0f, pushZ));
                     }
                     else
                     {
-                        list.Add(vector2 + new Vector3(0f, 0f, num3));
-                        list.Add(vector2 + new Vector3(0f, num2, 0f));
+                        list.Add(candidatePosition + new Vector3(0f, 0f, pushZ));
+                        list.Add(candidatePosition + new Vector3(0f, pushY, 0f));
                     }
                 }
-                else if (num5 <= num4 && num5 <= num6)
+                else if (squaredPushY <= squaredPushX && squaredPushY <= squaredPushZ)
                 {
-                    list.Add(vector2 + new Vector3(0f, num2, 0f));
-                    if (num4 <= num6)
+                    list.Add(candidatePosition + new Vector3(0f, pushY, 0f));
+                    if (squaredPushX <= squaredPushZ)
                     {
-                        list.Add(vector2 + new Vector3(num, 0f, 0f));
-                        list.Add(vector2 + new Vector3(0f, 0f, num3));
+                        list.Add(candidatePosition + new Vector3(pushX, 0f, 0f));
+                        list.Add(candidatePosition + new Vector3(0f, 0f, pushZ));
                     }
                     else
                     {
-                        list.Add(vector2 + new Vector3(0f, 0f, num3));
-                        list.Add(vector2 + new Vector3(num, 0f, 0f));
+                        list.Add(candidatePosition + new Vector3(0f, 0f, pushZ));
+                        list.Add(candidatePosition + new Vector3(pushX, 0f, 0f));
                     }
                 }
                 else
                 {
-                    list.Add(vector2 + new Vector3(0f, 0f, num3));
-                    if (num4 <= num5)
+                    list.Add(candidatePosition + new Vector3(0f, 0f, pushZ));
+                    if (squaredPushX <= squaredPushY)
                     {
-                        list.Add(vector2 + new Vector3(num, 0f, 0f));
-                        list.Add(vector2 + new Vector3(0f, num2, 0f));
+                        list.Add(candidatePosition + new Vector3(pushX, 0f, 0f));
+                        list.Add(candidatePosition + new Vector3(0f, pushY, 0f));
                     }
                     else
                     {
-                        list.Add(vector2 + new Vector3(0f, num2, 0f));
-                        list.Add(vector2 + new Vector3(num, 0f, 0f));
+                        list.Add(candidatePosition + new Vector3(0f, pushY, 0f));
+                        list.Add(candidatePosition + new Vector3(pushX, 0f, 0f));
                     }
                 }
 
@@ -755,7 +763,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
             }
             else
             {
-                vector = vector2;
+                vector = candidatePosition;
             }
 
             if (!vector.HasValue ||
@@ -779,15 +787,15 @@ public class ComponentBody : ComponentFrame, IUpdateable
         foreach (var offset in _freeSpaceOffsets)
         {
             Vector3? vector = null;
-            var vector2 = position + offset;
-            if (Terrain.ToCell(vector2) != Terrain.ToCell(position))
+            var candidatePosition = position + offset;
+            if (Terrain.ToCell(candidatePosition) != Terrain.ToCell(position))
             {
                 continue;
             }
 
             var box = new BoundingBox(
-                vector2 - new Vector3(boxSize.X / 2f, 0f, boxSize.Z / 2f),
-                vector2 + new Vector3(boxSize.X / 2f, boxSize.Y, boxSize.Z / 2f)
+                candidatePosition - new Vector3(boxSize.X / 2f, 0f, boxSize.Z / 2f),
+                candidatePosition + new Vector3(boxSize.X / 2f, boxSize.Y, boxSize.Z / 2f)
             );
             box.Min += new Vector3(0.01f, MaxSmoothRiseHeight + 0.01f, 0.01f);
             box.Max -= new Vector3(0.01f);
@@ -797,58 +805,58 @@ public class ComponentBody : ComponentFrame, IUpdateable
             _collisionBoxes.AddRange(_bodiesCollisionBoxes);
             if (!IsColliding(box, _collisionBoxes))
             {
-                vector = vector2;
+                vector = candidatePosition;
             }
             else
             {
                 _stoppedTime = 0f;
-                var num = CalculatePushBack(box, 0, _collisionBoxes, out _);
-                var num2 = CalculatePushBack(box, 1, _collisionBoxes, out _);
-                var num3 = CalculatePushBack(box, 2, _collisionBoxes, out _);
-                var num4 = num * num;
-                var num5 = num2 * num2;
-                var num6 = num3 * num3;
+                var pushX = CalculatePushBack(box, 0, _collisionBoxes, out _);
+                var pushY = CalculatePushBack(box, 1, _collisionBoxes, out _);
+                var pushZ = CalculatePushBack(box, 2, _collisionBoxes, out _);
+                var squaredPushX = pushX * pushX;
+                var squaredPushY = pushY * pushY;
+                var squaredPushZ = pushZ * pushZ;
                 var list = new List<Vector3>();
-                if (num4 <= num5 && num4 <= num6)
+                if (squaredPushX <= squaredPushY && squaredPushX <= squaredPushZ)
                 {
-                    list.Add(vector2 + new Vector3(num, 0f, 0f));
-                    if (num5 <= num6)
+                    list.Add(candidatePosition + new Vector3(pushX, 0f, 0f));
+                    if (squaredPushY <= squaredPushZ)
                     {
-                        list.Add(vector2 + new Vector3(0f, num2, 0f));
-                        list.Add(vector2 + new Vector3(0f, 0f, num3));
+                        list.Add(candidatePosition + new Vector3(0f, pushY, 0f));
+                        list.Add(candidatePosition + new Vector3(0f, 0f, pushZ));
                     }
                     else
                     {
-                        list.Add(vector2 + new Vector3(0f, 0f, num3));
-                        list.Add(vector2 + new Vector3(0f, num2, 0f));
+                        list.Add(candidatePosition + new Vector3(0f, 0f, pushZ));
+                        list.Add(candidatePosition + new Vector3(0f, pushY, 0f));
                     }
                 }
-                else if (num5 <= num4 && num5 <= num6)
+                else if (squaredPushY <= squaredPushX && squaredPushY <= squaredPushZ)
                 {
-                    list.Add(vector2 + new Vector3(0f, num2, 0f));
-                    if (num4 <= num6)
+                    list.Add(candidatePosition + new Vector3(0f, pushY, 0f));
+                    if (squaredPushX <= squaredPushZ)
                     {
-                        list.Add(vector2 + new Vector3(num, 0f, 0f));
-                        list.Add(vector2 + new Vector3(0f, 0f, num3));
+                        list.Add(candidatePosition + new Vector3(pushX, 0f, 0f));
+                        list.Add(candidatePosition + new Vector3(0f, 0f, pushZ));
                     }
                     else
                     {
-                        list.Add(vector2 + new Vector3(0f, 0f, num3));
-                        list.Add(vector2 + new Vector3(num, 0f, 0f));
+                        list.Add(candidatePosition + new Vector3(0f, 0f, pushZ));
+                        list.Add(candidatePosition + new Vector3(pushX, 0f, 0f));
                     }
                 }
                 else
                 {
-                    list.Add(vector2 + new Vector3(0f, 0f, num3));
-                    if (num4 <= num5)
+                    list.Add(candidatePosition + new Vector3(0f, 0f, pushZ));
+                    if (squaredPushX <= squaredPushY)
                     {
-                        list.Add(vector2 + new Vector3(num, 0f, 0f));
-                        list.Add(vector2 + new Vector3(0f, num2, 0f));
+                        list.Add(candidatePosition + new Vector3(pushX, 0f, 0f));
+                        list.Add(candidatePosition + new Vector3(0f, pushY, 0f));
                     }
                     else
                     {
-                        list.Add(vector2 + new Vector3(0f, num2, 0f));
-                        list.Add(vector2 + new Vector3(num, 0f, 0f));
+                        list.Add(candidatePosition + new Vector3(0f, pushY, 0f));
+                        list.Add(candidatePosition + new Vector3(pushX, 0f, 0f));
                     }
                 }
 
@@ -913,15 +921,15 @@ public class ComponentBody : ComponentFrame, IUpdateable
         _collisionBoxes.Clear();
         FindTerrainCollisionBoxes(box, _collisionBoxes);
         _collisionBoxes.AddRange(_movingBlocksCollisionBoxes);
-        var num = MathUtils.Max(CalculatePushBack(box, 1, _collisionBoxes, out var pushingCollisionBox), 0f);
+        var riseHeight = MathUtils.Max(CalculatePushBack(box, 1, _collisionBoxes, out var pushingCollisionBox), 0f);
         if (WorldContentBinding.For(Project).Catalog
                 .Blocks[Terrain.ExtractContents(pushingCollisionBox.BlockValue)].NoSmoothRise ||
-            !(num > 0.04f))
+            !(riseHeight > 0.04f))
         {
             return false;
         }
 
-        var x = MathUtils.Min(4.5f * dt, num);
+        var x = MathUtils.Min(4.5f * dt, riseHeight);
         move.Y = MathUtils.Max(move.Y, x);
         _velocity.Y = MathUtils.Max(_velocity.Y, 0f);
         StandingOnValue = pushingCollisionBox.BlockValue;
@@ -990,7 +998,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
         );
         FindTerrainCollisionBoxes(boundingBox, _collisionBoxes);
         _collisionBoxes.AddRange(_movingBlocksCollisionBoxes);
-        float num;
+        float terrainPushBack;
         CollisionBox pushingCollisionBox;
         if ((axis != 1) | isSmoothRising)
         {
@@ -1003,7 +1011,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
             // 将修改后的值重新赋值回 smoothRiseBox.Min
             smoothRiseBox.Min = min;
-            num = CalculateSmoothRisePushBack(
+            terrainPushBack = CalculateSmoothRisePushBack(
                 boundingBox,
                 smoothRiseBox,
                 axis,
@@ -1013,27 +1021,27 @@ public class ComponentBody : ComponentFrame, IUpdateable
         }
         else
         {
-            num = CalculatePushBack(boundingBox, axis, _collisionBoxes, out pushingCollisionBox);
+            terrainPushBack = CalculatePushBack(boundingBox, axis, _collisionBoxes, out pushingCollisionBox);
         }
 
         var box = new BoundingBox(
             position - new Vector3(boxSize.X / 2f, 0f, boxSize.Z / 2f) + v,
             position + new Vector3(boxSize.X / 2f, boxSize.Y, boxSize.Z / 2f) - v
         );
-        //客户端num2为0
-        var num2 = CalculatePushBack(box, axis, _bodiesCollisionBoxes, out var pushingCollisionBox2);
-        if (MathUtils.Abs(num) > MathUtils.Abs(num2))
+        // 客户端的 bodyPushBack 为 0
+        var bodyPushBack = CalculatePushBack(box, axis, _bodiesCollisionBoxes, out var pushingCollisionBox2);
+        if (MathUtils.Abs(terrainPushBack) > MathUtils.Abs(bodyPushBack))
         {
-            if (num == 0f)
+            if (terrainPushBack == 0f)
             {
                 return;
             }
 
             pushingCollisionBox.Collided?.Invoke(this);
-            var num3 = Terrain.ExtractContents(pushingCollisionBox.BlockValue);
-            if (WorldContentBinding.For(Project).Catalog.Blocks[num3].HasCollisionBehavior)
+            var blockContents = Terrain.ExtractContents(pushingCollisionBox.BlockValue);
+            if (WorldContentBinding.For(Project).Catalog.Blocks[blockContents].HasCollisionBehavior)
             {
-                var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(num3);
+                var blockBehaviors = _subsystemBlockBehaviors.GetBlockBehaviors(blockContents);
                 foreach (var behavior in blockBehaviors)
                 {
                     var vector = (pushingCollisionBox.Box.Min + pushingCollisionBox.Box.Max) / 2f;
@@ -1051,11 +1059,11 @@ public class ComponentBody : ComponentFrame, IUpdateable
             switch (axis)
             {
                 case 0:
-                    position.X += num;
+                    position.X += terrainPushBack;
                     _velocity.X = pushingCollisionBox.BlockVelocity.X;
                     break;
                 case 1:
-                    position.Y += num;
+                    position.Y += terrainPushBack;
                     _velocity.Y = pushingCollisionBox.BlockVelocity.Y;
                     if (move < 0f)
                     {
@@ -1066,14 +1074,14 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
                     break;
                 default:
-                    position.Z += num;
+                    position.Z += terrainPushBack;
                     _velocity.Z = pushingCollisionBox.BlockVelocity.Z;
                     break;
             }
         }
         else
         {
-            if (num2 == 0f)
+            if (bodyPushBack == 0f)
             {
                 return;
             }
@@ -1092,7 +1100,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
                         out _velocity.X,
                         out componentBody._velocity.X
                     );
-                    position.X += num2;
+                    position.X += bodyPushBack;
                     break;
                 case 1:
                     InelasticCollision(
@@ -1104,7 +1112,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
                         out _velocity.Y,
                         out componentBody._velocity.Y
                     );
-                    position.Y += num2;
+                    position.Y += bodyPushBack;
                     if (move < 0f)
                     {
                         StandingOnValue = pushingCollisionBox2.BlockValue;
@@ -1123,7 +1131,7 @@ public class ComponentBody : ComponentFrame, IUpdateable
                         out _velocity.Z,
                         out componentBody._velocity.Z
                     );
-                    position.Z += num2;
+                    position.Z += bodyPushBack;
                     break;
             }
 
@@ -1180,8 +1188,8 @@ public class ComponentBody : ComponentFrame, IUpdateable
             var movingBlockSet = _movingBlockSets.Array[i];
             foreach (var movingBlock in movingBlockSet.Blocks)
             {
-                var num = Terrain.ExtractContents(movingBlock.Value);
-                var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+                var blockContents = Terrain.ExtractContents(movingBlock.Value);
+                var block = WorldContentBinding.For(Project).Catalog.Blocks[blockContents];
                 if (!block.Collidable)
                 {
                     continue;
@@ -1231,19 +1239,19 @@ public class ComponentBody : ComponentFrame, IUpdateable
                     continue;
                 }
 
-                var num = TerrainChunk.CalculateCellIndex(i & 0xF, point.Y, j & 0xF);
-                var num2 = point.Y;
-                while (num2 <= point2.Y)
+                var cellIndex = TerrainChunk.CalculateCellIndex(i & 0xF, point.Y, j & 0xF);
+                var cellY = point.Y;
+                while (cellY <= point2.Y)
                 {
-                    var cellValueFast = chunkAtCell.GetCellValueFast(num);
-                    var num3 = Terrain.ExtractContents(cellValueFast);
-                    if (num3 != 0)
+                    var cellValueFast = chunkAtCell.GetCellValueFast(cellIndex);
+                    var blockContents = Terrain.ExtractContents(cellValueFast);
+                    if (blockContents != 0)
                     {
-                        var block = WorldContentBinding.For(Project).Catalog.Blocks[num3];
+                        var block = WorldContentBinding.For(Project).Catalog.Blocks[blockContents];
                         if (block.Collidable)
                         {
                             var customCollisionBoxes = block.GetCustomCollisionBoxes(_subsystemTerrain, cellValueFast);
-                            var v = new Vector3(i, num2, j);
+                            var v = new Vector3(i, cellY, j);
                             foreach (var collisionBox in customCollisionBoxes)
                             {
                                 result.Add(
@@ -1260,8 +1268,8 @@ public class ComponentBody : ComponentFrame, IUpdateable
                         }
                     }
 
-                    num2++;
-                    num++;
+                    cellY++;
+                    cellIndex++;
                 }
             }
         }
@@ -1269,35 +1277,35 @@ public class ComponentBody : ComponentFrame, IUpdateable
 
     public void FindSneakCollisionBoxes(Vector3 position, Vector2 overhang, DynamicArray<CollisionBox> result)
     {
-        var num = Terrain.ToCell(position.X);
-        var num2 = Terrain.ToCell(position.Y);
-        var num3 = Terrain.ToCell(position.Z);
+        var cellX = Terrain.ToCell(position.X);
+        var cellY = Terrain.ToCell(position.Y);
+        var cellZ = Terrain.ToCell(position.Z);
         if (WorldContentBinding.For(Project).Catalog
-            .Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3)].Collidable)
+            .Blocks[_subsystemTerrain.Terrain.GetCellContents(cellX, cellY - 1, cellZ)].Collidable)
         {
             return;
         }
 
-        var num4 = position.X < num + 0.5f;
-        var flag = position.Z < num3 + 0.5f;
+        var towardNegativeX = position.X < cellX + 0.5f;
+        var towardNegativeZ = position.Z < cellZ + 0.5f;
         CollisionBox item;
-        if (num4)
+        if (towardNegativeX)
         {
-            if (flag)
+            if (towardNegativeZ)
             {
                 var isCollidable = WorldContentBinding.For(Project).Catalog
-                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 - 1)].Collidable;
+                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(cellX, cellY - 1, cellZ - 1)].Collidable;
                 var isCollidable2 = WorldContentBinding.For(Project).Catalog
-                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3)].Collidable;
+                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(cellX - 1, cellY - 1, cellZ)].Collidable;
                 var isCollidable3 = WorldContentBinding.For(Project).Catalog
-                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3 - 1)].Collidable;
+                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(cellX - 1, cellY - 1, cellZ - 1)].Collidable;
                 if ((isCollidable && !isCollidable2) || (!isCollidable && !isCollidable2) & isCollidable3)
                 {
                     item = new CollisionBox
                     {
                         Box = new BoundingBox(
-                            new Vector3(num, num2, num3 + overhang.Y),
-                            new Vector3(num + 1, num2 + 1, num3 + 1)
+                            new Vector3(cellX, cellY, cellZ + overhang.Y),
+                            new Vector3(cellX + 1, cellY + 1, cellZ + 1)
                         ),
                         BlockValue = 0
                     };
@@ -1309,8 +1317,8 @@ public class ComponentBody : ComponentFrame, IUpdateable
                     item = new CollisionBox
                     {
                         Box = new BoundingBox(
-                            new Vector3(num + overhang.X, num2, num3),
-                            new Vector3(num + 1, num2 + 1, num3 + 1)
+                            new Vector3(cellX + overhang.X, cellY, cellZ),
+                            new Vector3(cellX + 1, cellY + 1, cellZ + 1)
                         ),
                         BlockValue = 0
                     };
@@ -1322,8 +1330,8 @@ public class ComponentBody : ComponentFrame, IUpdateable
                     item = new CollisionBox
                     {
                         Box = new BoundingBox(
-                            new Vector3(num + overhang.X, num2, num3 + overhang.Y),
-                            new Vector3(num + 1, num2 + 1, num3 + 1)
+                            new Vector3(cellX + overhang.X, cellY, cellZ + overhang.Y),
+                            new Vector3(cellX + 1, cellY + 1, cellZ + 1)
                         ),
                         BlockValue = 0
                     };
@@ -1333,18 +1341,18 @@ public class ComponentBody : ComponentFrame, IUpdateable
             else
             {
                 var isCollidable4 = WorldContentBinding.For(Project).Catalog
-                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 + 1)].Collidable;
+                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(cellX, cellY - 1, cellZ + 1)].Collidable;
                 var isCollidable5 = WorldContentBinding.For(Project).Catalog
-                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3)].Collidable;
+                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(cellX - 1, cellY - 1, cellZ)].Collidable;
                 var isCollidable6 = WorldContentBinding.For(Project).Catalog
-                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(num - 1, num2 - 1, num3 + 1)].Collidable;
+                    .Blocks[_subsystemTerrain.Terrain.GetCellContents(cellX - 1, cellY - 1, cellZ + 1)].Collidable;
                 if ((isCollidable4 && !isCollidable5) || (!isCollidable4 && !isCollidable5) & isCollidable6)
                 {
                     item = new CollisionBox
                     {
                         Box = new BoundingBox(
-                            new Vector3(num, num2, num3),
-                            new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)
+                            new Vector3(cellX, cellY, cellZ),
+                            new Vector3(cellX + 1, cellY + 1, cellZ + 1 - overhang.Y)
                         ),
                         BlockValue = 0
                     };
@@ -1356,8 +1364,8 @@ public class ComponentBody : ComponentFrame, IUpdateable
                     item = new CollisionBox
                     {
                         Box = new BoundingBox(
-                            new Vector3(num + overhang.X, num2, num3),
-                            new Vector3(num + 1, num2 + 1, num3 + 1)
+                            new Vector3(cellX + overhang.X, cellY, cellZ),
+                            new Vector3(cellX + 1, cellY + 1, cellZ + 1)
                         ),
                         BlockValue = 0
                     };
@@ -1369,8 +1377,8 @@ public class ComponentBody : ComponentFrame, IUpdateable
                     item = new CollisionBox
                     {
                         Box = new BoundingBox(
-                            new Vector3(num + overhang.X, num2, num3),
-                            new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)
+                            new Vector3(cellX + overhang.X, cellY, cellZ),
+                            new Vector3(cellX + 1, cellY + 1, cellZ + 1 - overhang.Y)
                         ),
                         BlockValue = 0
                     };
@@ -1378,21 +1386,21 @@ public class ComponentBody : ComponentFrame, IUpdateable
                 }
             }
         }
-        else if (flag)
+        else if (towardNegativeZ)
         {
             var isCollidable7 = WorldContentBinding.For(Project).Catalog
-                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 - 1)].Collidable;
+                .Blocks[_subsystemTerrain.Terrain.GetCellContents(cellX, cellY - 1, cellZ - 1)].Collidable;
             var isCollidable8 = WorldContentBinding.For(Project).Catalog
-                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3)].Collidable;
+                .Blocks[_subsystemTerrain.Terrain.GetCellContents(cellX + 1, cellY - 1, cellZ)].Collidable;
             var isCollidable9 = WorldContentBinding.For(Project).Catalog
-                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3 - 1)].Collidable;
+                .Blocks[_subsystemTerrain.Terrain.GetCellContents(cellX + 1, cellY - 1, cellZ - 1)].Collidable;
             if ((isCollidable7 && !isCollidable8) || (!isCollidable7 && !isCollidable8) & isCollidable9)
             {
                 item = new CollisionBox
                 {
                     Box = new BoundingBox(
-                        new Vector3(num, num2, num3 + overhang.Y),
-                        new Vector3(num + 1, num2 + 1, num3 + 1)
+                        new Vector3(cellX, cellY, cellZ + overhang.Y),
+                        new Vector3(cellX + 1, cellY + 1, cellZ + 1)
                     ),
                     BlockValue = 0
                 };
@@ -1404,8 +1412,8 @@ public class ComponentBody : ComponentFrame, IUpdateable
                 item = new CollisionBox
                 {
                     Box = new BoundingBox(
-                        new Vector3(num, num2, num3),
-                        new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)
+                        new Vector3(cellX, cellY, cellZ),
+                        new Vector3(cellX + 1 - overhang.X, cellY + 1, cellZ + 1)
                     ),
                     BlockValue = 0
                 };
@@ -1417,8 +1425,8 @@ public class ComponentBody : ComponentFrame, IUpdateable
                 item = new CollisionBox
                 {
                     Box = new BoundingBox(
-                        new Vector3(num, num2, num3 + overhang.Y),
-                        new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)
+                        new Vector3(cellX, cellY, cellZ + overhang.Y),
+                        new Vector3(cellX + 1 - overhang.X, cellY + 1, cellZ + 1)
                     ),
                     BlockValue = 0
                 };
@@ -1428,18 +1436,18 @@ public class ComponentBody : ComponentFrame, IUpdateable
         else
         {
             var isCollidable10 = WorldContentBinding.For(Project).Catalog
-                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num, num2 - 1, num3 + 1)].Collidable;
+                .Blocks[_subsystemTerrain.Terrain.GetCellContents(cellX, cellY - 1, cellZ + 1)].Collidable;
             var isCollidable11 = WorldContentBinding.For(Project).Catalog
-                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3)].Collidable;
+                .Blocks[_subsystemTerrain.Terrain.GetCellContents(cellX + 1, cellY - 1, cellZ)].Collidable;
             var isCollidable12 = WorldContentBinding.For(Project).Catalog
-                .Blocks[_subsystemTerrain.Terrain.GetCellContents(num + 1, num2 - 1, num3 + 1)].Collidable;
+                .Blocks[_subsystemTerrain.Terrain.GetCellContents(cellX + 1, cellY - 1, cellZ + 1)].Collidable;
             if ((isCollidable10 && !isCollidable11) || (!isCollidable10 && !isCollidable11) & isCollidable12)
             {
                 item = new CollisionBox
                 {
                     Box = new BoundingBox(
-                        new Vector3(num, num2, num3),
-                        new Vector3(num + 1, num2 + 1, num3 + 1 - overhang.Y)
+                        new Vector3(cellX, cellY, cellZ),
+                        new Vector3(cellX + 1, cellY + 1, cellZ + 1 - overhang.Y)
                     ),
                     BlockValue = 0
                 };
@@ -1451,8 +1459,8 @@ public class ComponentBody : ComponentFrame, IUpdateable
                 item = new CollisionBox
                 {
                     Box = new BoundingBox(
-                        new Vector3(num, num2, num3),
-                        new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1)
+                        new Vector3(cellX, cellY, cellZ),
+                        new Vector3(cellX + 1 - overhang.X, cellY + 1, cellZ + 1)
                     ),
                     BlockValue = 0
                 };
@@ -1467,8 +1475,8 @@ public class ComponentBody : ComponentFrame, IUpdateable
             item = new CollisionBox
             {
                 Box = new BoundingBox(
-                    new Vector3(num, num2, num3),
-                    new Vector3(num + 1 - overhang.X, num2 + 1, num3 + 1 - overhang.Y)
+                    new Vector3(cellX, cellY, cellZ),
+                    new Vector3(cellX + 1 - overhang.X, cellY + 1, cellZ + 1 - overhang.Y)
                 ),
                 BlockValue = 0
             };
@@ -1489,20 +1497,20 @@ public class ComponentBody : ComponentFrame, IUpdateable
     )
     {
         pushingCollisionBox = default;
-        var num = 0f;
+        var largestPushBack = 0f;
         for (var i = 0; i < collisionBoxes.Count; i++)
         {
-            var num2 = CalculateBoxBoxOverlap(ref box, ref collisionBoxes.Array[i].Box, axis);
-            if (!(MathUtils.Abs(num2) > MathUtils.Abs(num)))
+            var overlap = CalculateBoxBoxOverlap(ref box, ref collisionBoxes.Array[i].Box, axis);
+            if (!(MathUtils.Abs(overlap) > MathUtils.Abs(largestPushBack)))
             {
                 continue;
             }
 
-            num = num2;
+            largestPushBack = overlap;
             pushingCollisionBox = collisionBoxes.Array[i];
         }
 
-        return num;
+        return largestPushBack;
     }
 
     public float CalculateSmoothRisePushBack(
@@ -1514,23 +1522,23 @@ public class ComponentBody : ComponentFrame, IUpdateable
     )
     {
         pushingCollisionBox = default;
-        var num = 0f;
+        var largestPushBack = 0f;
         for (var i = 0; i < collisionBoxes.Count; i++)
         {
-            var num2 = !WorldContentBinding.For(Project).Catalog
+            var overlap = !WorldContentBinding.For(Project).Catalog
                 .Blocks[Terrain.ExtractContents(collisionBoxes.Array[i].BlockValue)].NoSmoothRise
                 ? CalculateBoxBoxOverlap(ref smoothRiseBox, ref collisionBoxes.Array[i].Box, axis)
                 : CalculateBoxBoxOverlap(ref normalBox, ref collisionBoxes.Array[i].Box, axis);
-            if (!(MathUtils.Abs(num2) > MathUtils.Abs(num)))
+            if (!(MathUtils.Abs(overlap) > MathUtils.Abs(largestPushBack)))
             {
                 continue;
             }
 
-            num = num2;
+            largestPushBack = overlap;
             pushingCollisionBox = collisionBoxes.Array[i];
         }
 
-        return num;
+        return largestPushBack;
     }
 
     public static float CalculateBoxBoxOverlap(ref BoundingBox b1, ref BoundingBox b2, int axis)
@@ -1549,33 +1557,36 @@ public class ComponentBody : ComponentFrame, IUpdateable
         {
             case 0:
             {
-                var num13 = b1.Min.X + b1.Max.X;
-                var num14 = b2.Min.X + b2.Max.X;
-                var num15 = b1.Max.X - b1.Min.X;
-                var num16 = b2.Max.X - b2.Min.X;
-                var num17 = num14 - num13;
-                var num18 = num15 + num16;
-                return 0.5f * (num17 > 0f ? num17 - num18 : num17 + num18);
+                var twiceFirstCenterX = b1.Min.X + b1.Max.X;
+                var twiceSecondCenterX = b2.Min.X + b2.Max.X;
+                var firstSizeX = b1.Max.X - b1.Min.X;
+                var secondSizeX = b2.Max.X - b2.Min.X;
+                var twiceCenterDeltaX = twiceSecondCenterX - twiceFirstCenterX;
+                var combinedSizeX = firstSizeX + secondSizeX;
+                return 0.5f *
+                       (twiceCenterDeltaX > 0f ? twiceCenterDeltaX - combinedSizeX : twiceCenterDeltaX + combinedSizeX);
             }
             case 1:
             {
-                var num7 = b1.Min.Y + b1.Max.Y;
-                var num8 = b2.Min.Y + b2.Max.Y;
-                var num9 = b1.Max.Y - b1.Min.Y;
-                var num10 = b2.Max.Y - b2.Min.Y;
-                var num11 = num8 - num7;
-                var num12 = num9 + num10;
-                return 0.5f * (num11 > 0f ? num11 - num12 : num11 + num12);
+                var twiceFirstCenterY = b1.Min.Y + b1.Max.Y;
+                var twiceSecondCenterY = b2.Min.Y + b2.Max.Y;
+                var firstSizeY = b1.Max.Y - b1.Min.Y;
+                var secondSizeY = b2.Max.Y - b2.Min.Y;
+                var twiceCenterDeltaY = twiceSecondCenterY - twiceFirstCenterY;
+                var combinedSizeY = firstSizeY + secondSizeY;
+                return 0.5f *
+                       (twiceCenterDeltaY > 0f ? twiceCenterDeltaY - combinedSizeY : twiceCenterDeltaY + combinedSizeY);
             }
             default:
             {
-                var num = b1.Min.Z + b1.Max.Z;
-                var num2 = b2.Min.Z + b2.Max.Z;
-                var num3 = b1.Max.Z - b1.Min.Z;
-                var num4 = b2.Max.Z - b2.Min.Z;
-                var num5 = num2 - num;
-                var num6 = num3 + num4;
-                return 0.5f * (num5 > 0f ? num5 - num6 : num5 + num6);
+                var twiceFirstCenterZ = b1.Min.Z + b1.Max.Z;
+                var twiceSecondCenterZ = b2.Min.Z + b2.Max.Z;
+                var firstSizeZ = b1.Max.Z - b1.Min.Z;
+                var secondSizeZ = b2.Max.Z - b2.Min.Z;
+                var twiceCenterDeltaZ = twiceSecondCenterZ - twiceFirstCenterZ;
+                var combinedSizeZ = firstSizeZ + secondSizeZ;
+                return 0.5f *
+                       (twiceCenterDeltaZ > 0f ? twiceCenterDeltaZ - combinedSizeZ : twiceCenterDeltaZ + combinedSizeZ);
             }
         }
     }
@@ -1600,9 +1611,9 @@ public class ComponentBody : ComponentFrame, IUpdateable
         out float result2
     )
     {
-        var num = 1f / (m1 + m2);
-        result1 = (cr * m2 * (v2 - v1) + m1 * v1 + m2 * v2) * num;
-        result2 = (cr * m1 * (v1 - v2) + m1 * v1 + m2 * v2) * num;
+        var inverseTotalMass = 1f / (m1 + m2);
+        result1 = (cr * m2 * (v2 - v1) + m1 * v1 + m2 * v2) * inverseTotalMass;
+        result2 = (cr * m1 * (v1 - v2) + m1 * v1 + m2 * v2) * inverseTotalMass;
     }
 
     public struct CollisionBox

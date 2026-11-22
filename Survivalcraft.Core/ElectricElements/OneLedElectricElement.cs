@@ -23,12 +23,12 @@ public class OneLedElectricElement(
         _color = LedBlock.LedColors[FourLedBlock.GetColor(data)];
         var v = new Vector3(cellFace.X + 0.5f, cellFace.Y + 0.5f, cellFace.Z + 0.5f);
         var vector = CellFace.FaceToVector3(mountingFace);
-        var vector2 = mountingFace < 4 ? Vector3.UnitY : Vector3.UnitX;
-        var right = Vector3.Cross(vector, vector2);
+        var up = mountingFace < 4 ? Vector3.UnitY : Vector3.UnitX;
+        var right = Vector3.Cross(vector, up);
         _glowPoint = _subsystemGlow.AddGlowPoint();
         _glowPoint.Position = v - 0.4375f * CellFace.FaceToVector3(mountingFace);
         _glowPoint.Forward = vector;
-        _glowPoint.Up = vector2;
+        _glowPoint.Up = up;
         _glowPoint.Right = right;
         _glowPoint.Color = Color.Transparent;
         _glowPoint.Size = 0.52f;
@@ -62,8 +62,9 @@ public class OneLedElectricElement(
             return false;
         }
 
-        var num = (int)MathUtils.Round(_voltage * 15f);
-        _glowPoint.Color = num >= 8 ? LedBlock.LedColors[MathUtils.Clamp(num - 8, 0, 7)] : Color.Transparent;
+        var inputLevel = (int)MathUtils.Round(_voltage * 15f);
+        _glowPoint.Color =
+            inputLevel >= 8 ? LedBlock.LedColors[MathUtils.Clamp(inputLevel - 8, 0, 7)] : Color.Transparent;
 
         return false;
     }

@@ -93,22 +93,25 @@ public class ComponentWalkAroundBehavior : ComponentBehavior, IUpdateable
     public Vector3 FindDestination()
     {
         var position = _componentCreature.ComponentBody.Position;
-        var num = 0f;
+        var bestScore = 0f;
         var result = position;
         for (var i = 0; i < 16; i++)
         {
             var vector = Vector2.Normalize(_random.Vector2(1f)) * _random.Float(6f, 12f);
-            var vector2 = new Vector3(position.X + vector.X, 0f, position.Z + vector.Y);
-            vector2.Y = _subsystemTerrain.Terrain.GetTopHeight(Terrain.ToCell(vector2.X), Terrain.ToCell(vector2.Z)) +
-                        1;
-            var num2 = ScoreDestination(vector2);
-            if (!(num2 > num))
+            var candidatePosition = new Vector3(position.X + vector.X, 0f, position.Z + vector.Y);
+            candidatePosition.Y = _subsystemTerrain.Terrain.GetTopHeight(
+                                      Terrain.ToCell(candidatePosition.X),
+                                      Terrain.ToCell(candidatePosition.Z)
+                                  ) +
+                                  1;
+            var candidateScore = ScoreDestination(candidatePosition);
+            if (!(candidateScore > bestScore))
             {
                 continue;
             }
 
-            num = num2;
-            result = vector2;
+            bestScore = candidateScore;
+            result = candidatePosition;
         }
 
         return result;
@@ -116,7 +119,7 @@ public class ComponentWalkAroundBehavior : ComponentBehavior, IUpdateable
 
     public float ScoreDestination(Vector3 destination)
     {
-        var num = 8f - MathUtils.Abs(_componentCreature.ComponentBody.Position.Y - destination.Y);
+        var score = 8f - MathUtils.Abs(_componentCreature.ComponentBody.Position.Y - destination.Y);
         if (_subsystemTerrain.Terrain.GetCellContents(
                 Terrain.ToCell(destination.X),
                 Terrain.ToCell(destination.Y) - 1,
@@ -124,9 +127,9 @@ public class ComponentWalkAroundBehavior : ComponentBehavior, IUpdateable
             ) ==
             18)
         {
-            num -= 5f;
+            score -= 5f;
         }
 
-        return num;
+        return score;
     }
 }

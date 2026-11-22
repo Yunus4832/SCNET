@@ -24,15 +24,15 @@ public abstract class TrapdoorBlockPresentation(TrapdoorBlock block, BlockPresen
         int z
     )
     {
-        var num = Terrain.ExtractData(value);
-        if (num < BlockMeshesByData.Length)
+        var meshIndex = Terrain.ExtractData(value);
+        if (meshIndex < BlockMeshesByData.Length)
         {
             generator.GenerateShadedMeshVertices(
                 this,
                 x,
                 y,
                 z,
-                BlockMeshesByData[num],
+                BlockMeshesByData[meshIndex],
                 Color.White,
                 null,
                 [],

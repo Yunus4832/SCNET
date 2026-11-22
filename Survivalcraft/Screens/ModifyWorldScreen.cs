@@ -110,16 +110,16 @@ public class ModifyWorldScreen : Screen
         _currentWorldSettingsData.Clear();
         WorldSettings.Save(_currentWorldSettingsData, true);
         _hosting.Save(_currentWorldSettingsData, WorldSettings.Name);
-        var flag = !CompareValueDictionaries(_originalWorldSettingsData, _currentWorldSettingsData) ||
-                   _originalAdmission != _admission.Configuration.Fingerprint();
-        var flag2 = ClientApplication.Worlds.ValidateWorldName(WorldSettings.Name);
+        var hasChanges = !CompareValueDictionaries(_originalWorldSettingsData, _currentWorldSettingsData) ||
+                         _originalAdmission != _admission.Configuration.Fingerprint();
+        var isNameValid = ClientApplication.Worlds.ValidateWorldName(WorldSettings.Name);
         _nameTextBox.Text = WorldSettings.Name;
         _seedLabel.Text = WorldSettings.Seed;
         _gameModeButton.Text =
             Localization.ClientLanguage.Catalog.Get("GameMode", WorldSettings.GameMode.ToString());
         _gameModeButton.IsEnabled = _changingGameModeAllowed;
-        _errorLabel.IsVisible = !flag2;
-        _applyButton.IsEnabled = flag2 && flag;
+        _errorLabel.IsVisible = !isNameValid;
+        _applyButton.IsEnabled = isNameValid && hasChanges;
         if (_worldOptionsButton.IsClicked)
         {
             ScreensManager.SwitchScreen("WorldOptions", WorldSettings, true);
@@ -138,7 +138,7 @@ public class ModifyWorldScreen : Screen
             );
         }
 
-        if ((_applyButton.IsClicked && flag2) & flag)
+        if ((_applyButton.IsClicked && isNameValid) & hasChanges)
         {
             if (WorldSettings.GameMode != 0 && WorldSettings.GameMode != GameMode.Adventure)
             {
@@ -151,7 +151,7 @@ public class ModifyWorldScreen : Screen
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
-            if (flag)
+            if (hasChanges)
             {
                 DialogsManager.ShowDialog(
                     null,

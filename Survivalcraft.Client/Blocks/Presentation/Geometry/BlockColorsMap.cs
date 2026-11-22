@@ -92,16 +92,16 @@ public class BlockColorsMap
                 var c = Color.Lerp(th11, th21, f);
                 var c2 = Color.Lerp(th12, th22, f);
                 var color = Color.Lerp(c, c2, f2);
-                var num = i + j * 16;
-                _map[num] = color;
+                var climateIndex = i + j * 16;
+                _map[climateIndex] = color;
             }
         }
     }
 
     public Color Lookup(int temperature, int humidity)
     {
-        var num = MathUtils.Clamp(temperature, 0, 15) + 16 * MathUtils.Clamp(humidity, 0, 15);
-        return _map[num];
+        var climateIndex = MathUtils.Clamp(temperature, 0, 15) + 16 * MathUtils.Clamp(humidity, 0, 15);
+        return _map[climateIndex];
     }
 
     public Color Lookup(Terrain terrain, int x, int y, int z)

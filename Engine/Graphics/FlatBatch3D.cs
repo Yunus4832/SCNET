@@ -25,14 +25,14 @@ public sealed class FlatBatch3D : BaseFlatBatch
     public void QueueLineStrip(IEnumerable<Vector3> points, Color color)
     {
         var count = LineVertices.Count;
-        var num = 0;
+        var pointCount = 0;
         foreach (var point in points)
         {
             LineVertices.Add(new VertexPositionColor(point, color));
-            num++;
+            pointCount++;
         }
 
-        for (var i = 0; i < num - 1; i++)
+        for (var i = 0; i < pointCount - 1; i++)
         {
             LineIndices.Add((ushort)(count + i));
             LineIndices.Add((ushort)(count + i + 1));

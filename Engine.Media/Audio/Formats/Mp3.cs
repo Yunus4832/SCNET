@@ -28,13 +28,13 @@ public static class Mp3
                     throw new NotSupportedException("Underlying stream cannot be seeked.");
                 }
 
-                var num = value * ChannelsCount * 4;
-                if (num < 0 || num > BytesCount)
+                var byteOffset = value * ChannelsCount * 4;
+                if (byteOffset < 0 || byteOffset > BytesCount)
                 {
                     throw new InvalidOperationException("Invalid range");
                 }
 
-                Reader.Position = num;
+                Reader.Position = byteOffset;
                 _streamPosition = value;
             }
         }
@@ -69,8 +69,8 @@ public static class Mp3
 
             count = (int)Math.Min(count, BytesCount - Position);
             var sample = new byte[count * 2];
-            var num = Reader.Read(sample, 0, count * 2);
-            for (var i = 0; i < num; i += 4)
+            var samplesRead = Reader.Read(sample, 0, count * 2);
+            for (var i = 0; i < samplesRead; i += 4)
             {
                 var sample32Bit = BitConverter.ToSingle(sample, i);
                 var sample16Bit = (short)(sample32Bit * short.MaxValue);
@@ -79,8 +79,8 @@ public static class Mp3
                 buffer[offset++] = sampleBytes[1];
             }
 
-            _streamPosition += num / 2 / ChannelsCount;
-            return num / 2;
+            _streamPosition += samplesRead / 2 / ChannelsCount;
+            return samplesRead / 2;
         }
 
         /// <summary>

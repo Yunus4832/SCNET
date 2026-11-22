@@ -74,29 +74,29 @@ public class SubsystemBlocksScanner : Subsystem, IUpdateable
 
                         _pollCount -= 1f;
                         var topHeightFast = nextChunk.GetTopHeightFast(_pollX, _pollZ);
-                        var num = TerrainChunk.CalculateCellIndex(_pollX, 0, _pollZ);
-                        var num2 = 0;
-                        while (num2 <= topHeightFast)
+                        var columnIndex = TerrainChunk.CalculateCellIndex(_pollX, 0, _pollZ);
+                        var cellY = 0;
+                        while (cellY <= topHeightFast)
                         {
-                            var cellValueFast = nextChunk.GetCellValueFast(num);
-                            var num3 = Terrain.ExtractContents(cellValueFast);
-                            if (num3 != 0)
+                            var cellValueFast = nextChunk.GetCellValueFast(columnIndex);
+                            var contents = Terrain.ExtractContents(cellValueFast);
+                            if (contents != 0)
                             {
-                                var array = _pollableBehaviorsByContents[num3];
+                                var array = _pollableBehaviorsByContents[contents];
                                 foreach (var item in array)
                                 {
                                     item.OnPoll(
                                         cellValueFast,
                                         nextChunk.Origin.X + _pollX,
-                                        num2,
+                                        cellY,
                                         nextChunk.Origin.Y + _pollZ,
                                         _pollPass
                                     );
                                 }
                             }
 
-                            num2++;
-                            num++;
+                            cellY++;
+                            columnIndex++;
                         }
 
                         _pollZ++;

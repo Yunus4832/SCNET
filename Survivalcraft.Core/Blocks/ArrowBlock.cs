@@ -105,8 +105,8 @@ public class ArrowBlock : Block
         while (i < Order.Length)
         {
             yield return Terrain.MakeBlockValue(BlockIndex, SetArrowType(0, (ArrowType)Order[i]));
-            var num = i + 1;
-            i = num;
+            var nextVariant = i + 1;
+            i = nextVariant;
         }
     }
 

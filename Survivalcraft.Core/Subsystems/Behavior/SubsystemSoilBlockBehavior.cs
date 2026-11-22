@@ -108,8 +108,8 @@ public class SubsystemSoilBlockBehavior : SubsystemPollableBlockBehavior, IUpdat
 
     private bool DegradesSoilIfOnTopOfIt(int value)
     {
-        var num = Terrain.ExtractContents(value);
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var contents = Terrain.ExtractContents(value);
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[contents];
         return !block.IsFaceTransparent(SubsystemTerrain, 5, value) && block.Collidable;
     }
 
@@ -152,9 +152,9 @@ public class SubsystemSoilBlockBehavior : SubsystemPollableBlockBehavior, IUpdat
     private bool DetermineHydrationHelper(int x, int y, int z, int steps)
     {
         var cellValueFast = SubsystemTerrain.Terrain.GetCellValueFast(x, y, z);
-        var num = Terrain.ExtractContents(cellValueFast);
+        var contents = Terrain.ExtractContents(cellValueFast);
         var data = Terrain.ExtractData(cellValueFast);
-        switch (num)
+        switch (contents)
         {
             case 18:
                 return true;
@@ -167,6 +167,6 @@ public class SubsystemSoilBlockBehavior : SubsystemPollableBlockBehavior, IUpdat
                 break;
         }
 
-        return num == 2 && DetermineHydration(x, y, z, steps);
+        return contents == 2 && DetermineHydration(x, y, z, steps);
     }
 }

@@ -33,8 +33,8 @@ public class MagnetBlock : Block
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = Terrain.ExtractData(value);
-        return num < CollisionBoxesByData.Length ? CollisionBoxesByData[num] : [];
+        var blockData = Terrain.ExtractData(value);
+        return blockData < CollisionBoxesByData.Length ? CollisionBoxesByData[blockData] : [];
     }
 
 

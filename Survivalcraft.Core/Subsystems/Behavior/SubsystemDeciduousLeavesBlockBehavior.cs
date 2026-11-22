@@ -33,14 +33,14 @@ public class SubsystemDeciduousLeavesBlockBehavior : SubsystemPollableBlockBehav
 
     private Point3? FindFallenLeavesPosition(Point3 p)
     {
-        int? num = null;
+        int? valueAbove = null;
         while (p.Y is >= 1 and < 256)
         {
             var cellValue = _subsystemTerrain.Terrain.GetCellValue(p.X, p.Y, p.Z);
-            if (num.HasValue)
+            if (valueAbove.HasValue)
             {
                 if (SubsystemFallenLeavesBlockBehavior.CanSupportFallenLeaves(SubsystemTerrain.Catalog, cellValue) &&
-                    SubsystemFallenLeavesBlockBehavior.CanBeReplacedByFallenLeaves(num.Value))
+                    SubsystemFallenLeavesBlockBehavior.CanBeReplacedByFallenLeaves(valueAbove.Value))
                 {
                     return new Point3(p.X, p.Y + 1, p.Z);
                 }
@@ -51,7 +51,7 @@ public class SubsystemDeciduousLeavesBlockBehavior : SubsystemPollableBlockBehav
                 }
             }
 
-            num = cellValue;
+            valueAbove = cellValue;
             p.Y--;
         }
 
@@ -82,20 +82,20 @@ public class SubsystemDeciduousLeavesBlockBehavior : SubsystemPollableBlockBehav
     {
         if (!WorldRuntimeContext.IsProjectActive(Project) || !WorldRuntimeContext.For(Project).IsAuthority) { return; }
 
-        var num = 0.03f * MathUtils.Hash((uint)(x + y * 59 + z * 3319)) / 4.2949673E+09f;
-        var timeOfYear = IntervalUtils.Normalize(_subsystemGameInfo.WorldSettings.TimeOfYear + num);
+        var seasonOffset = 0.03f * MathUtils.Hash((uint)(x + y * 59 + z * 3319)) / 4.2949673E+09f;
+        var timeOfYear = IntervalUtils.Normalize(_subsystemGameInfo.WorldSettings.TimeOfYear + seasonOffset);
         var obj = (DeciduousLeavesBlock)WorldContentBinding.For(Project).Catalog
             .Blocks[Terrain.ExtractContents(value)];
-        var num2 = Terrain.ExtractData(value);
-        var num3 = obj.SetTimeOfYear(num2, timeOfYear);
-        if (num3 == num2)
+        var previousData = Terrain.ExtractData(value);
+        var updatedData = obj.SetTimeOfYear(previousData, timeOfYear);
+        if (updatedData == previousData)
         {
             return;
         }
 
-        var value2 = Terrain.ReplaceData(value, num3);
-        var season = DeciduousLeavesBlock.GetSeason(num2);
-        var enteringWinter = DeciduousLeavesBlock.GetSeason(num3) == Season.Winter && season != Season.Winter;
+        var value2 = Terrain.ReplaceData(value, updatedData);
+        var season = DeciduousLeavesBlock.GetSeason(previousData);
+        var enteringWinter = DeciduousLeavesBlock.GetSeason(updatedData) == Season.Winter && season != Season.Winter;
         if (!applyImmediately && enteringWinter && FindFallenLeavesPosition(new Point3(x, y, z)) is { } target)
         {
             if (!_subsystemCellChangeQueue.TryQueueCellChanges(

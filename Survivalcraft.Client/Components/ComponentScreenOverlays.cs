@@ -67,9 +67,9 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
 
         if (_waterSurfaceCrossTime.HasValue)
         {
-            var num = (float)(_subsystemTime.GameTime - _waterSurfaceCrossTime.Value);
-            var num2 = 0.66f * MathUtils.Sqr(MathUtils.Saturate(1f - 0.75f * num));
-            if (num2 > 0.01f)
+            var secondsSinceCrossing = (float)(_subsystemTime.GameTime - _waterSurfaceCrossTime.Value);
+            var splashIntensity = 0.66f * MathUtils.Sqr(MathUtils.Saturate(1f - 0.75f * secondsSinceCrossing));
+            if (splashIntensity > 0.01f)
             {
                 Matrix matrix = default;
                 matrix.Translation = Vector3.Zero;
@@ -78,10 +78,11 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
                 matrix.Up = Vector3.Normalize(Vector3.Cross(matrix.Right, matrix.Forward));
                 var vector = matrix.ToYawPitchRoll();
                 var zero = Vector2.Zero;
-                zero.X -= 2f * vector.X / (float)Math.PI + 0.05f * MathUtils.Sin(5f * num);
-                zero.Y += 2f * vector.Y / (float)Math.PI + (_isUnderWater ? 0.75f * num : -0.75f * num);
+                zero.X -= 2f * vector.X / (float)Math.PI + 0.05f * MathUtils.Sin(5f * secondsSinceCrossing);
+                zero.Y += 2f * vector.Y / (float)Math.PI +
+                          (_isUnderWater ? 0.75f * secondsSinceCrossing : -0.75f * secondsSinceCrossing);
                 var texture = ContentManager.Get<Texture2D>("Textures/SplashOverlay");
-                DrawTexturedOverlay(camera, texture, new Color(156, 206, 210), num2, num2, zero);
+                DrawTexturedOverlay(camera, texture, new Color(156, 206, 210), splashIntensity, splashIntensity, zero);
             }
         }
 
@@ -120,10 +121,10 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
 
     public void Update(float dt)
     {
-        var flag = _subsystemSky.ViewUnderWaterDepth > 0f;
-        if (flag != _isUnderWater)
+        var isUnderwater = _subsystemSky.ViewUnderWaterDepth > 0f;
+        if (isUnderwater != _isUnderWater)
         {
-            _isUnderWater = flag;
+            _isUnderWater = isUnderwater;
             _waterSurfaceCrossTime = _subsystemTime.GameTime;
         }
 
@@ -149,19 +150,19 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
     public void DrawOverlay(Camera camera, Color color, float innerFactor, float outerFactor)
     {
         var viewportSize = camera.ViewportSize;
-        var vector = new Vector2(0f, 0f);
-        var vector2 = new Vector2(viewportSize.X, 0f);
-        var vector3 = new Vector2(viewportSize.X, viewportSize.Y);
-        var vector4 = new Vector2(0f, viewportSize.Y);
+        var topLeft = new Vector2(0f, 0f);
+        var topRight = new Vector2(viewportSize.X, 0f);
+        var bottomRight = new Vector2(viewportSize.X, viewportSize.Y);
+        var bottomLeft = new Vector2(0f, viewportSize.Y);
         var p = new Vector2(viewportSize.X / 2f, viewportSize.Y / 2f);
         var color2 = color * outerFactor;
         var color3 = color * innerFactor;
         var flatBatch2D = PrimitivesRenderer2D.FlatBatch(0, DepthStencilState.None, null, BlendState.AlphaBlend);
         var count = flatBatch2D.TriangleVertices.Count;
-        flatBatch2D.QueueTriangle(vector, vector2, p, 0f, color2, color2, color3);
-        flatBatch2D.QueueTriangle(vector2, vector3, p, 0f, color2, color2, color3);
-        flatBatch2D.QueueTriangle(vector3, vector4, p, 0f, color2, color2, color3);
-        flatBatch2D.QueueTriangle(vector4, vector, p, 0f, color2, color2, color3);
+        flatBatch2D.QueueTriangle(topLeft, topRight, p, 0f, color2, color2, color3);
+        flatBatch2D.QueueTriangle(topRight, bottomRight, p, 0f, color2, color2, color3);
+        flatBatch2D.QueueTriangle(bottomRight, bottomLeft, p, 0f, color2, color2, color3);
+        flatBatch2D.QueueTriangle(bottomLeft, topLeft, p, 0f, color2, color2, color3);
         flatBatch2D.TransformTriangles(camera.ViewportMatrix, count);
         flatBatch2D.Flush();
     }
@@ -176,19 +177,19 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
     )
     {
         var viewportSize = camera.ViewportSize;
-        var num = viewportSize.X / viewportSize.Y;
-        var vector = new Vector2(0f, 0f);
-        var vector2 = new Vector2(viewportSize.X, 0f);
-        var vector3 = new Vector2(viewportSize.X, viewportSize.Y);
-        var vector4 = new Vector2(0f, viewportSize.Y);
+        var aspectRatio = viewportSize.X / viewportSize.Y;
+        var topLeft = new Vector2(0f, 0f);
+        var topRight = new Vector2(viewportSize.X, 0f);
+        var bottomRight = new Vector2(viewportSize.X, viewportSize.Y);
+        var bottomLeft = new Vector2(0f, viewportSize.Y);
         var p = new Vector2(viewportSize.X / 2f, viewportSize.Y / 2f);
         offset.X = MathUtils.Remainder(offset.X, 1f);
         offset.Y = MathUtils.Remainder(offset.Y, 1f);
-        var vector5 = new Vector2(0f, 0f) + offset;
-        var vector6 = new Vector2(num, 0f) + offset;
-        var vector7 = new Vector2(num, 1f) + offset;
-        var vector8 = new Vector2(0f, 1f) + offset;
-        var texCoord = new Vector2(num / 2f, 0.5f) + offset;
+        var topLeftUv = new Vector2(0f, 0f) + offset;
+        var topRightUv = new Vector2(aspectRatio, 0f) + offset;
+        var bottomRightUv = new Vector2(aspectRatio, 1f) + offset;
+        var bottomLeftUv = new Vector2(0f, 1f) + offset;
+        var texCoord = new Vector2(aspectRatio / 2f, 0.5f) + offset;
         var color2 = color * outerFactor;
         var color3 = color * innerFactor;
         var texturedBatch2D = PrimitivesRenderer2D.TexturedBatch(
@@ -201,10 +202,54 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
             SamplerState.PointWrap
         );
         var count = texturedBatch2D.TriangleVertices.Count;
-        texturedBatch2D.QueueTriangle(vector, vector2, p, 0f, vector5, vector6, texCoord, color2, color2, color3);
-        texturedBatch2D.QueueTriangle(vector2, vector3, p, 0f, vector6, vector7, texCoord, color2, color2, color3);
-        texturedBatch2D.QueueTriangle(vector3, vector4, p, 0f, vector7, vector8, texCoord, color2, color2, color3);
-        texturedBatch2D.QueueTriangle(vector4, vector, p, 0f, vector8, vector5, texCoord, color2, color2, color3);
+        texturedBatch2D.QueueTriangle(
+            topLeft,
+            topRight,
+            p,
+            0f,
+            topLeftUv,
+            topRightUv,
+            texCoord,
+            color2,
+            color2,
+            color3
+        );
+        texturedBatch2D.QueueTriangle(
+            topRight,
+            bottomRight,
+            p,
+            0f,
+            topRightUv,
+            bottomRightUv,
+            texCoord,
+            color2,
+            color2,
+            color3
+        );
+        texturedBatch2D.QueueTriangle(
+            bottomRight,
+            bottomLeft,
+            p,
+            0f,
+            bottomRightUv,
+            bottomLeftUv,
+            texCoord,
+            color2,
+            color2,
+            color3
+        );
+        texturedBatch2D.QueueTriangle(
+            bottomLeft,
+            topLeft,
+            p,
+            0f,
+            bottomLeftUv,
+            topLeftUv,
+            texCoord,
+            color2,
+            color2,
+            color3
+        );
         texturedBatch2D.TransformTriangles(camera.ViewportMatrix, count);
         texturedBatch2D.Flush();
     }
@@ -213,9 +258,9 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
     {
         var viewportSize = camera.ViewportSize;
         var s = camera.Eye.HasValue ? 1.3f : 1f;
-        var num = camera.Eye.HasValue ? MathUtils.Pow(factor, 0.4f) : factor;
+        var iceCoverage = camera.Eye.HasValue ? MathUtils.Pow(factor, 0.4f) : factor;
         var v = camera.Eye.HasValue ? viewportSize : new Vector2(1f);
-        var num2 = v.Length();
+        var distanceScale = v.Length();
         var point = new Point2((int)MathUtils.Round(12f * viewportSize.X / viewportSize.Y), (int)MathUtils.Round(12f));
         if (_iceVertices.Length == 0 || _cellsCount != point)
         {
@@ -226,28 +271,28 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
             {
                 for (var j = 0; j <= point.Y; j++)
                 {
-                    float num3 = i;
-                    float num4 = j;
+                    float jitteredColumn = i;
+                    float jitteredRow = j;
                     if (i != 0 && i != point.X)
                     {
-                        num3 += _random.Float(-0.4f, 0.4f);
+                        jitteredColumn += _random.Float(-0.4f, 0.4f);
                     }
 
                     if (j != 0 && j != point.Y)
                     {
-                        num4 += _random.Float(-0.4f, 0.4f);
+                        jitteredRow += _random.Float(-0.4f, 0.4f);
                     }
 
-                    var x = num3 / point.X;
-                    var y = num4 / point.Y;
+                    var x = jitteredColumn / point.X;
+                    var y = jitteredRow / point.Y;
                     _iceVertices[i + j * (point.X + 1)] = new Vector2(x, y);
                 }
             }
         }
 
-        var vector = Vector3.UnitX / camera.ProjectionMatrix.M11 * 2f * 0.2f * s;
-        var vector2 = Vector3.UnitY / camera.ProjectionMatrix.M22 * 2f * 0.2f * s;
-        var v2 = -0.2f * Vector3.UnitZ - 0.5f * (vector + vector2);
+        var overlayWidth = Vector3.UnitX / camera.ProjectionMatrix.M11 * 2f * 0.2f * s;
+        var overlayHeight = Vector3.UnitY / camera.ProjectionMatrix.M22 * 2f * 0.2f * s;
+        var v2 = -0.2f * Vector3.UnitZ - 0.5f * (overlayWidth + overlayHeight);
         _light = LightingManager.CalculateSmoothLight(_subsystemTerrain, camera.ViewPosition) ?? _light ?? 1f;
 
         var color = Color.MultiplyColorOnly(Color.White, _light.Value);
@@ -263,28 +308,29 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
             SamplerState.PointWrap
         );
         var v3 = new Vector2(viewportSize.X / viewportSize.Y, 1f);
-        var vector3 = new Vector2(point.X - 1, point.Y - 1);
+        var lastCell = new Vector2(point.X - 1, point.Y - 1);
         for (var k = 0; k < point.X; k++)
         {
             for (var l = 0; l < point.Y; l++)
             {
-                var num5 = (new Vector2(2 * k / vector3.X - 1f, 2 * l / vector3.Y - 1f) * v).Length() / num2;
-                if (1f - num5 + _random.Float(0f, 0.05f) < num)
+                var normalizedDistance = (new Vector2(2 * k / lastCell.X - 1f, 2 * l / lastCell.Y - 1f) * v).Length() /
+                                         distanceScale;
+                if (1f - normalizedDistance + _random.Float(0f, 0.05f) < iceCoverage)
                 {
                     var v4 = _iceVertices[k + l * (point.X + 1)];
                     var v5 = _iceVertices[k + 1 + l * (point.X + 1)];
                     var v6 = _iceVertices[k + 1 + (l + 1) * (point.X + 1)];
                     var v7 = _iceVertices[k + (l + 1) * (point.X + 1)];
-                    var vector4 = v2 + v4.X * vector + v4.Y * vector2;
-                    var p = v2 + v5.X * vector + v5.Y * vector2;
-                    var vector5 = v2 + v6.X * vector + v6.Y * vector2;
-                    var p2 = v2 + v7.X * vector + v7.Y * vector2;
-                    var vector6 = v4 * v3;
+                    var corner00 = v2 + v4.X * overlayWidth + v4.Y * overlayHeight;
+                    var p = v2 + v5.X * overlayWidth + v5.Y * overlayHeight;
+                    var corner11 = v2 + v6.X * overlayWidth + v6.Y * overlayHeight;
+                    var p2 = v2 + v7.X * overlayWidth + v7.Y * overlayHeight;
+                    var uv00 = v4 * v3;
                     var texCoord = v5 * v3;
-                    var vector7 = v6 * v3;
+                    var uv11 = v6 * v3;
                     var texCoord2 = v7 * v3;
-                    texturedBatch3D.QueueTriangle(vector4, p, vector5, vector6, texCoord, vector7, color);
-                    texturedBatch3D.QueueTriangle(vector5, p2, vector4, vector7, texCoord2, vector6, color);
+                    texturedBatch3D.QueueTriangle(corner00, p, corner11, uv00, texCoord, uv11, color);
+                    texturedBatch3D.QueueTriangle(corner11, p2, corner00, uv11, texCoord2, uv00, color);
                 }
             }
         }

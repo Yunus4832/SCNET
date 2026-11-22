@@ -34,11 +34,11 @@ public class RealTimeClockElectricElement : RotatableElectricElement
     public override bool Simulate()
     {
         var day = _subsystemTimeOfDay.Day;
-        var num = (int)(((MathUtils.Ceiling(day * _periodsPerDay) + 0.5) / _periodsPerDay - day) *
-                        _subsystemTimeOfDay.DayDuration /
-                        SubsystemElectricity.CircuitStepDuration);
+        var stepsUntilUpdate = (int)(((MathUtils.Ceiling(day * _periodsPerDay) + 0.5) / _periodsPerDay - day) *
+                                     _subsystemTimeOfDay.DayDuration /
+                                     SubsystemElectricity.CircuitStepDuration);
         var circuitStep = MathUtils.Max(
-            SubsystemElectricity.FrameStartCircuitStep + num,
+            SubsystemElectricity.FrameStartCircuitStep + stepsUntilUpdate,
             SubsystemElectricity.CircuitStep + 1
         );
         SubsystemElectricity.QueueElectricElementForSimulation(this, circuitStep);

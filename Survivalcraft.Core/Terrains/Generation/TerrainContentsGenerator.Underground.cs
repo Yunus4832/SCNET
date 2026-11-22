@@ -170,131 +170,141 @@ public partial class TerrainContentsGenerator
         {
             for (var j = -1; j <= 1; j++)
             {
-                var num = i + chunk.Coords.X;
-                var num2 = j + chunk.Coords.Y;
-                var random = new Random(seed + num + 71 * num2);
-                var num3 = random.Int(0, 10);
-                for (var k = 0; k < num3; k++)
+                var sourceChunkX = i + chunk.Coords.X;
+                var sourceChunkZ = j + chunk.Coords.Y;
+                var random = new Random(seed + sourceChunkX + 71 * sourceChunkZ);
+                var skippedDraws = random.Int(0, 10);
+                for (var k = 0; k < skippedDraws; k++)
                 {
                     random.Int(0, 1);
                 }
 
-                var num4 = CalculateMountainRangeFactor(num * 16, num2 * 16);
+                var mountainFactor = CalculateMountainRangeFactor(sourceChunkX * 16, sourceChunkZ * 16);
                 for (var l = 0; l < 5; l++)
                 {
-                    var x = num * 16 + random.Int(0, 15);
+                    var x = sourceChunkX * 16 + random.Int(0, 15);
                     var y = random.Int(50, 150);
-                    var z = num2 * 16 + random.Int(0, 15);
+                    var z = sourceChunkZ * 16 + random.Int(0, 15);
                     _dirtPocketBrushes[random.Int(0, _dirtPocketBrushes.Count - 1)]
                         .PaintFastSelective(chunk, x, y, z, 3);
                 }
 
                 for (var m = 0; m < 30; m++)
                 {
-                    var x2 = num * 16 + random.Int(0, 15);
-                    var y2 = random.Int(20, 160);
-                    var z2 = num2 * 16 + random.Int(0, 15);
+                    var worldX = sourceChunkX * 16 + random.Int(0, 15);
+                    var worldY = random.Int(20, 160);
+                    var worldZ = sourceChunkZ * 16 + random.Int(0, 15);
                     _gravelPocketBrushes[random.Int(0, _gravelPocketBrushes.Count - 1)]
-                        .PaintFastSelective(chunk, x2, y2, z2, 3);
+                        .PaintFastSelective(chunk, worldX, worldY, worldZ, 3);
                 }
 
                 for (var n = 0; n < 5; n++)
                 {
-                    var x3 = num * 16 + random.Int(0, 15);
-                    var y3 = random.Int(10, 200);
-                    var z3 = num2 * 16 + random.Int(0, 15);
+                    var worldX = sourceChunkX * 16 + random.Int(0, 15);
+                    var worldY = random.Int(10, 200);
+                    var worldZ = sourceChunkZ * 16 + random.Int(0, 15);
                     _limestonePocketBrushes[random.Int(0, _limestonePocketBrushes.Count - 1)]
-                        .PaintFastSelective(chunk, x3, y3, z3, 3);
+                        .PaintFastSelective(chunk, worldX, worldY, worldZ, 3);
                 }
 
-                for (var num5 = 0; num5 < 1; num5++)
+                for (var pocket = 0; pocket < 1; pocket++)
                 {
-                    var x4 = num * 16 + random.Int(0, 15);
-                    var y4 = random.Int(50, 70);
-                    var z4 = num2 * 16 + random.Int(0, 15);
+                    var worldX = sourceChunkX * 16 + random.Int(0, 15);
+                    var worldY = random.Int(50, 70);
+                    var worldZ = sourceChunkZ * 16 + random.Int(0, 15);
                     _clayPocketBrushes[random.Int(0, _clayPocketBrushes.Count - 1)]
-                        .PaintFastSelective(chunk, x4, y4, z4, 3);
+                        .PaintFastSelective(chunk, worldX, worldY, worldZ, 3);
                 }
 
-                for (var num6 = 0; num6 < 30; num6++)
+                for (var pocket = 0; pocket < 30; pocket++)
                 {
-                    var x5 = num * 16 + random.Int(0, 15);
-                    var y5 = random.Int(20, 160);
-                    var z5 = num2 * 16 + random.Int(0, 15);
+                    var worldX = sourceChunkX * 16 + random.Int(0, 15);
+                    var worldY = random.Int(20, 160);
+                    var worldZ = sourceChunkZ * 16 + random.Int(0, 15);
                     _sandPocketBrushes[random.Int(0, _sandPocketBrushes.Count - 1)]
-                        .PaintFastSelective(chunk, x5, y5, z5, 4);
+                        .PaintFastSelective(chunk, worldX, worldY, worldZ, 4);
                 }
 
-                for (var num7 = 0; num7 < 4; num7++)
+                for (var pocket = 0; pocket < 4; pocket++)
                 {
-                    var x6 = num * 16 + random.Int(0, 15);
-                    var y6 = random.Int(40, 60);
-                    var z6 = num2 * 16 + random.Int(0, 15);
+                    var worldX = sourceChunkX * 16 + random.Int(0, 15);
+                    var worldY = random.Int(40, 60);
+                    var worldZ = sourceChunkZ * 16 + random.Int(0, 15);
                     _basaltPocketBrushes[random.Int(0, _basaltPocketBrushes.Count - 1)]
-                        .PaintFastSelective(chunk, x6, y6, z6, 4);
+                        .PaintFastSelective(chunk, worldX, worldY, worldZ, 4);
                 }
 
-                for (var num8 = 0; num8 < 3; num8++)
+                for (var pocket = 0; pocket < 3; pocket++)
                 {
-                    var x7 = num * 16 + random.Int(0, 15);
-                    var y7 = random.Int(20, 40);
-                    var z7 = num2 * 16 + random.Int(0, 15);
+                    var worldX = sourceChunkX * 16 + random.Int(0, 15);
+                    var worldY = random.Int(20, 40);
+                    var worldZ = sourceChunkZ * 16 + random.Int(0, 15);
                     _basaltPocketBrushes[random.Int(0, _basaltPocketBrushes.Count - 1)]
-                        .PaintFastSelective(chunk, x7, y7, z7, 3);
+                        .PaintFastSelective(chunk, worldX, worldY, worldZ, 3);
                 }
 
-                for (var num9 = 0; num9 < 6; num9++)
+                for (var pocket = 0; pocket < 6; pocket++)
                 {
-                    var x8 = num * 16 + random.Int(0, 15);
-                    var y8 = random.Int(4, 50);
-                    var z8 = num2 * 16 + random.Int(0, 15);
+                    var worldX = sourceChunkX * 16 + random.Int(0, 15);
+                    var worldY = random.Int(4, 50);
+                    var worldZ = sourceChunkZ * 16 + random.Int(0, 15);
                     _granitePocketBrushes[random.Int(0, _granitePocketBrushes.Count - 1)]
-                        .PaintFastSelective(chunk, x8, y8, z8, 67);
+                        .PaintFastSelective(chunk, worldX, worldY, worldZ, 67);
                 }
 
-                for (var num10 = 0; num10 < 30; num10++)
+                for (var pocket = 0; pocket < 30; pocket++)
                 {
-                    var x9 = num * 16 + random.Int(0, 15);
-                    var y9 = random.Int(4, 180);
-                    var z9 = num2 * 16 + random.Int(0, 15);
+                    var worldX = sourceChunkX * 16 + random.Int(0, 15);
+                    var worldY = random.Int(4, 180);
+                    var worldZ = sourceChunkZ * 16 + random.Int(0, 15);
                     _gravelPocketBrushes[random.Int(0, _gravelPocketBrushes.Count - 1)]
-                        .PaintFastSelective(chunk, x9, y9, z9, 67);
+                        .PaintFastSelective(chunk, worldX, worldY, worldZ, 67);
                 }
 
-                if (random.Bool(0.02f + 0.01f * num4))
+                if (random.Bool(0.02f + 0.01f * mountainFactor))
                 {
-                    var num11 = num * 16;
-                    var num12 = random.Int(40, 60);
-                    var num13 = num2 * 16;
-                    var num14 = random.Int(1, 3);
-                    for (var num15 = 0; num15 < num14; num15++)
+                    var waterOriginX = sourceChunkX * 16;
+                    var waterLevel = random.Int(40, 60);
+                    var waterOriginZ = sourceChunkZ * 16;
+                    var waterPocketCount = random.Int(1, 3);
+                    for (var waterPocket = 0; waterPocket < waterPocketCount; waterPocket++)
                     {
-                        var vector = random.Vector2(7f);
-                        var num16 = 8 + (int)MathUtils.Round(vector.X);
-                        var num17 = 0;
-                        var num18 = 8 + (int)MathUtils.Round(vector.Y);
+                        var waterOffset = random.Vector2(7f);
+                        var waterLocalX = 8 + (int)MathUtils.Round(waterOffset.X);
+                        var waterOffsetY = 0;
+                        var waterLocalZ = 8 + (int)MathUtils.Round(waterOffset.Y);
                         _waterPocketBrushes[random.Int(0, _waterPocketBrushes.Count - 1)]
-                            .PaintFast(chunk, num11 + num16, num12 + num17, num13 + num18);
+                            .PaintFast(
+                                chunk,
+                                waterOriginX + waterLocalX,
+                                waterLevel + waterOffsetY,
+                                waterOriginZ + waterLocalZ
+                            );
                     }
                 }
 
-                if (!random.Bool(0.06f + 0.05f * num4))
+                if (!random.Bool(0.06f + 0.05f * mountainFactor))
                 {
                     continue;
                 }
 
-                var num19 = num * 16;
-                var num20 = random.Int(15, 20); //岩浆池往下调整
-                var num21 = num2 * 16;
-                var num22 = random.Int(1, 2);
-                for (var num23 = 0; num23 < num22; num23++)
+                var magmaOriginX = sourceChunkX * 16;
+                var magmaLevel = random.Int(15, 20); //岩浆池往下调整
+                var magmaOriginZ = sourceChunkZ * 16;
+                var magmaPocketCount = random.Int(1, 2);
+                for (var magmaPocket = 0; magmaPocket < magmaPocketCount; magmaPocket++)
                 {
-                    var vector2 = random.Vector2(7f);
-                    var num24 = 8 + (int)MathUtils.Round(vector2.X);
-                    var num25 = random.Int(0, 1);
-                    var num26 = 8 + (int)MathUtils.Round(vector2.Y);
+                    var magmaOffset = random.Vector2(7f);
+                    var magmaLocalX = 8 + (int)MathUtils.Round(magmaOffset.X);
+                    var magmaOffsetY = random.Int(0, 1);
+                    var magmaLocalZ = 8 + (int)MathUtils.Round(magmaOffset.Y);
                     _magmaPocketBrushes[random.Int(0, _magmaPocketBrushes.Count - 1)]
-                        .PaintFast(chunk, num19 + num24, num20 + num25, num21 + num26);
+                        .PaintFast(
+                            chunk,
+                            magmaOriginX + magmaLocalX,
+                            magmaLevel + magmaOffsetY,
+                            magmaOriginZ + magmaLocalZ
+                        );
                 }
             }
         }
@@ -307,33 +317,33 @@ public partial class TerrainContentsGenerator
             return;
         }
 
-        var list = new List<CavePoint>();
+        var branches = new List<CavePoint>();
         var x = chunk.Coords.X;
         var y = chunk.Coords.Y;
         for (var i = x - 2; i <= x + 2; i++)
         {
             for (var j = y - 2; j <= y + 2; j++)
             {
-                list.Clear();
+                branches.Clear();
                 var random = new Random(seed + i + 9973 * j);
-                var num = i * 16 + random.Int(0, 15);
-                var num2 = j * 16 + random.Int(0, 15);
+                var entranceX = i * 16 + random.Int(0, 15);
+                var entranceZ = j * 16 + random.Int(0, 15);
                 var probability = 0.5f;
                 if (!random.Bool(probability))
                 {
                     continue;
                 }
 
-                var num3 = (int)CalculateHeight(num, num2);
-                var num4 = (int)CalculateHeight(num + 3, num2);
-                var num5 = (int)CalculateHeight(num, num2 + 3);
-                var position = new Vector3(num, num3 - 1, num2);
-                var v = new Vector3(3f, num4 - num3, 0f);
-                var v2 = new Vector3(0f, num5 - num3, 3f);
-                var direction = Vector3.Normalize(Vector3.Cross(v, v2));
+                var entranceHeight = (int)CalculateHeight(entranceX, entranceZ);
+                var heightAtPositiveX = (int)CalculateHeight(entranceX + 3, entranceZ);
+                var heightAtPositiveZ = (int)CalculateHeight(entranceX, entranceZ + 3);
+                var position = new Vector3(entranceX, entranceHeight - 1, entranceZ);
+                var surfaceTangentX = new Vector3(3f, heightAtPositiveX - entranceHeight, 0f);
+                var surfaceTangentZ = new Vector3(0f, heightAtPositiveZ - entranceHeight, 3f);
+                var direction = Vector3.Normalize(Vector3.Cross(surfaceTangentX, surfaceTangentZ));
                 if (direction.Y > -0.6f)
                 {
-                    list.Add(
+                    branches.Add(
                         new CavePoint
                         {
                             Position = position,
@@ -344,14 +354,14 @@ public partial class TerrainContentsGenerator
                     );
                 }
 
-                var num6 = i * 16 + 8;
-                var num7 = j * 16 + 8;
-                var num8 = 0;
-                while (num8 < list.Count)
+                var centerX = i * 16 + 8;
+                var centerZ = j * 16 + 8;
+                var branchIndex = 0;
+                while (branchIndex < branches.Count)
                 {
-                    var cavePoint = list[num8];
-                    var list2 = _caveBrushesByType[cavePoint.BrushType];
-                    list2[random.Int(0, list2.Count - 1)].PaintFastAvoidWater(
+                    var cavePoint = branches[branchIndex];
+                    var brushes = _caveBrushesByType[cavePoint.BrushType];
+                    brushes[random.Int(0, brushes.Count - 1)].PaintFastAvoidWater(
                         chunk,
                         Terrain.ToCell(cavePoint.Position.X),
                         Terrain.ToCell(cavePoint.Position.Y),
@@ -359,28 +369,30 @@ public partial class TerrainContentsGenerator
                     );
                     cavePoint.Position += 2f * cavePoint.Direction;
                     cavePoint.StepsTaken += 2;
-                    var num9 = cavePoint.Position.X - num6;
-                    var num10 = cavePoint.Position.Z - num7;
+                    var offsetFromCenterX = cavePoint.Position.X - centerX;
+                    var offsetFromCenterZ = cavePoint.Position.Z - centerZ;
                     if (random.Bool(0.5f))
                     {
-                        var vector = Vector3.Normalize(random.Vector3(1f));
-                        if ((num9 < -25.5f && vector.X < 0f) || (num9 > 25.5f && vector.X > 0f))
+                        var turnOffset = Vector3.Normalize(random.Vector3(1f));
+                        if ((offsetFromCenterX < -25.5f && turnOffset.X < 0f) ||
+                            (offsetFromCenterX > 25.5f && turnOffset.X > 0f))
                         {
-                            vector.X = 0f - vector.X;
+                            turnOffset.X = 0f - turnOffset.X;
                         }
 
-                        if ((num10 < -25.5f && vector.Z < 0f) || (num10 > 25.5f && vector.Z > 0f))
+                        if ((offsetFromCenterZ < -25.5f && turnOffset.Z < 0f) ||
+                            (offsetFromCenterZ > 25.5f && turnOffset.Z > 0f))
                         {
-                            vector.Z = 0f - vector.Z;
+                            turnOffset.Z = 0f - turnOffset.Z;
                         }
 
-                        if ((cavePoint.Direction.Y < -0.5f && vector.Y < -10f) ||
-                            (cavePoint.Direction.Y > 0.1f && vector.Y > 0f))
+                        if ((cavePoint.Direction.Y < -0.5f && turnOffset.Y < -10f) ||
+                            (cavePoint.Direction.Y > 0.1f && turnOffset.Y > 0f))
                         {
-                            vector.Y = 0f - vector.Y;
+                            turnOffset.Y = 0f - turnOffset.Y;
                         }
 
-                        cavePoint.Direction = Vector3.Normalize(cavePoint.Direction + 0.5f * vector);
+                        cavePoint.Direction = Vector3.Normalize(cavePoint.Direction + 0.5f * turnOffset);
                     }
 
                     if (cavePoint.StepsTaken > 20 && random.Bool(0.06f))
@@ -415,11 +427,11 @@ public partial class TerrainContentsGenerator
                     }
 
                     if (random.Bool(0.06f) &&
-                        list.Count < 12 &&
+                        branches.Count < 12 &&
                         cavePoint.StepsTaken > 20 &&
                         cavePoint.Position.Y < 58f)
                     {
-                        list.Add(
+                        branches.Add(
                             new CavePoint
                             {
                                 Position = cavePoint.Position,
@@ -432,19 +444,19 @@ public partial class TerrainContentsGenerator
                     }
 
                     if (cavePoint.StepsTaken >= cavePoint.Length ||
-                        MathUtils.Abs(num9) > 34f ||
-                        MathUtils.Abs(num10) > 34f ||
+                        MathUtils.Abs(offsetFromCenterX) > 34f ||
+                        MathUtils.Abs(offsetFromCenterZ) > 34f ||
                         cavePoint.Position.Y < 5f ||
                         cavePoint.Position.Y > 246f)
                     {
-                        num8++;
+                        branchIndex++;
                     }
                     else if (cavePoint.StepsTaken % 20 == 0)
                     {
-                        var num11 = CalculateHeight(cavePoint.Position.X, cavePoint.Position.Z);
-                        if (cavePoint.Position.Y > num11 + 1f)
+                        var surfaceHeight = CalculateHeight(cavePoint.Position.X, cavePoint.Position.Z);
+                        if (cavePoint.Position.Y > surfaceHeight + 1f)
                         {
-                            num8++;
+                            branchIndex++;
                         }
                     }
                 }

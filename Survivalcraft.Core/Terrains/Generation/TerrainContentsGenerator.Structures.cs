@@ -17,68 +17,68 @@ public partial class TerrainContentsGenerator
             return;
         }
 
-        var num = random.Int(0, MathUtils.Max(2, 1));
-        for (var i = 0; i < num; i++)
+        var trapAttempts = random.Int(0, MathUtils.Max(2, 1));
+        for (var i = 0; i < trapAttempts; i++)
         {
-            var num2 = random.Int(2, 5);
-            var num3 = random.Int(2, 5);
-            var num4 = random.Int(1, 16 - num2 - 2);
-            var num5 = random.Int(1, 16 - num3 - 2);
-            var flag = random.Float(0f, 1f) < 0.5f;
-            var num6 = random.Int(3, 5);
-            int? num7 = null;
-            var num8 = num4 - 1;
+            var pitWidth = random.Int(2, 5);
+            var pitLength = random.Int(2, 5);
+            var startX = random.Int(1, 16 - pitWidth - 2);
+            var startZ = random.Int(1, 16 - pitLength - 2);
+            var placeSpikes = random.Float(0f, 1f) < 0.5f;
+            var pitDepth = random.Int(3, 5);
+            int? groundY = null;
+            var scanX = startX - 1;
             while (true)
             {
-                if (num8 < num4 + num2 + 1)
+                if (scanX < startX + pitWidth + 1)
                 {
-                    for (var j = num5 - 1; j < num5 + num3 + 1; j++)
+                    for (var j = startZ - 1; j < startZ + pitLength + 1; j++)
                     {
-                        var num9 = chunk.CalculateTopmostCellHeight(num8, j);
-                        var num10 = MathUtils.Max(num9 - 20, 5);
-                        while (num9 >= num10 && chunk.GetCellContentsFast(num8, num9, j) != 8)
+                        var scanY = chunk.CalculateTopmostCellHeight(scanX, j);
+                        var minSearchY = MathUtils.Max(scanY - 20, 5);
+                        while (scanY >= minSearchY && chunk.GetCellContentsFast(scanX, scanY, j) != 8)
                         {
-                            num9--;
+                            scanY--;
                         }
 
-                        if (num7.HasValue && num7 != num9)
+                        if (groundY.HasValue && groundY != scanY)
                         {
                             goto end_IL_019b;
                         }
 
-                        num7 = num9;
-                        if (chunk.GetCellContentsFast(num8, num9, j) != 8)
+                        groundY = scanY;
+                        if (chunk.GetCellContentsFast(scanX, scanY, j) != 8)
                         {
                             goto end_IL_019b;
                         }
                     }
 
-                    num8++;
+                    scanX++;
                     continue;
                 }
 
-                if (!num7.HasValue || num7 - num6 < 5)
+                if (!groundY.HasValue || groundY - pitDepth < 5)
                 {
                     break;
                 }
 
-                for (var k = num4; k < num4 + num2; k++)
+                for (var k = startX; k < startX + pitWidth; k++)
                 {
-                    for (var l = num5; l < num5 + num3; l++)
+                    for (var l = startZ; l < startZ + pitLength; l++)
                     {
-                        for (var num11 = num7.Value - 1; num11 >= num7 - num6 + 1; num11--)
+                        for (var pitY = groundY.Value - 1; pitY >= groundY - pitDepth + 1; pitY--)
                         {
-                            chunk.SetCellValueFast(k, num11, l, Terrain.MakeBlockValue(0));
+                            chunk.SetCellValueFast(k, pitY, l, Terrain.MakeBlockValue(0));
                         }
 
-                        chunk.SetCellValueFast(k, num7.Value, l, Terrain.MakeBlockValue(87));
-                        if (!flag)
+                        chunk.SetCellValueFast(k, groundY.Value, l, Terrain.MakeBlockValue(87));
+                        if (!placeSpikes)
                         {
                             continue;
                         }
 
                         var data = SpikedPlankBlock.SetSpikesState(0, random.Float(0f, 1f) < 0.33f);
-                        chunk.SetCellValueFast(k, num7.Value - num6 + 1, l, Terrain.MakeBlockValue(86, data));
+                        chunk.SetCellValueFast(k, groundY.Value - pitDepth + 1, l, Terrain.MakeBlockValue(86, data));
                     }
                 }
 
@@ -105,49 +105,49 @@ public partial class TerrainContentsGenerator
             return;
         }
 
-        var num = random.Int(0, MathUtils.Max(1, 1));
-        for (var i = 0; i < num; i++)
+        var clusterAttempts = random.Int(0, MathUtils.Max(1, 1));
+        for (var i = 0; i < clusterAttempts; i++)
         {
-            var num2 = random.Int(6, 9);
-            var num3 = random.Int(6, 9);
-            var num4 = random.Bool(0.2f) ? random.Int(6, 20) : random.Int(1, 5);
-            var flag = random.Bool(0.5f);
-            for (var j = 0; j < num4; j++)
+            var centerX = random.Int(6, 9);
+            var centerZ = random.Int(6, 9);
+            var graveAttempts = random.Bool(0.2f) ? random.Int(6, 20) : random.Int(1, 5);
+            var skipFoundation = random.Bool(0.5f);
+            for (var j = 0; j < graveAttempts; j++)
             {
-                var num5 = num2 + random.Int(-4, 4);
-                var num6 = num3 + random.Int(-4, 4);
-                var num7 = chunk.CalculateTopmostCellHeight(num5, num6);
-                if (num7 is < 10 or > 246)
+                var graveX = centerX + random.Int(-4, 4);
+                var graveZ = centerZ + random.Int(-4, 4);
+                var groundY = chunk.CalculateTopmostCellHeight(graveX, graveZ);
+                if (groundY is < 10 or > 246)
                 {
                     continue;
                 }
 
-                var num8 = random.Int(0, 3);
+                var firstFace = random.Int(0, 3);
                 for (var k = 0; k < 4; k++)
                 {
-                    var num9 = (k + num8) % 4;
-                    var p = CellFace.FaceToPoint3(num9);
+                    var face = (k + firstFace) % 4;
+                    var p = CellFace.FaceToPoint3(face);
                     var p2 = new Point3(-p.Z, p.Y, p.X);
-                    var num10 = p.X < 0 ? num5 - 2 : num5 - 1;
-                    var num11 = p.X > 0 ? num5 + 2 : num5 + 1;
-                    var num12 = p.Z < 0 ? num6 - 2 : num6 - 1;
-                    var num13 = p.Z > 0 ? num6 + 2 : num6 + 1;
-                    for (var l = num10; l <= num11; l++)
+                    var minX = p.X < 0 ? graveX - 2 : graveX - 1;
+                    var maxX = p.X > 0 ? graveX + 2 : graveX + 1;
+                    var minZ = p.Z < 0 ? graveZ - 2 : graveZ - 1;
+                    var maxZ = p.Z > 0 ? graveZ + 2 : graveZ + 1;
+                    for (var l = minX; l <= maxX; l++)
                     {
-                        for (var m = num7 - 2; m <= num7 + 2; m++)
+                        for (var m = groundY - 2; m <= groundY + 2; m++)
                         {
-                            for (var n = num12; n <= num13; n++)
+                            for (var n = minZ; n <= maxZ; n++)
                             {
-                                var num14 = Terrain.ExtractContents(chunk.GetCellValueFast(l, m, n));
-                                var block = _subsystemTerrain.Catalog.Blocks[num14];
-                                if (m > num7)
+                                var contentsAtCell = Terrain.ExtractContents(chunk.GetCellValueFast(l, m, n));
+                                var block = _subsystemTerrain.Catalog.Blocks[contentsAtCell];
+                                if (m > groundY)
                                 {
                                     if (!block.Collidable)
                                     {
                                         continue;
                                     }
                                 }
-                                else if (num14 is 8 or 2 or 7 or 3 or 4)
+                                else if (contentsAtCell is 8 or 2 or 7 or 3 or 4)
                                 {
                                     continue;
                                 }
@@ -157,173 +157,188 @@ public partial class TerrainContentsGenerator
                         }
                     }
 
-                    var num15 = random.Int(0, 7);
-                    var data = GravestoneBlock.SetVariant(GravestoneBlock.SetRotation(0, num9 % 2), num15);
-                    int? num16 = null;
-                    var contents = 217;
-                    var contents2 = 136;
-                    if (num15 >= 4 && !flag)
+                    var gravestoneVariant = random.Int(0, 7);
+                    var data = GravestoneBlock.SetVariant(GravestoneBlock.SetRotation(0, face % 2), gravestoneVariant);
+                    int? foundationValue = null;
+                    var stairsContents = 217;
+                    var slabContents = 136;
+                    if (gravestoneVariant >= 4 && !skipFoundation)
                     {
-                        var cellContentsFast = chunk.GetCellContentsFast(num5, num7, num6);
+                        var cellContentsFast = chunk.GetCellContentsFast(graveX, groundY, graveZ);
                         if (cellContentsFast == 7 || cellContentsFast == 4)
                         {
-                            num16 = Terrain.MakeBlockValue(4);
-                            contents = 51;
-                            contents2 = 52;
+                            foundationValue = Terrain.MakeBlockValue(4);
+                            stairsContents = 51;
+                            slabContents = 52;
                         }
                         else if (random.Float(0f, 1f) < 0.5f)
                         {
-                            num16 = Terrain.MakeBlockValue(3);
-                            contents = 217;
-                            contents2 = 136;
+                            foundationValue = Terrain.MakeBlockValue(3);
+                            stairsContents = 217;
+                            slabContents = 136;
                         }
                         else
                         {
-                            num16 = Terrain.MakeBlockValue(67);
-                            contents = 96;
-                            contents2 = 95;
+                            foundationValue = Terrain.MakeBlockValue(67);
+                            stairsContents = 96;
+                            slabContents = 95;
                         }
                     }
 
-                    var flag2 = num16.HasValue && random.Bool(0.33f);
-                    var num17 = random.Float(0f, 1f);
-                    var num18 = random.Float(0f, 1f);
-                    var num19 = random.Int(-1, 0);
-                    var num20 = random.Int(1, 2);
-                    var num21 = flag2 ? num7 + 2 : num7 + 1;
-                    chunk.SetCellValueFast(num5, num21, num6, Terrain.MakeBlockValue(189, data));
-                    for (var num22 = num19; num22 <= num20; num22++)
+                    var raisedGrave = foundationValue.HasValue && random.Bool(0.33f);
+                    var borderRoll = random.Float(0f, 1f);
+                    var ornamentRoll = random.Float(0f, 1f);
+                    var firstOffset = random.Int(-1, 0);
+                    var lastOffset = random.Int(1, 2);
+                    var gravestoneY = raisedGrave ? groundY + 2 : groundY + 1;
+                    chunk.SetCellValueFast(graveX, gravestoneY, graveZ, Terrain.MakeBlockValue(189, data));
+                    for (var lengthOffset = firstOffset; lengthOffset <= lastOffset; lengthOffset++)
                     {
-                        var num23 = num5 + p.X * num22;
-                        var num24 = num6 + p.Z * num22;
-                        if (num22 is 0 or 1)
+                        var localX = graveX + p.X * lengthOffset;
+                        var localZ = graveZ + p.Z * lengthOffset;
+                        if (lengthOffset is 0 or 1)
                         {
-                            chunk.SetCellValueFast(num23, num21 - 2, num24, Terrain.MakeBlockValue(190));
-                            if (num16.HasValue)
+                            chunk.SetCellValueFast(localX, gravestoneY - 2, localZ, Terrain.MakeBlockValue(190));
+                            if (foundationValue.HasValue)
                             {
-                                chunk.SetCellValueFast(num23, num21 - 1, num24, num16.Value);
-                                if (num22 == 1)
+                                chunk.SetCellValueFast(localX, gravestoneY - 1, localZ, foundationValue.Value);
+                                if (lengthOffset == 1)
                                 {
-                                    var num25 = 0;
-                                    if (num18 < 0.2f)
+                                    var ornamentValue = 0;
+                                    if (ornamentRoll < 0.2f)
                                     {
-                                        num25 = Terrain.MakeBlockValue(20);
+                                        ornamentValue = Terrain.MakeBlockValue(20);
                                     }
-                                    else if (num18 < 0.3f)
+                                    else if (ornamentRoll < 0.3f)
                                     {
-                                        num25 = Terrain.MakeBlockValue(24);
+                                        ornamentValue = Terrain.MakeBlockValue(24);
                                     }
-                                    else if (num18 < 0.4f)
+                                    else if (ornamentRoll < 0.4f)
                                     {
-                                        num25 = Terrain.MakeBlockValue(25);
+                                        ornamentValue = Terrain.MakeBlockValue(25);
                                     }
-                                    else if (num18 < 0.5f)
+                                    else if (ornamentRoll < 0.5f)
                                     {
-                                        num25 = Terrain.MakeBlockValue(31, 4);
+                                        ornamentValue = Terrain.MakeBlockValue(31, 4);
                                     }
-                                    else if (num18 < 0.6f)
+                                    else if (ornamentRoll < 0.6f)
                                     {
-                                        num25 = Terrain.MakeBlockValue(132, CellFace.OppositeFace(num9));
+                                        ornamentValue = Terrain.MakeBlockValue(132, CellFace.OppositeFace(face));
                                     }
 
-                                    if (num25 != 0)
+                                    if (ornamentValue != 0)
                                     {
-                                        chunk.SetCellValueFast(num23, num21, num24, num25);
+                                        chunk.SetCellValueFast(localX, gravestoneY, localZ, ornamentValue);
                                     }
                                 }
                             }
                         }
 
-                        if (!flag2)
+                        if (!raisedGrave)
                         {
                             continue;
                         }
 
-                        if (num17 < 0.3f)
+                        if (borderRoll < 0.3f)
                         {
                             var value = Terrain.MakeBlockValue(
-                                contents,
+                                stairsContents,
                                 StairsBlock.SetRotation(0, CellFace.Point3ToFace(p2))
                             );
                             var value2 = Terrain.MakeBlockValue(
-                                contents,
+                                stairsContents,
                                 StairsBlock.SetRotation(0, CellFace.OppositeFace(CellFace.Point3ToFace(p2)))
                             );
-                            chunk.SetCellValueFast(num23 + p2.X, num21 - 1, num24 + p2.Z, value);
-                            chunk.SetCellValueFast(num23 - p2.X, num21 - 1, num24 - p2.Z, value2);
-                            if (num22 == -1)
+                            chunk.SetCellValueFast(localX + p2.X, gravestoneY - 1, localZ + p2.Z, value);
+                            chunk.SetCellValueFast(localX - p2.X, gravestoneY - 1, localZ - p2.Z, value2);
+                            if (lengthOffset == -1)
                             {
                                 var value3 = Terrain.MakeBlockValue(
-                                    contents,
+                                    stairsContents,
                                     StairsBlock.SetRotation(0, CellFace.OppositeFace(CellFace.Point3ToFace(p)))
                                 );
-                                chunk.SetCellValueFast(num23, num21 - 1, num24, value3);
+                                chunk.SetCellValueFast(localX, gravestoneY - 1, localZ, value3);
                             }
 
-                            if (num22 == 2)
+                            if (lengthOffset == 2)
                             {
                                 var value4 = Terrain.MakeBlockValue(
-                                    contents,
+                                    stairsContents,
                                     StairsBlock.SetRotation(0, CellFace.Point3ToFace(p))
                                 );
-                                chunk.SetCellValueFast(num23, num21 - 1, num24, value4);
+                                chunk.SetCellValueFast(localX, gravestoneY - 1, localZ, value4);
                             }
                         }
-                        else if (num17 < 0.4f)
+                        else if (borderRoll < 0.4f)
                         {
                             chunk.SetCellValueFast(
-                                num23 + p2.X,
-                                num21 - 1,
-                                num24 + p2.Z,
-                                Terrain.MakeBlockValue(contents2)
+                                localX + p2.X,
+                                gravestoneY - 1,
+                                localZ + p2.Z,
+                                Terrain.MakeBlockValue(slabContents)
                             );
                             chunk.SetCellValueFast(
-                                num23 - p2.X,
-                                num21 - 1,
-                                num24 - p2.Z,
-                                Terrain.MakeBlockValue(contents2)
+                                localX - p2.X,
+                                gravestoneY - 1,
+                                localZ - p2.Z,
+                                Terrain.MakeBlockValue(slabContents)
                             );
-                            if (num22 == -1)
-                            {
-                                chunk.SetCellValueFast(num23, num21 - 1, num24, Terrain.MakeBlockValue(contents2));
-                            }
-
-                            if (num22 == 2)
-                            {
-                                chunk.SetCellValueFast(num23, num21 - 1, num24, Terrain.MakeBlockValue(contents2));
-                            }
-                        }
-                        else if (num17 < 0.6f)
-                        {
-                            if (num22 is 0 or 1)
+                            if (lengthOffset == -1)
                             {
                                 chunk.SetCellValueFast(
-                                    num23 + p2.X,
-                                    num21 - 1,
-                                    num24 + p2.Z,
+                                    localX,
+                                    gravestoneY - 1,
+                                    localZ,
+                                    Terrain.MakeBlockValue(slabContents)
+                                );
+                            }
+
+                            if (lengthOffset == 2)
+                            {
+                                chunk.SetCellValueFast(
+                                    localX,
+                                    gravestoneY - 1,
+                                    localZ,
+                                    Terrain.MakeBlockValue(slabContents)
+                                );
+                            }
+                        }
+                        else if (borderRoll < 0.6f)
+                        {
+                            if (lengthOffset is 0 or 1)
+                            {
+                                chunk.SetCellValueFast(
+                                    localX + p2.X,
+                                    gravestoneY - 1,
+                                    localZ + p2.Z,
                                     Terrain.MakeBlockValue(31, CellFace.Point3ToFace(p2))
                                 );
                                 chunk.SetCellValueFast(
-                                    num23 - p2.X,
-                                    num21 - 1,
-                                    num24 - p2.Z,
+                                    localX - p2.X,
+                                    gravestoneY - 1,
+                                    localZ - p2.Z,
                                     Terrain.MakeBlockValue(31, CellFace.OppositeFace(CellFace.Point3ToFace(p2)))
                                 );
                             }
 
-                            if (num22 == -1)
+                            if (lengthOffset == -1)
                             {
                                 chunk.SetCellValueFast(
-                                    num23,
-                                    num21 - 1,
-                                    num24,
-                                    Terrain.MakeBlockValue(31, CellFace.OppositeFace(num9))
+                                    localX,
+                                    gravestoneY - 1,
+                                    localZ,
+                                    Terrain.MakeBlockValue(31, CellFace.OppositeFace(face))
                                 );
                             }
 
-                            if (num22 == 2)
+                            if (lengthOffset == 2)
                             {
-                                chunk.SetCellValueFast(num23, num21 - 1, num24, Terrain.MakeBlockValue(31, num9));
+                                chunk.SetCellValueFast(
+                                    localX,
+                                    gravestoneY - 1,
+                                    localZ,
+                                    Terrain.MakeBlockValue(31, face)
+                                );
                             }
                         }
                     }
@@ -337,37 +352,37 @@ public partial class TerrainContentsGenerator
 
     public void GenerateCairns(TerrainChunk chunk)
     {
-        var num = 190;
+        var cairnY = 190;
         var point = default(Point2);
         for (var i = 0; i < 16; i++)
         {
             for (var j = 0; j < 16; j++)
             {
-                if (Terrain.ExtractContents(chunk.GetCellValueFast(i, num, j)) == 0)
+                if (Terrain.ExtractContents(chunk.GetCellValueFast(i, cairnY, j)) == 0)
                 {
                     continue;
                 }
 
-                for (var k = num + 1; k < 256; k++)
+                for (var k = cairnY + 1; k < 256; k++)
                 {
                     if (Terrain.ExtractContents(chunk.GetCellValueFast(i, k, j)) != 0)
                     {
                         continue;
                     }
 
-                    num = k;
+                    cairnY = k;
                     point = new Point2(i, j);
                     break;
                 }
             }
         }
 
-        if (num is < 190 or > 255 || point.X is < 1 or >= 15 || point.Y is < 1 or >= 15)
+        if (cairnY is < 190 or > 255 || point.X is < 1 or >= 15 || point.Y is < 1 or >= 15)
         {
             return;
         }
 
-        var data = MathUtils.Clamp((int)(4f * MathUtils.LinearStep(190f, 256f, num)), 0, 3);
-        chunk.SetCellValueFast(point.X, num, point.Y, Terrain.MakeBlockValue(258, data));
+        var data = MathUtils.Clamp((int)(4f * MathUtils.LinearStep(190f, 256f, cairnY)), 0, 3);
+        chunk.SetCellValueFast(point.X, cairnY, point.Y, Terrain.MakeBlockValue(258, data));
     }
 }

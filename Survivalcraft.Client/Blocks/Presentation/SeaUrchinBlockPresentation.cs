@@ -104,9 +104,9 @@ public class SeaUrchinBlockPresentation(SeaUrchinBlock block, BlockPresentationC
                         Matrix.CreateRotationX(zero.X) *
                         Matrix.CreateRotationY(zero.Y) *
                         Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-                var num = 4 * i + j;
-                BlockMeshes[num] = new BlockMesh();
-                BlockMeshes[num].AppendModelPrimitive(
+                var meshIndex = 4 * i + j;
+                BlockMeshes[meshIndex] = new BlockMesh();
+                BlockMeshes[meshIndex].AppendModelPrimitive(
                     urchinNode.RequireMesh().Primitives[0],
                     nodeAbsoluteTransform * m,
                     false,

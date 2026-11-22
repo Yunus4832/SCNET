@@ -422,13 +422,13 @@ public abstract class Block : IDisposable
         BlockDropValue item;
         if (DropContent != 0)
         {
-            var num = (int)DropCount;
-            if (Random.Bool(DropCount - num))
+            var wholeDropCount = (int)DropCount;
+            if (Random.Bool(DropCount - wholeDropCount))
             {
-                num++;
+                wholeDropCount++;
             }
 
-            for (var i = 0; i < num; i++)
+            for (var i = 0; i < wholeDropCount; i++)
             {
                 item = new BlockDropValue
                 {
@@ -439,13 +439,13 @@ public abstract class Block : IDisposable
             }
         }
 
-        var num2 = (int)ExperienceCount;
-        if (Random.Bool(ExperienceCount - num2))
+        var wholeExperienceCount = (int)ExperienceCount;
+        if (Random.Bool(ExperienceCount - wholeExperienceCount))
         {
-            num2++;
+            wholeExperienceCount++;
         }
 
-        for (var j = 0; j < num2; j++)
+        for (var j = 0; j < wholeExperienceCount; j++)
         {
             item = new BlockDropValue
             {
@@ -463,10 +463,10 @@ public abstract class Block : IDisposable
 
     public virtual int SetDamage(int value, int damage)
     {
-        var num = Terrain.ExtractData(value);
-        num &= 0xF;
-        num |= MathUtils.Clamp(damage, 0, 4095) << 4;
-        return Terrain.ReplaceData(value, num);
+        var blockData = Terrain.ExtractData(value);
+        blockData &= 0xF;
+        blockData |= MathUtils.Clamp(damage, 0, 4095) << 4;
+        return Terrain.ReplaceData(value, blockData);
     }
 
     public virtual int GetDamageDestructionValue(int value) => 0;
@@ -541,14 +541,14 @@ public abstract class Block : IDisposable
 
         for (var i = 0; i < array.Length; i++)
         {
-            var num = ray.Intersection(array[i]);
-            if (!num.HasValue || (result.HasValue && !(num.Value < result.Value)))
+            var hitDistance = ray.Intersection(array[i]);
+            if (!hitDistance.HasValue || (result.HasValue && !(hitDistance.Value < result.Value)))
             {
                 continue;
             }
 
             nearestBoxIndex = i;
-            result = num;
+            result = hitDistance;
         }
 
         nearestBox = array[nearestBoxIndex];

@@ -35,10 +35,10 @@ public class BowWidget : CanvasWidget
             }
         }
 
-        var num = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
+        var backpackSlot = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
         foreach (var child in _inventoryGrid.Children)
         {
-            (child as InventorySlotWidget)?.AssignInventorySlot(inventory, num++);
+            (child as InventorySlotWidget)?.AssignInventorySlot(inventory, backpackSlot++);
         }
 
         _inventorySlotWidget.AssignInventorySlot(inventory, slotIndex);
@@ -50,11 +50,11 @@ public class BowWidget : CanvasWidget
     {
         var slotValue = _inventory.GetSlotValue(_slotIndex);
         var slotCount = _inventory.GetSlotCount(_slotIndex);
-        var num = Terrain.ExtractContents(slotValue);
+        var contents = Terrain.ExtractContents(slotValue);
         _instructionsLabel.Text = !BowBlock.GetArrowType(Terrain.ExtractData(slotValue)).HasValue
             ? Localization.ClientLanguage.Catalog.Get(_typeName, 0)
             : Localization.ClientLanguage.Catalog.Get(_typeName, 1);
-        if (num != 191 || slotCount == 0)
+        if (contents != 191 || slotCount == 0)
         {
             ParentWidget?.Children.Remove(this);
         }

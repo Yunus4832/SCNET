@@ -47,13 +47,13 @@ public class MemoryBankData : IEditableItemData
             Data.Clear();
             for (var i = 0; i < MathUtils.Min(text.Length, 256); i++)
             {
-                var num = HexChars.IndexOf(char.ToUpperInvariant(text[i]));
-                if (num < 0)
+                var hexDigit = HexChars.IndexOf(char.ToUpperInvariant(text[i]));
+                if (hexDigit < 0)
                 {
-                    num = 0;
+                    hexDigit = 0;
                 }
 
-                Data.Add((byte)num);
+                Data.Add((byte)hexDigit);
             }
         }
 
@@ -63,13 +63,13 @@ public class MemoryBankData : IEditableItemData
         }
 
         var text2 = array[1];
-        var num2 = HexChars.IndexOf(char.ToUpperInvariant(text2[0]));
-        if (num2 < 0)
+        var outputDigit = HexChars.IndexOf(char.ToUpperInvariant(text2[0]));
+        if (outputDigit < 0)
         {
-            num2 = 0;
+            outputDigit = 0;
         }
 
-        LastOutput = (byte)num2;
+        LastOutput = (byte)outputDigit;
     }
 
     public string SaveString()
@@ -103,16 +103,16 @@ public class MemoryBankData : IEditableItemData
     public string SaveString(bool saveLastOutput)
     {
         var stringBuilder = new StringBuilder();
-        var num = 0;
+        var usedLength = 0;
         for (var i = 0; i < Data.Count; i++)
         {
             if (Data.Array[i] != 0)
             {
-                num = i + 1;
+                usedLength = i + 1;
             }
         }
 
-        for (var j = 0; j < num; j++)
+        for (var j = 0; j < usedLength; j++)
         {
             var index = MathUtils.Clamp(Data.Array[j], 0, 15);
             stringBuilder.Append(HexChars[index]);

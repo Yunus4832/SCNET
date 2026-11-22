@@ -21,7 +21,7 @@ public static class TerrainParameterText
                 );
         }
 
-        if (value is bool flag) { return Localization.ClientLanguage.Catalog.Get("Usual", flag ? "yes" : "no"); }
+        if (value is bool enabled) { return Localization.ClientLanguage.Catalog.Get("Usual", enabled ? "yes" : "no"); }
 
         var text = (string)value;
         if (parameter.UsesBlockNames)

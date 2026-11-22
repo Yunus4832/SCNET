@@ -303,19 +303,19 @@ public class FurnitureInventoryPanel : CanvasWidget
                 where w != null
                 select w)
         );
-        var num = ComponentFurnitureInventory.PageIndex * list2.Count;
+        var firstSlotOffset = ComponentFurnitureInventory.PageIndex * list2.Count;
         foreach (var item in list2)
         {
-            if (num < list.Count)
+            if (firstSlotOffset < list.Count)
             {
-                item.AssignInventorySlot(ComponentFurnitureInventory, list[num]);
+                item.AssignInventorySlot(ComponentFurnitureInventory, list[firstSlotOffset]);
             }
             else
             {
                 item.AssignInventorySlot(null, 0);
             }
 
-            num++;
+            firstSlotOffset++;
         }
 
         _pagesCount = (list.Count + list2.Count - 1) / list2.Count;

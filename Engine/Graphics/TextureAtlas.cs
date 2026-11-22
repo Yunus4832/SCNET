@@ -12,15 +12,15 @@ public class TextureAtlas
     {
         Texture = texture;
         var array = atlasDefinition.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
-        var num = 0;
+        var lineIndex = 0;
         while (true)
         {
-            if (num >= array.Length)
+            if (lineIndex >= array.Length)
             {
                 return;
             }
 
-            var array2 = array[num].Split([' '], StringSplitOptions.RemoveEmptyEntries);
+            var array2 = array[lineIndex].Split([' '], StringSplitOptions.RemoveEmptyEntries);
             if (array2.Length < 5)
             {
                 break;
@@ -35,7 +35,7 @@ public class TextureAtlas
                 Height = int.Parse(array2[4], CultureInfo.InvariantCulture)
             };
             _rectangles.Add(key, value);
-            num++;
+            lineIndex++;
         }
 
         throw new InvalidOperationException("Invalid texture atlas definition.");

@@ -34,25 +34,25 @@ public class DispenserWidget : CanvasWidget
         _dispenseButton = Children.Find<ButtonWidget>("DispenseButton")!;
         _shootButton = Children.Find<ButtonWidget>("ShootButton")!;
         _acceptsDropsBox = Children.Find<CheckboxWidget>("AcceptsDropsBox")!;
-        var num = 0;
+        var slotIndex = 0;
         for (var i = 0; i < _dispenserGrid.RowsCount; i++)
         {
             for (var j = 0; j < _dispenserGrid.ColumnsCount; j++)
             {
                 var inventorySlotWidget = new InventorySlotWidget();
-                inventorySlotWidget.AssignInventorySlot(componentDispenser, num++);
+                inventorySlotWidget.AssignInventorySlot(componentDispenser, slotIndex++);
                 _dispenserGrid.Children.Add(inventorySlotWidget);
                 _dispenserGrid.SetWidgetCell(inventorySlotWidget, new Point2(j, i));
             }
         }
 
-        num = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
+        slotIndex = PlayerInventoryLayout.GetBackpackStartIndex(inventory);
         for (var k = 0; k < _inventoryGrid.RowsCount; k++)
         {
             for (var l = 0; l < _inventoryGrid.ColumnsCount; l++)
             {
                 var inventorySlotWidget2 = new InventorySlotWidget();
-                inventorySlotWidget2.AssignInventorySlot(inventory, num++);
+                inventorySlotWidget2.AssignInventorySlot(inventory, slotIndex++);
                 _inventoryGrid.Children.Add(inventorySlotWidget2);
                 _inventoryGrid.SetWidgetCell(inventorySlotWidget2, new Point2(l, k));
             }
@@ -67,27 +67,27 @@ public class DispenserWidget : CanvasWidget
             _componentBlockEntity.Coordinates.Z
         );
         var data = Terrain.ExtractData(value);
-        var flag = false;
+        var settingsChanged = false;
         if (_dispenseButton.IsClicked)
         {
             data = DispenserBlock.SetMode(data, DispenserBlock.Mode.Dispense);
-            flag = true;
+            settingsChanged = true;
         }
 
         if (_shootButton.IsClicked)
         {
             data = DispenserBlock.SetMode(data, DispenserBlock.Mode.Shoot);
-            flag = true;
+            settingsChanged = true;
         }
 
         if (_acceptsDropsBox.IsClicked)
         {
             data = DispenserBlock.SetAcceptsDrops(data, !DispenserBlock.GetAcceptsDrops(data));
-            flag = true;
+            settingsChanged = true;
         }
 
         var mode = DispenserBlock.GetMode(data);
-        if (flag)
+        if (settingsChanged)
         {
             var tmp = (byte)((mode == DispenserBlock.Mode.Shoot ? 1 : 0) |
                              (DispenserBlock.GetAcceptsDrops(data) ? 1 << 1 : 0));

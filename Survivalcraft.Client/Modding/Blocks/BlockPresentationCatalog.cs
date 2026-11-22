@@ -209,16 +209,16 @@ public sealed class BlockPresentationCatalog : IDisposable
         topColor = Color.MultiplyColorOnlyNotSaturated(topColor, s);
         var translation = matrix.Translation;
         var vector = matrix.Right * size.X;
-        var vector2 = matrix.Up * size.Y * height;
-        var vector3 = matrix.Forward * size.Z;
-        var v = translation + 0.5f * (-vector - vector2 - vector3);
-        var v2 = translation + 0.5f * (vector - vector2 - vector3);
-        var v3 = translation + 0.5f * (-vector + vector2 - vector3);
-        var v4 = translation + 0.5f * (vector + vector2 - vector3);
-        var v5 = translation + 0.5f * (-vector - vector2 + vector3);
-        var v6 = translation + 0.5f * (vector - vector2 + vector3);
-        var v7 = translation + 0.5f * (-vector + vector2 + vector3);
-        var v8 = translation + 0.5f * (vector + vector2 + vector3);
+        var upExtent = matrix.Up * size.Y * height;
+        var forwardExtent = matrix.Forward * size.Z;
+        var v = translation + 0.5f * (-vector - upExtent - forwardExtent);
+        var v2 = translation + 0.5f * (vector - upExtent - forwardExtent);
+        var v3 = translation + 0.5f * (-vector + upExtent - forwardExtent);
+        var v4 = translation + 0.5f * (vector + upExtent - forwardExtent);
+        var v5 = translation + 0.5f * (-vector - upExtent + forwardExtent);
+        var v6 = translation + 0.5f * (vector - upExtent + forwardExtent);
+        var v7 = translation + 0.5f * (-vector + upExtent + forwardExtent);
+        var v8 = translation + 0.5f * (vector + upExtent + forwardExtent);
         if (environmentData.ViewProjectionMatrix.HasValue)
         {
             var m = environmentData.ViewProjectionMatrix.Value;
@@ -232,83 +232,83 @@ public sealed class BlockPresentationCatalog : IDisposable
             Vector3.Transform(ref v8, ref m, out v8);
         }
 
-        var num = Terrain.ExtractContents(value);
-        var block = Get(num);
-        var vector4 = _slotTexCoords[block.GetFaceTextureSlot(0, value)];
-        vector4.W = MathUtils.Lerp(vector4.Y, vector4.W, height);
+        var contents = Terrain.ExtractContents(value);
+        var block = Get(contents);
+        var faceUvBounds = _slotTexCoords[block.GetFaceTextureSlot(0, value)];
+        faceUvBounds.W = MathUtils.Lerp(faceUvBounds.Y, faceUvBounds.W, height);
         texturedBatch3D.QueueQuad(
             color: Color.MultiplyColorOnlyNotSaturated(color, LightingManager.CalculateLighting(-matrix.Forward)),
             p1: v,
             p2: v3,
             p3: v4,
             p4: v2,
-            texCoord1: new Vector2(vector4.X, vector4.W),
-            texCoord2: new Vector2(vector4.X, vector4.Y),
-            texCoord3: new Vector2(vector4.Z, vector4.Y),
-            texCoord4: new Vector2(vector4.Z, vector4.W)
+            texCoord1: new Vector2(faceUvBounds.X, faceUvBounds.W),
+            texCoord2: new Vector2(faceUvBounds.X, faceUvBounds.Y),
+            texCoord3: new Vector2(faceUvBounds.Z, faceUvBounds.Y),
+            texCoord4: new Vector2(faceUvBounds.Z, faceUvBounds.W)
         );
-        vector4 = _slotTexCoords[block.GetFaceTextureSlot(2, value)];
-        vector4.W = MathUtils.Lerp(vector4.Y, vector4.W, height);
+        faceUvBounds = _slotTexCoords[block.GetFaceTextureSlot(2, value)];
+        faceUvBounds.W = MathUtils.Lerp(faceUvBounds.Y, faceUvBounds.W, height);
         texturedBatch3D.QueueQuad(
             color: Color.MultiplyColorOnlyNotSaturated(color, LightingManager.CalculateLighting(matrix.Forward)),
             p1: v5,
             p2: v6,
             p3: v8,
             p4: v7,
-            texCoord1: new Vector2(vector4.Z, vector4.W),
-            texCoord2: new Vector2(vector4.X, vector4.W),
-            texCoord3: new Vector2(vector4.X, vector4.Y),
-            texCoord4: new Vector2(vector4.Z, vector4.Y)
+            texCoord1: new Vector2(faceUvBounds.Z, faceUvBounds.W),
+            texCoord2: new Vector2(faceUvBounds.X, faceUvBounds.W),
+            texCoord3: new Vector2(faceUvBounds.X, faceUvBounds.Y),
+            texCoord4: new Vector2(faceUvBounds.Z, faceUvBounds.Y)
         );
-        vector4 = _slotTexCoords[block.GetFaceTextureSlot(5, value)];
+        faceUvBounds = _slotTexCoords[block.GetFaceTextureSlot(5, value)];
         texturedBatch3D.QueueQuad(
             color: Color.MultiplyColorOnlyNotSaturated(color, LightingManager.CalculateLighting(-matrix.Up)),
             p1: v,
             p2: v2,
             p3: v6,
             p4: v5,
-            texCoord1: new Vector2(vector4.X, vector4.Y),
-            texCoord2: new Vector2(vector4.Z, vector4.Y),
-            texCoord3: new Vector2(vector4.Z, vector4.W),
-            texCoord4: new Vector2(vector4.X, vector4.W)
+            texCoord1: new Vector2(faceUvBounds.X, faceUvBounds.Y),
+            texCoord2: new Vector2(faceUvBounds.Z, faceUvBounds.Y),
+            texCoord3: new Vector2(faceUvBounds.Z, faceUvBounds.W),
+            texCoord4: new Vector2(faceUvBounds.X, faceUvBounds.W)
         );
-        vector4 = _slotTexCoords[block.GetFaceTextureSlot(4, value)];
+        faceUvBounds = _slotTexCoords[block.GetFaceTextureSlot(4, value)];
         texturedBatch3D.QueueQuad(
             color: Color.MultiplyColorOnlyNotSaturated(topColor, LightingManager.CalculateLighting(matrix.Up)),
             p1: v3,
             p2: v7,
             p3: v8,
             p4: v4,
-            texCoord1: new Vector2(vector4.X, vector4.W),
-            texCoord2: new Vector2(vector4.X, vector4.Y),
-            texCoord3: new Vector2(vector4.Z, vector4.Y),
-            texCoord4: new Vector2(vector4.Z, vector4.W)
+            texCoord1: new Vector2(faceUvBounds.X, faceUvBounds.W),
+            texCoord2: new Vector2(faceUvBounds.X, faceUvBounds.Y),
+            texCoord3: new Vector2(faceUvBounds.Z, faceUvBounds.Y),
+            texCoord4: new Vector2(faceUvBounds.Z, faceUvBounds.W)
         );
-        vector4 = _slotTexCoords[block.GetFaceTextureSlot(1, value)];
-        vector4.W = MathUtils.Lerp(vector4.Y, vector4.W, height);
+        faceUvBounds = _slotTexCoords[block.GetFaceTextureSlot(1, value)];
+        faceUvBounds.W = MathUtils.Lerp(faceUvBounds.Y, faceUvBounds.W, height);
         texturedBatch3D.QueueQuad(
             color: Color.MultiplyColorOnlyNotSaturated(color, LightingManager.CalculateLighting(-matrix.Right)),
             p1: v,
             p2: v5,
             p3: v7,
             p4: v3,
-            texCoord1: new Vector2(vector4.Z, vector4.W),
-            texCoord2: new Vector2(vector4.X, vector4.W),
-            texCoord3: new Vector2(vector4.X, vector4.Y),
-            texCoord4: new Vector2(vector4.Z, vector4.Y)
+            texCoord1: new Vector2(faceUvBounds.Z, faceUvBounds.W),
+            texCoord2: new Vector2(faceUvBounds.X, faceUvBounds.W),
+            texCoord3: new Vector2(faceUvBounds.X, faceUvBounds.Y),
+            texCoord4: new Vector2(faceUvBounds.Z, faceUvBounds.Y)
         );
-        vector4 = _slotTexCoords[block.GetFaceTextureSlot(3, value)];
-        vector4.W = MathUtils.Lerp(vector4.Y, vector4.W, height);
+        faceUvBounds = _slotTexCoords[block.GetFaceTextureSlot(3, value)];
+        faceUvBounds.W = MathUtils.Lerp(faceUvBounds.Y, faceUvBounds.W, height);
         texturedBatch3D.QueueQuad(
             color: Color.MultiplyColorOnlyNotSaturated(color, LightingManager.CalculateLighting(matrix.Right)),
             p1: v2,
             p2: v4,
             p3: v8,
             p4: v6,
-            texCoord1: new Vector2(vector4.X, vector4.W),
-            texCoord2: new Vector2(vector4.X, vector4.Y),
-            texCoord3: new Vector2(vector4.Z, vector4.Y),
-            texCoord4: new Vector2(vector4.Z, vector4.W)
+            texCoord1: new Vector2(faceUvBounds.X, faceUvBounds.W),
+            texCoord2: new Vector2(faceUvBounds.X, faceUvBounds.Y),
+            texCoord3: new Vector2(faceUvBounds.Z, faceUvBounds.Y),
+            texCoord4: new Vector2(faceUvBounds.Z, faceUvBounds.W)
         );
     }
 
@@ -387,105 +387,105 @@ public sealed class BlockPresentationCatalog : IDisposable
             Vector3.Transform(ref v10, ref m, out v10);
         }
 
-        var num = Terrain.ExtractContents(value);
-        var block = Get(num);
-        var vector2 = Vector4.Zero;
+        var contents = Terrain.ExtractContents(value);
+        var block = Get(contents);
+        var faceUvBounds = Vector4.Zero;
         var textureSlotCount = block.GetTextureSlotCount(value);
         var textureSlot = block.GetFaceTextureSlot(0, value);
-        vector2.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
-        vector2.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
-        vector2.W = vector2.Y + 1f / textureSlotCount;
-        vector2.Z = vector2.X + 1f / textureSlotCount;
+        faceUvBounds.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
+        faceUvBounds.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
+        faceUvBounds.W = faceUvBounds.Y + 1f / textureSlotCount;
+        faceUvBounds.Z = faceUvBounds.X + 1f / textureSlotCount;
         texturedBatch3D.QueueQuad(
             color: Color.MultiplyColorOnly(color, LightingManager.CalculateLighting(-matrix.Forward)),
             p1: v3,
             p2: v5,
             p3: v6,
             p4: v4,
-            texCoord1: new Vector2(vector2.X, vector2.W),
-            texCoord2: new Vector2(vector2.X, vector2.Y),
-            texCoord3: new Vector2(vector2.Z, vector2.Y),
-            texCoord4: new Vector2(vector2.Z, vector2.W)
+            texCoord1: new Vector2(faceUvBounds.X, faceUvBounds.W),
+            texCoord2: new Vector2(faceUvBounds.X, faceUvBounds.Y),
+            texCoord3: new Vector2(faceUvBounds.Z, faceUvBounds.Y),
+            texCoord4: new Vector2(faceUvBounds.Z, faceUvBounds.W)
         );
         textureSlot = block.GetFaceTextureSlot(2, value);
-        vector2.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
-        vector2.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
-        vector2.W = vector2.Y + 1f / textureSlotCount;
-        vector2.Z = vector2.X + 1f / textureSlotCount;
+        faceUvBounds.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
+        faceUvBounds.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
+        faceUvBounds.W = faceUvBounds.Y + 1f / textureSlotCount;
+        faceUvBounds.Z = faceUvBounds.X + 1f / textureSlotCount;
         texturedBatch3D.QueueQuad(
             color: Color.MultiplyColorOnly(color, LightingManager.CalculateLighting(matrix.Forward)),
             p1: v7,
             p2: v8,
             p3: v10,
             p4: v9,
-            texCoord1: new Vector2(vector2.Z, vector2.W),
-            texCoord2: new Vector2(vector2.X, vector2.W),
-            texCoord3: new Vector2(vector2.X, vector2.Y),
-            texCoord4: new Vector2(vector2.Z, vector2.Y)
+            texCoord1: new Vector2(faceUvBounds.Z, faceUvBounds.W),
+            texCoord2: new Vector2(faceUvBounds.X, faceUvBounds.W),
+            texCoord3: new Vector2(faceUvBounds.X, faceUvBounds.Y),
+            texCoord4: new Vector2(faceUvBounds.Z, faceUvBounds.Y)
         );
         textureSlot = block.GetFaceTextureSlot(5, value);
-        vector2.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
-        vector2.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
-        vector2.W = vector2.Y + 1f / textureSlotCount;
-        vector2.Z = vector2.X + 1f / textureSlotCount;
+        faceUvBounds.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
+        faceUvBounds.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
+        faceUvBounds.W = faceUvBounds.Y + 1f / textureSlotCount;
+        faceUvBounds.Z = faceUvBounds.X + 1f / textureSlotCount;
         texturedBatch3D.QueueQuad(
             color: Color.MultiplyColorOnly(color, LightingManager.CalculateLighting(-matrix.Up)),
             p1: v3,
             p2: v4,
             p3: v8,
             p4: v7,
-            texCoord1: new Vector2(vector2.X, vector2.Y),
-            texCoord2: new Vector2(vector2.Z, vector2.Y),
-            texCoord3: new Vector2(vector2.Z, vector2.W),
-            texCoord4: new Vector2(vector2.X, vector2.W)
+            texCoord1: new Vector2(faceUvBounds.X, faceUvBounds.Y),
+            texCoord2: new Vector2(faceUvBounds.Z, faceUvBounds.Y),
+            texCoord3: new Vector2(faceUvBounds.Z, faceUvBounds.W),
+            texCoord4: new Vector2(faceUvBounds.X, faceUvBounds.W)
         );
         textureSlot = block.GetFaceTextureSlot(4, value);
-        vector2.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
-        vector2.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
-        vector2.W = vector2.Y + 1f / textureSlotCount;
-        vector2.Z = vector2.X + 1f / textureSlotCount;
+        faceUvBounds.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
+        faceUvBounds.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
+        faceUvBounds.W = faceUvBounds.Y + 1f / textureSlotCount;
+        faceUvBounds.Z = faceUvBounds.X + 1f / textureSlotCount;
         texturedBatch3D.QueueQuad(
             color: Color.MultiplyColorOnly(topColor, LightingManager.CalculateLighting(matrix.Up)),
             p1: v5,
             p2: v9,
             p3: v10,
             p4: v6,
-            texCoord1: new Vector2(vector2.X, vector2.W),
-            texCoord2: new Vector2(vector2.X, vector2.Y),
-            texCoord3: new Vector2(vector2.Z, vector2.Y),
-            texCoord4: new Vector2(vector2.Z, vector2.W)
+            texCoord1: new Vector2(faceUvBounds.X, faceUvBounds.W),
+            texCoord2: new Vector2(faceUvBounds.X, faceUvBounds.Y),
+            texCoord3: new Vector2(faceUvBounds.Z, faceUvBounds.Y),
+            texCoord4: new Vector2(faceUvBounds.Z, faceUvBounds.W)
         );
         textureSlot = block.GetFaceTextureSlot(1, value);
-        vector2.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
-        vector2.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
-        vector2.W = vector2.Y + 1f / textureSlotCount;
-        vector2.Z = vector2.X + 1f / textureSlotCount;
+        faceUvBounds.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
+        faceUvBounds.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
+        faceUvBounds.W = faceUvBounds.Y + 1f / textureSlotCount;
+        faceUvBounds.Z = faceUvBounds.X + 1f / textureSlotCount;
         texturedBatch3D.QueueQuad(
             color: Color.MultiplyColorOnly(color, LightingManager.CalculateLighting(-matrix.Right)),
             p1: v3,
             p2: v7,
             p3: v9,
             p4: v5,
-            texCoord1: new Vector2(vector2.Z, vector2.W),
-            texCoord2: new Vector2(vector2.X, vector2.W),
-            texCoord3: new Vector2(vector2.X, vector2.Y),
-            texCoord4: new Vector2(vector2.Z, vector2.Y)
+            texCoord1: new Vector2(faceUvBounds.Z, faceUvBounds.W),
+            texCoord2: new Vector2(faceUvBounds.X, faceUvBounds.W),
+            texCoord3: new Vector2(faceUvBounds.X, faceUvBounds.Y),
+            texCoord4: new Vector2(faceUvBounds.Z, faceUvBounds.Y)
         );
         textureSlot = block.GetFaceTextureSlot(3, value);
-        vector2.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
-        vector2.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
-        vector2.W = vector2.Y + 1f / textureSlotCount;
-        vector2.Z = vector2.X + 1f / textureSlotCount;
+        faceUvBounds.X = (float)(textureSlot % textureSlotCount) / textureSlotCount;
+        faceUvBounds.Y = (float)(textureSlot / textureSlotCount) / textureSlotCount;
+        faceUvBounds.W = faceUvBounds.Y + 1f / textureSlotCount;
+        faceUvBounds.Z = faceUvBounds.X + 1f / textureSlotCount;
         texturedBatch3D.QueueQuad(
             color: Color.MultiplyColorOnly(color, LightingManager.CalculateLighting(matrix.Right)),
             p1: v4,
             p2: v6,
             p3: v10,
             p4: v8,
-            texCoord1: new Vector2(vector2.X, vector2.W),
-            texCoord2: new Vector2(vector2.X, vector2.Y),
-            texCoord3: new Vector2(vector2.Z, vector2.Y),
-            texCoord4: new Vector2(vector2.Z, vector2.W)
+            texCoord1: new Vector2(faceUvBounds.X, faceUvBounds.W),
+            texCoord2: new Vector2(faceUvBounds.X, faceUvBounds.Y),
+            texCoord3: new Vector2(faceUvBounds.Z, faceUvBounds.Y),
+            texCoord4: new Vector2(faceUvBounds.Z, faceUvBounds.W)
         );
     }
 
@@ -525,8 +525,8 @@ public sealed class BlockPresentationCatalog : IDisposable
     )
     {
         environmentData ??= _defaultEnvironmentData;
-        var num = Terrain.ExtractContents(value);
-        var block = Get(num);
+        var contents = Terrain.ExtractContents(value);
+        var block = Get(contents);
         var vector = Vector4.Zero;
         var textureSlotCount = block.GetTextureSlotCount(value);
         var textureSlot = block.GetFaceTextureSlot(-1, value);
@@ -545,23 +545,23 @@ public sealed class BlockPresentationCatalog : IDisposable
         }
 
         var translation = matrix.Translation;
-        Vector3 vector2;
-        Vector3 vector3;
+        Vector3 quadRight;
+        Vector3 quadUp;
         if (environmentData.BillboardDirection.HasValue)
         {
-            vector2 = Vector3.Normalize(Vector3.Cross(environmentData.BillboardDirection.Value, Vector3.UnitY));
-            vector3 = -Vector3.Normalize(Vector3.Cross(environmentData.BillboardDirection.Value, vector2));
+            quadRight = Vector3.Normalize(Vector3.Cross(environmentData.BillboardDirection.Value, Vector3.UnitY));
+            quadUp = -Vector3.Normalize(Vector3.Cross(environmentData.BillboardDirection.Value, quadRight));
         }
         else
         {
-            vector2 = matrix.Right;
-            vector3 = matrix.Up;
+            quadRight = matrix.Right;
+            quadUp = matrix.Up;
         }
 
-        var v = translation + 0.85f * size * (-vector2 - vector3);
-        var v2 = translation + 0.85f * size * (vector2 - vector3);
-        var v3 = translation + 0.85f * size * (-vector2 + vector3);
-        var v4 = translation + 0.85f * size * (vector2 + vector3);
+        var v = translation + 0.85f * size * (-quadRight - quadUp);
+        var v2 = translation + 0.85f * size * (quadRight - quadUp);
+        var v3 = translation + 0.85f * size * (-quadRight + quadUp);
+        var v4 = translation + 0.85f * size * (quadRight + quadUp);
         if (environmentData.ViewProjectionMatrix.HasValue)
         {
             var m = environmentData.ViewProjectionMatrix.Value;
@@ -617,8 +617,8 @@ public sealed class BlockPresentationCatalog : IDisposable
     )
     {
         environmentData ??= _defaultEnvironmentData;
-        var num = Terrain.ExtractContents(value);
-        var block = Get(num);
+        var contents = Terrain.ExtractContents(value);
+        var block = Get(contents);
         try
         {
             Image image;
@@ -655,15 +655,20 @@ public sealed class BlockPresentationCatalog : IDisposable
         }
 
         value = new BlockMesh();
-        var num = (int)MathUtils.Round(_slotTexCoords[slot].X * image.Width);
-        var num2 = (int)MathUtils.Round(_slotTexCoords[slot].Y * image.Height);
-        var num3 = (int)MathUtils.Round(_slotTexCoords[slot].Z * image.Width);
-        var num4 = (int)MathUtils.Round(_slotTexCoords[slot].W * image.Height);
-        var num5 = MathUtils.Max(num3 - num, num4 - num2);
+        var leftPixel = (int)MathUtils.Round(_slotTexCoords[slot].X * image.Width);
+        var topPixel = (int)MathUtils.Round(_slotTexCoords[slot].Y * image.Height);
+        var rightPixel = (int)MathUtils.Round(_slotTexCoords[slot].Z * image.Width);
+        var bottomPixel = (int)MathUtils.Round(_slotTexCoords[slot].W * image.Height);
+        var longestSide = MathUtils.Max(rightPixel - leftPixel, bottomPixel - topPixel);
         value.AppendImageExtrusion(
             image: image,
-            bounds: new Rectangle(left: num, top: num2, width: num3 - num, height: num4 - num2),
-            scale: new Vector3(1f / num5, 1f / num5, 0.0833333358f),
+            bounds: new Rectangle(
+                left: leftPixel,
+                top: topPixel,
+                width: rightPixel - leftPixel,
+                height: bottomPixel - topPixel
+            ),
+            scale: new Vector3(1f / longestSide, 1f / longestSide, 0.0833333358f),
             color: Color.White,
             alphaThreshold: 0
         );

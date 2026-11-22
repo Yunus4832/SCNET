@@ -34,18 +34,18 @@ public class ScrollPanelWidget : ContainerWidget
 
     public virtual float CalculateScrollAreaLength()
     {
-        var num = 0f;
+        var contentLength = 0f;
         foreach (var child in Children)
         {
             if (child.IsVisible)
             {
-                num = Direction != 0
-                    ? MathUtils.Max(num, child.ParentDesiredSize.Y + 2f * child.Margin.Y)
-                    : MathUtils.Max(num, child.ParentDesiredSize.X + 2f * child.Margin.X);
+                contentLength = Direction != 0
+                    ? MathUtils.Max(contentLength, child.ParentDesiredSize.Y + 2f * child.Margin.Y)
+                    : MathUtils.Max(contentLength, child.ParentDesiredSize.X + 2f * child.Margin.X);
             }
         }
 
-        return num;
+        return contentLength;
     }
 
     protected override void MeasureOverride(Vector2 parentAvailableSize)
@@ -100,7 +100,7 @@ public class ScrollPanelWidget : ContainerWidget
 
     public override void Update()
     {
-        var num = 50f;
+        var overscrollLimit = 50f;
         ScrollAreaLength = CalculateScrollAreaLength();
         _scrollBarAlpha = MathUtils.Max(_scrollBarAlpha - 2f * Time.FrameDuration, 0f);
         if (Input.Tap.HasValue && HitTestPanel(Input.Tap.Value))
@@ -113,21 +113,21 @@ public class ScrollPanelWidget : ContainerWidget
             if (Input.Press.HasValue)
             {
                 var vector = ScreenToWidget(Input.Press.Value);
-                var vector2 = vector - _lastDragPosition.Value;
-                float num2;
+                var dragDelta = vector - _lastDragPosition.Value;
+                float dragVelocity;
                 if (Direction == LayoutDirection.Horizontal)
                 {
-                    ScrollPosition += 0f - vector2.X;
-                    num2 = vector2.X / Time.FrameDuration;
+                    ScrollPosition += 0f - dragDelta.X;
+                    dragVelocity = dragDelta.X / Time.FrameDuration;
                 }
                 else
                 {
-                    ScrollPosition += 0f - vector2.Y;
-                    num2 = vector2.Y / Time.FrameDuration;
+                    ScrollPosition += 0f - dragDelta.Y;
+                    dragVelocity = dragDelta.Y / Time.FrameDuration;
                 }
 
-                var num3 = MathUtils.Abs(num2) < MathUtils.Abs(_dragSpeed) ? 20f : 16f;
-                _dragSpeed += MathUtils.Saturate(num3 * Time.FrameDuration) * (num2 - _dragSpeed);
+                var smoothingRate = MathUtils.Abs(dragVelocity) < MathUtils.Abs(_dragSpeed) ? 20f : 16f;
+                _dragSpeed += MathUtils.Saturate(smoothingRate * Time.FrameDuration) * (dragVelocity - _dragSpeed);
                 _scrollBarAlpha = 4f;
                 _lastDragPosition = vector;
                 ScrollSpeed = 0f;
@@ -156,11 +156,11 @@ public class ScrollPanelWidget : ContainerWidget
         {
             ScrollPosition -= 40f * Input.Scroll.Value.Z;
             ScrollSpeed = 0f;
-            num = 0f;
+            overscrollLimit = 0f;
             _scrollBarAlpha = 3f;
         }
 
-        var num4 = MathUtils.Max(ScrollAreaLength - ActualSize.Y, 0f);
+        var maxScroll = MathUtils.Max(ScrollAreaLength - ActualSize.Y, 0f);
         if (ScrollPosition < 0f)
         {
             if (!_lastDragPosition.HasValue)
@@ -171,21 +171,21 @@ public class ScrollPanelWidget : ContainerWidget
                 );
             }
 
-            ScrollPosition = MathUtils.Max(ScrollPosition, 0f - num);
+            ScrollPosition = MathUtils.Max(ScrollPosition, 0f - overscrollLimit);
             ScrollSpeed = 0f;
         }
 
-        if (ScrollPosition > num4)
+        if (ScrollPosition > maxScroll)
         {
             if (!_lastDragPosition.HasValue && !float.IsPositiveInfinity(ScrollPosition))
             {
                 ScrollPosition = MathUtils.Max(
-                    ScrollPosition + 6f * Time.FrameDuration * (num4 - ScrollPosition - 5f),
-                    num4
+                    ScrollPosition + 6f * Time.FrameDuration * (maxScroll - ScrollPosition - 5f),
+                    maxScroll
                 );
             }
 
-            ScrollPosition = MathUtils.Min(ScrollPosition, num4 + num);
+            ScrollPosition = MathUtils.Min(ScrollPosition, maxScroll + overscrollLimit);
             ScrollSpeed = 0f;
         }
 

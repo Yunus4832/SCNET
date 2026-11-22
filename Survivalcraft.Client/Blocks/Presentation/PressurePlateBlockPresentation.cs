@@ -50,8 +50,8 @@ public class PressurePlateBlockPresentation(PressurePlateBlock block, BlockPrese
         int z
     )
     {
-        var num = Terrain.ExtractData(value);
-        if (num >= BlockMeshesByData.Length || BlockMeshesByData[num] == null)
+        var meshIndex = Terrain.ExtractData(value);
+        if (meshIndex >= BlockMeshesByData.Length || BlockMeshesByData[meshIndex] == null)
         {
             return;
         }
@@ -61,7 +61,7 @@ public class PressurePlateBlockPresentation(PressurePlateBlock block, BlockPrese
             x,
             y,
             z,
-            BlockMeshesByData[num],
+            BlockMeshesByData[meshIndex],
             Color.White,
             null,
             geometry.SubsetOpaque
@@ -111,10 +111,10 @@ public class PressurePlateBlockPresentation(PressurePlateBlock block, BlockPrese
         {
             var pressurePlateNode = model.FindNode("PressurePlate")!;
             var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(pressurePlateNode);
-            var num = TextureSlotsByMaterial[i];
+            var materialTextureSlot = TextureSlotsByMaterial[i];
             for (var j = 0; j < 6; j++)
             {
-                var num2 = SetMountingFace(SetMaterial(0, i), j);
+                var meshIndex = SetMountingFace(SetMaterial(0, i), j);
                 var matrix = j >= 4
                     ? j != 4
                         ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
@@ -123,8 +123,8 @@ public class PressurePlateBlockPresentation(PressurePlateBlock block, BlockPrese
                       Matrix.CreateTranslation(0f, 0f, -0.5f) *
                       Matrix.CreateRotationY(j * (float)Math.PI / 2f) *
                       Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-                BlockMeshesByData[num2] = new BlockMesh();
-                BlockMeshesByData[num2].AppendModelPrimitive(
+                BlockMeshesByData[meshIndex] = new BlockMesh();
+                BlockMeshesByData[meshIndex].AppendModelPrimitive(
                     pressurePlateNode.RequireMesh().Primitives[0],
                     nodeAbsoluteTransform * matrix,
                     false,
@@ -133,9 +133,11 @@ public class PressurePlateBlockPresentation(PressurePlateBlock block, BlockPrese
                     false,
                     Color.White
                 );
-                BlockMeshesByData[num2]
-                    .TransformTextureCoordinates(Matrix.CreateTranslation(num % 16 / 16f, num / 16 / 16f, 0f));
-                BlockMeshesByData[num2].GenerateSidesData();
+                BlockMeshesByData[meshIndex]
+                    .TransformTextureCoordinates(
+                        Matrix.CreateTranslation(materialTextureSlot % 16 / 16f, materialTextureSlot / 16 / 16f, 0f)
+                    );
+                BlockMeshesByData[meshIndex].GenerateSidesData();
             }
 
             var identity = Matrix.Identity;
@@ -150,7 +152,9 @@ public class PressurePlateBlockPresentation(PressurePlateBlock block, BlockPrese
                 Color.White
             );
             StandaloneBlockMeshesByMaterial[i]
-                .TransformTextureCoordinates(Matrix.CreateTranslation(num % 16 / 16f, num / 16 / 16f, 0f));
+                .TransformTextureCoordinates(
+                    Matrix.CreateTranslation(materialTextureSlot % 16 / 16f, materialTextureSlot / 16 / 16f, 0f)
+                );
         }
     }
 }

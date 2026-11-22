@@ -67,20 +67,20 @@ public class AStar<T> where T : unmanaged
         _openHeap.Clear();
         OpenStorage.Clear();
         ClosedStorage.Clear();
-        var node = NewNode(start, default, 0f, 0f);
-        OpenStorage.Set(start, node);
-        HeapEnqueue(node);
-        Node? node2 = null;
-        var num = 0;
-        Node? node3;
+        var startNode = NewNode(start, default, 0f, 0f);
+        OpenStorage.Set(start, startNode);
+        HeapEnqueue(startNode);
+        Node? fallbackNode = null;
+        var expandedCount = 0;
+        Node? currentNode;
         while (true)
         {
-            node3 = _openHeap.Count > 0 ? HeapDequeue() : null;
-            if (node3 == null || num >= maxPositionsToCheck)
+            currentNode = _openHeap.Count > 0 ? HeapDequeue() : null;
+            if (currentNode == null || expandedCount >= maxPositionsToCheck)
             {
-                if (node2 != null)
+                if (fallbackNode != null)
                 {
-                    BuildPathFromEndNode(node, node2);
+                    BuildPathFromEndNode(startNode, fallbackNode);
                     return;
                 }
 
@@ -89,59 +89,64 @@ public class AStar<T> where T : unmanaged
                 return;
             }
 
-            if (World.IsGoal(node3.Position))
+            if (World.IsGoal(currentNode.Position))
             {
                 break;
             }
 
-            ClosedStorage.Set(node3.Position, node3);
-            OpenStorage.Set(node3.Position, null);
-            num++;
+            ClosedStorage.Set(currentNode.Position, currentNode);
+            OpenStorage.Set(currentNode.Position, null);
+            expandedCount++;
             _neighbors.Clear();
-            World.Neighbors(node3.Position, _neighbors);
+            World.Neighbors(currentNode.Position, _neighbors);
             for (var i = 0; i < _neighbors.Count; i++)
             {
-                var val = _neighbors.Array[i];
-                if (ClosedStorage.Get(val) != null)
+                var neighborPosition = _neighbors.Array[i];
+                if (ClosedStorage.Get(neighborPosition) != null)
                 {
                     continue;
                 }
 
-                var num2 = World.Cost(node3.Position, val);
-                if (num2.CloseTo(1f / 0f))
+                var stepCost = World.Cost(currentNode.Position, neighborPosition);
+                if (stepCost.CloseTo(1f / 0f))
                 {
                     continue;
                 }
 
-                var num3 = node3.G + num2;
-                var num4 = World.Heuristic(val, end);
-                if (node3 != node && (node2 == null || num4 < node2.H))
+                var candidateCost = currentNode.G + stepCost;
+                var estimatedRemainingCost = World.Heuristic(neighborPosition, end);
+                if (currentNode != startNode && (fallbackNode == null || estimatedRemainingCost < fallbackNode.H))
                 {
-                    node2 = node3;
+                    fallbackNode = currentNode;
                 }
 
-                if (OpenStorage.Get(val) is Node node4)
+                if (OpenStorage.Get(neighborPosition) is Node neighborNode)
                 {
-                    if (!(num3 < node4.G))
+                    if (!(candidateCost < neighborNode.G))
                     {
                         continue;
                     }
 
-                    node4.G = num3;
-                    node4.F = num3 + node4.H;
-                    node4.PreviousPosition = node3.Position;
-                    HeapUpdate(node4);
+                    neighborNode.G = candidateCost;
+                    neighborNode.F = candidateCost + neighborNode.H;
+                    neighborNode.PreviousPosition = currentNode.Position;
+                    HeapUpdate(neighborNode);
                 }
                 else
                 {
-                    node4 = NewNode(val, node3.Position, num3, num4);
-                    OpenStorage.Set(val, node4);
-                    HeapEnqueue(node4);
+                    neighborNode = NewNode(
+                        neighborPosition,
+                        currentNode.Position,
+                        candidateCost,
+                        estimatedRemainingCost
+                    );
+                    OpenStorage.Set(neighborPosition, neighborNode);
+                    HeapEnqueue(neighborNode);
                 }
             }
         }
 
-        BuildPathFromEndNode(node, node3);
+        BuildPathFromEndNode(startNode, currentNode);
     }
 
     public void HeapEnqueue(Node node)
@@ -184,23 +189,26 @@ public class AStar<T> where T : unmanaged
     {
         while (true)
         {
-            var num = pos;
-            var num2 = 2 * pos + 1;
-            var num3 = 2 * pos + 2;
-            if (num2 < _openHeap.Count && _openHeap.Array[num2].F < _openHeap.Array[num].F)
+            var lowestCostIndex = pos;
+            var leftChildIndex = 2 * pos + 1;
+            var rightChildIndex = 2 * pos + 2;
+            if (leftChildIndex < _openHeap.Count &&
+                _openHeap.Array[leftChildIndex].F < _openHeap.Array[lowestCostIndex].F)
             {
-                num = num2;
+                lowestCostIndex = leftChildIndex;
             }
 
-            if (num3 < _openHeap.Count && _openHeap.Array[num3].F < _openHeap.Array[num].F)
+            if (rightChildIndex < _openHeap.Count &&
+                _openHeap.Array[rightChildIndex].F < _openHeap.Array[lowestCostIndex].F)
             {
-                num = num3;
+                lowestCostIndex = rightChildIndex;
             }
 
-            if (num != pos)
+            if (lowestCostIndex != pos)
             {
-                (_openHeap.Array[num], _openHeap.Array[pos]) = (_openHeap.Array[pos], _openHeap.Array[num]);
-                pos = num;
+                (_openHeap.Array[lowestCostIndex], _openHeap.Array[pos]) =
+                    (_openHeap.Array[pos], _openHeap.Array[lowestCostIndex]);
+                pos = lowestCostIndex;
                 continue;
             }
 
@@ -210,17 +218,17 @@ public class AStar<T> where T : unmanaged
 
     public void HeapifyFromPosToStart(int pos)
     {
-        var num = pos;
-        while (num > 0)
+        var childIndex = pos;
+        while (childIndex > 0)
         {
-            var num2 = (num - 1) / 2;
-            var node = _openHeap.Array[num2];
-            var node2 = _openHeap.Array[num];
-            if (node.F > node2.F)
+            var parentIndex = (childIndex - 1) / 2;
+            var parent = _openHeap.Array[parentIndex];
+            var child = _openHeap.Array[childIndex];
+            if (parent.F > child.F)
             {
-                _openHeap.Array[num2] = node2;
-                _openHeap.Array[num] = node;
-                num = num2;
+                _openHeap.Array[parentIndex] = child;
+                _openHeap.Array[childIndex] = parent;
+                childIndex = parentIndex;
                 continue;
             }
 

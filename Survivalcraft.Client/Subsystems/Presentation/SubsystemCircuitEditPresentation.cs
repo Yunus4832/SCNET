@@ -188,8 +188,8 @@ public sealed class SubsystemCircuitEditPresentation : Subsystem
                 delegate(int newVoltageLevel)
                 {
                     var data2 = BatteryBlock.SetVoltageLevel(data, newVoltageLevel);
-                    var num = Terrain.ReplaceData(value, data2);
-                    if (num == value)
+                    var updatedValue = Terrain.ReplaceData(value, data2);
+                    if (updatedValue == value)
                     {
                         return;
                     }
@@ -215,8 +215,8 @@ public sealed class SubsystemCircuitEditPresentation : Subsystem
                 voltageLevel,
                 delegate(int newVoltageLevel)
                 {
-                    var num = BatteryBlock.SetVoltageLevel(data, newVoltageLevel);
-                    if (num == data)
+                    var updatedData = BatteryBlock.SetVoltageLevel(data, newVoltageLevel);
+                    if (updatedData == data)
                     {
                         return;
                     }
@@ -246,8 +246,8 @@ public sealed class SubsystemCircuitEditPresentation : Subsystem
                 data,
                 delegate(int newData)
                 {
-                    var num = Terrain.ReplaceData(value, newData);
-                    if (num == value)
+                    var updatedValue = Terrain.ReplaceData(value, newData);
+                    if (updatedValue == value)
                     {
                         return;
                     }
@@ -308,8 +308,8 @@ public sealed class SubsystemCircuitEditPresentation : Subsystem
                 delegate(int newDelay)
                 {
                     var data2 = AdjustableDelayGateBlock.SetDelay(data, newDelay);
-                    var num = Terrain.ReplaceData(value, data2);
-                    if (num != value)
+                    var updatedValue = Terrain.ReplaceData(value, data2);
+                    if (updatedValue != value)
                     {
                         var p = new EditableBlockValuePackage
                         {
@@ -333,8 +333,8 @@ public sealed class SubsystemCircuitEditPresentation : Subsystem
                 delay,
                 delegate(int newDelay)
                 {
-                    var num = AdjustableDelayGateBlock.SetDelay(data, newDelay);
-                    if (num == data)
+                    var updatedData = AdjustableDelayGateBlock.SetDelay(data, newDelay);
+                    if (updatedData == data)
                     {
                         return;
                     }

@@ -15,20 +15,20 @@ public class NandGateElectricElement(
     public override bool Simulate()
     {
         var voltage = _voltage;
-        var num = 0;
-        var num2 = 15;
+        var inputCount = 0;
+        var combinedBits = 15;
         foreach (var connection in Connections)
         {
             if (connection.ConnectorType != ElectricConnectorType.Output && connection.NeighborConnectorType != 0)
             {
-                num2 &= (int)MathUtils.Round(
+                combinedBits &= (int)MathUtils.Round(
                     connection.NeighborElectricElement.GetOutputVoltage(connection.NeighborConnectorFace) * 15f
                 );
-                num++;
+                inputCount++;
             }
         }
 
-        _voltage = num == 2 ? (~num2 & 0xF) / 15f : 0f;
+        _voltage = inputCount == 2 ? (~combinedBits & 0xF) / 15f : 0f;
         return _voltage.UncloseTo(voltage);
     }
 }

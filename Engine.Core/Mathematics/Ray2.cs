@@ -13,7 +13,7 @@ public struct Ray2(Vector2 position, Vector2 direction) : IEquatable<Ray2>
 
     public float? Intersection(BoundingRectangle rectangle)
     {
-        var num = 0f;
+        var entryDistance = 0f;
         if (Direction.X == 0f)
         {
             if (Position.X < rectangle.Min.X || Position.X > rectangle.Max.X)
@@ -23,16 +23,16 @@ public struct Ray2(Vector2 position, Vector2 direction) : IEquatable<Ray2>
         }
         else
         {
-            var num2 = 1f / Direction.X;
-            var num3 = (rectangle.Min.X - Position.X) * num2;
-            var num4 = (rectangle.Max.X - Position.X) * num2;
-            if (num3 > num4)
+            var inverseX = 1f / Direction.X;
+            var entryX = (rectangle.Min.X - Position.X) * inverseX;
+            var exitX = (rectangle.Max.X - Position.X) * inverseX;
+            if (entryX > exitX)
             {
-                (num3, num4) = (num4, num3);
+                (entryX, exitX) = (exitX, entryX);
             }
 
-            num = MathUtils.Max(num3, num);
-            if (num > num4)
+            entryDistance = MathUtils.Max(entryX, entryDistance);
+            if (entryDistance > exitX)
             {
                 return null;
             }
@@ -47,44 +47,44 @@ public struct Ray2(Vector2 position, Vector2 direction) : IEquatable<Ray2>
         }
         else
         {
-            var num6 = 1f / Direction.Y;
-            var num7 = (rectangle.Min.Y - Position.Y) * num6;
-            var num8 = (rectangle.Max.Y - Position.Y) * num6;
-            if (num7 > num8)
+            var inverseY = 1f / Direction.Y;
+            var entryY = (rectangle.Min.Y - Position.Y) * inverseY;
+            var exitY = (rectangle.Max.Y - Position.Y) * inverseY;
+            if (entryY > exitY)
             {
-                (num7, num8) = (num8, num7);
+                (entryY, exitY) = (exitY, entryY);
             }
 
-            num = MathUtils.Max(num7, num);
-            if (num > num8)
+            entryDistance = MathUtils.Max(entryY, entryDistance);
+            if (entryDistance > exitY)
             {
                 return null;
             }
         }
 
-        return num;
+        return entryDistance;
     }
 
     public float? Intersection(BoundingCircle circle)
     {
         var v = circle.Center - Position;
-        var num = v.LengthSquared();
-        var num2 = circle.Radius * circle.Radius;
-        if (num < num2)
+        var centerDistanceSquared = v.LengthSquared();
+        var radiusSquared = circle.Radius * circle.Radius;
+        if (centerDistanceSquared < radiusSquared)
         {
             return 0f;
         }
 
-        var num3 = Vector2.Dot(Direction, v);
-        if (num3 < 0f)
+        var projectedDistance = Vector2.Dot(Direction, v);
+        if (projectedDistance < 0f)
         {
             return null;
         }
 
-        var num4 = num2 + num3 * num3 - num;
-        if (!(num4 < 0f))
+        var discriminant = radiusSquared + projectedDistance * projectedDistance - centerDistanceSquared;
+        if (!(discriminant < 0f))
         {
-            return num3 - MathUtils.Sqrt(num4);
+            return projectedDistance - MathUtils.Sqrt(discriminant);
         }
 
         return null;

@@ -36,41 +36,41 @@ public class FontBatch2D : BaseFontBatch
     {
         Vector2 v;
         Vector2 v2;
-        Vector2 vector3;
+        Vector2 textOrigin;
         if (angle != 0f)
         {
             var vector = new Vector2(MathUtils.Cos(angle), MathUtils.Sin(angle));
             v = vector;
             v2 = new Vector2(0f - vector.Y, vector.X);
-            var vector2 = CalculateTextOffset(text, 0, text.Length, anchor, scale, spacing);
-            var v3 = v * vector2.X + v2 * vector2.Y;
+            var anchorOffset = CalculateTextOffset(text, 0, text.Length, anchor, scale, spacing);
+            var v3 = v * anchorOffset.X + v2 * anchorOffset.Y;
             v *= scale.X * Font.Scale;
             v2 *= scale.Y * Font.Scale;
-            vector3 = position + v3;
+            textOrigin = position + v3;
         }
         else
         {
             v = new Vector2(scale.X * Font.Scale, 0f);
             v2 = new Vector2(0f, scale.Y * Font.Scale);
-            vector3 = position + CalculateTextOffset(text, 0, text.Length, anchor, scale, spacing);
+            textOrigin = position + CalculateTextOffset(text, 0, text.Length, anchor, scale, spacing);
         }
 
         spacing += Font.Spacing;
-        vector3 += 0.5f * (v * spacing.X + v2 * spacing.Y);
+        textOrigin += 0.5f * (v * spacing.X + v2 * spacing.Y);
         if ((anchor & TextAnchor.DisableSnapToPixels) == 0)
         {
-            vector3 = Vector2.Round(vector3);
+            textOrigin = Vector2.Round(textOrigin);
         }
 
-        var v4 = vector3;
-        var num = 0;
+        var penPosition = textOrigin;
+        var lineIndex = 0;
         foreach (var c in text)
         {
             switch (c)
             {
                 case '\n':
-                    num++;
-                    v4 = vector3 + num * (Font.GlyphHeight + spacing.Y) * v2;
+                    lineIndex++;
+                    penPosition = textOrigin + lineIndex * (Font.GlyphHeight + spacing.Y) * v2;
                     continue;
                 case '\r':
                     continue;
@@ -84,32 +84,32 @@ public class FontBatch2D : BaseFontBatch
                     throw new ArgumentNullException(nameof(Font.Texture));
                 }
 
-                var v5 = v * (glyph.TexCoord2.X - glyph.TexCoord1.X) * Font.Texture.Width;
-                var v6 = v2 * (glyph.TexCoord2.Y - glyph.TexCoord1.Y) * Font.Texture.Height;
-                var v7 = v * glyph.Offset.X + v2 * glyph.Offset.Y;
-                var v8 = v4 + v7;
-                var vector4 = v8 + v5;
-                var vector5 = v8 + v6;
-                var vector6 = v8 + v5 + v6;
+                var glyphWidthVector = v * (glyph.TexCoord2.X - glyph.TexCoord1.X) * Font.Texture.Width;
+                var glyphHeightVector = v2 * (glyph.TexCoord2.Y - glyph.TexCoord1.Y) * Font.Texture.Height;
+                var glyphOffset = v * glyph.Offset.X + v2 * glyph.Offset.Y;
+                var topLeft = penPosition + glyphOffset;
+                var topRight = topLeft + glyphWidthVector;
+                var bottomLeft = topLeft + glyphHeightVector;
+                var bottomRight = topLeft + glyphWidthVector + glyphHeightVector;
                 var count = TriangleVertices.Count;
                 TriangleVertices.Count += 4;
                 TriangleVertices.Array[count] = new VertexPositionColorTexture(
-                    new Vector3(v8.X, v8.Y, depth),
+                    new Vector3(topLeft.X, topLeft.Y, depth),
                     color,
                     new Vector2(glyph.TexCoord1.X, glyph.TexCoord1.Y)
                 );
                 TriangleVertices.Array[count + 1] = new VertexPositionColorTexture(
-                    new Vector3(vector4.X, vector4.Y, depth),
+                    new Vector3(topRight.X, topRight.Y, depth),
                     color,
                     new Vector2(glyph.TexCoord2.X, glyph.TexCoord1.Y)
                 );
                 TriangleVertices.Array[count + 2] = new VertexPositionColorTexture(
-                    new Vector3(vector6.X, vector6.Y, depth),
+                    new Vector3(bottomRight.X, bottomRight.Y, depth),
                     color,
                     new Vector2(glyph.TexCoord2.X, glyph.TexCoord2.Y)
                 );
                 TriangleVertices.Array[count + 3] = new VertexPositionColorTexture(
-                    new Vector3(vector5.X, vector5.Y, depth),
+                    new Vector3(bottomLeft.X, bottomLeft.Y, depth),
                     color,
                     new Vector2(glyph.TexCoord1.X, glyph.TexCoord2.Y)
                 );
@@ -123,7 +123,7 @@ public class FontBatch2D : BaseFontBatch
                 TriangleIndices.Array[count2 + 5] = (ushort)count;
             }
 
-            v4 += v * (glyph.Width + spacing.X);
+            penPosition += v * (glyph.Width + spacing.X);
         }
     }
 

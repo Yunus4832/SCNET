@@ -21,7 +21,7 @@ public class SwitchBlock : MountedElectricElementBlock
         {
             for (var j = 0; j < 2; j++)
             {
-                var num = (i << 1) | j;
+                var orientationStateIndex = (i << 1) | j;
                 var matrix = i >= 4
                     ? i != 4
                         ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
@@ -31,10 +31,17 @@ public class SwitchBlock : MountedElectricElementBlock
                       Matrix.CreateRotationY(i * (float)Math.PI / 2f) *
                       Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
                 var matrix2 = Matrix.CreateRotationX(j == 0 ? MathUtils.DegToRad(30f) : MathUtils.DegToRad(-30f));
-                blockPositionsByIndex[num] = new CollisionGeometryBuilder();
-                blockPositionsByIndex[num].Append(bodyNode.Primitives[0], nodeAbsoluteTransform * matrix);
-                blockPositionsByIndex[num].Append(leverNode.Primitives[0], nodeAbsoluteTransform2 * matrix2 * matrix);
-                CollisionBoxesByIndex[num] = [blockPositionsByIndex[num].GetBounds()];
+                blockPositionsByIndex[orientationStateIndex] = new CollisionGeometryBuilder();
+                blockPositionsByIndex[orientationStateIndex].Append(
+                    bodyNode.Primitives[0],
+                    nodeAbsoluteTransform * matrix
+                );
+                blockPositionsByIndex[orientationStateIndex].Append(
+                    leverNode.Primitives[0],
+                    nodeAbsoluteTransform2 * matrix2 * matrix
+                );
+                CollisionBoxesByIndex[orientationStateIndex] =
+                    [blockPositionsByIndex[orientationStateIndex].GetBounds()];
             }
         }
     }
@@ -82,8 +89,10 @@ public class SwitchBlock : MountedElectricElementBlock
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = CalculateIndex(value);
-        return num >= CollisionBoxesByIndex.Length ? [] : CollisionBoxesByIndex[num];
+        var orientationStateIndex = CalculateIndex(value);
+        return orientationStateIndex >= CollisionBoxesByIndex.Length
+            ? []
+            : CollisionBoxesByIndex[orientationStateIndex];
     }
 
 

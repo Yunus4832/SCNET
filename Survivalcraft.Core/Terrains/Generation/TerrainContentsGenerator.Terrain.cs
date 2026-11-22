@@ -306,16 +306,16 @@ public partial class TerrainContentsGenerator
 
         public float Sample(float x, float y)
         {
-            var num = (int)MathUtils.Floor(x);
-            var num2 = (int)MathUtils.Floor(y);
-            var num3 = (int)MathUtils.Ceiling(x);
-            var num4 = (int)MathUtils.Ceiling(y);
-            var f = x - num;
-            var f2 = y - num2;
-            var x2 = _data[num + num2 * _sizeX];
-            var x3 = _data[num3 + num2 * _sizeX];
-            var x4 = _data[num + num4 * _sizeX];
-            var x5 = _data[num3 + num4 * _sizeX];
+            var minX = (int)MathUtils.Floor(x);
+            var minY = (int)MathUtils.Floor(y);
+            var maxX = (int)MathUtils.Ceiling(x);
+            var maxY = (int)MathUtils.Ceiling(y);
+            var f = x - minX;
+            var f2 = y - minY;
+            var x2 = _data[minX + minY * _sizeX];
+            var x3 = _data[maxX + minY * _sizeX];
+            var x4 = _data[minX + maxY * _sizeX];
+            var x5 = _data[maxX + maxY * _sizeX];
             var x6 = MathUtils.Lerp(x2, x3, f);
             var x7 = MathUtils.Lerp(x4, x5, f);
             return MathUtils.Lerp(x6, x7, f2);
@@ -363,15 +363,15 @@ public partial class TerrainContentsGenerator
             out float v222
         )
         {
-            var num = x + y * _sizeX + z * _sizeXy;
-            v111 = _data[num];
-            v211 = _data[num + 1];
-            v121 = _data[num + _sizeX];
-            v221 = _data[num + 1 + _sizeX];
-            v112 = _data[num + _sizeXy];
-            v212 = _data[num + 1 + _sizeXy];
-            v122 = _data[num + _sizeX + _sizeXy];
-            v222 = _data[num + 1 + _sizeX + _sizeXy];
+            var baseIndex = x + y * _sizeX + z * _sizeXy;
+            v111 = _data[baseIndex];
+            v211 = _data[baseIndex + 1];
+            v121 = _data[baseIndex + _sizeX];
+            v221 = _data[baseIndex + 1 + _sizeX];
+            v112 = _data[baseIndex + _sizeXy];
+            v212 = _data[baseIndex + 1 + _sizeXy];
+            v122 = _data[baseIndex + _sizeX + _sizeXy];
+            v222 = _data[baseIndex + 1 + _sizeX + _sizeXy];
         }
 
         public float Get(int x, int y, int z)
@@ -386,23 +386,23 @@ public partial class TerrainContentsGenerator
 
         public float Sample(float x, float y, float z)
         {
-            var num = (int)MathUtils.Floor(x);
-            var num2 = (int)MathUtils.Ceiling(x);
-            var num3 = (int)MathUtils.Floor(y);
-            var num4 = (int)MathUtils.Ceiling(y);
-            var num5 = (int)MathUtils.Floor(z);
-            var num6 = (int)MathUtils.Ceiling(z);
-            var f = x - num;
-            var f2 = y - num3;
-            var f3 = z - num5;
-            var x2 = _data[num + num3 * _sizeX + num5 * _sizeX * _sizeY];
-            var x3 = _data[num2 + num3 * _sizeX + num5 * _sizeX * _sizeY];
-            var x4 = _data[num + num4 * _sizeX + num5 * _sizeX * _sizeY];
-            var x5 = _data[num2 + num4 * _sizeX + num5 * _sizeX * _sizeY];
-            var x6 = _data[num + num3 * _sizeX + num6 * _sizeX * _sizeY];
-            var x7 = _data[num2 + num3 * _sizeX + num6 * _sizeX * _sizeY];
-            var x8 = _data[num + num4 * _sizeX + num6 * _sizeX * _sizeY];
-            var x9 = _data[num2 + num4 * _sizeX + num6 * _sizeX * _sizeY];
+            var minX = (int)MathUtils.Floor(x);
+            var maxX = (int)MathUtils.Ceiling(x);
+            var minY = (int)MathUtils.Floor(y);
+            var maxY = (int)MathUtils.Ceiling(y);
+            var minZ = (int)MathUtils.Floor(z);
+            var maxZ = (int)MathUtils.Ceiling(z);
+            var f = x - minX;
+            var f2 = y - minY;
+            var f3 = z - minZ;
+            var x2 = _data[minX + minY * _sizeX + minZ * _sizeX * _sizeY];
+            var x3 = _data[maxX + minY * _sizeX + minZ * _sizeX * _sizeY];
+            var x4 = _data[minX + maxY * _sizeX + minZ * _sizeX * _sizeY];
+            var x5 = _data[maxX + maxY * _sizeX + minZ * _sizeX * _sizeY];
+            var x6 = _data[minX + minY * _sizeX + maxZ * _sizeX * _sizeY];
+            var x7 = _data[maxX + minY * _sizeX + maxZ * _sizeX * _sizeY];
+            var x8 = _data[minX + maxY * _sizeX + maxZ * _sizeX * _sizeY];
+            var x9 = _data[maxX + maxY * _sizeX + maxZ * _sizeX * _sizeY];
             var x10 = MathUtils.Lerp(x2, x3, f);
             var x11 = MathUtils.Lerp(x4, x5, f);
             var x12 = MathUtils.Lerp(x6, x7, f);

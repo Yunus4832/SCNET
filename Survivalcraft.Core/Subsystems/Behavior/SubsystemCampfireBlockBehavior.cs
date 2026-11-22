@@ -176,8 +176,8 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
             return false;
         }
 
-        var num = Terrain.ExtractContents(value);
-        var block = WorldContentBinding.For(Project).Catalog.Blocks[num];
+        var fuelContents = Terrain.ExtractContents(value);
+        var block = WorldContentBinding.For(Project).Catalog.Blocks[fuelContents];
         if (Project.FindSubsystem<SubsystemExplosions>(true)!.TryExplodeBlock(x, y, z, value))
         {
             return true;
@@ -193,33 +193,33 @@ public class SubsystemCampfireBlockBehavior : SubsystemBlockBehavior, IUpdateabl
             return false;
         }
 
-        var num2 = count * MathUtils.Min(block.FuelFireDuration, 20f) / 5f;
-        var num3 = (int)num2;
-        var num4 = num2 - num3;
-        if (_random.Float(0f, 1f) < num4)
+        var fuelSteps = count * MathUtils.Min(block.FuelFireDuration, 20f) / 5f;
+        var wholeSteps = (int)fuelSteps;
+        var fractionalStep = fuelSteps - wholeSteps;
+        if (_random.Float(0f, 1f) < fractionalStep)
         {
-            num3++;
+            wholeSteps++;
         }
 
-        return num3 <= 0 || ResizeCampfire(x, y, z, num3, true);
+        return wholeSteps <= 0 || ResizeCampfire(x, y, z, wholeSteps, true);
     }
 
     private bool ResizeCampfire(int x, int y, int z, int steps, bool playSound)
     {
         var cellValue = SubsystemTerrain.Terrain.GetCellValue(x, y, z);
-        var num = Terrain.ExtractData(cellValue);
-        if (num <= 0)
+        var fireLevel = Terrain.ExtractData(cellValue);
+        if (fireLevel <= 0)
         {
             return false;
         }
 
-        var num2 = MathUtils.Clamp(num + steps, 0, 15);
-        if (num2 == num)
+        var newFireLevel = MathUtils.Clamp(fireLevel + steps, 0, 15);
+        if (newFireLevel == fireLevel)
         {
             return false;
         }
 
-        var value = Terrain.ReplaceData(cellValue, num2);
+        var value = Terrain.ReplaceData(cellValue, newFireLevel);
         SubsystemTerrain.ChangeCell(x, y, z, value);
         if (!playSound)
         {

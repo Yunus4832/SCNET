@@ -696,46 +696,46 @@ public partial class CharacterData : IDisposable
     public Vector3 FindIntroSpawnPosition(Vector2 desiredSpawnPosition)
     {
         var vector = Vector2.Zero;
-        var num = float.MinValue;
+        var bestScore = float.MinValue;
         for (var i = -30; i <= 30; i += 2)
         {
             for (var j = -30; j <= 30; j += 2)
             {
-                var num2 = Terrain.ToCell(desiredSpawnPosition.X) + i;
-                var num3 = Terrain.ToCell(desiredSpawnPosition.Y) + j;
-                var num4 = ScoreIntroSpawnPosition(desiredSpawnPosition, num2, num3);
-                if (num4 > num)
+                var candidateX = Terrain.ToCell(desiredSpawnPosition.X) + i;
+                var candidateZ = Terrain.ToCell(desiredSpawnPosition.Y) + j;
+                var score = ScoreIntroSpawnPosition(desiredSpawnPosition, candidateX, candidateZ);
+                if (score > bestScore)
                 {
-                    num = num4;
-                    vector = new Vector2(num2, num3);
+                    bestScore = score;
+                    vector = new Vector2(candidateX, candidateZ);
                 }
             }
         }
 
-        float num5 =
+        float spawnY =
             _subsystemTerrain.Terrain.CalculateTopmostCellHeight(Terrain.ToCell(vector.X), Terrain.ToCell(vector.Y)) +
             1;
-        return new Vector3(vector.X + 0.5f, num5 + 0.01f, vector.Y + 0.5f);
+        return new Vector3(vector.X + 0.5f, spawnY + 0.01f, vector.Y + 0.5f);
     }
 
     public Vector3 FindNoIntroSpawnPosition(Vector3 desiredSpawnPosition, bool respawn)
     {
         var vector = Vector3.Zero;
-        var num = float.MinValue;
+        var bestScore = float.MinValue;
         for (var i = -8; i <= 8; i++)
         {
             for (var j = -8; j <= 8; j++)
             {
                 for (var k = -8; k <= 8; k++)
                 {
-                    var num2 = Terrain.ToCell(desiredSpawnPosition.X) + i;
-                    var num3 = Terrain.ToCell(desiredSpawnPosition.Y) + j;
-                    var num4 = Terrain.ToCell(desiredSpawnPosition.Z) + k;
-                    var num5 = ScoreNoIntroSpawnPosition(desiredSpawnPosition, num2, num3, num4);
-                    if (num5 > num)
+                    var candidateX = Terrain.ToCell(desiredSpawnPosition.X) + i;
+                    var candidateY = Terrain.ToCell(desiredSpawnPosition.Y) + j;
+                    var candidateZ = Terrain.ToCell(desiredSpawnPosition.Z) + k;
+                    var score = ScoreNoIntroSpawnPosition(desiredSpawnPosition, candidateX, candidateY, candidateZ);
+                    if (score > bestScore)
                     {
-                        num = num5;
-                        vector = new Vector3(num2, num3, num4);
+                        bestScore = score;
+                        vector = new Vector3(candidateX, candidateY, candidateZ);
                     }
                 }
             }
@@ -746,42 +746,42 @@ public partial class CharacterData : IDisposable
 
     public float ScoreIntroSpawnPosition(Vector2 desiredSpawnPosition, int x, int z)
     {
-        var num = -0.01f * Vector2.Distance(new Vector2(x, z), desiredSpawnPosition);
-        var num2 = _subsystemTerrain.Terrain.CalculateTopmostCellHeight(x, z);
-        if (num2 < 64 || num2 > 85)
+        var score = -0.01f * Vector2.Distance(new Vector2(x, z), desiredSpawnPosition);
+        var surfaceY = _subsystemTerrain.Terrain.CalculateTopmostCellHeight(x, z);
+        if (surfaceY < 64 || surfaceY > 85)
         {
-            num -= 5f;
+            score -= 5f;
         }
 
         if (_subsystemTerrain.Terrain.GetSeasonalTemperature(x, z) < 8)
         {
-            num -= 5f;
+            score -= 5f;
         }
 
-        var cellContents = _subsystemTerrain.Terrain.GetCellContents(x, num2, z);
+        var cellContents = _subsystemTerrain.Terrain.GetCellContents(x, surfaceY, z);
         if (_subsystemTerrain.Catalog.Blocks[cellContents].Transparent)
         {
-            num -= 5f;
+            score -= 5f;
         }
 
         for (var i = x - 1; i <= x + 1; i++)
         {
             for (var j = z - 1; j <= z + 1; j++)
             {
-                if (_subsystemTerrain.Terrain.GetCellContents(i, num2 + 2, j) != 0)
+                if (_subsystemTerrain.Terrain.GetCellContents(i, surfaceY + 2, j) != 0)
                 {
-                    num -= 1f;
+                    score -= 1f;
                 }
             }
         }
 
         var vector = ComponentIntro.FindOceanDirection(_subsystemTerrain.Environment, new Vector2(x, z));
-        var vector2 = new Vector3(x, num2 + 1.5f, z);
+        var eyePosition = new Vector3(x, surfaceY + 1.5f, z);
         for (var k = -1; k <= 1; k++)
         {
-            var end = vector2 + new Vector3(30f * vector.X, 5f * k, 30f * vector.Y);
+            var end = eyePosition + new Vector3(30f * vector.X, 5f * k, 30f * vector.Y);
             var terrainRaycastResult = _subsystemTerrain.Raycast(
-                vector2,
+                eyePosition,
                 end,
                 false,
                 true,
@@ -796,19 +796,19 @@ public partial class CharacterData : IDisposable
             var cellContents2 = _subsystemTerrain.Terrain.GetCellContents(cellFace.X, cellFace.Y, cellFace.Z);
             if (cellContents2 != 18 && cellContents2 != 0)
             {
-                num -= 2f;
+                score -= 2f;
             }
         }
 
-        return num;
+        return score;
     }
 
     public float ScoreNoIntroSpawnPosition(Vector3 desiredSpawnPosition, int x, int y, int z)
     {
-        var num = -0.01f * Vector3.Distance(new Vector3(x, y, z), desiredSpawnPosition);
+        var score = -0.01f * Vector3.Distance(new Vector3(x, y, z), desiredSpawnPosition);
         if (y < 1 || y >= 255)
         {
-            num -= 100f;
+            score -= 100f;
         }
 
         var obj = _subsystemTerrain.Catalog
@@ -819,22 +819,22 @@ public partial class CharacterData : IDisposable
             .Blocks[_subsystemTerrain.Terrain.GetCellContents(x, y + 1, z)];
         if (obj.Transparent)
         {
-            num -= 10f;
+            score -= 10f;
         }
 
         if (!obj.Collidable)
         {
-            num -= 10f;
+            score -= 10f;
         }
 
         if (block.Collidable)
         {
-            num -= 10f;
+            score -= 10f;
         }
 
         if (block2.Collidable)
         {
-            num -= 10f;
+            score -= 10f;
         }
 
         foreach (var playersDatum in SubsystemCharacters.Characters)
@@ -843,11 +843,11 @@ public partial class CharacterData : IDisposable
                 Vector3.DistanceSquared(playersDatum.SpawnPosition, new Vector3(x, y, z)) <
                 MathUtils.Sqr(2))
             {
-                num -= 1f;
+                score -= 1f;
             }
         }
 
-        return num;
+        return score;
     }
 
     public bool CheckIsPointInWater(Point3 p)
@@ -857,9 +857,9 @@ public partial class CharacterData : IDisposable
         {
             for (var j = p.Z - 1; j < p.Z + 1; j++)
             {
-                for (var num = p.Y; num > 0; num--)
+                for (var cellY = p.Y; cellY > 0; cellY--)
                 {
-                    var cellContents = _subsystemTerrain.Terrain.GetCellContents(p.X, num, p.Z);
+                    var cellContents = _subsystemTerrain.Terrain.GetCellContents(p.X, cellY, p.Z);
                     var block = _subsystemTerrain.Catalog.Blocks[cellContents];
                     if (block.Collidable)
                     {

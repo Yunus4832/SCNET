@@ -100,14 +100,14 @@ public class ComponentAvoidFireBehavior : ComponentBehavior, IUpdateable
                     return;
                 }
 
-                var vector2 =
+                var escapeDirection =
                     Vector3.Normalize(
                         Vector3.Normalize(_componentCreature.ComponentBody.Position - _target.Value) +
                         _random.Vector3(0.5f)
                     );
                 var value2 = _componentCreature.ComponentBody.Position +
                              _random.Float(6f, 8f) *
-                             Vector3.Normalize(new Vector3(vector2.X, 0f, vector2.Z));
+                             Vector3.Normalize(new Vector3(escapeDirection.X, 0f, escapeDirection.Z));
                 _componentPathfinding.SetDestination(
                     value2,
                     _random.Float(0.6f, 0.8f),
@@ -195,33 +195,33 @@ public class ComponentAvoidFireBehavior : ComponentBehavior, IUpdateable
     {
         _ = _componentCreature.ComponentBody.Position;
         Vector3? result = null;
-        var num = 0f;
+        var bestScore = 0f;
         foreach (var campfire in _subsystemCampfireBlockBehavior.Campfires)
         {
             var vector = new Vector3(campfire.X, campfire.Y, campfire.Z);
-            var num2 = ScoreTarget(vector);
-            if (!(num2 > num))
+            var candidateScore = ScoreTarget(vector);
+            if (!(candidateScore > bestScore))
             {
                 continue;
             }
 
-            num = num2;
+            bestScore = candidateScore;
             result = vector;
         }
 
-        targetScore = num;
+        targetScore = bestScore;
         return result;
     }
 
     public float ScoreTarget(Vector3 target)
     {
-        var num = _subsystemSky.SkyLightIntensity > 0.2f ? _dayRange : _nightRange;
-        if (!(num > 0f))
+        var avoidanceRange = _subsystemSky.SkyLightIntensity > 0.2f ? _dayRange : _nightRange;
+        if (!(avoidanceRange > 0f))
         {
             return 0f;
         }
 
-        var num2 = Vector3.Distance(target, _componentCreature.ComponentBody.Position);
-        return MathUtils.Saturate(1f - num2 / num);
+        var distance = Vector3.Distance(target, _componentCreature.ComponentBody.Position);
+        return MathUtils.Saturate(1f - distance / avoidanceRange);
     }
 }

@@ -151,8 +151,8 @@ public class ComponentCreativeInventory : Component, IPagedInventory
             return 1;
         }
 
-        var num = Terrain.ExtractContents(_slots[slotIndex]);
-        if (WorldContentBinding.For(Project).Catalog.Blocks[num].NonDuplicable)
+        var contents = Terrain.ExtractContents(_slots[slotIndex]);
+        if (WorldContentBinding.For(Project).Catalog.Blocks[contents].NonDuplicable)
         {
             _slots[slotIndex] = 0;
         }

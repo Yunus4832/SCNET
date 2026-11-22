@@ -62,9 +62,9 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
 
         var slotValue = inventory.GetSlotValue(activeSlotIndex);
         var slotCount = inventory.GetSlotCount(activeSlotIndex);
-        var num = Terrain.ExtractContents(slotValue);
+        var heldContents = Terrain.ExtractContents(slotValue);
         var data = Terrain.ExtractData(slotValue);
-        if (num != 191 || slotCount <= 0)
+        if (heldContents != 191 || slotCount <= 0)
         {
             return false;
         }
@@ -75,22 +75,22 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
             _aimStartTimes[componentMiner] = value;
         }
 
-        var num2 = (float)(_subsystemTime.GameTime - value);
-        var num3 = (float)MathUtils.Remainder(_subsystemTime.GameTime, 1000.0);
+        var aimDuration = (float)(_subsystemTime.GameTime - value);
+        var swayTime = (float)MathUtils.Remainder(_subsystemTime.GameTime, 1000.0);
         var v = ((componentMiner.ComponentCreature.ComponentBody.IsSneaking ? 0.02f : 0.04f) +
-                 0.25f * MathUtils.Saturate((num2 - 2.1f) / 5f)) *
+                 0.25f * MathUtils.Saturate((aimDuration - 2.1f) / 5f)) *
                 new Vector3
                 {
-                    X = SimplexNoise.OctavedNoise(num3, 2f, 3, 2f, 0.5f),
-                    Y = SimplexNoise.OctavedNoise(num3 + 100f, 2f, 3, 2f, 0.5f),
-                    Z = SimplexNoise.OctavedNoise(num3 + 200f, 2f, 3, 2f, 0.5f)
+                    X = SimplexNoise.OctavedNoise(swayTime, 2f, 3, 2f, 0.5f),
+                    Y = SimplexNoise.OctavedNoise(swayTime + 100f, 2f, 3, 2f, 0.5f),
+                    Z = SimplexNoise.OctavedNoise(swayTime + 200f, 2f, 3, 2f, 0.5f)
                 };
         aim.Direction = Vector3.Normalize(aim.Direction + v);
         switch (state)
         {
             case AimState.InProgress:
             {
-                if (num2 >= 9f)
+                if (aimDuration >= 9f)
                 {
                     componentMiner.ComponentCreature.ComponentCreatureSounds.PlayMoanSound();
                     return true;
@@ -113,7 +113,7 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
                         inventory.RemoveSlotItems(activeSlotIndex, 1);
                         inventory.AddSlotItems(
                             activeSlotIndex,
-                            Terrain.MakeBlockValue(num, BowBlock.SetDraw(data, draw2)),
+                            Terrain.MakeBlockValue(heldContents, BowBlock.SetDraw(data, draw2)),
                             1
                         );
                     }
@@ -127,7 +127,7 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
                     inventory.RemoveSlotItems(activeSlotIndex, 1);
                     inventory.AddSlotItems(
                         activeSlotIndex,
-                        Terrain.MakeBlockValue(num, BowBlock.SetDraw(data, 0)),
+                        Terrain.MakeBlockValue(heldContents, BowBlock.SetDraw(data, 0)),
                         1
                     );
                 }
@@ -143,38 +143,38 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
                     var vector = componentMiner.ComponentCreature.ComponentCreaturePose.EyePosition +
                                  componentMiner.ComponentCreature.ComponentBody.Matrix.Right * 0.3f -
                                  componentMiner.ComponentCreature.ComponentBody.Matrix.Up * 0.2f;
-                    var vector2 = Vector3.Normalize(vector + aim.Direction * 10f - vector);
-                    var num4 = MathUtils.Lerp(0f, 28f, MathUtils.Pow(draw / 15f, 0.75f));
+                    var shotDirection = Vector3.Normalize(vector + aim.Direction * 10f - vector);
+                    var launchSpeed = MathUtils.Lerp(0f, 28f, MathUtils.Pow(draw / 15f, 0.75f));
                     if (componentMiner.ComponentCharacter != null)
                     {
-                        num4 *= 0.5f * (componentMiner.ComponentCharacter.ComponentLevel.StrengthFactor - 1f) +
-                                1f;
+                        launchSpeed *= 0.5f * (componentMiner.ComponentCharacter.ComponentLevel.StrengthFactor - 1f) +
+                                       1f;
                     }
 
-                    var vector3 = Vector3.Zero;
+                    var spread = Vector3.Zero;
                     if (arrowType == ArrowBlock.ArrowType.WoodenArrow)
                     {
-                        vector3 = new Vector3(0.025f, 0.025f, 0.025f);
+                        spread = new Vector3(0.025f, 0.025f, 0.025f);
                     }
 
                     if (arrowType == ArrowBlock.ArrowType.StoneArrow)
                     {
-                        vector3 = new Vector3(0.01f, 0.01f, 0.01f);
+                        spread = new Vector3(0.01f, 0.01f, 0.01f);
                     }
 
                     var value2 = Terrain.MakeBlockValue(
                         192,
                         ArrowBlock.SetArrowType(0, arrowType.Value)
                     );
-                    var vector4 = Vector3.Normalize(Vector3.Cross(vector2, Vector3.UnitY));
-                    var v2 = Vector3.Normalize(Vector3.Cross(vector2, vector4));
-                    var v3 = _random.Float(0f - vector3.X, vector3.X) * vector4 +
-                             _random.Float(0f - vector3.Y, vector3.Y) * v2 +
-                             _random.Float(0f - vector3.Z, vector3.Z) * vector2;
+                    var shotRight = Vector3.Normalize(Vector3.Cross(shotDirection, Vector3.UnitY));
+                    var v2 = Vector3.Normalize(Vector3.Cross(shotDirection, shotRight));
+                    var v3 = _random.Float(0f - spread.X, spread.X) * shotRight +
+                             _random.Float(0f - spread.Y, spread.Y) * v2 +
+                             _random.Float(0f - spread.Z, spread.Z) * shotDirection;
                     if (_subsystemProjectiles.FireProjectile(
                             value2,
                             vector,
-                            (vector2 + v3) * num4,
+                            (shotDirection + v3) * launchSpeed,
                             Vector3.Zero,
                             componentMiner.ComponentCreature
                         ) !=
@@ -199,7 +199,7 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
                 if (WorldRuntimeContext.For(Project).IsAuthority)
                 {
                     inventory.RemoveSlotItems(activeSlotIndex, 1);
-                    var value3 = Terrain.MakeBlockValue(num, BowBlock.SetDraw(data, 0));
+                    var value3 = Terrain.MakeBlockValue(heldContents, BowBlock.SetDraw(data, 0));
                     inventory.AddSlotItems(activeSlotIndex, value3, 1);
                     var damageCount = 0;
                     if (draw >= 15)
@@ -224,9 +224,9 @@ public class SubsystemBowBlockBehavior : SubsystemBlockBehavior
 
     public override int GetProcessInventoryItemCapacity(IInventory inventory, int slotIndex, int value)
     {
-        var num = Terrain.ExtractContents(value);
+        var itemContents = Terrain.ExtractContents(value);
         var arrowType = ArrowBlock.GetArrowType(Terrain.ExtractData(value));
-        if (num == 192 && _supportedArrowTypes.Contains(arrowType))
+        if (itemContents == 192 && _supportedArrowTypes.Contains(arrowType))
         {
             return !BowBlock.GetArrowType(Terrain.ExtractData(inventory.GetSlotValue(slotIndex))).HasValue ? 1 : 0;
         }

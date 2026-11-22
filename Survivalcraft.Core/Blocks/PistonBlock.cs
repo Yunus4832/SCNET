@@ -71,17 +71,17 @@ public class PistonBlock : Block, IElectricElementBlock
     )
     {
         var forward = eyeForward;
-        var num = float.PositiveInfinity;
+        var lowestAlignment = float.PositiveInfinity;
         var face = 0;
         for (var i = 0; i < 6; i++)
         {
-            var num2 = Vector3.Dot(CellFace.FaceToVector3(i), forward);
-            if (!(num2 < num))
+            var alignment = Vector3.Dot(CellFace.FaceToVector3(i), forward);
+            if (!(alignment < lowestAlignment))
             {
                 continue;
             }
 
-            num = num2;
+            lowestAlignment = alignment;
             face = i;
         }
 

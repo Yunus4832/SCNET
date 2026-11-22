@@ -68,13 +68,13 @@ public abstract class DoorBlock(string modelName, float pivotDistance) : Block, 
             var rotation = GetRotation(i);
             var open = GetOpen(i);
             var rightHanded = GetRightHanded(i);
-            float num = !rightHanded ? 1 : -1;
+            float hingeMirrorScale = !rightHanded ? 1 : -1;
             blockPositionsByData[i] = new CollisionGeometryBuilder();
             var identity = Matrix.Identity;
-            identity *= Matrix.CreateScale(0f - num, 1f, 1f);
-            identity *= Matrix.CreateTranslation((0.5f - PivotDistance) * num, 0f, 0f) *
-                        Matrix.CreateRotationY(open ? num * (float)Math.PI / 2f : 0f) *
-                        Matrix.CreateTranslation((0f - (0.5f - PivotDistance)) * num, 0f, 0f);
+            identity *= Matrix.CreateScale(0f - hingeMirrorScale, 1f, 1f);
+            identity *= Matrix.CreateTranslation((0.5f - PivotDistance) * hingeMirrorScale, 0f, 0f) *
+                        Matrix.CreateRotationY(open ? hingeMirrorScale * (float)Math.PI / 2f : 0f) *
+                        Matrix.CreateTranslation((0f - (0.5f - PivotDistance)) * hingeMirrorScale, 0f, 0f);
             identity *= Matrix.CreateTranslation(0f, 0f, 0.5f - PivotDistance) *
                         Matrix.CreateRotationY(rotation * (float)Math.PI / 2f) *
                         Matrix.CreateTranslation(0.5f, 0f, 0.5f);
@@ -191,8 +191,8 @@ public abstract class DoorBlock(string modelName, float pivotDistance) : Block, 
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = Terrain.ExtractData(value);
-        return num < CollisionBoxesByData.Length ? CollisionBoxesByData[num] : [];
+        var blockData = Terrain.ExtractData(value);
+        return blockData < CollisionBoxesByData.Length ? CollisionBoxesByData[blockData] : [];
     }
 
     public override bool ShouldAvoid(int value)
@@ -258,13 +258,13 @@ public abstract class DoorBlock(string modelName, float pivotDistance) : Block, 
     public static int GetHingeFace(int data)
     {
         var rotation = GetRotation(data);
-        var num = rotation - 1 < 0 ? 3 : rotation - 1;
+        var previousFace = rotation - 1 < 0 ? 3 : rotation - 1;
         if (!GetRightHanded(data))
         {
-            num = CellFace.OppositeFace(num);
+            previousFace = CellFace.OppositeFace(previousFace);
         }
 
-        return num;
+        return previousFace;
     }
 
     public override bool IsMovableByPiston(int value, int pistonFace, int y, out bool isEnd)

@@ -63,33 +63,33 @@ public static class TextureAtlasManager
     private static void LoadTextureAtlas(Texture2D texture, string atlasDefinition, string prefix)
     {
         var array = atlasDefinition.Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries);
-        var num = 0;
+        var lineIndex = 0;
         while (true)
         {
-            if (num >= array.Length)
+            if (lineIndex >= array.Length)
             {
                 return;
             }
 
-            var array2 = array[num].Split([' '], StringSplitOptions.RemoveEmptyEntries);
+            var array2 = array[lineIndex].Split([' '], StringSplitOptions.RemoveEmptyEntries);
             if (array2.Length < 5)
             {
                 break;
             }
 
             var key = prefix + array2[0];
-            var num2 = int.Parse(array2[1], CultureInfo.InvariantCulture);
-            var num3 = int.Parse(array2[2], CultureInfo.InvariantCulture);
-            var num4 = int.Parse(array2[3], CultureInfo.InvariantCulture);
-            var num5 = int.Parse(array2[4], CultureInfo.InvariantCulture);
-            var topLeft = new Vector2(num2 / (float)texture.Width, num3 / (float)texture.Height);
+            var left = int.Parse(array2[1], CultureInfo.InvariantCulture);
+            var top = int.Parse(array2[2], CultureInfo.InvariantCulture);
+            var width = int.Parse(array2[3], CultureInfo.InvariantCulture);
+            var height = int.Parse(array2[4], CultureInfo.InvariantCulture);
+            var topLeft = new Vector2(left / (float)texture.Width, top / (float)texture.Height);
             var bottomRight = new Vector2(
-                (num2 + num4) / (float)texture.Width,
-                (num3 + num5) / (float)texture.Height
+                (left + width) / (float)texture.Width,
+                (top + height) / (float)texture.Height
             );
             var value = new Subtexture(texture, topLeft, bottomRight);
             _subtextures.Add(key, value);
-            num++;
+            lineIndex++;
         }
 
         throw new InvalidOperationException("Invalid texture atlas definition.");

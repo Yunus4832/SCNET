@@ -25,7 +25,7 @@ public class SpikedPlankBlock : MountedElectricElementBlock
             var nodeAbsoluteTransform = modelNode.AbsoluteTransform;
             for (var j = 0; j < 6; j++)
             {
-                var num = SetMountingFace(SetSpikesState(0, i != 0), j);
+                var meshIndex = SetMountingFace(SetSpikesState(0, i != 0), j);
                 var m = j >= 4
                     ? j != 4
                         ? Matrix.CreateRotationX((float)Math.PI) * Matrix.CreateTranslation(0.5f, 1f, 0.5f)
@@ -34,9 +34,9 @@ public class SpikedPlankBlock : MountedElectricElementBlock
                       Matrix.CreateTranslation(0f, 0f, -0.5f) *
                       Matrix.CreateRotationY(j * (float)Math.PI / 2f) *
                       Matrix.CreateTranslation(0.5f, 0.5f, 0.5f);
-                blockPositionsByData[num] = new CollisionGeometryBuilder();
-                blockPositionsByData[num].Append(modelNode.Primitives[0], nodeAbsoluteTransform * m);
-                CollisionBoxesByData[num] = [blockPositionsByData[num].GetBounds()];
+                blockPositionsByData[meshIndex] = new CollisionGeometryBuilder();
+                blockPositionsByData[meshIndex].Append(modelNode.Primitives[0], nodeAbsoluteTransform * m);
+                CollisionBoxesByData[meshIndex] = [blockPositionsByData[meshIndex].GetBounds()];
             }
         }
     }
@@ -101,13 +101,13 @@ public class SpikedPlankBlock : MountedElectricElementBlock
 
     public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value)
     {
-        var num = Terrain.ExtractData(value);
-        if (num >= CollisionBoxesByData.Length)
+        var meshIndex = Terrain.ExtractData(value);
+        if (meshIndex >= CollisionBoxesByData.Length)
         {
             return base.GetCustomCollisionBoxes(terrain, value);
         }
 
-        return CollisionBoxesByData[num];
+        return CollisionBoxesByData[meshIndex];
     }
 
 
