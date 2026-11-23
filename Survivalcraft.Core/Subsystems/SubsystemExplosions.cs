@@ -693,7 +693,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
 
     public virtual void PostprocessExplosions(bool playExplosionSound)
     {
-        var pressures = _pressureByPoint.ToDictionary();
+        var pressures = _pressureByPoint.EnumerateNonDefault();
         var point = ExplosionAcoustics.SelectOrigin(pressures);
         var totalPressure = 0f;
         foreach (var item in pressures)
@@ -718,7 +718,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             }
         }
 
-        foreach (var item2 in _surroundingPressureByPoint.ToDictionary())
+        foreach (var item2 in _surroundingPressureByPoint.EnumerateNonDefault())
         {
             var cellValue = _subsystemTerrain.Terrain.GetCellValue(item2.Key.X, item2.Key.Y, item2.Key.Z);
             var contents = Terrain.ExtractContents(cellValue);
@@ -1045,9 +1045,12 @@ public class SubsystemExplosions : Subsystem, IUpdateable
             }
         }
 
-        public Dictionary<Point3, T> ToDictionary()
+        public Dictionary<Point3, T> ToDictionary() => new(EnumerateNonDefault());
+
+        /// <summary>按桶和槽位索引升序枚举非默认值。</summary>
+        internal IEnumerable<KeyValuePair<Point3, T>> EnumerateNonDefault()
         {
-            var dictionary = new Dictionary<Point3, T>();
+            var comparer = EqualityComparer<T>.Default;
             for (var i = 0; i < _data.Length; i++)
             {
                 var array = _data[i];
@@ -1061,20 +1064,18 @@ public class SubsystemExplosions : Subsystem, IUpdateable
                 var chunkOriginZ = _originZ + (((i >> 8) & 0xF) << 4);
                 for (var j = 0; j < array.Length; j++)
                 {
-                    if (!Equals(array[j], default(T)))
+                    if (!comparer.Equals(array[j], default))
                     {
                         var localX = j & 0xF;
                         var localY = (j >> 4) & 0xF;
                         var localZ = (j >> 8) & 0xF;
-                        dictionary.Add(
+                        yield return new KeyValuePair<Point3, T>(
                             new Point3(chunkOriginX + localX, chunkOriginY + localY, chunkOriginZ + localZ),
                             array[j]
                         );
                     }
                 }
             }
-
-            return dictionary;
         }
     }
 
@@ -1106,7 +1107,7 @@ public class SubsystemExplosions : Subsystem, IUpdateable
         public int Axis;
     }
 
-    private struct SurroundingPressurePoint
+    private record struct SurroundingPressurePoint
     {
         public float Pressure;
 

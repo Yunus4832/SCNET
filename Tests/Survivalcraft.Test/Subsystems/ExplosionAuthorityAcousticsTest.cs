@@ -139,6 +139,25 @@ public sealed class ExplosionAuthorityAcousticsTest
     }
 
     [Fact]
+    public void ExplosionPressureEnumerationPreservesBucketAndCellOrder()
+    {
+        var pressures = new SubsystemExplosions.SparseSpatialArray<float>(0, 0, 0, -1f);
+        pressures.Set(16, 0, 0, 3f);
+        pressures.Set(1, 0, 0, 2f);
+        pressures.Set(-1, 0, 0, 1f);
+        pressures.Set(0, 0, 0, 4f);
+        pressures.Set(0, 0, 0, 0f);
+        pressures.Set(128, 0, 0, 5f);
+
+        Assert.Equal(
+            [new Point3(-1, 0, 0), new Point3(1, 0, 0), new Point3(16, 0, 0)],
+            pressures.EnumerateNonDefault().Select(entry => entry.Key)
+        );
+        pressures.Clear();
+        Assert.Empty(pressures.EnumerateNonDefault());
+    }
+
+    [Fact]
     public void ClientPlaysTheAuthorityPitchWithoutDrawingFromTheRuleRandomStream()
     {
         using var project = new RuntimeTestProject(RuntimeSide.Client);
