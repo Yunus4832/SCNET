@@ -19,6 +19,30 @@ namespace Survivalcraft.Test.ClientContent;
 public sealed class ClientContentRuntimeTest
 {
     [Fact]
+    public void DirectoryListingsRefreshAfterResourceChanges()
+    {
+        ContentManager.Initialize();
+        var resource = new ContentInfo("Audio/Splashes/Test.ogg");
+        var replacement = new ContentInfo(resource.AbsolutePath);
+        var owner = ResourceId.Parse("example.sounds:splash").Namespace;
+        try
+        {
+            Assert.Empty(ContentManager.List("Audio/Splashes"));
+            ContentManager.AddOwned(owner, resource);
+            Assert.Same(resource, Assert.Single(ContentManager.List("Audio/Splashes/")));
+            ContentManager.AddOwned(owner, replacement);
+            Assert.Same(replacement, Assert.Single(ContentManager.List("Audio/Splashes")));
+            ContentManager.RemoveOwner(owner);
+            Assert.Empty(ContentManager.List("Audio/Splashes"));
+            ContentManager.AddOwned(owner, new ContentInfo(resource.AbsolutePath));
+            Assert.Single(ContentManager.List("Audio/Splashes"));
+            ContentManager.Initialize();
+            Assert.Empty(ContentManager.List("Audio/Splashes"));
+        }
+        finally { ContentManager.Initialize(); }
+    }
+
+    [Fact]
     public void PreviewLifetimeDoesNotOwnWorldPresentationsOrCoreRules()
     {
         using var rules = CreateRules();

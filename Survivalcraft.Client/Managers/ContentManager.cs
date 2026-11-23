@@ -14,6 +14,8 @@ public static class ContentManager
 {
     private static readonly Dictionary<string, ContentInfo> _resources = new();
 
+    private static readonly Dictionary<string, ReadOnlyList<ContentInfo>> _directoryLists = new(StringComparer.Ordinal);
+
     internal static readonly Dictionary<string, IContentReader> readerList = new();
 
     private static readonly Dictionary<string, List<object>> _caches = new();
@@ -36,6 +38,7 @@ public static class ContentManager
 
             readerList.Clear();
             _resources.Clear();
+            _directoryLists.Clear();
             _resourceOwners.Clear();
             if (!_deviceResetSubscribed)
             {
@@ -263,6 +266,8 @@ public static class ContentManager
                 _resourceOwners.Remove(path);
                 if (!_resources.Remove(path, out var resource)) { continue; }
 
+                _directoryLists.Clear();
+
                 try { Invalidate(resource.ContentPath); }
                 catch (Exception error) { errors.Add(error); }
 
@@ -346,6 +351,7 @@ public static class ContentManager
         }
 
         _resources[contentInfo.AbsolutePath] = contentInfo;
+        _directoryLists.Clear();
     }
 
     private static void Invalidate(string contentPath)
@@ -380,12 +386,24 @@ public static class ContentManager
 
     public static ReadOnlyList<ContentInfo> List(string directory)
     {
-        if (!directory.EndsWith("/"))
+        if (!directory.EndsWith('/'))
         {
             directory += "/";
         }
 
-        var contents = _resources.Values.Where(content => content.ContentPath.StartsWith(directory)).ToList();
-        return new ReadOnlyList<ContentInfo>(contents);
+        lock (_syncObj)
+        {
+            if (!_directoryLists.TryGetValue(directory, out var contents))
+            {
+                contents = new ReadOnlyList<ContentInfo>(
+                    _resources.Values
+                        .Where(content => content.ContentPath.StartsWith(directory, StringComparison.Ordinal))
+                        .ToList()
+                );
+                _directoryLists.Add(directory, contents);
+            }
+
+            return contents;
+        }
     }
 }
