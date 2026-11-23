@@ -13,7 +13,11 @@ public class SubsystemParticles : Subsystem, IDrawable, IUpdateable
 
     private readonly List<ParticleSystemBase> _endedParticleSystems = [];
 
-    private readonly Dictionary<ParticleSystemBase, bool> _particleSystems = new();
+    private readonly Dictionary<ParticleSystemBase, int> _particleSystems = new();
+
+    internal const int burstParticleLimit = 1800;
+
+    private int _reservedBurstParticles;
 
     private SubsystemTime _subsystemTime = null!;
 
@@ -87,26 +91,47 @@ public class SubsystemParticles : Subsystem, IDrawable, IUpdateable
 
     public void AddParticleSystem(ParticleSystemBase particleSystem)
     {
-        if (!WorldRuntimeContext.For(Project).HasPresentation)
+        AddNetParticleSystem(particleSystem);
+    }
+
+    /// <summary>为短时特效预留粒子槽位，超额时跳过构造，系统移除时归还槽位。</summary>
+    internal bool TryAddBurst(int particleCount, Func<ParticleSystemBase> create)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(particleCount);
+        if (!WorldRuntimeContext.For(Project).HasPresentation ||
+            particleCount > burstParticleLimit - _reservedBurstParticles)
         {
-            return;
+            return false;
         }
 
-        AddNetParticleSystem(particleSystem);
+        Register(create(), particleCount);
+        return true;
     }
 
     public void AddNetParticleSystem(ParticleSystemBase particleSystem)
     {
-        if (!WorldRuntimeContext.For(Project).HasPresentation)
-        {
-            return;
-        }
+        if (WorldRuntimeContext.For(Project).HasPresentation) { Register(particleSystem, 0); }
+    }
 
+    private void Register(ParticleSystemBase particleSystem, int particleCount)
+    {
         if (particleSystem.SubsystemParticles == null)
         {
-            _particleSystems.Add(particleSystem, true);
+            _particleSystems.Add(particleSystem, particleCount);
+            _reservedBurstParticles += particleCount;
             particleSystem.SubsystemParticles = this;
-            particleSystem.OnAdded();
+            try { particleSystem.OnAdded(); }
+            catch
+            {
+                if (_particleSystems.Remove(particleSystem, out var reserved))
+                {
+                    _reservedBurstParticles -= reserved;
+                    particleSystem.SubsystemParticles = null;
+                }
+
+                throw;
+            }
+
             return;
         }
 
@@ -131,7 +156,8 @@ public class SubsystemParticles : Subsystem, IDrawable, IUpdateable
         }
 
         particleSystem.OnRemoved();
-        _particleSystems.Remove(particleSystem);
+        _particleSystems.Remove(particleSystem, out var reserved);
+        _reservedBurstParticles -= reserved;
         particleSystem.SubsystemParticles = null;
     }
 

@@ -4,6 +4,8 @@ namespace Game.ParticleSystems;
 
 public class BurntDebrisParticleSystem : ParticleSystem<BurntDebrisParticleSystem.Particle>
 {
+    public const int ParticleCount = 15;
+
     private readonly Random _random = new();
 
     private readonly SubsystemTerrain _subsystemTerrain;
@@ -18,7 +20,7 @@ public class BurntDebrisParticleSystem : ParticleSystem<BurntDebrisParticleSyste
     }
 
     public BurntDebrisParticleSystem(SubsystemTerrain terrain, Vector3 position)
-        : base(15)
+        : base(ParticleCount)
     {
         _subsystemTerrain = terrain;
         Texture = ContentManager.Get<Texture2D>("Textures/FireParticle");

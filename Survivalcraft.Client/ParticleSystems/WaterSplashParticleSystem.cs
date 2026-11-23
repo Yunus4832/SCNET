@@ -4,6 +4,8 @@ namespace Game.ParticleSystems;
 
 public class WaterSplashParticleSystem : ParticleSystem<WaterSplashParticleSystem.Particle>
 {
+    public const int ParticleCount = 60;
+
     private readonly Vector3 _position;
 
     private readonly Random _random = new();
@@ -16,7 +18,7 @@ public class WaterSplashParticleSystem : ParticleSystem<WaterSplashParticleSyste
         SubsystemTerrain terrain,
         Vector3 position,
         bool large
-    ) : base(60)
+    ) : base(ParticleCount)
     {
         _subsystemTerrain = terrain;
         _position = position;

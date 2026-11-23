@@ -4,6 +4,8 @@ namespace Game.ParticleSystems;
 
 public class MagmaSplashParticleSystem : ParticleSystem<MagmaSplashParticleSystem.Particle>
 {
+    public const int ParticleCount = 40;
+
     private readonly Vector3 _position;
 
     private readonly Random _random = new();
@@ -16,7 +18,7 @@ public class MagmaSplashParticleSystem : ParticleSystem<MagmaSplashParticleSyste
         SubsystemTerrain terrain,
         Vector3 position,
         bool large
-    ) : base(40)
+    ) : base(ParticleCount)
     {
         _subsystemTerrain = terrain;
         _position = position;

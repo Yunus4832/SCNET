@@ -240,14 +240,16 @@ public sealed class SubsystemProjectilesPresentation : Subsystem, IDrawable, IUp
 
                 break;
             case ProjectilePackage.EffectType.WaterSplash:
-                _subsystemParticles.AddParticleSystem(
-                    new WaterSplashParticleSystem(_subsystemTerrain, effect.Position, false)
+                _subsystemParticles.TryAddBurst(
+                    WaterSplashParticleSystem.ParticleCount,
+                    () => new WaterSplashParticleSystem(_subsystemTerrain, effect.Position, false)
                 );
                 _subsystemAudio.PlayRandomSound("Audio/Splashes", 1f, effect.Pitch, effect.Position, 6f, true);
                 break;
             case ProjectilePackage.EffectType.MagmaSplash:
-                _subsystemParticles.AddParticleSystem(
-                    new MagmaSplashParticleSystem(_subsystemTerrain, effect.Position, false)
+                _subsystemParticles.TryAddBurst(
+                    MagmaSplashParticleSystem.ParticleCount,
+                    () => new MagmaSplashParticleSystem(_subsystemTerrain, effect.Position, false)
                 );
                 _subsystemAudio.PlayRandomSound("Audio/Sizzles", 1f, effect.Pitch, effect.Position, 3f, true);
                 break;

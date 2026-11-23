@@ -51,7 +51,7 @@ public sealed class BlockDigOutcomeTest
         var presentation = owner.Catalog.Get(block.BlockIndex);
 
         presentation.OnDug(subsystem, particles, Outcome(oldValue, dig));
-        var systems = (Dictionary<ParticleSystemBase, bool>)typeof(SubsystemParticles)
+        var systems = (Dictionary<ParticleSystemBase, int>)typeof(SubsystemParticles)
             .GetField("_particleSystems", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(particles)!;
         var leaves = Assert.IsType<LeavesParticleSystem>(Assert.Single(systems.Keys));
         var emitted = (LeavesParticleSystem.Particle[])typeof(ParticleSystem<LeavesParticleSystem.Particle>)

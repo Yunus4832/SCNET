@@ -105,7 +105,10 @@ public sealed class SubsystemFirePresentation : Subsystem, IUpdateable
         var distance = _subsystemViews.CalculateDistanceFromNearestView(position);
         if (kind != BlockBurnEffectKind.FluidSizzle && _debrisCount < 15 && distance < 24f)
         {
-            _subsystemParticles.AddParticleSystem(new BurntDebrisParticleSystem(_terrain, position));
+            _subsystemParticles.TryAddBurst(
+                BurntDebrisParticleSystem.ParticleCount,
+                () => new BurntDebrisParticleSystem(_terrain, position)
+            );
             _debrisCount++;
         }
 

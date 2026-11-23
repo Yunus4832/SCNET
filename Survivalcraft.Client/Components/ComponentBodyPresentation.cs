@@ -69,8 +69,9 @@ public sealed class ComponentBodyPresentation : Component
                     4f,
                     true
                 );
-                _subsystemParticles.AddParticleSystem(
-                    new WaterSplashParticleSystem(
+                _subsystemParticles.TryAddBurst(
+                    WaterSplashParticleSystem.ParticleCount,
+                    () => new WaterSplashParticleSystem(
                         _subsystemTerrain,
                         position,
                         (_body.BoundingBox.Max - _body.BoundingBox.Min).Length() > 0.8f
@@ -83,8 +84,9 @@ public sealed class ComponentBodyPresentation : Component
             {
                 _fluidEffectsPlayed = true;
                 _subsystemAudio.PlaySound("Audio/SizzleLong", 1f, 0f, position, 4f, true);
-                _subsystemParticles.AddParticleSystem(
-                    new MagmaSplashParticleSystem(
+                _subsystemParticles.TryAddBurst(
+                    MagmaSplashParticleSystem.ParticleCount,
+                    () => new MagmaSplashParticleSystem(
                         _subsystemTerrain,
                         position,
                         (_body.BoundingBox.Max - _body.BoundingBox.Min).Length() > 0.8f
