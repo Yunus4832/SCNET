@@ -19,6 +19,23 @@ namespace Survivalcraft.Test.Subsystems;
 public sealed class CharacterNameUniquenessTest
 {
     [Fact]
+    public void SuggestedNamesUseWordPairsBeforeAddingNumbers()
+    {
+        using var project = new RuntimeTestProject(RuntimeSide.Authority);
+        var subsystem = new SubsystemCharacters();
+        project.InitializeSubsystem(subsystem);
+
+        string[] names = ["Лесной-Ворон", "Mocho-Ágil"];
+        AddActive(subsystem, "ЛЕСНОЙ-ВОРОН");
+        var lastWordPair = subsystem.SuggestCharacterName(names, 14);
+        Assert.Equal("Mocho-Ágil", lastWordPair);
+        var nextName = subsystem.SuggestCharacterName(names, 14, "MOCHO-ÁGIL");
+        Assert.Contains(nextName, new[] { "Лесной-Ворон1", "Mocho-Ágil1" });
+        Assert.True(subsystem.IsCharacterNameAvailable(nextName));
+        Assert.InRange(nextName.Length, 1, 14);
+    }
+
+    [Fact]
     public void ActiveAndOfflineNamesAreReservedCaseInsensitively()
     {
         using var project = new RuntimeTestProject(RuntimeSide.Authority);

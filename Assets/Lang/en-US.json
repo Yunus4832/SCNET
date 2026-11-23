@@ -3581,7 +3581,10 @@
             "CreationInvalidProfile": "The character name or appearance is invalid. Edit it and retry.",
             "CreationNameUnavailable": "This character name is already used in this world. Choose another name.",
             "CreationUnavailable": "Character creation is unavailable. Check the connection and retry.",
-            "3": "Character name"
+            "3": "Character name",
+            "NameModifiers": "Agile|Amber|Bold|Brisk|Calm|Clear|Coral|Cozy|Crisp|Dusky|Frost|Gold|Grand|Green|Keen|Lucky|Merry|Noble|Quiet|Rosy|Sandy|Snowy|Sunny|Swift",
+            "NameNouns": "Bear|Bison|Crane|Creek|Deer|Dove|Elk|Finch|Fox|Frog|Gecko|Hare|Hawk|Koala|Lynx|Moose|Otter|Owl|Panda|Pine|Raven|Seal|Tiger|Wolf",
+            "NamePattern": "{0}{1}"
         },
         "PasswordDialog": {
             "Remember": "Remember on this instance",

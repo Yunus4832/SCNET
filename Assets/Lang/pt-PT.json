@@ -3581,7 +3581,10 @@
             "CreationInvalidProfile": "O nome ou aspeto da personagem é inválido. Corrige e tenta novamente.",
             "CreationNameUnavailable": "Este nome já é usado neste mundo. Escolhe outro nome.",
             "CreationUnavailable": "Não é possível criar a personagem. Verifica a ligação e tenta novamente.",
-            "3": "Nome da personagem"
+            "3": "Nome da personagem",
+            "NameModifiers": "Ágil|Calmo|Curto|Doce|Feliz|Feroz|Fiel|Firme|Forte|Frio|Leal|Leve|Lindo|Livre|Manso|Morno|Nobre|Novo|Pardo|Rubro|Suave|Veloz|Verde|Vivo",
+            "NameNouns": "Astro|Bisão|Búfalo|Cais|Cão|Cedro|Corvo|Cervo|Falcão|Farol|Fogo|Gato|Grilo|Javali|Lagarto|Lago|Lince|Lobo|Monte|Mocho|Panda|Pato|Rio|Texugo",
+            "NamePattern": "{1}-{0}"
         },
         "PasswordDialog": {
             "Remember": "Guardar nesta instância",

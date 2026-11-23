@@ -211,6 +211,35 @@ public class SubsystemCharacters : Subsystem, IUpdateable
         }
     }
 
+    /// <summary>为新角色建议一个当前世界名册中尚未使用的名字。</summary>
+    public string SuggestCharacterName(
+        IReadOnlyList<string> baseNames,
+        int maximumLength,
+        string? previousName = null
+    )
+    {
+        var start = System.Random.Shared.Next(baseNames.Count);
+        for (var attempt = 0; attempt < baseNames.Count * 10000; attempt++)
+        {
+            var index = (start + attempt) % baseNames.Count;
+            var suffix = attempt / baseNames.Count;
+            var name = baseNames[index];
+            if (suffix > 0)
+            {
+                name += suffix.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            }
+
+            if (name.Length <= maximumLength &&
+                !string.Equals(name, previousName, StringComparison.OrdinalIgnoreCase) &&
+                IsCharacterNameAvailable(name))
+            {
+                return name;
+            }
+        }
+
+        throw new InvalidOperationException("No unused suggested character name remains.");
+    }
+
     public bool IsCharacterNameAvailable(string name, Guid exceptCharacterId = default)
     {
         if (!CharacterData.VerifyName(name)) { return false; }

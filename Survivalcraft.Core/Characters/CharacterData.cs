@@ -25,8 +25,6 @@ public partial class CharacterData : IDisposable
 
     public const double SpawnPreparationTimeoutSeconds = 15;
 
-    private static readonly Regex _validNameRegex = GenValidNameRegex();
-
     public bool IsDead;
 
     public bool IsSetStatus;
@@ -82,22 +80,7 @@ public partial class CharacterData : IDisposable
 
     public int SpawnsCount { get; set; }
 
-    public string Name
-    {
-        get;
-        set
-        {
-            if (value == field)
-            {
-                return;
-            }
-
-            field = value;
-            IsDefaultName = false;
-        }
-    } = string.Empty;
-
-    public bool IsDefaultName { get; set; }
+    public string Name { get; set; } = string.Empty;
 
     public CharacterSex CharacterSex
     {
@@ -192,7 +175,7 @@ public partial class CharacterData : IDisposable
         FirstSpawnTime = -1.0;
         LastSpawnTime = -1.0;
         RandomizeCharacterSkin();
-        ResetName(BuiltInCharacterSkins.GetDefaultName(CharacterSkinName));
+        Name = BuiltInCharacterSkins.GetDefaultName(CharacterSkinName);
         if (!WorldRuntimeContext.For(Project).IsAuthority) { return; }
 
         _stateMachine.AddState(
@@ -525,12 +508,6 @@ public partial class CharacterData : IDisposable
         CharacterSkinName = array2.Length != 0
             ? array2[random.Int(0, array2.Length - 1)]
             : array[random.Int(0, array.Length - 1)];
-    }
-
-    public void ResetName(string defaultName)
-    {
-        Name = defaultName;
-        IsDefaultName = true;
     }
 
     public static bool VerifyName(string name)
@@ -1121,22 +1098,13 @@ public partial class CharacterData : IDisposable
             return input;
         }
 
-        // 删除所有非法字符
-        var sanitized = new StringBuilder();
-        foreach (var c in input)
-        {
-            if (_validNameRegex.IsMatch(c.ToString()))
-            {
-                sanitized.Append(c);
-            }
-        }
-
-        // 处理空值情况
+        var sanitized = string.Concat(NameParts().Matches(input).Select(match => match.Value))
+            .Normalize(NormalizationForm.FormC);
         return sanitized.Length > 0
-            ? sanitized.ToString()
+            ? sanitized
             : throw new InvalidOperationException("Invalid input");
     }
 
-    [GeneratedRegex(@"^[\u4E00-\u9FA5A-Za-z0-9_-]+$", RegexOptions.Compiled)]
-    private static partial Regex GenValidNameRegex();
+    [GeneratedRegex(@"\p{L}\p{M}*|[\p{Nd}_-]")]
+    private static partial Regex NameParts();
 }

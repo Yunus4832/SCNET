@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Xml.Linq;
 
 using Engine.Input;
@@ -50,6 +51,8 @@ public class CharacterScreen : Screen
 
     private readonly ButtonWidget _playButton;
 
+    private readonly ButtonWidget _randomizeNameButton;
+
     private readonly ButtonWidget _characterSexButton;
 
     private readonly ClickableTextRowWidget _characterSexLabel;
@@ -66,6 +69,7 @@ public class CharacterScreen : Screen
         _characterSexButton = Children.Find<ButtonWidget>("CharacterSexButton")!;
         _characterSexLabel = Children.Find<ClickableTextRowWidget>("CharacterSexLabel")!;
         _nameTextBox = Children.Find<TextBoxWidget>("Name")!;
+        _randomizeNameButton = Children.Find<ButtonWidget>("RandomizeName")!;
         _characterSkinLabel = Children.Find<LabelWidget>("CharacterSkinLabel")!;
         _characterSkinSelector = Children.Find<ClickableWidget>("CharacterSkinSelector")!;
         _controlsDrawer = Children.Find<SelectionDrawerWidget>("Controls")!;
@@ -78,6 +82,12 @@ public class CharacterScreen : Screen
         _playerModel.CharacterSkinsCache = _characterSkinsCache;
         _nameTextBox.FocusLost += delegate
         {
+            if (_mode == Mode.Initial)
+            {
+                _characterData.Name = _nameTextBox.Text;
+                return;
+            }
+
             if (VerifyName())
             {
                 _characterData.Name = _nameTextBox.Text.Trim();
@@ -107,9 +117,11 @@ public class CharacterScreen : Screen
 
         _descriptionLabel.Text = string.Empty;
         _controlsDrawer.RefreshItems();
+        _randomizeNameButton.IsVisible = _mode == Mode.Initial;
 
         if (_mode == Mode.Initial)
         {
+            _characterData.Name = SuggestCharacterName();
             _characterSexButton.IsEnabled = true;
             _playButton.IsVisible = true;
         }
@@ -118,10 +130,14 @@ public class CharacterScreen : Screen
             _characterSexButton.IsEnabled = false;
             _playButton.IsVisible = false;
         }
+
+        _nameTextBox.Text = _characterData.Name;
     }
 
     public override void Leave()
     {
+        if (_mode == Mode.Initial) { _nameTextBox.HasFocus = false; }
+
         if (!_continuingEntry) { _characterData.SubsystemCharacters.ClearCharacterCreationRequest(); }
 
         _continuingEntry = false;
@@ -132,9 +148,10 @@ public class CharacterScreen : Screen
 
     public override void Update()
     {
-        if (ClientApplication.World?.Project is null)
+        // 退出时世界可能先卸载，角色页仍会在转场期间收到更新。
+        if (_characterData is null || !ReferenceEquals(ClientApplication.World?.Project, _characterData.Project))
         {
-            throw new InvalidOperationException("ClientApplication.World?.Project is not initialized");
+            return;
         }
 
 
@@ -150,6 +167,13 @@ public class CharacterScreen : Screen
         _playerModel.CharacterSex = _characterData.CharacterSex;
         _playerModel.CharacterSkinName = _characterData.CharacterSkinName;
         _characterSexButton.Text = _characterData.CharacterSex.ToString();
+        if (_mode == Mode.Initial && _randomizeNameButton.IsClicked)
+        {
+            var previousName = _nameTextBox.Text.Trim();
+            _nameTextBox.HasFocus = false;
+            _characterData.Name = SuggestCharacterName(previousName);
+        }
+
         if (!_nameTextBox.HasFocus)
         {
             _nameTextBox.Text = _characterData.Name;
@@ -177,10 +201,6 @@ public class CharacterScreen : Screen
             _characterData.CharacterSex =
                 _characterData.CharacterSex == CharacterSex.Male ? CharacterSex.Female : CharacterSex.Male;
             _characterData.RandomizeCharacterSkin();
-            if (_characterData.IsDefaultName)
-            {
-                _characterData.ResetName(CharacterSkinsManager.GetDisplayName(_characterData.CharacterSkinName));
-            }
         }
 
         if (_characterSkinSelector.IsClicked)
@@ -208,16 +228,7 @@ public class CharacterScreen : Screen
                     playerModelWidget.CharacterSkinTexture = texture;
                     return obj;
                 },
-                delegate(object item)
-                {
-                    _characterData.CharacterSkinName = (string)item;
-                    if (_characterData.IsDefaultName)
-                    {
-                        _characterData.ResetName(
-                            CharacterSkinsManager.GetDisplayName(_characterData.CharacterSkinName)
-                        );
-                    }
-                },
+                item => _characterData.CharacterSkinName = (string)item,
                 _characterData.CharacterSkinName
             );
             DialogsManager.ShowDialog(null, dialog);
@@ -255,6 +266,23 @@ public class CharacterScreen : Screen
         }
 
         _nameWasInvalid = false;
+    }
+
+    private string SuggestCharacterName(string? previousName = null)
+    {
+        var catalog = Localization.ClientLanguage.Catalog;
+        const StringSplitOptions options = StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries;
+        var modifiers = catalog.GetContentWidgets(_typeName, "NameModifiers").Split('|', options);
+        var nouns = catalog.GetContentWidgets(_typeName, "NameNouns").Split('|', options);
+        var pattern = catalog.GetContentWidgets(_typeName, "NamePattern");
+        var baseNames = modifiers.SelectMany(modifier =>
+            nouns.Select(noun => string.Format(CultureInfo.InvariantCulture, pattern, modifier, noun))
+        ).ToArray();
+        return _characterData.SubsystemCharacters.SuggestCharacterName(
+            baseNames,
+            _nameTextBox.MaximumLength,
+            previousName
+        );
     }
 
     private void UpdateInputDevice()

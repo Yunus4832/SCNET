@@ -74,8 +74,15 @@ public sealed class CharacterCreationFlowTest
         }
     }
 
-    [Fact]
-    public void AuthorityReportsInvalidExistingAndOfflineDuplicateProfilesWithoutMutatingOwnership()
+    [Theory]
+    [InlineData("Tester", "Tester")]
+    [InlineData("银尾狐", "银尾狐")]
+    [InlineData("Mocho-A\u0301gil", "Mocho-Ágil")]
+    [InlineData("Лесной-Ворон", "Лесной-Ворон")]
+    public void AuthorityReportsInvalidExistingAndOfflineDuplicateProfilesWithoutMutatingOwnership(
+        string requestedName,
+        string expectedName
+    )
     {
         using var project = new RuntimeTestProject(RuntimeSide.Authority);
         var players = new SubsystemCharacters();
@@ -86,11 +93,11 @@ public sealed class CharacterCreationFlowTest
         var sender = new Client(null, 1, Guid.NewGuid(), Guid.Empty) { PlayerAddress = address };
         var request = new CharacterCreateRequestPackage
         {
-            CreationRequestId = Guid.NewGuid(), CharacterName = "Tester", SkinName = "$Male1",
+            CreationRequestId = Guid.NewGuid(), CharacterName = requestedName, SkinName = "$Male1",
             CharacterSex = ProtocolEnum.Encode(CharacterSex.Male)
         };
         Assert.Null(CharacterCreation.Validate(request, sender, players, store, out var name, out _));
-        Assert.Equal("Tester", name);
+        Assert.Equal(expectedName, name);
         Assert.Equal(
             CharacterCreationError.Unavailable,
             CharacterCreation.Validate(
@@ -114,7 +121,7 @@ public sealed class CharacterCreationFlowTest
             )
         );
         var data = new ValuesDictionary();
-        data.SetValue("Name", "TESTER");
+        data.SetValue("Name", expectedName.ToUpperInvariant());
         var recordType = typeof(SubsystemCharacters).GetNestedType("OfflineCharacterData", BindingFlags.NonPublic)!;
         var record = Activator.CreateInstance(recordType, data, new ValuesDictionary())!;
         var offline = (IDictionary)typeof(SubsystemCharacters).GetField(
