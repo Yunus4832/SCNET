@@ -12,7 +12,6 @@ public class ChunkStateResetPackageHandler : PackageHandlerBase<ChunkStateResetP
         project.FindSubsystem<SubsystemSignBlockBehavior>(true)!.ClearChunkState(package.Chunk);
         project.FindSubsystem<SubsystemMemoryBankBlockBehavior>(true)!.ClearChunkState(package.Chunk);
         project.FindSubsystem<SubsystemTruthTableCircuitBlockBehavior>(true)!.ClearChunkState(package.Chunk);
-        project.FindSubsystem<SubsystemFireBlockBehavior>(true)!.ClearChunkState(package.Chunk);
         project.FindSubsystem<SubsystemExplosivesBlockBehavior>(true)!.ClearReplicaChunkState(package.Chunk);
     }
 }

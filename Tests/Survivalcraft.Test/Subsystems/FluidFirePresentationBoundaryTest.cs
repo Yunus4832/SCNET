@@ -8,9 +8,11 @@ using EntitySystem.TemplatesDatabase;
 using Game.Network;
 using Game.Network.Handling;
 using Game.Network.Transport;
+using Game.Protocol.Terrain;
 using Game.Subsystems;
 using Game.Subsystems.Behavior;
 using Game.Terrains;
+using Game.Terrains.Distribution;
 using Game.World;
 
 using Survivalcraft.Test.Fixtures;
@@ -21,6 +23,67 @@ namespace Survivalcraft.Test.Subsystems;
 [Collection(ConfigFileCollection.Name)]
 public sealed class FluidFirePresentationBoundaryTest
 {
+    [Fact]
+    public void ChunkSnapshotsRestoreAndClearAmbientFireAfterRevisit()
+    {
+        using var project = new RuntimeTestProject(RuntimeSide.Client);
+        using var terrain = new Terrain();
+        var terrainSubsystem = new SubsystemTerrain { Terrain = terrain };
+        var content = new ClientChunkContentCoordinator(terrain);
+        typeof(SubsystemTerrain).GetProperty("ClientChunkContents")!.SetValue(terrainSubsystem, content);
+        project.AddSubsystem(terrainSubsystem);
+        project.AddSubsystem(new SubsystemTime());
+        var fire = new SubsystemFireBlockBehavior();
+        project.AddSubsystem(fire);
+        fire.Load(new ValuesDictionary());
+        var ambient = new SubsystemAmbientSounds();
+        var audio = new SubsystemAudio();
+        project.AddSubsystem(ambient);
+        project.AddSubsystem(audio);
+        project.AddSubsystem(new SubsystemParticles());
+        project.AddSubsystem(new SubsystemGameWidgets());
+        ((List<Vector3>)Field(audio, "_listenerPositions")!).Add(Vector3.Zero);
+        var presentation = new SubsystemFirePresentation();
+        project.InitializeSubsystem(presentation);
+        presentation.Load(new ValuesDictionary());
+        var chunk = terrain.AllocateChunk(0, 0);
+        var cells = new int[AuthorityChunkSnapshot.CellCount];
+        var shafts = new long[AuthorityChunkSnapshot.ShaftCount];
+        cells[TerrainChunk.CalculateCellIndex(1, 0, 0)] = 104;
+
+        bool Install(long version) => content.TryInstall(
+            new ClientChunkSnapshot(
+                new ChunkAllocationId(chunk.Coords, chunk.AllocationGeneration),
+                version,
+                cells,
+                shafts
+            )
+        );
+
+        Assert.True(Install(1));
+        presentation.Update(1);
+        Assert.InRange(ambient.FireSoundVolume, .74257f, .74258f);
+        fire.OnChunkDiscarding(chunk);
+        terrain.FreeChunk(chunk);
+        ambient.FireSoundVolume = 0;
+        presentation.Update(1);
+        Assert.Empty(fire.FirePoints);
+        Assert.Equal(0f, ambient.FireSoundVolume);
+        chunk = terrain.AllocateChunk(0, 0);
+        Array.Clear(cells);
+        cells[TerrainChunk.CalculateCellIndex(2, 0, 0)] = 104;
+        Assert.True(Install(2));
+        presentation.Update(1);
+        Assert.InRange(ambient.FireSoundVolume, .18703f, .18704f);
+        Assert.Equal(new Point3(2, 0, 0), Assert.Single(fire.FirePoints));
+        Array.Clear(cells);
+        Assert.True(Install(3));
+        ambient.FireSoundVolume = 0;
+        presentation.Update(1);
+        Assert.Empty(fire.FirePoints);
+        Assert.Equal(0f, ambient.FireSoundVolume);
+    }
+
     [Fact]
     public void RealAuthorityFluidAndFireLoadAndUpdateWithoutAudioViewsOrParticles()
     {
@@ -86,7 +149,7 @@ public sealed class FluidFirePresentationBoundaryTest
         var presentation = new SubsystemFirePresentation();
         project.InitializeSubsystem(presentation);
         presentation.Load(new ValuesDictionary());
-        fire.AddFireNet(1, 0, 0, 1f);
+        fire.OnBlockAdded(104, 0, 1, 0, 0);
         presentation.Update(1f);
         Assert.InRange(ambient.FireSoundVolume, .74257f, .74258f);
         Assert.Single(fire.FirePoints);
@@ -94,7 +157,7 @@ public sealed class FluidFirePresentationBoundaryTest
         ambient.FireSoundVolume = 0f;
         presentation.Update(1f);
         Assert.Equal(0f, ambient.FireSoundVolume);
-        fire.AddFireNet(2, 0, 0, 1f);
+        fire.OnBlockAdded(104, 0, 2, 0, 0);
         presentation.Update(1f);
         Assert.InRange(ambient.FireSoundVolume, .18703f, .18704f);
         Assert.Equal(new Point3(2, 0, 0), Assert.Single(fire.FirePoints));

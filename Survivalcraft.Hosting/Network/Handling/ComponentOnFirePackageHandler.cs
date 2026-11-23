@@ -20,25 +20,6 @@ public class ComponentOnFirePackageHandler : PackageHandlerBase<ComponentOnFireP
                     fuseRemoved.Point
                 );
                 break;
-            case BlockFireAddedPackage message1:
-            {
-                project.FindSubsystem<SubsystemFireBlockBehavior>(true)!.AddFireNet(
-                    message1.X,
-                    message1.Y,
-                    message1.Z,
-                    message1.Duration
-                );
-                break;
-            }
-            case BlockFireRemovedPackage message2:
-            {
-                project.FindSubsystem<SubsystemFireBlockBehavior>(true)!.RemoveFireNet(
-                    message2.X,
-                    message2.Y,
-                    message2.Z
-                );
-                break;
-            }
             case EntityFirePackage message3:
             {
                 project.FindEntityById(

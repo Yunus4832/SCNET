@@ -62,8 +62,6 @@ namespace Game.Protocol;
 [Union(57, typeof(Connection.ConnectionRequestPackage))]
 [Union(58, typeof(Connection.ServerInfoRequestPackage))]
 [Union(59, typeof(Connection.ServerInfoResponsePackage))]
-[Union(60, typeof(Entities.BlockFireAddedPackage))]
-[Union(61, typeof(Entities.BlockFireRemovedPackage))]
 [Union(62, typeof(Entities.BodyCollisionPackage))]
 [Union(63, typeof(Entities.BodyImpulsePackage))]
 [Union(64, typeof(Entities.BodyStatesPackage))]

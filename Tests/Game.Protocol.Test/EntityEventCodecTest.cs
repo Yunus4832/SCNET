@@ -16,8 +16,6 @@ public sealed class EntityEventCodecTest
         [
             new EntityFirePackage { EntityId = 42, AttackerEntityId = 43, Duration = 5 }
         ];
-        yield return [new BlockFireAddedPackage { X = -2, Y = 64, Z = 3, Duration = 0.5f }];
-        yield return [new BlockFireRemovedPackage { X = -2, Y = 64, Z = 3 }];
         foreach (var type in Enum.GetValues<ComponentBehaviorPackage.EventType>())
         {
             yield return

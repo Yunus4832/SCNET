@@ -31,10 +31,6 @@ public sealed class ChunkStateResetPackageTest
                     { Target = new EditableWorldBlockTarget(default), ItemType = BuiltInBlockEditKind.Button }
             )
         );
-        Assert.Equal(
-            PackageTransportPolicy.Bulk,
-            PackageTransportPolicy.Get(new BlockFireRemovedPackage { X = 1, Y = 2, Z = 3 })
-        );
     }
 
     [Fact]

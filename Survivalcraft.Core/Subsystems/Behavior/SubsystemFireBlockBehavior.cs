@@ -28,7 +28,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     private SubsystemTime _subsystemTime = null!;
 
-    private bool _subscribedToChunkInterest;
+    private bool _subscribedToChunkContent;
 
     public IReadOnlyCollection<Point3> FirePoints => _fireData.Keys;
 
@@ -73,7 +73,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
                     if (SubsystemTerrain.Terrain.GetCellContents(x, y, z) != BuiltInBlockRegistry.GetIndex<FireBlock>())
                     {
-                        RemoveFireNet(x, y, z);
+                        RemoveFire(x, y, z);
                         _copyIndex++;
                         continue;
                     }
@@ -439,31 +439,17 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         AddFire(x, y, z, 1f);
     }
 
-    public override void OnChunkDiscarding(TerrainChunk chunk)
-    {
-        var list = new List<Point3>();
-        foreach (var key in _fireData.Keys)
-        {
-            if (key.X >= chunk.Origin.X &&
-                key.X < chunk.Origin.X + 16 &&
-                key.Z >= chunk.Origin.Y &&
-                key.Z < chunk.Origin.Y + 16)
-            {
-                list.Add(key);
-            }
-        }
-
-        foreach (var item in list)
-        {
-            RemoveFire(item.X, item.Y, item.Z);
-        }
-    }
+    public override void OnChunkDiscarding(TerrainChunk chunk) => ClearChunkState(chunk.Coords);
 
     public override void Load(ValuesDictionary valuesDictionary)
     {
         base.Load(valuesDictionary);
-        Project.FindSubsystem<SubsystemNetworkInterest>(true)!.ChunkEntered += SendChunkState;
-        _subscribedToChunkInterest = true;
+        if (SubsystemTerrain.ClientChunkContents is { } contents)
+        {
+            contents.ContentInstalled += RefreshChunkFirePoints;
+            _subscribedToChunkContent = true;
+        }
+
         _subsystemTime = Project.FindSubsystem<SubsystemTime>(true)!;
         for (var i = -2; i <= 2; i++)
         {
@@ -487,26 +473,31 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         }
     }
 
-    private void AddFire(int x, int y, int z, float expandability)
+    private void RefreshChunkFirePoints(TerrainChunk chunk)
     {
-        if (WorldRuntimeContext.For(Project).IsAuthority && TryAddFire(x, y, z, expandability))
+        ClearChunkState(chunk.Coords);
+        var fireContents = BuiltInBlockRegistry.GetIndex<FireBlock>();
+        for (var z = 0; z < 16; z++)
         {
-            NetworkSender.SendToChunkObservers(
-                Project,
-                new Point2(x >> 4, z >> 4),
-                new BlockFireAddedPackage { X = x, Y = y, Z = z, Duration = expandability }
-            );
+            for (var x = 0; x < 16; x++)
+            {
+                for (var y = 0; y < 1 << TerrainChunk.HeightBits; y++)
+                {
+                    if (chunk.GetCellContentsFast(x, y, z) == fireContents)
+                    {
+                        AddFire(chunk.Origin.X + x, y, chunk.Origin.Y + z, 1f);
+                    }
+                }
+            }
         }
     }
 
-    public void AddFireNet(int x, int y, int z, float expandability) => TryAddFire(x, y, z, expandability);
-
-    private bool TryAddFire(int x, int y, int z, float expandability)
+    private void AddFire(int x, int y, int z, float expandability)
     {
         var point = new Point3(x, y, z);
         if (_fireData.ContainsKey(point))
         {
-            return false;
+            return;
         }
 
         var fireData = new FireData
@@ -517,57 +508,30 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         if (WorldRuntimeContext.For(Project).IsAuthority) { InitializeFireDataTimes(fireData); }
 
         _fireData[point] = fireData;
-        return true;
     }
 
-    public void ClearChunkState(Point2 chunk)
+    internal void ClearChunkState(Point2 chunk)
     {
         foreach (var point in _fireData.Keys.Where(point =>
                      point.X >> 4 == chunk.X && point.Z >> 4 == chunk.Y
                  ).ToArray())
         {
-            RemoveFireNet(point.X, point.Y, point.Z);
-        }
-    }
-
-    private void SendChunkState(WorldConnection client, Point2 chunk)
-    {
-        foreach (var fire in _fireData.Values.Where(fire =>
-                     fire.Point.X >> 4 == chunk.X && fire.Point.Z >> 4 == chunk.Y
-                 ))
-        {
-            NetworkSender.SendTo(
-                client,
-                new BlockFireAddedPackage
-                    { X = fire.Point.X, Y = fire.Point.Y, Z = fire.Point.Z, Duration = fire.FireExpandability }
-            );
+            RemoveFire(point.X, point.Y, point.Z);
         }
     }
 
     public override void Dispose()
     {
-        if (_subscribedToChunkInterest)
+        if (_subscribedToChunkContent)
         {
-            Project.FindSubsystem<SubsystemNetworkInterest>(true)!.ChunkEntered -= SendChunkState;
-            _subscribedToChunkInterest = false;
+            SubsystemTerrain.ClientChunkContents!.ContentInstalled -= RefreshChunkFirePoints;
+            _subscribedToChunkContent = false;
         }
 
         base.Dispose();
     }
 
     private void RemoveFire(int x, int y, int z)
-    {
-        if (_fireData.Remove(new Point3(x, y, z)) && WorldRuntimeContext.For(Project).IsAuthority)
-        {
-            NetworkSender.SendToChunkObservers(
-                Project,
-                new Point2(x >> 4, z >> 4),
-                new BlockFireRemovedPackage { X = x, Y = y, Z = z }
-            );
-        }
-    }
-
-    public void RemoveFireNet(int x, int y, int z)
     {
         var key = new Point3(x, y, z);
         _fireData.Remove(key);
