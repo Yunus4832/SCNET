@@ -166,7 +166,7 @@ public static class Display
             GLWrapper.ApplyRasterizerState(RasterizerState);
             GLWrapper.ApplyDepthStencilState(DepthStencilState);
             GLWrapper.ApplyBlendState(BlendState);
-            var indices = gCHandle2.AddrOfPinnedObject() + 2 * startIndex;
+            var indices = gCHandle2.AddrOfPinnedObject() + sizeof(int) * startIndex;
             unsafe
             {
                 GLWrapper.GL.DrawElements(

@@ -9,8 +9,8 @@ public sealed class FlatBatch3D : BaseFlatBatch
         var count = LineVertices.Count;
         LineVertices.Add(new VertexPositionColor(p1, color));
         LineVertices.Add(new VertexPositionColor(p2, color));
-        LineIndices.Add((ushort)count);
-        LineIndices.Add((ushort)(count + 1));
+        LineIndices.Add(count);
+        LineIndices.Add(count + 1);
     }
 
     public void QueueLine(Vector3 p1, Vector3 p2, Color color1, Color color2)
@@ -18,8 +18,8 @@ public sealed class FlatBatch3D : BaseFlatBatch
         var count = LineVertices.Count;
         LineVertices.Add(new VertexPositionColor(p1, color1));
         LineVertices.Add(new VertexPositionColor(p2, color2));
-        LineIndices.Add((ushort)count);
-        LineIndices.Add((ushort)(count + 1));
+        LineIndices.Add(count);
+        LineIndices.Add(count + 1);
     }
 
     public void QueueLineStrip(IEnumerable<Vector3> points, Color color)
@@ -34,8 +34,8 @@ public sealed class FlatBatch3D : BaseFlatBatch
 
         for (var i = 0; i < pointCount - 1; i++)
         {
-            LineIndices.Add((ushort)(count + i));
-            LineIndices.Add((ushort)(count + i + 1));
+            LineIndices.Add(count + i);
+            LineIndices.Add(count + i + 1);
         }
     }
 
@@ -45,9 +45,9 @@ public sealed class FlatBatch3D : BaseFlatBatch
         TriangleVertices.Add(new VertexPositionColor(p1, color));
         TriangleVertices.Add(new VertexPositionColor(p2, color));
         TriangleVertices.Add(new VertexPositionColor(p3, color));
-        TriangleIndices.Add((ushort)count);
-        TriangleIndices.Add((ushort)(count + 1));
-        TriangleIndices.Add((ushort)(count + 2));
+        TriangleIndices.Add(count);
+        TriangleIndices.Add(count + 1);
+        TriangleIndices.Add(count + 2);
     }
 
     public void QueueTriangle(Vector3 p1, Vector3 p2, Vector3 p3, Color color1, Color color2, Color color3)
@@ -56,9 +56,9 @@ public sealed class FlatBatch3D : BaseFlatBatch
         TriangleVertices.Add(new VertexPositionColor(p1, color1));
         TriangleVertices.Add(new VertexPositionColor(p2, color2));
         TriangleVertices.Add(new VertexPositionColor(p3, color3));
-        TriangleIndices.Add((ushort)count);
-        TriangleIndices.Add((ushort)(count + 1));
-        TriangleIndices.Add((ushort)(count + 2));
+        TriangleIndices.Add(count);
+        TriangleIndices.Add(count + 1);
+        TriangleIndices.Add(count + 2);
     }
 
     public void QueueQuad(Vector3 p1, Vector3 p2, Vector3 p3, Vector3 p4, Color color)
@@ -68,12 +68,12 @@ public sealed class FlatBatch3D : BaseFlatBatch
         TriangleVertices.Add(new VertexPositionColor(p2, color));
         TriangleVertices.Add(new VertexPositionColor(p3, color));
         TriangleVertices.Add(new VertexPositionColor(p4, color));
-        TriangleIndices.Add((ushort)count);
-        TriangleIndices.Add((ushort)(count + 1));
-        TriangleIndices.Add((ushort)(count + 2));
-        TriangleIndices.Add((ushort)(count + 2));
-        TriangleIndices.Add((ushort)(count + 3));
-        TriangleIndices.Add((ushort)count);
+        TriangleIndices.Add(count);
+        TriangleIndices.Add(count + 1);
+        TriangleIndices.Add(count + 2);
+        TriangleIndices.Add(count + 2);
+        TriangleIndices.Add(count + 3);
+        TriangleIndices.Add(count);
     }
 
     public void QueueBoundingBox(BoundingBox boundingBox, Color color)

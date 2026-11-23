@@ -18,7 +18,7 @@ public sealed class TexturedBatch2D : BaseTexturedBatch
         TriangleVertices.AddRange(batch.TriangleVertices);
         for (var i = 0; i < batch.TriangleIndices.Count; i++)
         {
-            TriangleIndices.Add((ushort)(batch.TriangleIndices[i] + count));
+            TriangleIndices.Add(batch.TriangleIndices[i] + count);
         }
 
         if (matrix.HasValue && matrix != Matrix.Identity)
@@ -53,9 +53,9 @@ public sealed class TexturedBatch2D : BaseTexturedBatch
             new VertexPositionColorTexture(new Vector3(p3.X, p3.Y, depth), color, texCoord3);
         var count2 = TriangleIndices.Count;
         TriangleIndices.Count += 3;
-        TriangleIndices.Array[count2] = (ushort)count;
-        TriangleIndices.Array[count2 + 1] = (ushort)(count + 1);
-        TriangleIndices.Array[count2 + 2] = (ushort)(count + 2);
+        TriangleIndices.Array[count2] = count;
+        TriangleIndices.Array[count2 + 1] = count + 1;
+        TriangleIndices.Array[count2 + 2] = count + 2;
     }
 
     public void QueueTriangle(
@@ -81,9 +81,9 @@ public sealed class TexturedBatch2D : BaseTexturedBatch
             new VertexPositionColorTexture(new Vector3(p3.X, p3.Y, depth), color3, texCoord3);
         var count2 = TriangleIndices.Count;
         TriangleIndices.Count += 3;
-        TriangleIndices.Array[count2] = (ushort)count;
-        TriangleIndices.Array[count2 + 1] = (ushort)(count + 1);
-        TriangleIndices.Array[count2 + 2] = (ushort)(count + 2);
+        TriangleIndices.Array[count2] = count;
+        TriangleIndices.Array[count2 + 1] = count + 1;
+        TriangleIndices.Array[count2 + 2] = count + 2;
     }
 
     public void QueueQuad(
@@ -119,12 +119,12 @@ public sealed class TexturedBatch2D : BaseTexturedBatch
         );
         var count2 = TriangleIndices.Count;
         TriangleIndices.Count += 6;
-        TriangleIndices.Array[count2] = (ushort)count;
-        TriangleIndices.Array[count2 + 1] = (ushort)(count + 1);
-        TriangleIndices.Array[count2 + 2] = (ushort)(count + 2);
-        TriangleIndices.Array[count2 + 3] = (ushort)(count + 2);
-        TriangleIndices.Array[count2 + 4] = (ushort)(count + 3);
-        TriangleIndices.Array[count2 + 5] = (ushort)count;
+        TriangleIndices.Array[count2] = count;
+        TriangleIndices.Array[count2 + 1] = count + 1;
+        TriangleIndices.Array[count2 + 2] = count + 2;
+        TriangleIndices.Array[count2 + 3] = count + 2;
+        TriangleIndices.Array[count2 + 4] = count + 3;
+        TriangleIndices.Array[count2 + 5] = count;
     }
 
     public void QueueQuad(
@@ -152,12 +152,12 @@ public sealed class TexturedBatch2D : BaseTexturedBatch
             new VertexPositionColorTexture(new Vector3(p4.X, p4.Y, depth), color, texCoord4);
         var count2 = TriangleIndices.Count;
         TriangleIndices.Count += 6;
-        TriangleIndices.Array[count2] = (ushort)count;
-        TriangleIndices.Array[count2 + 1] = (ushort)(count + 1);
-        TriangleIndices.Array[count2 + 2] = (ushort)(count + 2);
-        TriangleIndices.Array[count2 + 3] = (ushort)(count + 2);
-        TriangleIndices.Array[count2 + 4] = (ushort)(count + 3);
-        TriangleIndices.Array[count2 + 5] = (ushort)count;
+        TriangleIndices.Array[count2] = count;
+        TriangleIndices.Array[count2 + 1] = count + 1;
+        TriangleIndices.Array[count2 + 2] = count + 2;
+        TriangleIndices.Array[count2 + 3] = count + 2;
+        TriangleIndices.Array[count2 + 4] = count + 3;
+        TriangleIndices.Array[count2 + 5] = count;
     }
 
     public void QueueQuad(
@@ -188,12 +188,12 @@ public sealed class TexturedBatch2D : BaseTexturedBatch
             new VertexPositionColorTexture(new Vector3(p4.X, p4.Y, depth), color4, texCoord4);
         var count2 = TriangleIndices.Count;
         TriangleIndices.Count += 6;
-        TriangleIndices.Array[count2] = (ushort)count;
-        TriangleIndices.Array[count2 + 1] = (ushort)(count + 1);
-        TriangleIndices.Array[count2 + 2] = (ushort)(count + 2);
-        TriangleIndices.Array[count2 + 3] = (ushort)(count + 2);
-        TriangleIndices.Array[count2 + 4] = (ushort)(count + 3);
-        TriangleIndices.Array[count2 + 5] = (ushort)count;
+        TriangleIndices.Array[count2] = count;
+        TriangleIndices.Array[count2 + 1] = count + 1;
+        TriangleIndices.Array[count2 + 2] = count + 2;
+        TriangleIndices.Array[count2 + 3] = count + 2;
+        TriangleIndices.Array[count2 + 4] = count + 3;
+        TriangleIndices.Array[count2 + 5] = count;
     }
 
     public void Flush(bool clearAfterFlush = true)

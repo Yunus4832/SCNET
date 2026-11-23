@@ -85,7 +85,7 @@ public static class BevelledShapeRenderer
 
             foreach (var tempIndex in _tmpIndices)
             {
-                batch.TriangleIndices.Add((ushort)(tempIndex + count));
+                batch.TriangleIndices.Add(tempIndex + count);
             }
 
             if (!(antialiasSize > 0f))
@@ -141,7 +141,7 @@ public static class BevelledShapeRenderer
 
             foreach (var tempIndex in _tmpIndices)
             {
-                batch.TriangleIndices.Add((ushort)(tempIndex + count2));
+                batch.TriangleIndices.Add(tempIndex + count2);
             }
 
             if (!(antialiasSize > 0f))
@@ -209,7 +209,7 @@ public static class BevelledShapeRenderer
 
         foreach (var tempIndex in _tmpIndices)
         {
-            batch.TriangleIndices.Add((ushort)(tempIndex + count));
+            batch.TriangleIndices.Add(tempIndex + count);
         }
     }
 
@@ -257,9 +257,9 @@ public static class BevelledShapeRenderer
             triangleVertices.Add(item);
         }
 
-        foreach (ushort triangleIndex in _tmpBatch.TriangleIndices)
+        foreach (var triangleIndex in _tmpBatch.TriangleIndices)
         {
-            batch.TriangleIndices.Add((ushort)(triangleIndex + count));
+            batch.TriangleIndices.Add(triangleIndex + count);
         }
     }
 
