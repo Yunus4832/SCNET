@@ -25,10 +25,11 @@
                     </UniformSpacingPanelWidget>
 
                     <UniformSpacingPanelWidget Name="WindowModeContainer" Direction="Horizontal" Margin="0, 3">
-                        <LabelWidget Text="[SettingsUiScreen:2]" HorizontalAlignment="Far" VerticalAlignment="Center"
-                                     Margin="20, 0"/>
-                        <BevelledButtonWidget Name="WindowModeButton" Style="{Styles/ButtonStyle_310x60}"
-                                              VerticalAlignment="Center" Margin="20, 0"/>
+                        <CanvasWidget Size="310, 60" HorizontalAlignment="Far" VerticalAlignment="Near" Margin="20, 0">
+                            <LabelWidget Text="[SettingsUiScreen:2]" HorizontalAlignment="Far" VerticalAlignment="Center"/>
+                        </CanvasWidget>
+                        <InlineSelectionWidget Name="WindowModeButton" CollapsedSize="310, 60"
+                                               VerticalAlignment="Near" Margin="20, 0"/>
                     </UniformSpacingPanelWidget>
 
                     <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">

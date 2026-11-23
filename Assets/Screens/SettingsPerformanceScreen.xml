@@ -16,10 +16,12 @@
                                   IsHitTestVisible="false">
 
                     <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                        <LabelWidget Text="[SettingsPerformanceScreen:2]" HorizontalAlignment="Far"
-                                     VerticalAlignment="Center" Margin="20, 0"/>
-                        <BevelledButtonWidget Name="ResolutionButton" Style="{Styles/ButtonStyle_310x60}"
-                                              VerticalAlignment="Center" Margin="20, 0"/>
+                        <CanvasWidget Size="310, 60" HorizontalAlignment="Far" VerticalAlignment="Near" Margin="20, 0">
+                            <LabelWidget Text="[SettingsPerformanceScreen:2]" HorizontalAlignment="Far"
+                                         VerticalAlignment="Center"/>
+                        </CanvasWidget>
+                        <InlineSelectionWidget Name="ResolutionButton" CollapsedSize="310, 60"
+                                               VerticalAlignment="Near" Margin="20, 0"/>
                     </UniformSpacingPanelWidget>
 
                     <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
@@ -40,10 +42,12 @@
                     </UniformSpacingPanelWidget>
 
                     <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                        <LabelWidget Text="[SettingsPerformanceScreen:6]" HorizontalAlignment="Far"
-                                     VerticalAlignment="Center" Margin="20, 0"/>
-                        <BevelledButtonWidget Name="SkyRenderingModeButton" Style="{Styles/ButtonStyle_310x60}"
-                                              VerticalAlignment="Center" Margin="20, 0"/>
+                        <CanvasWidget Size="310, 60" HorizontalAlignment="Far" VerticalAlignment="Near" Margin="20, 0">
+                            <LabelWidget Text="[SettingsPerformanceScreen:6]" HorizontalAlignment="Far"
+                                         VerticalAlignment="Center"/>
+                        </CanvasWidget>
+                        <InlineSelectionWidget Name="SkyRenderingModeButton" CollapsedSize="310, 60"
+                                               VerticalAlignment="Near" Margin="20, 0"/>
                     </UniformSpacingPanelWidget>
 
                     <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">

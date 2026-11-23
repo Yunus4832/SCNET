@@ -24,10 +24,10 @@
                                 <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
                                     <ClickableTextRowWidget Name="TerrainGenerationLabel"
                                                             Text="[WorldOptionsScreen:2]" Color="255, 255, 255"
-                                                            HorizontalAlignment="Far" VerticalAlignment="Near"
+                                                            Size="Infinity, 60" HorizontalAlignment="Far" VerticalAlignment="Near"
                                                             TextHorizontalAlignment="Far" Margin="20, 0"/>
                                     <InlineSelectionWidget Name="TerrainGeneration" CollapsedSize="310, 60"
-                                                           VerticalAlignment="Center" Margin="20, 0"
+                                                           VerticalAlignment="Near" Margin="20, 0"
                                                            MaxVisibleItems="5"/>
                                 </UniformSpacingPanelWidget>
 
@@ -40,22 +40,24 @@
                                                     Color="255, 255, 255" HorizontalAlignment="Far"
                                                     VerticalAlignment="Center" TextHorizontalAlignment="Far"
                                                     Margin="20, 0"/>
-                            <CanvasWidget Size="310, 60" VerticalAlignment="Center" Margin="20, 0">
+                            <CanvasWidget Size="310, 68" VerticalAlignment="Center" Margin="20, 0">
                                 <CanvasWidget Margin="0, 6" IsHitTestVisible="false">
                                     <BevelledRectangleWidget Style="{Styles/TextBoxArea}"/>
                                     <StackPanelWidget Direction="Horizontal" Margin="12, 0">
-                                        <RectangleWidget Name="BlocksTextureIcon" Size="48, 48"
+                                        <RectangleWidget Name="BlocksTextureIcon" Size="40, 40"
                                                          FillColor="255, 255, 255"
                                                          OutlineColor="0, 0, 0, 0" VerticalAlignment="Center"/>
-                                        <CanvasWidget Size="10, 0" IsHitTestVisible="false"/>
-                                        <CanvasWidget Size="Infinity, 48" IsHitTestVisible="false">
+                                        <CanvasWidget Size="12, 0" IsHitTestVisible="false"/>
+                                        <CanvasWidget Size="Infinity, 56" IsHitTestVisible="false">
                                             <StackPanelWidget Direction="Vertical" VerticalAlignment="Center"
                                                               IsHitTestVisible="false">
-                                                <LabelWidget Name="BlocksTextureLabel"/>
-                                                <LabelWidget Name="BlocksTextureDetails" Color="128, 128, 128"/>
+                                                <LabelWidget Name="BlocksTextureLabel" FontScale="0.9"
+                                                             Ellipsis="true" MaxLines="1"/>
+                                                <LabelWidget Name="BlocksTextureDetails" FontScale="0.7"
+                                                             Color="160, 160, 160"/>
                                             </StackPanelWidget>
                                         </CanvasWidget>
-                                        <LabelWidget Text="..." Size="32, 48" Color="160, 160, 160"
+                                        <LabelWidget Text="..." Size="28, 56" Color="160, 160, 160"
                                                      HorizontalAlignment="Center" VerticalAlignment="Center"
                                                      TextAnchor="HorizontalCenter, VerticalCenter"/>
                                     </StackPanelWidget>
@@ -146,10 +148,10 @@
                             <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
                                 <ClickableTextRowWidget Name="TimeOfDayLabel" Text="[WorldOptionsScreen:20]"
                                                         Color="255, 255, 255" HorizontalAlignment="Far"
-                                                        VerticalAlignment="Near" TextHorizontalAlignment="Far"
-                                                        Margin="20, 0"/>
+                                                        Size="Infinity, 60" VerticalAlignment="Near"
+                                                        TextHorizontalAlignment="Far" Margin="20, 0"/>
                                 <InlineSelectionWidget Name="TimeOfDay" CollapsedSize="310, 60"
-                                                       VerticalAlignment="Center" Margin="20, 0"
+                                                       VerticalAlignment="Near" Margin="20, 0"
                                                        MaxVisibleItems="5"/>
                             </UniformSpacingPanelWidget>
 

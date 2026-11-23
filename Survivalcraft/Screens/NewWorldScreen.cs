@@ -23,7 +23,7 @@ public class NewWorldScreen : Screen
 
     private readonly ButtonWidget _serverSettingsButton;
 
-    private readonly ButtonWidget _startingPositionButton;
+    private readonly InlineSelectionWidget _startingPositionSelection;
 
     private readonly ButtonWidget _worldOptionsButton;
 
@@ -40,7 +40,11 @@ public class NewWorldScreen : Screen
         _nameTextBox = Children.Find<TextBoxWidget>("Name")!;
         _seedTextBox = Children.Find<TextBoxWidget>("Seed")!;
         _gameModeButton = Children.Find<ButtonWidget>("GameMode")!;
-        _startingPositionButton = Children.Find<ButtonWidget>("StartingPosition")!;
+        _startingPositionSelection = Children.Find<InlineSelectionWidget>("StartingPosition")!;
+        _startingPositionSelection.ConfigureEnum<StartingPositionMode>(
+            item => Localization.ClientLanguage.Catalog.Get("StartingPositionMode", item.ToString()),
+            mode => _worldSettings.StartingPositionMode = mode
+        );
         _worldOptionsButton = Children.Find<ButtonWidget>("WorldOptions")!;
         _blankSeedLabel = Children.Find<LabelWidget>("BlankSeed")!;
         _errorLabel = Children.Find<LabelWidget>("Error")!;
@@ -72,6 +76,13 @@ public class NewWorldScreen : Screen
                 Name = ClientApplication.Worlds.GetUnusedWorldName()
             };
         }
+
+        _startingPositionSelection.SelectedItem = _worldSettings.StartingPositionMode;
+    }
+
+    public override void Leave()
+    {
+        _startingPositionSelection.Close();
     }
 
     public override void Update()
@@ -89,24 +100,11 @@ public class NewWorldScreen : Screen
             );
         }
 
-        if (_startingPositionButton.IsClicked)
-        {
-            var enumValues2 = EnumUtils.GetEnumValues(typeof(StartingPositionMode));
-            _worldSettings.StartingPositionMode =
-                (StartingPositionMode)((enumValues2.IndexOf((int)_worldSettings.StartingPositionMode) + 1) %
-                                       enumValues2.Count);
-        }
-
         var isNameValid = ClientApplication.Worlds.ValidateWorldName(_worldSettings.Name);
         _nameTextBox.Text = _worldSettings.Name;
         _seedTextBox.Text = _worldSettings.Seed;
         _gameModeButton.Text =
             Localization.ClientLanguage.Catalog.Get("GameMode", _worldSettings.GameMode.ToString());
-        _startingPositionButton.Text =
-            Localization.ClientLanguage.Catalog.Get(
-                "StartingPositionMode",
-                _worldSettings.StartingPositionMode.ToString()
-            );
         _playButton.IsVisible = isNameValid;
         _errorLabel.IsVisible = !isNameValid;
         _blankSeedLabel.IsVisible = _worldSettings.Seed.Length == 0 && !_seedTextBox.HasFocus;

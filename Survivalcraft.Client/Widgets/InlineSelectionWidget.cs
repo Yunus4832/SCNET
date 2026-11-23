@@ -18,6 +18,8 @@ public sealed class InlineSelectionWidget : CanvasWidget
 
     private readonly LabelWidget _headerLabel;
 
+    private Action<object>? _onItemChosen;
+
     private readonly List<object> _items = [];
 
     private readonly ListPanelWidget _list;
@@ -44,10 +46,14 @@ public sealed class InlineSelectionWidget : CanvasWidget
         _list.ItemWidgetFactory = CreateItemWidget;
         _list.ScrollPosition = 0f;
         _list.ScrollSpeed = 0f;
-        _list.ItemClicked += _ =>
+        _list.ItemClicked += item =>
         {
             Input.Clear();
             Close();
+            if (!Equals(item, SelectedItem))
+            {
+                _onItemChosen?.Invoke(item);
+            }
         };
         _list.SelectionChanged += () =>
         {
@@ -200,6 +206,14 @@ public sealed class InlineSelectionWidget : CanvasWidget
         UpdateVisualState();
     }
 
+    /// <summary>配置枚举选项，仅在用户选择不同项时调用回调。</summary>
+    public void ConfigureEnum<T>(Func<T, string> getText, Action<T> onChoice) where T : struct, Enum
+    {
+        ItemTextProvider = item => getText((T)item);
+        SetItems(Enum.GetValues<T>().Cast<object>());
+        _onItemChosen = item => onChoice((T)item);
+    }
+
     public void AddItem(object item)
     {
         ArgumentNullException.ThrowIfNull(item);
@@ -244,7 +258,7 @@ public sealed class InlineSelectionWidget : CanvasWidget
 
     public override void Update()
     {
-        if (IsOpen && Input.Back)
+        if (IsOpen && (Input.Back || Input.Cancel))
         {
             Input.Clear();
             Close();

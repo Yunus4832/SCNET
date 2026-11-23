@@ -21,10 +21,12 @@
                     </UniformSpacingPanelWidget>
 
                     <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
-                        <LabelWidget Text="[SettingsControlsScreen:2]" HorizontalAlignment="Far"
-                                     VerticalAlignment="Center" Margin="20, 0"/>
-                        <BevelledButtonWidget Name="LookControlMode" Style="{Styles/ButtonStyle_310x60}"
-                                              VerticalAlignment="Center" Margin="20, 0"/>
+                        <CanvasWidget Size="310, 60" HorizontalAlignment="Far" VerticalAlignment="Near" Margin="20, 0">
+                            <LabelWidget Text="[SettingsControlsScreen:2]" HorizontalAlignment="Far"
+                                         VerticalAlignment="Center"/>
+                        </CanvasWidget>
+                        <InlineSelectionWidget Name="LookControlMode" CollapsedSize="310, 60"
+                                               VerticalAlignment="Near" Margin="20, 0"/>
                     </UniformSpacingPanelWidget>
 
                     <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">

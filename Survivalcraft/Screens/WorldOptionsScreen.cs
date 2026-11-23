@@ -255,7 +255,17 @@ public class WorldOptionsScreen : Screen
             editor.Name = "GeneratorParameter." + parameter.Key;
             editor.IsEnabled = !_isExistingWorld;
             editor.Margin = new Vector2(20, 0);
-            editor.VerticalAlignment = WidgetAlignment.Center;
+            if (editor is InlineSelectionWidget selection)
+            {
+                label.Size = new Vector2(float.PositiveInfinity, selection.CollapsedSize.Y);
+                label.VerticalAlignment = WidgetAlignment.Near;
+                selection.VerticalAlignment = WidgetAlignment.Near;
+            }
+            else
+            {
+                editor.VerticalAlignment = WidgetAlignment.Center;
+            }
+
             row.Children.Add(editor);
             _generatorParameters.Children.Add(row);
         }

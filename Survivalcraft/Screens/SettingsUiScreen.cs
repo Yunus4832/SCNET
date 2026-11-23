@@ -30,7 +30,7 @@ public class SettingsUiScreen : Screen
 
     private readonly ButtonWidget _upsideDownButton;
 
-    private readonly ButtonWidget _windowModeButton;
+    private readonly InlineSelectionWidget _windowModeSelection;
 
     private readonly ContainerWidget _windowModeContainer;
 
@@ -57,7 +57,15 @@ public class SettingsUiScreen : Screen
         _hudSafeAreaButton = Children.Find<ButtonWidget>("HudSafeArea")!;
         _hudSafeAreaCustomPaddingButton = Children.Find<ButtonWidget>("HudSafeAreaCustomPadding")!;
         _hudSafeAreaPaddingSlider = Children.Find<SliderWidget>("HudSafeAreaPadding")!;
-        _windowModeButton = Children.Find<ButtonWidget>("WindowModeButton")!;
+        _windowModeSelection = Children.Find<InlineSelectionWidget>("WindowModeButton")!;
+        _windowModeSelection.ConfigureEnum<StartupWindowMode>(
+            item => Localization.ClientLanguage.Catalog.Get("WindowMode", item.ToString()),
+            windowMode =>
+            {
+                Window.WindowMode = StartupWindowModes.ToWindowMode(windowMode);
+                StartupManager.Profiles.UpdateRunningSettings(rs => rs.WindowMode = windowMode);
+            }
+        );
         _uiScaleSlider = Children.Find<SliderWidget>("UIScaleSlider")!;
         _upsideDownButton = Children.Find<ButtonWidget>("UpsideDownButton")!;
         _showGuiInScreenshotsButton = Children.Find<ButtonWidget>("ShowGuiInScreenshotsButton")!;
@@ -67,21 +75,20 @@ public class SettingsUiScreen : Screen
 
     public override void Enter(object[] parameters)
     {
+        _windowModeSelection.SelectedItem = StartupManager.Profiles.CurrentRunningSettings.WindowMode;
         _windowModeContainer.IsVisible = ClientPlatform.Kind is not Platform.Android;
         _languageSelection.SetItems(Localization.ClientLanguage.Catalog.LanguageTypes);
         _languageSelection.SelectedItem = Localization.ClientLanguage.Catalog.CurrentLanguage;
     }
 
+    public override void Leave()
+    {
+        _windowModeSelection.Close();
+        _languageSelection.Close();
+    }
+
     public override void Update()
     {
-        if (_windowModeButton.IsClicked)
-        {
-            var windowMode = (StartupWindowMode)(((int)StartupManager.Profiles.CurrentRunningSettings.WindowMode + 1) %
-                                                 Enum.GetValues<StartupWindowMode>().Length);
-            Window.WindowMode = StartupWindowModes.ToWindowMode(windowMode);
-            StartupManager.Profiles.UpdateRunningSettings(rs => rs.WindowMode = windowMode);
-        }
-
         if (_uiScaleSlider.SlidingCompleted)
         {
             Configuration.ClientConfiguration.Preferences.UIScale = _uiScaleSlider.Value;
@@ -136,11 +143,6 @@ public class SettingsUiScreen : Screen
                                  EnumUtils.GetEnumValues(typeof(ScreenshotSize)).Count);
         }
 
-        // 更新按钮文本
-        _windowModeButton.Text = Localization.ClientLanguage.Catalog.Get(
-            "WindowMode",
-            StartupManager.Profiles.CurrentRunningSettings.WindowMode.ToString()
-        );
         _upsideDownButton.Text = Configuration.ClientConfiguration.Preferences.UpsideDownLayout
             ? Localization.ClientLanguage.Catalog.Yes
             : Localization.ClientLanguage.Catalog.No;

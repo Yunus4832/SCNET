@@ -23,7 +23,7 @@ public class SettingsControlsScreen : Screen
 
     private readonly ButtonWidget _leftHandedLayoutButton;
 
-    private readonly ButtonWidget _lookControlModeButton;
+    private readonly InlineSelectionWidget _lookControlModeSelection;
 
     private readonly SliderWidget _lookSensitivitySlider;
 
@@ -36,7 +36,11 @@ public class SettingsControlsScreen : Screen
         var node = ContentManager.Get<XElement>("Screens/SettingsControlsScreen");
         LoadContents(this, node);
         _moveControlModeButton = Children.Find<ButtonWidget>("MoveControlMode")!;
-        _lookControlModeButton = Children.Find<ButtonWidget>("LookControlMode")!;
+        _lookControlModeSelection = Children.Find<InlineSelectionWidget>("LookControlMode")!;
+        _lookControlModeSelection.ConfigureEnum<LookControlMode>(
+            item => Localization.ClientLanguage.Catalog.Get("LookControlMode", item.ToString()),
+            value => Configuration.ClientConfiguration.Preferences.LookControlMode = value
+        );
         _leftHandedLayoutButton = Children.Find<ButtonWidget>("LeftHandedLayout")!;
         _flipVerticalAxisButton = Children.Find<ButtonWidget>("FlipVerticalAxis")!;
         _autoJumpButton = Children.Find<ButtonWidget>("AutoJump")!;
@@ -48,6 +52,16 @@ public class SettingsControlsScreen : Screen
         _dragDistanceSlider = Children.Find<SliderWidget>("DragDistanceSlider")!;
     }
 
+    public override void Enter(object[] parameters)
+    {
+        _lookControlModeSelection.SelectedItem = Configuration.ClientConfiguration.Preferences.LookControlMode;
+    }
+
+    public override void Leave()
+    {
+        _lookControlModeSelection.Close();
+    }
+
     public override void Update()
     {
         if (_moveControlModeButton.IsClicked)
@@ -55,13 +69,6 @@ public class SettingsControlsScreen : Screen
             Configuration.ClientConfiguration.Preferences.MoveControlMode =
                 (MoveControlMode)((int)(Configuration.ClientConfiguration.Preferences.MoveControlMode + 1) %
                                   EnumUtils.GetEnumValues(typeof(MoveControlMode)).Count);
-        }
-
-        if (_lookControlModeButton.IsClicked)
-        {
-            Configuration.ClientConfiguration.Preferences.LookControlMode =
-                (LookControlMode)((int)(Configuration.ClientConfiguration.Preferences.LookControlMode + 1) %
-                                  EnumUtils.GetEnumValues(typeof(LookControlMode)).Count);
         }
 
         if (_leftHandedLayoutButton.IsClicked)
@@ -116,11 +123,6 @@ public class SettingsControlsScreen : Screen
             Localization.ClientLanguage.Catalog.Get(
                 "MoveControlMode",
                 Configuration.ClientConfiguration.Preferences.MoveControlMode.ToString()
-            );
-        _lookControlModeButton.Text =
-            Localization.ClientLanguage.Catalog.Get(
-                "LookControlMode",
-                Configuration.ClientConfiguration.Preferences.LookControlMode.ToString()
             );
         _leftHandedLayoutButton.Text = Configuration.ClientConfiguration.Preferences.LeftHandedLayout
             ? Localization.ClientLanguage.Catalog.Get("Usual", "on")

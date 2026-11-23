@@ -23,9 +23,9 @@ public class SettingsPerformanceScreen : Screen
 
     private readonly ButtonWidget _objectShadowsButton;
 
-    private readonly ButtonWidget _resolutionButton;
+    private readonly InlineSelectionWidget _resolutionSelection;
 
-    private readonly ButtonWidget _skyRenderingModeButton;
+    private readonly InlineSelectionWidget _skyRenderingModeSelection;
 
     private readonly ButtonWidget _terrainMipmapsButton;
 
@@ -37,11 +37,19 @@ public class SettingsPerformanceScreen : Screen
     {
         var node = ContentManager.Get<XElement>("Screens/SettingsPerformanceScreen");
         LoadContents(this, node);
-        _resolutionButton = Children.Find<ButtonWidget>("ResolutionButton")!;
+        _resolutionSelection = Children.Find<InlineSelectionWidget>("ResolutionButton")!;
+        _resolutionSelection.ConfigureEnum<ResolutionMode>(
+            item => Localization.ClientLanguage.Catalog.Get("ResolutionMode", item.ToString()),
+            value => Configuration.ClientConfiguration.Preferences.ResolutionMode = value
+        );
         _visibilityRangeSlider = Children.Find<SliderWidget>("VisibilityRangeSlider")!;
         _visibilityRangeWarningLabel = Children.Find<LabelWidget>("VisibilityRangeWarningLabel")!;
         _terrainMipmapsButton = Children.Find<ButtonWidget>("TerrainMipmapsButton")!;
-        _skyRenderingModeButton = Children.Find<ButtonWidget>("SkyRenderingModeButton")!;
+        _skyRenderingModeSelection = Children.Find<InlineSelectionWidget>("SkyRenderingModeButton")!;
+        _skyRenderingModeSelection.ConfigureEnum<SkyRenderingMode>(
+            item => Localization.ClientLanguage.Catalog.Get("SkyRenderingMode", item.ToString()),
+            value => Configuration.ClientConfiguration.Preferences.SkyRenderingMode = value
+        );
         _objectShadowsButton = Children.Find<ButtonWidget>("ObjectShadowsButton")!;
         _framerateLimitButton = Children.Find<ButtonWidget>("FramerateLimitButton")!;
         _visibilityRangeSlider.MinValue = 0f;
@@ -50,6 +58,8 @@ public class SettingsPerformanceScreen : Screen
 
     public override void Enter(object[] parameters)
     {
+        _resolutionSelection.SelectedItem = Configuration.ClientConfiguration.Preferences.ResolutionMode;
+        _skyRenderingModeSelection.SelectedItem = Configuration.ClientConfiguration.Preferences.SkyRenderingMode;
         _enterVisibilityRange = Configuration.ClientConfiguration.Preferences.VisibilityRange;
         if (GameManager.Runtime?.Client is { IsClosed: false })
         {
@@ -59,19 +69,14 @@ public class SettingsPerformanceScreen : Screen
         }
     }
 
+    public override void Leave()
+    {
+        _resolutionSelection.Close();
+        _skyRenderingModeSelection.Close();
+    }
+
     public override void Update()
     {
-        if (_resolutionButton.IsClicked)
-        {
-            var enumValues = EnumUtils.GetEnumValues(typeof(ResolutionMode));
-            Configuration.ClientConfiguration.Preferences.ResolutionMode =
-                (ResolutionMode)((enumValues.IndexOf(
-                                      (int)Configuration.ClientConfiguration.Preferences.ResolutionMode
-                                  ) +
-                                  1) %
-                                 enumValues.Count);
-        }
-
         if (_visibilityRangeSlider.IsSliding)
         {
             Configuration.ClientConfiguration.Preferences.VisibilityRange =
@@ -83,17 +88,6 @@ public class SettingsPerformanceScreen : Screen
         {
             Configuration.ClientConfiguration.Preferences.TerrainMipmapsEnabled =
                 !Configuration.ClientConfiguration.Preferences.TerrainMipmapsEnabled;
-        }
-
-        if (_skyRenderingModeButton.IsClicked)
-        {
-            var enumValues3 = EnumUtils.GetEnumValues(typeof(SkyRenderingMode));
-            Configuration.ClientConfiguration.Preferences.SkyRenderingMode =
-                (SkyRenderingMode)((enumValues3.IndexOf(
-                                        (int)Configuration.ClientConfiguration.Preferences.SkyRenderingMode
-                                    ) +
-                                    1) %
-                                   enumValues3.Count);
         }
 
         if (_objectShadowsButton.IsClicked)
@@ -108,11 +102,6 @@ public class SettingsPerformanceScreen : Screen
                 !Configuration.ClientConfiguration.Preferences.VSync;
         }
 
-        _resolutionButton.Text =
-            Localization.ClientLanguage.Catalog.Get(
-                "ResolutionMode",
-                Configuration.ClientConfiguration.Preferences.ResolutionMode.ToString()
-            );
         _visibilityRangeSlider.Value =
             _visibilityRanges.IndexOf(Configuration.ClientConfiguration.Preferences.VisibilityRange) >= 0
                 ? _visibilityRanges.IndexOf(Configuration.ClientConfiguration.Preferences.VisibilityRange)
@@ -161,10 +150,6 @@ public class SettingsPerformanceScreen : Screen
             ? Localization.ClientLanguage.Catalog.Enable
             : Localization.ClientLanguage.Catalog.Disable;
 
-        _skyRenderingModeButton.Text = Localization.ClientLanguage.Catalog.Get(
-            "SkyRenderingMode",
-            Configuration.ClientConfiguration.Preferences.SkyRenderingMode.ToString()
-        );
 
         _objectShadowsButton.Text = Configuration.ClientConfiguration.Preferences.ObjectsShadowsEnabled
             ? Localization.ClientLanguage.Catalog.Enable

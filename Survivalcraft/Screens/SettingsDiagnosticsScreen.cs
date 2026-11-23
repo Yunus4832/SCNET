@@ -10,7 +10,7 @@ public class SettingsDiagnosticsScreen : Screen
 
     private readonly ButtonWidget _displayFpsRibbonButton;
 
-    private readonly ButtonWidget _relayPreference;
+    private readonly InlineSelectionWidget _relayPreferenceSelection;
 
     private readonly ButtonWidget _resetCompatibilityButton;
 
@@ -26,23 +26,25 @@ public class SettingsDiagnosticsScreen : Screen
         _displayFpsRibbonButton = Children.Find<ButtonWidget>("DisplayFpsRibbonButton")!;
         _viewGameLogButton = Children.Find<ButtonWidget>("ViewGameLogButton")!;
         _useReducedZRangeButton = Children.Find<ButtonWidget>("UseReducedZRangeButton")!;
-        _relayPreference = Children.Find<ButtonWidget>("RelayPreference")!;
+        _relayPreferenceSelection = Children.Find<InlineSelectionWidget>("RelayPreference")!;
+        _relayPreferenceSelection.ConfigureEnum<RelayPolicy>(
+            item => P2PRoomStatusDialog.Text($"Relay{item}"),
+            policy =>
+            {
+                Configuration.HostingConfiguration.Preferences.InvitationRelayPolicy = policy;
+                SettingsManager.SaveSettings();
+            }
+        );
         _resetCompatibilityButton = Children.Find<ButtonWidget>("ResetCompatibilityButton")!;
+    }
+
+    public override void Leave()
+    {
+        _relayPreferenceSelection.Close();
     }
 
     public override void Update()
     {
-        if (_relayPreference.IsClicked)
-        {
-            Configuration.HostingConfiguration.Preferences.InvitationRelayPolicy = (RelayPolicy)(
-                ((int)Configuration.HostingConfiguration.Preferences.InvitationRelayPolicy + 1) %
-                Enum.GetValues<RelayPolicy>().Length);
-            SettingsManager.SaveSettings();
-        }
-
-        _relayPreference.Text = P2PRoomStatusDialog.Text(
-            $"Relay{Configuration.HostingConfiguration.Preferences.InvitationRelayPolicy}"
-        );
         if (_displayDebugInfoButton.IsClicked)
         {
             DebugOverlayManager.ToggleVisibility();
@@ -72,6 +74,7 @@ public class SettingsDiagnosticsScreen : Screen
             SettingsManager.SaveSettings();
         }
 
+        _relayPreferenceSelection.SelectedItem = Configuration.HostingConfiguration.Preferences.InvitationRelayPolicy;
         _displayDebugInfoButton.Text = Configuration.ClientConfiguration.Preferences.DisplayDebugInfo
             ? Localization.ClientLanguage.Catalog.Yes
             : Localization.ClientLanguage.Catalog.No;
