@@ -152,7 +152,7 @@ public static class GameManager
             SetupNetworkHandlers(project);
             WorldActivity.Track(runtime, null, Dispatcher.InvokeAsync);
 
-            Log.Information("加载NetProject");
+            Log.Information("客户端世界已加载");
         }
         catch
         {

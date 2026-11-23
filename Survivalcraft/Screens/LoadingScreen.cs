@@ -109,18 +109,18 @@ public class LoadingScreen : Screen
         AddLoadAction(
             delegate
             {
-                // 初始化TextureAtlas
-                Log.Information("初始化纹理地图");
+                Log.Information("初始化纹理图集");
                 TextureAtlasManager.Initialize();
             }
         );
         AddLoadAction(
             delegate
             {
-                Log.Information("初始化内置内容数据");
                 try
                 {
+                    Log.Information("初始化游戏数据库");
                     CurrentModRuntime.Value!.InitializeContentData();
+                    Log.Information("初始化客户端预览");
                     GameEntry.InitializeClientPreview(CurrentModRuntime.Value!);
                 }
                 catch (Exception e)
