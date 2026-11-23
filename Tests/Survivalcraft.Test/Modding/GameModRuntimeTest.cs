@@ -54,6 +54,21 @@ public class GameModRuntimeTest
     }
 
     [Fact]
+    public void DedicatedAndClientRuntimesShareTheBuiltInFingerprint()
+    {
+        using var client = GameModRuntime.Start();
+        using var server = GameModRuntime.StartFromProfile(
+            new ModProfile { Id = "server" },
+            Path.GetTempPath(),
+            includeClientAssets: false
+        );
+        Assert.Equal(Assert.Single(client.LoadedMods).ResourcesMd5, Assert.Single(server.LoadedMods).ResourcesMd5);
+        Assert.Contains(client.Content.RegisteredResources, asset => asset.RelativePath == "Textures/Blocks.webp");
+        Assert.DoesNotContain(server.Content.RegisteredResources, asset => asset.RelativePath.StartsWith("Textures/"));
+        Assert.Contains(server.Content.RegisteredResources, asset => asset.RelativePath == "Database.xml");
+    }
+
+    [Fact]
     public void RuntimeIncludesRequiredBuiltInContentMod()
     {
         var externalManifest = new ModManifest(

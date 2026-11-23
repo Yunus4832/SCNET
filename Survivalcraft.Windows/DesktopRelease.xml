@@ -3,7 +3,8 @@
     <Platform>windows-x64</Platform>
     <Files>
         <string>SurvivalcraftStarter.exe</string>
-        <string>Assets.zip</string>
+        <string>SharedAssets.zip</string>
+        <string>ClientAssets.zip</string>
         <string>SDL2.dll</string>
         <string>soft_oal.dll</string>
         <string>libpng16.dll</string>

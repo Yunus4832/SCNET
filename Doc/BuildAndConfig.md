@@ -108,7 +108,7 @@ Versions:
 这是全局构建目标入口，主要负责：
 
 - 在资源打包前根据独立 SVG 源文件增量生成 GUI 图集
-- 把 `Assets/` 打成 `Assets.zip`
+- 从 `Assets/Shared/` 打包共享资产，客户端还从 `Assets/Client/` 打包表现资产
 - 在 `Publish` 后打包桌面发布输出
 - 在 Android 发布后复制并重命名 APK
 
@@ -158,7 +158,7 @@ Mono 并发 GC 采用 Android SDK 的默认设置。调整 GC 选项时，应同
 ### `SharedProperties/AndroidApplication.props`
 
 这是 Android 可运行启动器的公共项目配置，集中定义目标框架、程序集名称、最低系统版本、
-`Assets.zip` 资产声明、共享图标与 Android 资源、共享 Manifest；全局 `using` 随共享启动器源码维护。每个架构项目仍显式声明自己的
+`SharedAssets.zip` 和 `ClientAssets.zip` 资产声明、共享图标与 Android 资源、共享 Manifest；全局 `using` 随共享启动器源码维护。每个架构项目仍显式声明自己的
 `RuntimeIdentifier` 和 APK 名称。共享托管项目采用前述 `IsRidAgnostic` 配置，
 主构建输出位于 `bin/<配置>/<目标框架>/`；启动器按自己的 RID 选择原生资产。
 
@@ -171,7 +171,7 @@ Mono 并发 GC 采用 Android SDK 的默认设置。调整 GC 选项时，应同
 
 Arm32、x64 和 x86 变体通过这份配置链接 `Survivalcraft.Android/` 中的公共启动器源码。
 平台资源由四个架构共同导入的 `AndroidApplication.props` 引用，不再从主架构项目转引。
-各变体继续保留独立的项目、`bin/obj`、`Assets.zip` 和对应 ABI 的 OpenAL 库，使 Rider
+各变体继续保留独立的项目、`bin/obj`、两个资产包和对应 ABI 的 OpenAL 库，使 Rider
 可以直接选择匹配设备架构的项目运行，同时避免不同 RID 的中间产物互相污染。
 
 ### Android 调试部署出现旧程序集
@@ -277,7 +277,7 @@ NuGet 包是另一条发行流程，不由应用发布脚本生成。使用 `Scr
 仓库使用 `Directory.Build.targets` 统一处理资源和发布结果：
 
 - `Tools/GuiAtlasTool/Assets/` 中任一 SVG、PNG 或 WebP 发生变化时，会先重新生成 GUI 图集
-- 构建前会把 `Assets/` 打成 `Assets.zip`，ZIP 条目直接使用逻辑资源路径，例如 `Database.xml`
+- 桌面与 Android 客户端携带 `SharedAssets.zip` 和 `ClientAssets.zip`，独立服只携带 `SharedAssets.zip`。构建分别以 `Assets/Shared/` 和 `Assets/Client/` 为根，两个目录中的逻辑路径必须互不重复。例如 `Assets/Client/Textures/Blocks.webp` 仍通过 `AssetManager.Get<Texture2D>("Textures/Blocks")` 读取。
 - 桌面发布会将 `$(PublishDir)` 生成的发布输出压缩到仓库根目录下的 `Publish/` 目录
 - Android 发布会生成并重命名 APK 到 `Publish/`
 
@@ -291,14 +291,14 @@ SVG 使用整数像素 `width`、`height` 和对应 `viewBox`。同一条目只�
 
 工具按尺寸和名称稳定排序，将 SVG 和位图排版合成为无损 WebP 图集，生成以下忽略的构建产物：
 
-- `Assets/Atlases/AtlasTexture.webp`
-- `Assets/Atlases/Atlas.txt`
+- `Assets/Client/Atlases/AtlasTexture.webp`
+- `Assets/Client/Atlases/Atlas.txt`
 
 ```bash
 dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- generate \
   Tools/GuiAtlasTool/Assets \
-  Assets/Atlases/AtlasTexture.webp \
-  Assets/Atlases/Atlas.txt
+  Assets/Client/Atlases/AtlasTexture.webp \
+  Assets/Client/Atlases/Atlas.txt
 ```
 
 `prepare-image` 将 PNG/WebP 转为普通无损 WebP，`extract` 从当前图集中直接提取 WebP 条目；
@@ -340,8 +340,8 @@ Windows/Linux 的便携 ZIP 包携带 `DesktopRelease.xml`，声明平台和由�
 `Desktop.UpdateTransactions.Test`。共享库使用命名空间 `Scnet.Desktop.Updates`，负责清单验证、暂存、进程交接、
 文件更新事务、回滚和中断恢复，不依赖游戏或 Engine。Windows/Linux Starter 通过项目引用调用共享库，
 平台文件替换和通知保留在各自项目中。游戏通过退出动作提交更新请求，由 Starter 在游戏运行结束后接管。类库随单文件发布合并，不额外发布更新器或依赖 shell/PowerShell。
-当前 Linux 集合为 `SurvivalcraftStarter`、`Assets.zip`、`libSDL2-2.0.so`、`libopenal.so`；Windows 集合为
-`SurvivalcraftStarter.exe`、`Assets.zip`、`SDL2.dll`、`soft_oal.dll`。两平台还包含各自的三个图像原生库和
+当前 Linux 集合为 `SurvivalcraftStarter`、`SharedAssets.zip` 和 `ClientAssets.zip`、`libSDL2-2.0.so`、`libopenal.so`；Windows 集合为
+`SurvivalcraftStarter.exe`、`SharedAssets.zip` 和 `ClientAssets.zip`、`SDL2.dll`、`soft_oal.dll`。两平台还包含各自的三个图像原生库和
 `ThirdPartyNotices.txt`，具体文件见对应 `DesktopRelease.xml`。修改发行文件集合时须同步对应清单。
 
 ContentServer 的 `linux-x64`/`windows-x64` 版本下载地址应指向完整便携 ZIP。客户端验证 SHA-256 后检查清单、平台与
@@ -354,7 +354,8 @@ ZIP 文件集合，拒绝目录穿越、符号链接、实例/配置覆盖及清
     <Platform>linux-x64</Platform>
     <Files>
         <string>SurvivalcraftStarter</string>
-        <string>Assets.zip</string>
+        <string>SharedAssets.zip</string>
+        <string>ClientAssets.zip</string>
         <string>libSDL2-2.0.so</string>
         <string>libopenal.so</string>
         <string>libpng.so</string>

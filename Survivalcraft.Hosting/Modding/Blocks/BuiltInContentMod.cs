@@ -8,7 +8,10 @@ using Game.Modding.Data;
 
 namespace Game.Modding.Blocks;
 
-public sealed class BuiltInContentMod(Action<IModCommands, ModId>? registerAppCommands = null) : IMod
+public sealed class BuiltInContentMod(
+    Action<IModCommands, ModId>? registerAppCommands = null,
+    bool includeClientAssets = true
+) : IMod
 {
     public static readonly ModManifest Manifest = new(
         BuiltInBlockIdentities.Namespace.Value,
@@ -18,9 +21,12 @@ public sealed class BuiltInContentMod(Action<IModCommands, ModId>? registerAppCo
         throw new InvalidOperationException("Host product version is missing.")
     );
 
-    public static ModDescriptor CreateDescriptor(Action<IModCommands, ModId>? registerAppCommands = null)
+    public static ModDescriptor CreateDescriptor(
+        Action<IModCommands, ModId>? registerAppCommands = null,
+        bool includeClientAssets = true
+    )
     {
-        return new ModDescriptor(Manifest, () => new BuiltInContentMod(registerAppCommands));
+        return new ModDescriptor(Manifest, () => new BuiltInContentMod(registerAppCommands, includeClientAssets));
     }
 
     public void Configure(IModContext context)
@@ -28,7 +34,7 @@ public sealed class BuiltInContentMod(Action<IModCommands, ModId>? registerAppCo
         BuiltInWorldCommands.Register(context.Commands, context.Manifest.ModId);
         registerAppCommands?.Invoke(context.Commands, context.Manifest.ModId);
 
-        var assets = BuiltInContentAssets.Load();
+        var assets = BuiltInContentAssets.Load(includeClientAssets);
         foreach (var asset in assets)
         {
             context.Extensions.Register(

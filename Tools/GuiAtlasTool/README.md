@@ -12,7 +12,7 @@ SVG 按声明的尺寸转为图集条目，与位图一起排版合成。
 - 不包含编辑器背景、隐藏图层或页面底色；普通态和按下态分别保存。
 - 可编辑的几何图标和 HUD 按钮继续使用 SVG；位图保留最终尺寸的像素质量。
 
-该工具只生成 GUI 图集。需要独立加载、独立生命周期或采样参数的纹理放在 `Assets/Textures/`。
+该工具只生成 GUI 图集。需要独立加载、独立生命周期或采样参数的纹理放在 `Assets/Client/Textures/`。
 生成命令和构建期增量行为见 [构建配置](../../Doc/BuildAndConfig.md#gui-图集)。
 
 ## 位图转换与提取
@@ -31,7 +31,7 @@ dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- prepare-image \
 
 ```bash
 dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- extract \
-  Assets/Atlases/AtlasTexture.webp Assets/Atlases/Atlas.txt Tools/GuiAtlasTool/Assets Entry1 Entry2
+  Assets/Client/Atlases/AtlasTexture.webp Assets/Client/Atlases/Atlas.txt Tools/GuiAtlasTool/Assets Entry1 Entry2
 ```
 
 提取默认输出 `.webp`。转换和提取命令拒绝覆盖已有文件；需要替换时增加 `--overwrite`。

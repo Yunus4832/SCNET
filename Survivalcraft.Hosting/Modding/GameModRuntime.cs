@@ -225,19 +225,20 @@ public sealed class GameModRuntime : IDisposable
         Action<IModCommands, ModId>? registerAppCommands = null
     )
     {
-        return StartFromDescriptors(externalMods ?? [], null, registerAppCommands);
+        return StartFromDescriptors(externalMods ?? [], null, registerAppCommands, true);
     }
 
     public static GameModRuntime StartFromProfile(
         ModProfile profile,
         string localRepositoryPath,
         Action<string>? log = null,
-        Action<IModCommands, ModId>? registerAppCommands = null
+        Action<IModCommands, ModId>? registerAppCommands = null,
+        bool includeClientAssets = true
     )
     {
         var sources = LocalModLoadPlan.Resolve(profile, localRepositoryPath, log);
         var externalMods = ModPackageCatalog.CreateLoadPlan(sources);
-        return StartFromDescriptors(externalMods, profile, registerAppCommands);
+        return StartFromDescriptors(externalMods, profile, registerAppCommands, includeClientAssets);
     }
 
     public void InitializeDatabase()
@@ -305,10 +306,12 @@ public sealed class GameModRuntime : IDisposable
     private static GameModRuntime StartFromDescriptors(
         IEnumerable<ModDescriptor> descriptors,
         ModProfile? effectiveProfile,
-        Action<IModCommands, ModId>? registerAppCommands
+        Action<IModCommands, ModId>? registerAppCommands,
+        bool includeClientAssets
     )
     {
-        var allDescriptors = new List<ModDescriptor> { BuiltInContentMod.CreateDescriptor(registerAppCommands) };
+        var allDescriptors = new List<ModDescriptor>
+            { BuiltInContentMod.CreateDescriptor(registerAppCommands, includeClientAssets) };
         allDescriptors.AddRange(descriptors);
 
         var host = new ModHost();
@@ -450,7 +453,7 @@ public sealed class GameModRuntime : IDisposable
         );
         lines.AddRange(
             content.Entries
-                .Where(entry => entry.Key.Namespace == owner)
+                .Where(entry => entry.Key.Namespace == owner && !entry.Value.IsClientAsset)
                 .OrderBy(entry => entry.Key.ToString(), StringComparer.Ordinal)
                 .Select(entry => $"content:{entry.Key}:{entry.Value.RelativePath}")
         );

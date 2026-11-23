@@ -31,7 +31,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="Assets.zip">
+        <None Include="SharedAssets.zip;ClientAssets.zip">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </None>
     </ItemGroup>

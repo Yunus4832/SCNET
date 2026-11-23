@@ -1,11 +1,11 @@
 ---
 name: scnet-language-management
-description: Manage SCNET localization files through the repository C# LanguageTool. Use when adding, updating, removing, renaming, listing, reading, or validating keys in Assets/Lang/*.json, and avoid direct JSON text edits for localization changes.
+description: Manage SCNET localization files through the repository C# LanguageTool. Use when adding, updating, removing, renaming, listing, reading, or validating keys in Assets/Shared/Lang/*.json, and avoid direct JSON text edits for localization changes.
 ---
 
 # SCNET Language Management
 
-Use the repository tool instead of manually editing `Assets/Lang/*.json`.
+Use the repository tool instead of manually editing `Assets/Shared/Lang/*.json`.
 
 Run commands from the repository root. Use `rules` for key conventions and `overview . --depth 1`
 to locate the section before inspecting individual keys.

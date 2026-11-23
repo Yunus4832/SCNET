@@ -21,7 +21,8 @@ public sealed class DesktopReleaseManifest
         if (manifest.Platform != platform ||
             manifest.Files.Count == 0 ||
             !manifest.Files.Contains(manifest.Executable, StringComparer.Ordinal) ||
-            !manifest.Files.Contains("Assets.zip", StringComparer.Ordinal) ||
+            !manifest.Files.Contains("SharedAssets.zip", StringComparer.Ordinal) ||
+            !manifest.Files.Contains("ClientAssets.zip", StringComparer.Ordinal) ||
             manifest.Files.Distinct(StringComparer.OrdinalIgnoreCase).Count() != manifest.Files.Count)
         {
             throw new InvalidDataException("The release package does not match this platform.");

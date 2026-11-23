@@ -17,9 +17,9 @@
 
     <ItemGroup>
         <None Update="TestAssets/Models/*.glb" CopyToOutputDirectory="PreserveNewest"/>
-        <None Include="../../Assets/Music/AloneForever.ogg" Link="TestAssets/AloneForever.ogg"
+        <None Include="../../Assets/Client/Music/AloneForever.ogg" Link="TestAssets/AloneForever.ogg"
               CopyToOutputDirectory="PreserveNewest"/>
-        <None Include="../../Assets/Models/StoneClub.glb" Link="TestAssets/StoneClub.glb"
+        <None Include="../../Assets/Shared/Models/StoneClub.glb" Link="TestAssets/StoneClub.glb"
               CopyToOutputDirectory="PreserveNewest"/>
     </ItemGroup>
 

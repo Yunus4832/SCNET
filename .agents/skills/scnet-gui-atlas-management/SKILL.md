@@ -5,7 +5,7 @@ description: Compose SCNET gameplay HUD button textures, manage GUI atlas SVG, P
 
 # SCNET GUI Atlas Management
 
-Treat `Tools/GuiAtlasTool/Assets/` as the source of truth. `Assets/Atlases/AtlasTexture.webp` and
+Treat `Tools/GuiAtlasTool/Assets/` as the source of truth. `Assets/Client/Atlases/AtlasTexture.webp` and
 `Atlas.txt` are ignored build products; never edit or commit them as source assets.
 
 ## Choose the source format
@@ -40,7 +40,7 @@ dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- prepare-image \
   historical.png Tools/GuiAtlasTool/Assets/EntryName.webp --premultiplied
 
 dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- extract \
-  Assets/Atlases/AtlasTexture.webp Assets/Atlases/Atlas.txt Tools/GuiAtlasTool/Assets EntryName AnotherEntry
+  Assets/Client/Atlases/AtlasTexture.webp Assets/Client/Atlases/Atlas.txt Tools/GuiAtlasTool/Assets EntryName AnotherEntry
 ```
 
 Conversion/extraction refuse replacements without `--overwrite`. Inspect a same-name replacement
@@ -85,8 +85,8 @@ Generate the atlas directly when focused inspection is useful:
 ```bash
 dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- generate \
   Tools/GuiAtlasTool/Assets \
-  Assets/Atlases/AtlasTexture.webp \
-  Assets/Atlases/Atlas.txt
+  Assets/Client/Atlases/AtlasTexture.webp \
+  Assets/Client/Atlases/Atlas.txt
 ```
 
 After changing sources or the tool:

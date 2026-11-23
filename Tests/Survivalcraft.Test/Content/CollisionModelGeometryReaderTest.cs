@@ -38,7 +38,7 @@ public sealed class CollisionModelGeometryReaderTest
     [InlineData("Models/PressurePlate.glb")]
     public void ActualBuiltInGeometryMatchesTheExistingIndexedMeshes(string path)
     {
-        var asset = BuiltInContentAssets.Load().Single(asset => asset.RelativePath == path);
+        var asset = BuiltInContentAssets.Load(includeClientAssets: false).Single(asset => asset.RelativePath == path);
         using var stream = asset.OpenRead();
         var data = ModelData.Load(stream);
         using var graphics = Model.Load(data);

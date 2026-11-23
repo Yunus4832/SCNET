@@ -27,7 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="Assets.zip">
+        <None Include="SharedAssets.zip;ClientAssets.zip">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
             <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
         </None>

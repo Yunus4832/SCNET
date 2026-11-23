@@ -15,7 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="../../Assets/Database.xml" Link="Fixtures/Database.xml" CopyToOutputDirectory="PreserveNewest"/>
+        <None Include="../../Assets/Shared/Database.xml" Link="Fixtures/Database.xml" CopyToOutputDirectory="PreserveNewest"/>
         <None Update="Fixtures/BuiltInBlocks.txt" CopyToOutputDirectory="PreserveNewest"/>
     </ItemGroup>
 

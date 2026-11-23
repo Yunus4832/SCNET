@@ -12,6 +12,8 @@ public sealed class ContentRegistration
         _bytes = bytes.ToArray();
     }
 
+    internal bool IsClientAsset { get; init; }
+
     public string RelativePath { get; }
 
     public MemoryStream OpenRead() => new(_bytes, writable: false);

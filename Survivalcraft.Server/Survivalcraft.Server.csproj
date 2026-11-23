@@ -7,6 +7,7 @@
         <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND $([MSBuild]::IsOSPlatform('Windows'))">win-x64</RuntimeIdentifier>
         <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND $([MSBuild]::IsOSPlatform('Linux'))">linux-x64</RuntimeIdentifier>
         <RuntimeIdentifiers>linux-x64;win-x64</RuntimeIdentifiers>
+        <SharedAssetsOnly>true</SharedAssetsOnly>
         <UsePackAssetsTarget>true</UsePackAssetsTarget>
     </PropertyGroup>
 
@@ -21,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Include="Assets.zip" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"
+        <None Include="SharedAssets.zip" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"
               ExcludeFromSingleFile="true"/>
         <None Include="../ThirdPartyNotices.txt" Link="ThirdPartyNotices.txt" CopyToPublishDirectory="PreserveNewest"
               ExcludeFromSingleFile="true"/>

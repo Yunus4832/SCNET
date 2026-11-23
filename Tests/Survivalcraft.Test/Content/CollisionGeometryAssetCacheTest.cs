@@ -12,7 +12,8 @@ public sealed class CollisionGeometryAssetCacheTest
     public void WorldDirectoriesShareOnlyImmutableGeometryAndPreserveResourceIdCase()
     {
         var id = ResourceId.Parse("game:Models/IronDoor.glb");
-        var asset = BuiltInContentAssets.Load().Single(asset => asset.RelativePath == id.Path);
+        var asset = BuiltInContentAssets.Load(includeClientAssets: false)
+            .Single(asset => asset.RelativePath == id.Path);
         var extensions = new ExtensionRegistry();
         extensions.GetRegistry<ContentRegistration>(ContentExtensions.RegistryName)
             .Register(id.Namespace, id, asset);

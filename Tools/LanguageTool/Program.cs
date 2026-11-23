@@ -352,7 +352,7 @@ internal sealed class LanguageToolApp
         Console.WriteLine(
             """
             SCNET language key rules:
-            - Language files live in Assets/Lang/{culture}.json.
+            - Language files live in Assets/Shared/Lang/{culture}.json.
             - All four language files must expose the same JSON key paths and value kinds.
             - Runtime Game.Localization.ClientLanguage.Catalog.Get(section, key) reads JSON path: {section}.{key}.
             - Runtime Game.Localization.ClientLanguage.Catalog.GetContentWidgets(name, key) reads JSON path: ContentWidgets.{name}.{key}.
@@ -589,7 +589,7 @@ internal sealed class LanguageToolApp
         var documents = new Dictionary<string, LanguageDocument>(StringComparer.Ordinal);
         foreach (var culture in _defaultCultures)
         {
-            var file = Path.Combine(root.FullName, "Assets", "Lang", $"{culture}.json");
+            var file = Path.Combine(root.FullName, "Assets", "Shared", "Lang", $"{culture}.json");
             if (!File.Exists(file))
             {
                 throw new FileNotFoundException($"Language file not found: {file}");
@@ -1261,7 +1261,7 @@ internal sealed class LanguageToolApp
         while (directory is not null)
         {
             if (File.Exists(Path.Combine(directory.FullName, "SCNET.slnx")) &&
-                Directory.Exists(Path.Combine(directory.FullName, "Assets", "Lang")))
+                Directory.Exists(Path.Combine(directory.FullName, "Assets", "Shared", "Lang")))
             {
                 return directory;
             }

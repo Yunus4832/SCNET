@@ -368,6 +368,8 @@ healthchecksdb
 ~*
 # Generated game asset archives
 Assets.zip
+SharedAssets.zip
+ClientAssets.zip
 Publish/*
 
 # 避免被 NuGet 规则忽略
@@ -377,5 +379,5 @@ Publish/*
 Services/Content/ContentServer/wwwroot/
 
 # Generated GUI atlas
-/Assets/Atlases/Atlas.txt
-/Assets/Atlases/AtlasTexture.webp
+/Assets/Client/Atlases/Atlas.txt
+/Assets/Client/Atlases/AtlasTexture.webp

@@ -758,7 +758,8 @@ public static class ServerStarter
             profile,
             Storage.GetSystemPath(GamePaths.ContentPackageCache),
             Log.Information,
-            registerAppCommands: _registerAppCommands ?? RegisterProcessCommands
+            registerAppCommands: _registerAppCommands ?? RegisterProcessCommands,
+            includeClientAssets: false
         );
         using (var replacement = CurrentModRuntime.BeginReplacement(_modRuntime)) { replacement.Commit(); }
 

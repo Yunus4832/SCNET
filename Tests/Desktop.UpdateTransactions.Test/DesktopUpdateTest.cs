@@ -23,7 +23,7 @@ public sealed class DesktopUpdateTest : IDisposable
         DesktopUpdateTransaction.Apply(taskPath, Replace);
 
         Assert.Equal(DesktopUpdateState.Completed, DesktopUpdateTask.Read(taskPath).State);
-        Assert.Equal("new", File.ReadAllText(Path.Combine(task.TargetDirectory, "Assets.zip")));
+        Assert.Equal("new", File.ReadAllText(Path.Combine(task.TargetDirectory, "SharedAssets.zip")));
         Assert.Equal("settings", File.ReadAllText(Path.Combine(task.TargetDirectory, "Starter.xml")));
         Assert.Equal("world", File.ReadAllText(Path.Combine(instance, "world.xml")));
         Assert.Equal("custom", File.ReadAllText(Path.Combine(task.TargetDirectory, "custom.txt")));
@@ -63,7 +63,7 @@ public sealed class DesktopUpdateTest : IDisposable
         );
 
         Assert.Equal(DesktopUpdateState.RolledBack, DesktopUpdateTask.Read(taskPath).State);
-        Assert.Equal("old", File.ReadAllText(Path.Combine(task.TargetDirectory, "Assets.zip")));
+        Assert.Equal("old", File.ReadAllText(Path.Combine(task.TargetDirectory, "SharedAssets.zip")));
         Assert.Equal("old", File.ReadAllText(Path.Combine(task.TargetDirectory, "SurvivalcraftStarter")));
         Assert.Equal("obsolete", File.ReadAllText(Path.Combine(task.TargetDirectory, "obsolete.dll")));
         Assert.False(File.Exists(Path.Combine(task.TargetDirectory, "added.dll")));
@@ -77,7 +77,7 @@ public sealed class DesktopUpdateTest : IDisposable
                 taskPath,
                 (source, destination) =>
                 {
-                    if (Path.GetFileName(destination) == "Assets.zip")
+                    if (Path.GetFileName(destination) == "SharedAssets.zip")
                     {
                         throw new IOException("Injected locked file.");
                     }
@@ -88,11 +88,11 @@ public sealed class DesktopUpdateTest : IDisposable
         );
         var task = DesktopUpdateTask.Read(taskPath);
         Assert.Equal(DesktopUpdateState.RollbackFailed, task.State);
-        Assert.True(File.Exists(Path.Combine(Path.GetDirectoryName(taskPath)!, "backup", "Assets.zip")));
+        Assert.True(File.Exists(Path.Combine(Path.GetDirectoryName(taskPath)!, "backup", "SharedAssets.zip")));
 
         DesktopUpdateTransaction.Rollback(taskPath, Replace);
         Assert.Equal(DesktopUpdateState.RolledBack, DesktopUpdateTask.Read(taskPath).State);
-        Assert.Equal("old", File.ReadAllText(Path.Combine(task.TargetDirectory, "Assets.zip")));
+        Assert.Equal("old", File.ReadAllText(Path.Combine(task.TargetDirectory, "SharedAssets.zip")));
     }
 
     [Fact]
@@ -128,11 +128,11 @@ public sealed class DesktopUpdateTest : IDisposable
                 (_, _) => Assert.Fail("Prepared cleanup should not notify.")
             )
         );
-        Assert.Equal("old", File.ReadAllText(Path.Combine(task.TargetDirectory, "Assets.zip")));
+        Assert.Equal("old", File.ReadAllText(Path.Combine(task.TargetDirectory, "SharedAssets.zip")));
     }
 
     [Theory]
-    [InlineData("../Assets.zip")]
+    [InlineData("../SharedAssets.zip")]
     [InlineData("Instances")]
     [InlineData("Starter.xml")]
     [InlineData("sub/file.dll")]
@@ -142,7 +142,7 @@ public sealed class DesktopUpdateTest : IDisposable
         var archive = CreateArchive("linux-x64", file);
         Assert.Throws<InvalidDataException>(() => DesktopUpdateCoordinator.Prepare(archive, target, "linux-x64"));
         Assert.False(Directory.Exists(Path.Combine(target, ".update")));
-        Assert.Equal("old", File.ReadAllText(Path.Combine(target, "Assets.zip")));
+        Assert.Equal("old", File.ReadAllText(Path.Combine(target, "SharedAssets.zip")));
     }
 
     [Fact]
@@ -196,7 +196,7 @@ public sealed class DesktopUpdateTest : IDisposable
             )
         );
         Assert.False(Directory.Exists(Path.Combine(target, ".update")));
-        Assert.Equal("old", File.ReadAllText(Path.Combine(target, "Assets.zip")));
+        Assert.Equal("old", File.ReadAllText(Path.Combine(target, "SharedAssets.zip")));
     }
 
     [Fact]
@@ -231,12 +231,13 @@ public sealed class DesktopUpdateTest : IDisposable
         var target = Path.Combine(_root, "installed");
         Directory.CreateDirectory(target);
         File.WriteAllText(Path.Combine(target, "SurvivalcraftStarter"), "old");
-        File.WriteAllText(Path.Combine(target, "Assets.zip"), "old");
+        File.WriteAllText(Path.Combine(target, "SharedAssets.zip"), "old");
+        File.WriteAllText(Path.Combine(target, "ClientAssets.zip"), "old");
         File.WriteAllText(Path.Combine(target, "obsolete.dll"), "obsolete");
         WriteManifest(
             Path.Combine(target, DesktopReleaseManifest.FileName),
             "linux-x64",
-            ["SurvivalcraftStarter", "Assets.zip", "obsolete.dll"]
+            ["SurvivalcraftStarter", "SharedAssets.zip", "ClientAssets.zip", "obsolete.dll"]
         );
         return target;
     }
@@ -245,7 +246,7 @@ public sealed class DesktopUpdateTest : IDisposable
     {
         var path = Path.Combine(_root, Guid.NewGuid().ToString("N") + ".zip");
         using var zip = ZipFile.Open(path, ZipArchiveMode.Create);
-        foreach (var file in new[] { "SurvivalcraftStarter", "Assets.zip", "added.dll" })
+        foreach (var file in new[] { "SurvivalcraftStarter", "SharedAssets.zip", "ClientAssets.zip", "added.dll" })
         {
             using var writer = new StreamWriter(zip.CreateEntry(file).Open());
             writer.Write("new");
@@ -258,7 +259,7 @@ public sealed class DesktopUpdateTest : IDisposable
                 new DesktopReleaseManifest
                 {
                     Platform = platform,
-                    Files = ["SurvivalcraftStarter", "Assets.zip", "added.dll"]
+                    Files = ["SurvivalcraftStarter", "SharedAssets.zip", "ClientAssets.zip", "added.dll"]
                 }
             );
         }

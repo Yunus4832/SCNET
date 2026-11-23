@@ -7,23 +7,23 @@
 
     <PropertyGroup>
         <_GuiAtlasSourceDirectory>$(SolutionRoot)Tools/GuiAtlasTool/Assets</_GuiAtlasSourceDirectory>
-        <_GuiAtlasTexture>$(SolutionRoot)Assets/Atlases/AtlasTexture.webp</_GuiAtlasTexture>
-        <_GuiAtlasDefinition>$(SolutionRoot)Assets/Atlases/Atlas.txt</_GuiAtlasDefinition>
+        <_GuiAtlasTexture>$(SolutionRoot)Assets/Client/Atlases/AtlasTexture.webp</_GuiAtlasTexture>
+        <_GuiAtlasDefinition>$(SolutionRoot)Assets/Client/Atlases/Atlas.txt</_GuiAtlasDefinition>
         <_GuiAtlasToolProject>$(SolutionRoot)Tools/GuiAtlasTool/GuiAtlasTool.csproj</_GuiAtlasToolProject>
         <_GuiAtlasToolAssembly>$(SolutionRoot)Tools/GuiAtlasTool/bin/$(Configuration)/$(GlobalTargetFramework)/SCNET.GuiAtlasTool.dll</_GuiAtlasToolAssembly>
     </PropertyGroup>
 
     <ItemGroup>
-        <AssetFiles Include="$(SolutionRoot)Assets/**/*.*"
-                        Exclude="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)"/>
-        <AssetFiles Include="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)"/>
+        <SharedAssetFiles Include="$(SolutionRoot)Assets/Shared/**/*"/>
+        <ClientAssetFiles Include="$(SolutionRoot)Assets/Client/**/*" Exclude="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)" AssetDirectory="%(RecursiveDir)"/>
+        <ClientAssetFiles Include="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)" AssetDirectory="Atlases/"/>
         <_GuiAtlasSources Include="$(_GuiAtlasSourceDirectory)/**/*.svg;$(_GuiAtlasSourceDirectory)/**/*.png;$(_GuiAtlasSourceDirectory)/**/*.webp"/>
         <_GuiAtlasToolSources Include="$(SolutionRoot)Tools/GuiAtlasTool/**/*.cs;$(SolutionRoot)Tools/GuiAtlasTool/GuiAtlasTool.csproj"
                               Exclude="$(SolutionRoot)Tools/GuiAtlasTool/bin/**/*;$(SolutionRoot)Tools/GuiAtlasTool/obj/**/*"/>
     </ItemGroup>
 
     <!-- 图集工具作为主机工具参与构建依赖排序。 -->
-    <ItemGroup Condition="'$(UsePackAssetsTarget)' == 'true'">
+    <ItemGroup Condition="'$(UsePackAssetsTarget)' == 'true' and '$(SharedAssetsOnly)' != 'true'">
         <ProjectReference Include="$(_GuiAtlasToolProject)"
                           ReferenceOutputAssembly="false"
                           Private="false"
@@ -35,35 +35,39 @@
 
     <Target Name="GenerateGuiAtlas"
             BeforeTargets="GenerateAssetManifest"
-            Condition="'$(UsePackAssetsTarget)' == 'true'"
+            Condition="'$(UsePackAssetsTarget)' == 'true' and '$(SharedAssetsOnly)' != 'true'"
             Inputs="@(_GuiAtlasSources);$(_GuiAtlasSourceDirectory);@(_GuiAtlasToolSources)"
             Outputs="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)">
         <Exec Command="dotnet &quot;$(_GuiAtlasToolAssembly)&quot; generate &quot;$(_GuiAtlasSourceDirectory)&quot; &quot;$(_GuiAtlasTexture)&quot; &quot;$(_GuiAtlasDefinition)&quot;"/>
     </Target>
 
     <Target Name="GenerateAssetManifest"
-            BeforeTargets="PackAssets"
             Condition="'$(UsePackAssetsTarget)' == 'true'">
-        <PropertyGroup>
-            <_AssetManifest>$(IntermediateOutputPath)AssetFiles.manifest</_AssetManifest>
-        </PropertyGroup>
+        <ItemGroup>
+            <_LogicalPath Include="@(SharedAssetFiles->'%(RecursiveDir)%(Filename)%(Extension)')"/>
+            <_LogicalPath Include="@(ClientAssetFiles->'%(AssetDirectory)%(Filename)%(Extension)')"/>
+        </ItemGroup>
+        <RemoveDuplicates Inputs="@(_LogicalPath)">
+            <Output TaskParameter="HadAnyDuplicates" PropertyName="_DuplicateAssetPaths"/>
+        </RemoveDuplicates>
+        <Error Condition="'$(_DuplicateAssetPaths)' == 'true'" Text="Shared and Client assets must have distinct logical paths."/>
         <MakeDir Directories="$(IntermediateOutputPath)"/>
-        <WriteLinesToFile File="$(_AssetManifest)"
-                          Lines="@(AssetFiles->'%(FullPath)')"
-                          Overwrite="true"
-                          WriteOnlyWhenDifferent="true"/>
+        <WriteLinesToFile File="$(IntermediateOutputPath)SharedAssets.manifest" Lines="@(SharedAssetFiles)" Overwrite="true" WriteOnlyWhenDifferent="true"/>
+        <WriteLinesToFile File="$(IntermediateOutputPath)ClientAssets.manifest" Lines="@(ClientAssetFiles)" Overwrite="true" WriteOnlyWhenDifferent="true"/>
     </Target>
 
-    <!-- 增量打包资源 -->
-    <Target Name="PackAssets"
-            BeforeTargets="BeforeBuild"
-            DependsOnTargets="ResolveProjectReferences"
-            Condition="'$(UsePackAssetsTarget)' == 'true'"
-            Inputs="@(AssetFiles);$(_AssetManifest)"
-            Outputs="$(MSBuildProjectDirectory)/Assets.zip">
-        <Message Text="[PackAssets] 正在执行增量打包..." Importance="high"/>
-        <ZipDirectory SourceDirectory="$(SolutionRoot)Assets" DestinationFile="$(MSBuildProjectDirectory)/Assets.zip" Overwrite="true"/>
+    <Target Name="PackSharedAssets" DependsOnTargets="GenerateAssetManifest"
+            Inputs="@(SharedAssetFiles);$(IntermediateOutputPath)SharedAssets.manifest" Outputs="$(MSBuildProjectDirectory)/SharedAssets.zip">
+        <ZipDirectory SourceDirectory="$(SolutionRoot)Assets/Shared" DestinationFile="$(MSBuildProjectDirectory)/SharedAssets.zip" Overwrite="true"/>
     </Target>
+
+    <Target Name="PackClientAssets" Condition="'$(SharedAssetsOnly)' != 'true'" DependsOnTargets="GenerateAssetManifest"
+            Inputs="@(ClientAssetFiles);$(IntermediateOutputPath)ClientAssets.manifest" Outputs="$(MSBuildProjectDirectory)/ClientAssets.zip">
+        <ZipDirectory SourceDirectory="$(SolutionRoot)Assets/Client" DestinationFile="$(MSBuildProjectDirectory)/ClientAssets.zip" Overwrite="true"/>
+    </Target>
+
+    <Target Name="PackAssets" BeforeTargets="BeforeBuild" Condition="'$(UsePackAssetsTarget)' == 'true'"
+            DependsOnTargets="ResolveProjectReferences;PackSharedAssets;PackClientAssets"/>
 
     <!-- 检查是否定义了 OutputFileName 属性 -->
     <PropertyGroup>

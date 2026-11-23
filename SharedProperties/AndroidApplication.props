@@ -25,7 +25,8 @@
     </ItemGroup>
 
     <ItemGroup>
-        <AndroidAsset Include="$(MSBuildProjectDirectory)/Assets.zip" Link="Assets/Assets.zip"/>
+        <AndroidAsset Include="$(MSBuildProjectDirectory)/SharedAssets.zip" Link="Assets/SharedAssets.zip"/>
+        <AndroidAsset Include="$(MSBuildProjectDirectory)/ClientAssets.zip" Link="Assets/ClientAssets.zip"/>
     </ItemGroup>
 
     <ItemGroup>
