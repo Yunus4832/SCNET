@@ -311,7 +311,11 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 fireData |= (1 << oppositeFace) & 0xF;
                 cellValue = Terrain.ReplaceData(Terrain.ReplaceContents(0, 104), fireData);
                 AddFire(x + point.X, y + point.Y, z + point.Z, fireExpandability);
-                SubsystemTerrain.ChangeCell(x + point.X, y + point.Y, z + point.Z, cellValue);
+                if (cellValue != Terrain.NormalizeCellValue(cellValue2))
+                {
+                    SubsystemTerrain.ChangeCell(x + point.X, y + point.Y, z + point.Z, cellValue);
+                }
+
                 result = true;
             }
         }
@@ -323,7 +327,8 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
     {
         if (!WorldRuntimeContext.For(Project).IsAuthority) { return; }
 
-        var fireData = Terrain.ExtractData(SubsystemTerrain.Terrain.GetCellValue(x, y, z));
+        var currentValue = Terrain.NormalizeCellValue(SubsystemTerrain.Terrain.GetCellValue(x, y, z));
+        var fireData = Terrain.ExtractData(currentValue);
         if ((fireData & 1) != 0 &&
             WorldContentBinding.For(Project).Catalog
                 .Blocks[SubsystemTerrain.Terrain.GetCellContents(x, y, z + 1)]
@@ -398,7 +403,10 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         }
 
         var value2 = Terrain.ReplaceData(Terrain.ReplaceContents(0, contents), fireData);
-        SubsystemTerrain.ChangeCell(x, y, z, value2);
+        if (value2 != currentValue)
+        {
+            SubsystemTerrain.ChangeCell(x, y, z, value2);
+        }
     }
 
     private bool HasLoadedFuelNeighbors(int x, int z)
@@ -481,24 +489,24 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     private void AddFire(int x, int y, int z, float expandability)
     {
-        if (WorldRuntimeContext.For(Project).IsAuthority)
+        if (WorldRuntimeContext.For(Project).IsAuthority && TryAddFire(x, y, z, expandability))
         {
             NetworkSender.SendToChunkObservers(
                 Project,
                 new Point2(x >> 4, z >> 4),
                 new BlockFireAddedPackage { X = x, Y = y, Z = z, Duration = expandability }
             );
-
-            AddFireNet(x, y, z, expandability);
         }
     }
 
-    public void AddFireNet(int x, int y, int z, float expandability)
+    public void AddFireNet(int x, int y, int z, float expandability) => TryAddFire(x, y, z, expandability);
+
+    private bool TryAddFire(int x, int y, int z, float expandability)
     {
         var point = new Point3(x, y, z);
         if (_fireData.ContainsKey(point))
         {
-            return;
+            return false;
         }
 
         var fireData = new FireData
@@ -509,6 +517,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
         if (WorldRuntimeContext.For(Project).IsAuthority) { InitializeFireDataTimes(fireData); }
 
         _fireData[point] = fireData;
+        return true;
     }
 
     public void ClearChunkState(Point2 chunk)
@@ -548,7 +557,7 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
 
     private void RemoveFire(int x, int y, int z)
     {
-        if (WorldRuntimeContext.For(Project).IsAuthority)
+        if (_fireData.Remove(new Point3(x, y, z)) && WorldRuntimeContext.For(Project).IsAuthority)
         {
             NetworkSender.SendToChunkObservers(
                 Project,
@@ -556,8 +565,6 @@ public class SubsystemFireBlockBehavior : SubsystemBlockBehavior, IUpdateable
                 new BlockFireRemovedPackage { X = x, Y = y, Z = z }
             );
         }
-
-        RemoveFireNet(x, y, z);
     }
 
     public void RemoveFireNet(int x, int y, int z)
