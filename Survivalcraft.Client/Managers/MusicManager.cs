@@ -115,7 +115,7 @@ public static class MusicManager
             {
                 StopMusic();
                 var volume = _fadeSound != null ? 0f : Volume;
-                var open = ContentManager.CreateStreamFactory(name, "ogg", "wav");
+                var open = AssetManager.CreateStreamFactory(name, "ogg", "wav");
                 _sound = new StreamingSound(
                     () => SoundData.Stream(open()),
                     volume,

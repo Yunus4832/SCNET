@@ -42,7 +42,7 @@ public class ListSelectionDialog : Dialog
         if (!float.IsFinite(itemSize) || itemSize <= 0f) { throw new ArgumentOutOfRangeException(nameof(itemSize)); }
 
         _selectionHandler = selectionHandler;
-        LoadContents(this, ContentManager.Get<XElement>("Dialogs/ListSelectionDialog"));
+        LoadContents(this, AssetManager.Get<XElement>("Dialogs/ListSelectionDialog"));
         _titleLabelWidget = Children.Find<LabelWidget>("ListSelectionDialog.Title")!;
         _listWidget = Children.Find<ListPanelWidget>("ListSelectionDialog.List")!;
         _contentWidget = Children.Find<CanvasWidget>("ListSelectionDialog.Content")!;

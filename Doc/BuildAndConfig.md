@@ -281,7 +281,7 @@ NuGet 包是另一条发行流程，不由应用发布脚本生成。使用 `Scr
 - 桌面发布会将 `$(PublishDir)` 生成的发布输出压缩到仓库根目录下的 `Publish/` 目录
 - Android 发布会生成并重命名 APK 到 `Publish/`
 
-这也是为什么不同平台项目里会看到 `UsePackResourceTarget`、`UsePackOutputTarget` 和 `UseRenameApkTarget` 之类的属性。这些属性用于集中处理资源和发布产物。
+这也是为什么不同平台项目里会看到 `UsePackAssetsTarget`、`UsePackOutputTarget` 和 `UseRenameApkTarget` 之类的属性。这些属性用于集中处理资源和发布产物。
 
 ### GUI 图集
 
@@ -304,12 +304,12 @@ dotnet run --project Tools/GuiAtlasTool/GuiAtlasTool.csproj -- generate \
 `prepare-image` 将 PNG/WebP 转为普通无损 WebP，`extract` 从当前图集中直接提取 WebP 条目；
 仅历史预乘输入的一次性导入需要显式指定 `--premultiplied`。详见 [图集工具](../Tools/GuiAtlasTool/README.md)。
 
-启用 `UsePackResourceTarget` 的项目在 `PackResource` 前生成图集。
+启用 `UsePackAssetsTarget` 的项目在 `PackAssets` 前生成图集。
 MSBuild 将 SVG、PNG、WebP 和工具源码作为增量输入；没有变化时不会重复生成。
 图集工具通过构建专用 `ProjectReference` 参与依赖排序，其程序集和内容保留在工具输出目录。
 项目引用隔离应用的目标框架、RID、平台、输出路径以及安装阶段的 `NoBuild`、`DeployOnBuild` 参数，
 工具保持构建主机上的 `net10.0` 配置。
-资源生成限定在常规构建阶段，`PackResource` 等待项目引用就绪后执行。
+资源生成限定在常规构建阶段，`PackAssets` 等待项目引用就绪后执行。
 解决方案并行 `Rebuild` 会先完成工具重建，再允许依赖它的应用生成图集。
 
 ### 信令服务与探针

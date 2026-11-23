@@ -20,7 +20,7 @@ public class SettingsScreen : Screen
 
     public SettingsScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/SettingsScreen");
+        var node = AssetManager.Get<XElement>("Screens/SettingsScreen");
         LoadContents(this, node);
         _performanceButton = Children.Find<ButtonWidget>("Performance")!;
         _graphicsButton = Children.Find<ButtonWidget>("Graphics")!;

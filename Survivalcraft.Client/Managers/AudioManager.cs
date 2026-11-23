@@ -27,7 +27,7 @@ public static class AudioManager
 
         if (!Mixer.IsAudioInitialized || cancellation.IsCancellationRequested) { return; }
 
-        var buffer = ContentManager.Get<SoundBuffer>(name);
+        var buffer = AssetManager.Get<SoundBuffer>(name);
 
         new Sound(
             buffer,

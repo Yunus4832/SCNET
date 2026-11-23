@@ -24,7 +24,7 @@ public class LeavesParticleSystem : ParticleSystem<LeavesParticleSystem.Particle
     {
         _subsystemTerrain = subsystemTerrain;
         _fadeIn = fadeIn;
-        Texture = ContentManager.Get<Texture2D>("Textures/LeafParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/LeafParticle");
         TextureSlotsCount = 1;
         var color =
             _subsystemTerrain.Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog

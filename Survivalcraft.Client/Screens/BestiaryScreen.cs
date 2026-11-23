@@ -18,13 +18,13 @@ public class BestiaryScreen : Screen
 
     public BestiaryScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/BestiaryScreen");
+        var node = AssetManager.Get<XElement>("Screens/BestiaryScreen");
         LoadContents(this, node);
         _creaturesList = Children.Find<ListPanelWidget>("CreaturesList")!;
         _creaturesList.ItemWidgetFactory = delegate(object item)
         {
             var bestiaryCreatureInfo2 = (BestiaryCreatureInfo)item;
-            var node2 = ContentManager.Get<XElement>("Widgets/BestiaryItem");
+            var node2 = AssetManager.Get<XElement>("Widgets/BestiaryItem");
             var obj = (ContainerWidget)LoadWidget(this, node2, null);
             var modelWidget = obj.Children.Find<ModelWidget>("BestiaryItem.Model")!;
             SetupBestiaryModelWidget(
@@ -234,8 +234,8 @@ public class BestiaryScreen : Screen
         bool autoAspect
     )
     {
-        modelWidget.Model = ContentManager.Get<Model>(info.ModelName);
-        modelWidget.TextureOverride = ContentManager.Get<Texture2D>(info.TextureOverride);
+        modelWidget.Model = AssetManager.Get<Model>(info.ModelName);
+        modelWidget.TextureOverride = AssetManager.Get<Texture2D>(info.TextureOverride);
         var absoluteTransforms = new Matrix[modelWidget.Model.Nodes.Count];
         modelWidget.Model.CopyAbsoluteNodeTransformsTo(absoluteTransforms);
         var boundingBox = modelWidget.Model.CalculateAbsoluteBoundingBox(absoluteTransforms);

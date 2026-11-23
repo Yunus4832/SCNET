@@ -308,6 +308,6 @@ public class ComponentFirstPersonModel : Component, IDrawable, IUpdateable
         _componentCharacter = Entity.FindComponent<ComponentCharacter>(true)!;
         _componentRider = Entity.FindComponent<ComponentRider>(true)!;
         _componentMiner = Entity.FindComponent<ComponentMiner>(true)!;
-        _handModel = ContentManager.Get<Model>(valuesDictionary.GetValue<string>("HandModelName"));
+        _handModel = AssetManager.Get<Model>(valuesDictionary.GetValue<string>("HandModelName"));
     }
 }

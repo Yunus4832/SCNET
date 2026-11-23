@@ -22,7 +22,7 @@ public class MagmaSplashParticleSystem : ParticleSystem<MagmaSplashParticleSyste
     {
         _subsystemTerrain = terrain;
         _position = position;
-        Texture = ContentManager.Get<Texture2D>("Textures/MagmaSplashParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/MagmaSplashParticle");
         TextureSlotsCount = 2;
         SetLightOrigin(terrain, position);
         var white = Color.White;

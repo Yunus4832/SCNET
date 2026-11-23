@@ -132,7 +132,7 @@ public abstract class BasePumpkinBlockPresentation(BasePumpkinBlock block, Block
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Pumpkins");
+        var model = AssetManager.Get<Model>("Models/Pumpkins");
         var pumpkinNode = model.FindNode("Pumpkin")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(pumpkinNode);
         for (var i = 0; i < 8; i++)

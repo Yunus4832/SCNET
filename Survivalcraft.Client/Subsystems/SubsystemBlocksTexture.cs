@@ -56,7 +56,7 @@ public class SubsystemBlocksTexture : Subsystem
             return;
         }
 
-        if (!ContentManager.IsContent(BlocksTexture))
+        if (!AssetManager.IsAsset(BlocksTexture))
         {
             BlocksTexture.Dispose();
         }

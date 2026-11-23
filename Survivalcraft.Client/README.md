@@ -8,8 +8,9 @@ connection, command and CPU content services and has no dependency on Client.
 `ClientApplication` owns client content, world presentation, frame telemetry and platform URI
 requests. Each client world has its own presentation resources and mod services. Application
 startup, platform registration and screens that assemble application services belong to the
-integrated application. Content resources are installed before CPU content data initializes
-preview rendering, and are released before the owning CPU mod environment is retired.
+integrated application. `ClientContentRuntime` installs registered mod resources into
+`AssetManager` before preview rendering starts. Readers in `Game.AssetReaders` decode those
+assets on demand. The client releases them before the owning mod environment is retired.
 
 ## Development entry points
 

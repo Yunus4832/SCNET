@@ -312,7 +312,7 @@ public static class ScreensManager
     public static void DrawVrBackground()
     {
         var hmdMatrix = Matrix.Identity;
-        var batch = _pr3.TexturedBatch(ContentManager.Get<Texture2D>("Textures/Star"));
+        var batch = _pr3.TexturedBatch(AssetManager.Get<Texture2D>("Textures/Star"));
         _sharedRandom.Seed(0);
         for (var i = 0; i < 1500; i++)
         {
@@ -326,7 +326,7 @@ public static class ScreensManager
         }
 
         var batch2 = _pr3.TexturedBatch(
-            ContentManager.Get<Texture2D>("Textures/Blocks"),
+            AssetManager.Get<Texture2D>("Textures/Blocks"),
             true,
             1,
             null,

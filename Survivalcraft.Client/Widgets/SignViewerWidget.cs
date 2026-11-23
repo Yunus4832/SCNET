@@ -16,7 +16,7 @@ public sealed class SignViewerWidget : CanvasWidget
 
     public SignViewerWidget(SignData? signData, Action close)
     {
-        LoadContents(this, ContentManager.Get<XElement>("Widgets/SignViewerWidget"));
+        LoadContents(this, AssetManager.Get<XElement>("Widgets/SignViewerWidget"));
         _close = close;
         _closeButton = Children.Find<ButtonWidget>("SignViewer.Close")!;
         _openLinkButton = Children.Find<ButtonWidget>("SignViewer.OpenLink")!;

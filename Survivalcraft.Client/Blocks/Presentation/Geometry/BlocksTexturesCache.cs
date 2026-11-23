@@ -21,7 +21,7 @@ public class BlocksTexturesCache
 
     public void Clear()
     {
-        foreach (var value in Textures.Values.Where(value => !ContentManager.IsContent(value)))
+        foreach (var value in Textures.Values.Where(value => !AssetManager.IsAsset(value)))
         {
             value.Dispose();
         }

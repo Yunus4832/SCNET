@@ -56,7 +56,7 @@ public class CraftingTableBlockPresentation(CraftingTableBlock block, BlockPrese
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/CraftingTable");
+        var model = AssetManager.Get<Model>("Models/CraftingTable");
         var craftingTableNode = model.FindNode("CraftingTable")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(craftingTableNode);
         BlockMesh.AppendModelPrimitive(

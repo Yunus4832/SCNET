@@ -18,7 +18,7 @@ public class SoundParticleSystem : ParticleSystem<SoundParticleSystem.Particle>
     {
         _position = position;
         _direction = direction;
-        Texture = ContentManager.Get<Texture2D>("Textures/SoundParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/SoundParticle");
         TextureSlotsCount = 2;
     }
 

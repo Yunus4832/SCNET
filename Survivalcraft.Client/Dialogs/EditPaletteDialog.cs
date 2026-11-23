@@ -26,7 +26,7 @@ public class EditPaletteDialog : Dialog
 
     public EditPaletteDialog(WorldPalette palette)
     {
-        var node = ContentManager.Get<XElement>("Dialogs/EditPaletteDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/EditPaletteDialog");
         LoadContents(this, node);
         _listPanel = Children.Find<ContainerWidget>("EditPaletteDialog.ListPanel")!;
         _okButton = Children.Find<ButtonWidget>("EditPaletteDialog.OK")!;
@@ -49,7 +49,7 @@ public class EditPaletteDialog : Dialog
                                 Color = Color.Gray,
                                 HorizontalAlignment = WidgetAlignment.Far,
                                 VerticalAlignment = WidgetAlignment.Center,
-                                Font = ContentManager.Get<BitmapFont>("Fonts/Pericles")
+                                Font = AssetManager.Get<BitmapFont>("Fonts/Pericles")
                             }
                         }
                     },
@@ -64,7 +64,7 @@ public class EditPaletteDialog : Dialog
                 {
                     Size = new Vector2(300f, -1f),
                     VerticalAlignment = WidgetAlignment.Center,
-                    Font = ContentManager.Get<BitmapFont>("Fonts/Pericles")
+                    Font = AssetManager.Get<BitmapFont>("Fonts/Pericles")
                 }
             );
             obj.Children.Add(

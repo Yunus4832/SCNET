@@ -54,7 +54,7 @@ public class BitmapButtonWidget : ButtonWidget
 
     public BitmapButtonWidget()
     {
-        var node = ContentManager.Get<XElement>("Widgets/BitmapButtonContents");
+        var node = AssetManager.Get<XElement>("Widgets/BitmapButtonContents");
         LoadChildren(this, node);
         RectangleWidget = Children.Find<RectangleWidget>("Button.Rectangle")!;
         _imageWidget = Children.Find<RectangleWidget>("Button.Image")!;

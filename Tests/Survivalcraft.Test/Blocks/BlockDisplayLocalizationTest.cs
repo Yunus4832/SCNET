@@ -19,7 +19,7 @@ public sealed class BlockDisplayLocalizationTest
     [InlineData("ru-RU")]
     public void VariantNamesResolveAtDisplayIncludingPressurePlateOrientation(string culture)
     {
-        Game.Managers.ContentManager.Initialize();
+        Game.Managers.AssetManager.Initialize();
         using var world = new WorldCatalogScope(RuntimeSide.Client);
         using var presentations = new BlockPresentationCatalog(
             world.Catalog,

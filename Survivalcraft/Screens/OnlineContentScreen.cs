@@ -84,7 +84,7 @@ public sealed class OnlineContentScreen : Screen
 
     public OnlineContentScreen()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Screens/OnlineContentScreen"));
+        LoadContents(this, AssetManager.Get<XElement>("Screens/OnlineContentScreen"));
         _contentList = Children.Find<ListPanelWidget>("ContentList")!;
         _searchTextBox = Children.Find<TextBoxWidget>("Search")!;
         _searchPlaceholder = Children.Find<LabelWidget>("SearchPlaceholder")!;
@@ -187,7 +187,7 @@ public sealed class OnlineContentScreen : Screen
         var latest = content.Versions.FirstOrDefault();
         var widget = (ContainerWidget)LoadWidget(
             null,
-            ContentManager.Get<XElement>("Widgets/OnlineContentItem"),
+            AssetManager.Get<XElement>("Widgets/OnlineContentItem"),
             null
         );
         widget.Children.Find<LabelWidget>("OnlineContentItem.Name")!.Text = content.Name;

@@ -59,7 +59,7 @@ public class SmeltingRecipeWidget : CanvasWidget
 
     public SmeltingRecipeWidget()
     {
-        var node = ContentManager.Get<XElement>("Widgets/SmeltingRecipe");
+        var node = AssetManager.Get<XElement>("Widgets/SmeltingRecipe");
         LoadContents(this, node);
         _nameWidget = Children.Find<LabelWidget>("SmeltingRecipeWidget.Name")!;
         _descriptionWidget = Children.Find<LabelWidget>("SmeltingRecipeWidget.Description")!;

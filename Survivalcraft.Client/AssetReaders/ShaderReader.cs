@@ -1,14 +1,14 @@
 using Engine.Graphics;
 
-namespace Game.ContentReaders;
+namespace Game.AssetReaders;
 
-public class ShaderReader : IContentReader
+public class ShaderReader : AssetReader
 {
     public override string Type => "Engine.Graphics.Shader";
 
     public override string[] DefaultSuffix => ["vsh", "psh"];
 
-    public override object Get(ContentInfo[] contents)
+    public override object Get(AssetInfo[] contents)
     {
         ShaderMacro[] shaderMacros;
         if (contents[0].Filename.StartsWith("AlphaTested"))

@@ -32,7 +32,7 @@ public class EmptyBucketBlockPresentation(EmptyBucketBlock block, BlockPresentat
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/EmptyBucket");
+        var model = AssetManager.Get<Model>("Models/EmptyBucket");
         var bucketNode = model.FindNode("Bucket")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(bucketNode);
         StandaloneBlockMesh.AppendModelPrimitive(

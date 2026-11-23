@@ -64,7 +64,7 @@ public abstract class TrapdoorBlockPresentation(TrapdoorBlock block, BlockPresen
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>(ModelName);
+        var model = AssetManager.Get<Model>(ModelName);
         var trapdoorNode = model.FindNode("Trapdoor")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(trapdoorNode);
         for (var i = 0; i < 16; i++)

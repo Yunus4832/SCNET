@@ -83,7 +83,7 @@ public class ThermometerBlockPresentation(ThermometerBlock block, BlockPresentat
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Thermometer");
+        var model = AssetManager.Get<Model>("Models/Thermometer");
         var caseNode = model.FindNode("Case")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(caseNode);
         var fluidNode = model.FindNode("Fluid")!;

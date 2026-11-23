@@ -45,7 +45,7 @@ public class MessageDialog : Dialog
     {
         _handler = handler;
         _cancelBehavior = cancelBehavior;
-        var node = ContentManager.Get<XElement>("Dialogs/MessageDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/MessageDialog");
         LoadContents(this, node);
         _defaultSize = Size;
         _bodyWidget = Children.Find<CanvasWidget>("MessageDialog.Body")!;

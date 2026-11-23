@@ -86,7 +86,7 @@ public class SliderWidget : CanvasWidget
 
     public SliderWidget()
     {
-        var node = ContentManager.Get<XElement>("Widgets/SliderContents");
+        var node = AssetManager.Get<XElement>("Widgets/SliderContents");
         LoadChildren(this, node);
         _canvasWidget = Children.Find<CanvasWidget>("Slider.Canvas")!;
         _labelCanvasWidget = Children.Find<CanvasWidget>("Slider.LabelCanvas")!;

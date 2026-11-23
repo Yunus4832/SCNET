@@ -44,7 +44,7 @@ public sealed class PasswordDialog : Dialog
         }
 
         _minimumLength = minimumLength;
-        LoadContents(this, ContentManager.Get<XElement>("Dialogs/PasswordDialog"));
+        LoadContents(this, AssetManager.Get<XElement>("Dialogs/PasswordDialog"));
         Children.Find<CanvasWidget>("Surface")!.Size = new Vector2(
             600,
             confirmPassword || allowRemember ? 300 : 240

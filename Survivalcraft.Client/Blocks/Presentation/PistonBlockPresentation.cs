@@ -76,7 +76,7 @@ public class PistonBlockPresentation(PistonBlock block, BlockPresentationCatalog
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Pistons");
+        var model = AssetManager.Get<Model>("Models/Pistons");
         for (var pistonMode = PistonMode.Pushing; pistonMode <= PistonMode.StrictPulling; pistonMode++)
         {
             for (var i = 0; i < 2; i++)

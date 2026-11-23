@@ -81,7 +81,7 @@ public class GrassTrapBlockPresentation(GrassTrapBlock block, BlockPresentationC
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/GrassTrap");
+        var model = AssetManager.Get<Model>("Models/GrassTrap");
         var grassTrapNode = model.FindNode("GrassTrap")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(grassTrapNode);
         var color = BlockColorsMap.GrassColorsMap.Lookup(8, 15);

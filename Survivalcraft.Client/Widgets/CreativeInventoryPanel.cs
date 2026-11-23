@@ -22,7 +22,7 @@ public class CreativeInventoryPanel : CanvasWidget
     {
         _creativeInventoryWidget = creativeInventoryWidget;
         _componentCreativeInventory = creativeInventoryWidget.Entity.FindComponent<ComponentCreativeInventory>(true)!;
-        var node = ContentManager.Get<XElement>("Widgets/CreativeInventoryPanel");
+        var node = AssetManager.Get<XElement>("Widgets/CreativeInventoryPanel");
         LoadContents(this, node);
         _inventoryGrid = Children.Find<GridPanelWidget>("InventoryGrid")!;
         for (var i = 0; i < _inventoryGrid.RowsCount; i++)

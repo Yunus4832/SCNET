@@ -26,7 +26,7 @@ public class CharacterSkinsCache
 
     public void Clear()
     {
-        foreach (var value in _textures.Values.Where(value => !ContentManager.IsContent(value)))
+        foreach (var value in _textures.Values.Where(value => !AssetManager.IsAsset(value)))
         {
             value.Dispose();
         }

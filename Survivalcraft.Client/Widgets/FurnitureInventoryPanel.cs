@@ -39,7 +39,7 @@ public class FurnitureInventoryPanel : CanvasWidget
         SubsystemFurnitureBlockBehavior =
             ComponentFurnitureInventory.Project.FindSubsystem<SubsystemFurnitureBlockBehavior>(true)!;
         SubsystemTerrain = ComponentFurnitureInventory.Project.FindSubsystem<SubsystemTerrain>(true)!;
-        var node = ContentManager.Get<XElement>("Widgets/FurnitureInventoryPanel");
+        var node = AssetManager.Get<XElement>("Widgets/FurnitureInventoryPanel");
         LoadContents(this, node);
         _furnitureSetList = Children.Find<ListPanelWidget>("FurnitureSetList")!;
         _inventoryGrid = Children.Find<GridPanelWidget>("InventoryGrid")!;

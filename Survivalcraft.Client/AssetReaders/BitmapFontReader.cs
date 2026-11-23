@@ -1,14 +1,14 @@
 using Engine.Graphics;
 
-namespace Game.ContentReaders;
+namespace Game.AssetReaders;
 
-public class BitmapFontReader : IContentReader
+public class BitmapFontReader : AssetReader
 {
     public override string Type => "Engine.Graphics.BitmapFont";
 
     public override string[] DefaultSuffix => ["lst", "webp"];
 
-    public override object Get(ContentInfo[] contents)
+    public override object Get(AssetInfo[] contents)
     {
         return contents.Length != 2
             ? throw new Exception("not matches content count")

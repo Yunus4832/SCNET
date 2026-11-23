@@ -66,7 +66,7 @@ public class VitalStatsWidget : CanvasWidget
     public VitalStatsWidget(ComponentCharacter componentCharacter)
     {
         _componentCharacter = componentCharacter;
-        var node = ContentManager.Get<XElement>("Widgets/VitalStatsWidget");
+        var node = AssetManager.Get<XElement>("Widgets/VitalStatsWidget");
         LoadContents(this, node);
         _titleLabel = Children.Find<LabelWidget>("TitleLabel")!;
         _healthLink = Children.Find<LinkWidget>("HealthLink")!;

@@ -51,7 +51,7 @@ internal static class PreviewRenderer
             try
             {
                 Storage.RegisterFileSystemRoot("app", AppContext.BaseDirectory, readOnly: true);
-                ContentManager.Initialize();
+                AssetManager.Initialize();
                 runtime = GameModRuntime.Start(scenario.CreateMods());
                 Game.GameEntry.InitializeClientContent(runtime);
                 foreach (var culture in options.Cultures)

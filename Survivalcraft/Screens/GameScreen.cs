@@ -20,7 +20,7 @@ public class GameScreen : Screen
 
     public GameScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/GameScreen");
+        var node = AssetManager.Get<XElement>("Screens/GameScreen");
         LoadContents(this, node);
         IsDrawRequired = true;
         Window.Deactivated += delegate

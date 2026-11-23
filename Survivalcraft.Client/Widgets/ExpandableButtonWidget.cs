@@ -47,7 +47,7 @@ public sealed class ExpandableButtonWidget : CanvasWidget
         set
         {
             _iconName = value;
-            _icon.Subtexture = ContentManager.Get<Subtexture>(value);
+            _icon.Subtexture = AssetManager.Get<Subtexture>(value);
         }
     }
 

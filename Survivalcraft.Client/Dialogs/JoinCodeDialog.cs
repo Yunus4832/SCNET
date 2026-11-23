@@ -28,7 +28,7 @@ public sealed class JoinCodeDialog : Dialog
     public JoinCodeDialog(RelayPolicy initialPolicy, Action<NetworkTarget> connect)
     {
         _connect = connect;
-        LoadContents(this, ContentManager.Get<XElement>("Dialogs/JoinCodeDialog"));
+        LoadContents(this, AssetManager.Get<XElement>("Dialogs/JoinCodeDialog"));
         _addressPlaceholder = Children.Find<LabelWidget>("AddressPlaceholder")!;
         _codePlaceholder = Children.Find<LabelWidget>("CodePlaceholder")!;
         _address = Children.Find<TextBoxWidget>("Address")!;

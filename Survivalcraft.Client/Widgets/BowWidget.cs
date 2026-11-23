@@ -20,7 +20,7 @@ public class BowWidget : CanvasWidget
     {
         _inventory = inventory;
         _slotIndex = slotIndex;
-        var node = ContentManager.Get<XElement>("Widgets/BowWidget");
+        var node = AssetManager.Get<XElement>("Widgets/BowWidget");
         LoadContents(this, node);
         _inventoryGrid = Children.Find<GridPanelWidget>("InventoryGrid")!;
         _inventorySlotWidget = Children.Find<InventorySlotWidget>("InventorySlot")!;

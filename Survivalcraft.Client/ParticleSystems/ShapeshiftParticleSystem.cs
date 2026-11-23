@@ -12,7 +12,7 @@ public class ShapeshiftParticleSystem : ParticleSystem<ShapeshiftParticleSystem.
 
     public ShapeshiftParticleSystem() : base(40)
     {
-        Texture = ContentManager.Get<Texture2D>("Textures/ShapeshiftParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/ShapeshiftParticle");
         TextureSlotsCount = 3;
     }
 

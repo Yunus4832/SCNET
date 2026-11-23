@@ -28,7 +28,7 @@ public class RecipaediaScreen : Screen
 
     public RecipaediaScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/RecipaediaScreen");
+        var node = AssetManager.Get<XElement>("Screens/RecipaediaScreen");
         LoadContents(this, node);
         _blocksList = Children.Find<ListPanelWidget>("BlocksList")!;
         _categoryLabel = Children.Find<LabelWidget>("Category")!;
@@ -43,7 +43,7 @@ public class RecipaediaScreen : Screen
             var value = (int)item;
             var contents = Terrain.ExtractContents(value);
             var block = ClientApplication.Content.PreviewCatalog.Get(contents);
-            var node2 = ContentManager.Get<XElement>("Widgets/RecipaediaItem");
+            var node2 = AssetManager.Get<XElement>("Widgets/RecipaediaItem");
             var obj = (ContainerWidget)LoadWidget(this, node2, null);
             obj.Children.Find<BlockIconWidget>("RecipaediaItem.Icon")!.Catalog =
                 ClientApplication.Content.PreviewCatalog;

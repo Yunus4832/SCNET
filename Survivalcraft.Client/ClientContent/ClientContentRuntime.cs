@@ -1,3 +1,4 @@
+using Game.AssetReaders;
 using Game.Localization;
 using Game.Modding.Blocks;
 using Game.Modding.Content;
@@ -19,17 +20,17 @@ public sealed class ClientContentRuntime : IDisposable
     public void InstallResources(IEnumerable<RegisteredContentResource> resources)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        BuiltInContentReaders.Register();
+        BuiltInAssetReaders.Register();
         foreach (var entry in resources)
         {
-            if (ContentManager.ContainsOwned(entry.Id.Namespace, entry.ContentPath)) { continue; }
+            if (AssetManager.ContainsOwned(entry.Id.Namespace, entry.ContentPath)) { continue; }
 
             using var source = entry.OpenRead();
-            var content = new ContentInfo(entry.ContentPath);
-            content.SetContentStream(source);
+            var content = new AssetInfo(entry.ContentPath);
+            content.SetAssetStream(source);
             try
             {
-                ContentManager.AddOwned(entry.Id.Namespace, content);
+                AssetManager.AddOwned(entry.Id.Namespace, content);
                 _installedOwners.Add(entry.Id.Namespace);
             }
             catch
@@ -99,7 +100,7 @@ public sealed class ClientContentRuntime : IDisposable
         _previewCatalog = null;
         foreach (var owner in _installedOwners)
         {
-            try { ContentManager.RemoveOwner(owner); }
+            try { AssetManager.RemoveOwner(owner); }
             catch (Exception error) { errors.Add(error); }
         }
 

@@ -76,7 +76,7 @@ public class EggBlockPresentation(EggBlock block, BlockPresentationCatalog catal
     public override void Initialize()
     {
         _eggMeshes.Clear();
-        var model = ContentManager.Get<Model>("Models/Egg");
+        var model = AssetManager.Get<Model>("Models/Egg");
         var eggNode = model.FindNode("Egg")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(eggNode);
         foreach (var eggType in Block.ReadOnlyEggTypes.OfType<EggType>())

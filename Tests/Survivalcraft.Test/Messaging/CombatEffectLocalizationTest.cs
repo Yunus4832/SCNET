@@ -17,7 +17,7 @@ public sealed class CombatEffectLocalizationTest
     [InlineData("ru-RU", "Промах")]
     public void MissEffectResolvesUsingReceivingClientsActualLanguage(string culture, string expected)
     {
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         using var runtime = GameModRuntime.Start();
         var effect = new CharacterHitEffectPackage { Text = new LocalizedText(ComponentMiner.Name, "2", "2") };
         var received = Assert.IsType<CharacterHitEffectPackage>(

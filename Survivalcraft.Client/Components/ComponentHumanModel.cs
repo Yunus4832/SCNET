@@ -527,7 +527,7 @@ public class ComponentHumanModel : ComponentCreatureModel
                         camera.ViewMatrix
                     );
                     var down = Vector3.TransformNormal(-nameTagScale * Vector3.UnitY, camera.ViewMatrix);
-                    var font = ContentManager.Get<BitmapFont>("Fonts/Pericles");
+                    var font = AssetManager.Get<BitmapFont>("Fonts/Pericles");
                     _subsystemModelsRenderer.PrimitivesRenderer
                         .FontBatch(
                             font,

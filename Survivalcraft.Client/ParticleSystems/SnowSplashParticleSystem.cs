@@ -15,7 +15,7 @@ public class SnowSplashParticleSystem : ParticleSystem<SnowSplashParticleSystem.
     public SnowSplashParticleSystem(BlockContentCatalog catalog) : base(100)
     {
         _catalog = catalog;
-        Texture = ContentManager.Get<Texture2D>("Textures/SnowParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/SnowParticle");
         TextureSlotsCount = 4;
     }
 

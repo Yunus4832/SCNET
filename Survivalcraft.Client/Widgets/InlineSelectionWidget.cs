@@ -34,7 +34,7 @@ public sealed class InlineSelectionWidget : CanvasWidget
 
     public InlineSelectionWidget()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Widgets/InlineSelectionWidget"));
+        LoadContents(this, AssetManager.Get<XElement>("Widgets/InlineSelectionWidget"));
         _surface = Children.Find<CanvasWidget>("InlineSelection.Surface")!;
         _background = Children.Find<BevelledRectangleWidget>("InlineSelection.Background")!;
         _header = Children.Find<CanvasWidget>("InlineSelection.Header")!;

@@ -43,7 +43,7 @@ public class StickBlockPresentation(StickBlock block, BlockPresentationCatalog c
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Stick");
+        var model = AssetManager.Get<Model>("Models/Stick");
         var stickNode = model.FindNode("Stick")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(stickNode);
         StandaloneBlockMesh.AppendModelPrimitive(

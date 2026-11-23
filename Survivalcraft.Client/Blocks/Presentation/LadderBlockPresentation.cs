@@ -61,7 +61,7 @@ public abstract class LadderBlockPresentation(LadderBlock block, BlockPresentati
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>(ModelName);
+        var model = AssetManager.Get<Model>(ModelName);
         var ladderNode = model.FindNode("Ladder")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(ladderNode);
         for (var i = 0; i < 4; i++)

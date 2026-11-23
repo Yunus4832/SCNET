@@ -17,8 +17,8 @@ public static class TextureAtlasManager
 
     public static void Initialize()
     {
-        var texture = ContentManager.Get<Texture2D>("Atlases/AtlasTexture");
-        var s = ContentManager.Get<string>("Atlases/Atlas");
+        var texture = AssetManager.Get<Texture2D>("Atlases/AtlasTexture");
+        var s = AssetManager.Get<string>("Atlases/Atlas");
         LoadAtlases(texture, s);
     }
 
@@ -39,7 +39,7 @@ public static class TextureAtlasManager
         try
         {
             value = new Subtexture(
-                (ContentManager.Get(typeof(Texture2D), name) as Texture2D)!,
+                (AssetManager.Get(typeof(Texture2D), name) as Texture2D)!,
                 Vector2.Zero,
                 Vector2.One
             );

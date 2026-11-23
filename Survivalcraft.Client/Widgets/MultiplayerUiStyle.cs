@@ -15,7 +15,7 @@ internal static class MultiplayerUiStyle
     {
         var button = new BevelledButtonWidget
         {
-            Style = ContentManager.Get<XElement>("Styles/ButtonStyle_160x60"),
+            Style = AssetManager.Get<XElement>("Styles/ButtonStyle_160x60"),
             Size = size
         };
         SetButtonText(button, text);

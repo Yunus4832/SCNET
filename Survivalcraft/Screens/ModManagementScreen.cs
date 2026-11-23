@@ -46,7 +46,7 @@ public sealed class ModManagementScreen : Screen
 
     public ModManagementScreen()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Screens/ModManagementScreen"));
+        LoadContents(this, AssetManager.Get<XElement>("Screens/ModManagementScreen"));
         _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
         _emptyLabel = Children.Find<LabelWidget>("Empty")!;
         _modsList = Children.Find<ListPanelWidget>("ModsList")!;
@@ -542,7 +542,7 @@ public sealed class ModManagementScreen : Screen
 
         var widget = (ContainerWidget)LoadWidget(
             null,
-            ContentManager.Get<XElement>("Widgets/ModManagementItem"),
+            AssetManager.Get<XElement>("Widgets/ModManagementItem"),
             null
         );
         widget.Children.Find<LabelWidget>("ModManagementItem.Name")!.Text = mod.LocalEntry?.Name ?? mod.ModId;

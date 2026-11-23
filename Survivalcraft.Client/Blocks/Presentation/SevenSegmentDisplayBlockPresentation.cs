@@ -73,7 +73,7 @@ public class SevenSegmentDisplayBlockPresentation(SevenSegmentDisplayBlock block
 
     public override void Initialize()
     {
-        var sevenSegmentDisplayNode = ContentManager.Get<Model>("Models/Gates").FindNode("SevenSegmentDisplay")!;
+        var sevenSegmentDisplayNode = AssetManager.Get<Model>("Models/Gates").FindNode("SevenSegmentDisplay")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(sevenSegmentDisplayNode);
         for (var i = 0; i < 4; i++)
         {

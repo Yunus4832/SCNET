@@ -47,7 +47,7 @@ public abstract class RakeBlockPresentation(
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Rake");
+        var model = AssetManager.Get<Model>("Models/Rake");
         var handleNode = model.FindNode("Handle")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(handleNode);
         var headNode = model.FindNode("Head")!;

@@ -158,7 +158,7 @@ public sealed class ComponentClothingPresentation : Component, IUpdateable
     private void ReleaseResources()
     {
         ReleaseRenderTargets();
-        if (_skinTexture is not null && !ContentManager.IsContent(_skinTexture)) { _skinTexture.Dispose(); }
+        if (_skinTexture is not null && !AssetManager.IsAsset(_skinTexture)) { _skinTexture.Dispose(); }
 
         _skinTexture = null;
         _skinTextureName = string.Empty;

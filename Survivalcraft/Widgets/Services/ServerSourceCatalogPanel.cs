@@ -38,7 +38,7 @@ public sealed class ServerSourceCatalogPanel : ServicePanelWidget
 
     public ServerSourceCatalogPanel()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Widgets/Services/ServerSourceCatalogPanel"));
+        LoadContents(this, AssetManager.Get<XElement>("Widgets/Services/ServerSourceCatalogPanel"));
         _searchTextBox = Children.Find<TextBoxWidget>("Search")!;
         _searchPlaceholder = Children.Find<LabelWidget>("SearchPlaceholder")!;
         _repositoryDrawer = Children.Find<SelectionDrawerWidget>("RepositoryFilter")!;
@@ -109,7 +109,7 @@ public sealed class ServerSourceCatalogPanel : ServicePanelWidget
     private static Widget CreateSourceWidget(object item)
     {
         var source = (RegisteredServerSource)item;
-        var widget = (ContainerWidget)LoadWidget(null, ContentManager.Get<XElement>("Widgets/ServerSourceItem"), null);
+        var widget = (ContainerWidget)LoadWidget(null, AssetManager.Get<XElement>("Widgets/ServerSourceItem"), null);
         widget.Children.Find<LabelWidget>("ServerSourceItem.Name")!.Text = source.Name;
         widget.Children.Find<LabelWidget>("ServerSourceItem.Address")!.Text = source.ApiUrl;
         widget.Children.Find<LabelWidget>("ServerSourceItem.State")!.Text = IsInstalled(source)

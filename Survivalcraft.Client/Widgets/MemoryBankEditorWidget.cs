@@ -74,7 +74,7 @@ public sealed class MemoryBankEditorWidget : CanvasWidget, IGameInputCapturingWi
 
     public MemoryBankEditorWidget(MemoryBankData data, Action<bool> completed, Action close)
     {
-        LoadContents(this, ContentManager.Get<XElement>("Widgets/MemoryBankEditorWidget"));
+        LoadContents(this, AssetManager.Get<XElement>("Widgets/MemoryBankEditorWidget"));
         _sourceData = data;
         _temporaryData = (MemoryBankData)data.Copy();
         _completed = completed;

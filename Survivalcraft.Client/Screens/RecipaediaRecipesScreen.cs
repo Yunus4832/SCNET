@@ -20,7 +20,7 @@ public class RecipaediaRecipesScreen : Screen
 
     public RecipaediaRecipesScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/RecipaediaRecipesScreen");
+        var node = AssetManager.Get<XElement>("Screens/RecipaediaRecipesScreen");
         LoadContents(this, node);
         _craftingRecipeWidget = Children.Find<CraftingRecipeWidget>("CraftingRecipe")!;
         _craftingRecipeWidget.Catalog = ClientApplication.Content.PreviewCatalog;

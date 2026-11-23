@@ -20,7 +20,7 @@ public sealed class ConnectionReasonLocalizationTest
     [InlineData("ru-RU", "Сервер заполнен")]
     public void RemoteCloseAndRejectionUseReceivingLocale(string culture, string expected)
     {
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         using var runtime = GameModRuntime.Start();
         var previous = ClientLanguage.Catalog;
         var reason = ConnectionMessages.Create("ServerFull", "The server is full");

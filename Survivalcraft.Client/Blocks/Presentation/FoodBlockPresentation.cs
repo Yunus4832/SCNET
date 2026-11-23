@@ -48,7 +48,7 @@ public abstract class FoodBlockPresentation(
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>(ModelName);
+        var model = AssetManager.Get<Model>(ModelName);
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(model.MeshNodes[0]);
         StandaloneBlockMesh.AppendModelPrimitive(
             model.MeshNodes[0].RequireMesh().Primitives[0],

@@ -22,7 +22,7 @@ public class WaterSplashParticleSystem : ParticleSystem<WaterSplashParticleSyste
     {
         _subsystemTerrain = terrain;
         _position = position;
-        Texture = ContentManager.Get<Texture2D>("Textures/WaterSplashParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/WaterSplashParticle");
         TextureSlotsCount = 2;
         SetLightOrigin(terrain, position);
         var white = Color.White;

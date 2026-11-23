@@ -22,7 +22,7 @@ public class RichTextWidget : Widget
 
     public MessageContent Content { get => _content; set => _content = value ?? MessageContent.Plain(string.Empty); }
 
-    public BitmapFont Font { get => _font ??= ContentManager.Get<BitmapFont>("Fonts/Pericles"); set => _font = value; }
+    public BitmapFont Font { get => _font ??= AssetManager.Get<BitmapFont>("Fonts/Pericles"); set => _font = value; }
 
     public Color NormalTextColor { get; set; } = Color.White;
 

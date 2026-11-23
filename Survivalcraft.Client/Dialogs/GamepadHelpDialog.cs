@@ -12,7 +12,7 @@ public class GamepadHelpDialog : Dialog
 
     public GamepadHelpDialog()
     {
-        var node = ContentManager.Get<XElement>("Dialogs/GamepadHelpDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/GamepadHelpDialog");
         LoadContents(this, node);
         _okButton = Children.Find<ButtonWidget>("OkButton")!;
         _helpButton = Children.Find<ButtonWidget>("HelpButton")!;

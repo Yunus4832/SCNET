@@ -27,7 +27,7 @@ public class LevelFactorDialog : Dialog
         float total
     )
     {
-        var node = ContentManager.Get<XElement>("Dialogs/LevelFactorDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/LevelFactorDialog");
         LoadContents(this, node);
         _titleWidget = Children.Find<LabelWidget>("LevelFactorDialog.Title")!;
         _descriptionWidget = Children.Find<LabelWidget>("LevelFactorDialog.Description")!;

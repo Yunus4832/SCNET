@@ -93,7 +93,7 @@ public class GravestoneBlockPresentation(GravestoneBlock block, BlockPresentatio
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Graves");
+        var model = AssetManager.Get<Model>("Models/Graves");
         for (var i = 0; i < 16; i++)
         {
             var variant = GetVariant(i);

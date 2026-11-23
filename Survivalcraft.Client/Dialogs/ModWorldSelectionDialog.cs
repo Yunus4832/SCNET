@@ -22,7 +22,7 @@ public class ModWorldSelectionDialog : Dialog
     )
     {
         _selectionHandler = selectionHandler;
-        var node = ContentManager.Get<XElement>("Dialogs/ModWorldSelectionDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/ModWorldSelectionDialog");
         LoadContents(this, node);
         Children.Find<LabelWidget>("ModWorldSelectionDialog.Title")!.Text =
             Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "Title");

@@ -16,7 +16,7 @@ public class SpawnDialog : Dialog
 
     public SpawnDialog()
     {
-        var node = ContentManager.Get<XElement>("Dialogs/SpawnDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/SpawnDialog");
         LoadContents(this, node);
         _seasonLabelWidget = Children.Find<LabelWidget>("SpawnDialog.SeasonLabel")!;
         _largeLabelWidget = Children.Find<LabelWidget>("SpawnDialog.LargeLabel")!;

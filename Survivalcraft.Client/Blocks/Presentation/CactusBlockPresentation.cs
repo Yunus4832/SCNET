@@ -46,7 +46,7 @@ public class CactusBlockPresentation(CactusBlock block, BlockPresentationCatalog
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Cactus");
+        var model = AssetManager.Get<Model>("Models/Cactus");
         var cactusNode = model.FindNode("Cactus")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(cactusNode);
         BlockMesh.AppendModelPrimitive(

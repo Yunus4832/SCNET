@@ -45,7 +45,7 @@ public class MainMenuScreen : Screen
 
     public MainMenuScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/MainMenuScreen");
+        var node = AssetManager.Get<XElement>("Screens/MainMenuScreen");
         LoadContents(this, node);
         _powerButton = Children.Find<ExpandableButtonWidget>("PowerButton")!;
         _languageButton = Children.Find<ExpandableButtonWidget>("LanguageButton")!;

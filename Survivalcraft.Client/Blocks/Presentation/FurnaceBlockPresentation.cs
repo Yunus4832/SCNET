@@ -60,7 +60,7 @@ public class FurnaceBlockPresentation(FurnaceBlock block, BlockPresentationCatal
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Furnace");
+        var model = AssetManager.Get<Model>("Models/Furnace");
         var furnaceNode = model.FindNode("Furnace")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(furnaceNode);
         for (var i = 0; i < 4; i++)

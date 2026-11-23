@@ -30,7 +30,7 @@ public sealed class HostedWorldScreen : Screen
 
     public HostedWorldScreen()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Screens/HostedWorldScreen"));
+        LoadContents(this, AssetManager.Get<XElement>("Screens/HostedWorldScreen"));
         _status = Children.Find<LabelWidget>("Status")!;
         _joinButton = Children.Find<ButtonWidget>("Join")!;
         _stopButton = Children.Find<ButtonWidget>("Stop")!;

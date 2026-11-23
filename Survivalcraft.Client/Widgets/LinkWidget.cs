@@ -32,7 +32,7 @@ public class LinkWidget : FixedSizePanelWidget
 
     public LinkWidget()
     {
-        var node = ContentManager.Get<XElement>("Widgets/LinkContents");
+        var node = AssetManager.Get<XElement>("Widgets/LinkContents");
         LoadChildren(this, node);
         _labelWidget = Children.Find<LabelWidget>("Label")!;
         _clickableWidget = Children.Find<ClickableWidget>("Clickable")!;

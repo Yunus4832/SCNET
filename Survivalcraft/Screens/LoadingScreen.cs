@@ -36,7 +36,7 @@ public class LoadingScreen : Screen
             VerticalAlignment = WidgetAlignment.Center,
             HorizontalAlignment = WidgetAlignment.Center
         };
-        rectangle1.Subtexture = ContentManager.Get<Subtexture>("Textures/Branding/PublisherLogo");
+        rectangle1.Subtexture = AssetManager.Get<Subtexture>("Textures/Branding/PublisherLogo");
         var rectangle2 = new RectangleWidget
         {
             FillColor = Color.White,
@@ -46,7 +46,7 @@ public class LoadingScreen : Screen
             HorizontalAlignment = WidgetAlignment.Far,
             Margin = new Vector2(10f)
         };
-        rectangle2.Subtexture = ContentManager.Get<Subtexture>("Textures/Branding/EngineLogo");
+        rectangle2.Subtexture = AssetManager.Get<Subtexture>("Textures/Branding/EngineLogo");
         var busyBar = new BusyBarWidget
         {
             VerticalAlignment = WidgetAlignment.Far,
@@ -89,9 +89,9 @@ public class LoadingScreen : Screen
                         registerAppCommands: Commands.BuiltIn.BuiltInApplicationCommands.Register
                     )
                 );
-                ContentManager.Initialize();
+                AssetManager.Initialize();
                 GameEntry.InitializeClientContent(CurrentModRuntime.Value!);
-                LabelWidget.BitmapFont = ContentManager.Get<BitmapFont>("Fonts/Pericles");
+                LabelWidget.BitmapFont = AssetManager.Get<BitmapFont>("Fonts/Pericles");
             }
         );
         AddLoadAction(ContentLoaded);
@@ -138,7 +138,7 @@ public class LoadingScreen : Screen
                 FurniturePacksManager.Initialize();
                 LightingManager.Initialize();
                 ClientApplication.Worlds.SetNewWorldNames(
-                    ContentManager.Get<string>("NewWorldNames")
+                    AssetManager.Get<string>("NewWorldNames")
                         .Split(['\n', '\r'], StringSplitOptions.RemoveEmptyEntries)
                 );
             }
@@ -215,8 +215,8 @@ public class LoadingScreen : Screen
     public override void Leave()
     {
         Window.VSync = Configuration.ClientConfiguration.Preferences.VSync;
-        ContentManager.Dispose("Textures/Branding/PublisherLogo");
-        ContentManager.Dispose("Textures/Branding/EngineLogo");
+        AssetManager.Dispose("Textures/Branding/PublisherLogo");
+        AssetManager.Dispose("Textures/Branding/EngineLogo");
     }
 
     public override void Enter(object[] parameters)

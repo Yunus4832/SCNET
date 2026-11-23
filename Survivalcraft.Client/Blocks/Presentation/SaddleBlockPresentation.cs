@@ -43,7 +43,7 @@ public class SaddleBlockPresentation(SaddleBlock block, BlockPresentationCatalog
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Saddle");
+        var model = AssetManager.Get<Model>("Models/Saddle");
         var saddleNode = model.FindNode("Saddle")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(saddleNode);
         StandaloneBlockMesh.AppendModelPrimitive(

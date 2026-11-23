@@ -16,7 +16,7 @@ public class FuseParticleSystem : ParticleSystem<FuseParticleSystem.Particle>
         : base(15)
     {
         _position = position;
-        Texture = ContentManager.Get<Texture2D>("Textures/FireParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/FireParticle");
         TextureSlotsCount = 3;
     }
 

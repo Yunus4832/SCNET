@@ -47,7 +47,7 @@ public abstract class MacheteBlockPresentation(
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Machete");
+        var model = AssetManager.Get<Model>("Models/Machete");
         var handlerNode = model.FindNode("Handle")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(handlerNode);
         var headNode = model.FindNode("Head")!;

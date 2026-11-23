@@ -29,7 +29,7 @@ public sealed class BlockCollisionGeometryBaselineTest
 
         {
             Dispatcher.Initialize();
-            ContentManager.Initialize();
+            AssetManager.Initialize();
             using var runtime = GameModRuntime.Start();
             runtime.InitializeContentData();
             var world = new WorldRuntimeContext(RuntimeSide.Authority, false);

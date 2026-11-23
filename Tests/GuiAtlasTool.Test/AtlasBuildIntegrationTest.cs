@@ -37,7 +37,7 @@ public sealed class AtlasBuildIntegrationTest
                     ),
                     new XElement(
                         "PropertyGroup",
-                        new XElement("UsePackResourceTarget", "true"),
+                        new XElement("UsePackAssetsTarget", "true"),
                         new XElement("_GuiAtlasTexture", texture),
                         new XElement("_GuiAtlasDefinition", definition)
                     )

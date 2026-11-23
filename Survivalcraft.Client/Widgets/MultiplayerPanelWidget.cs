@@ -73,7 +73,7 @@ public sealed class MultiplayerPanelWidget : CanvasWidget
     {
         _characterData = characterData;
         _observationWidget = observationWidget;
-        LoadContents(this, ContentManager.Get<XElement>("Widgets/MultiplayerPanelWidget"));
+        LoadContents(this, AssetManager.Get<XElement>("Widgets/MultiplayerPanelWidget"));
         var tabs = Children.Find<StackPanelWidget>("Tabs")!;
         _listHost = Children.Find<CanvasWidget>("ListHost")!;
         _actionsHost = Children.Find<CanvasWidget>("ActionsHost")!;

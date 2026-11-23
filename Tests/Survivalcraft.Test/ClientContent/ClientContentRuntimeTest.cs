@@ -2,10 +2,10 @@ using System.Xml.Linq;
 
 using Game;
 using Game.Application;
+using Game.AssetReaders;
 using Game.Blocks;
 using Game.Blocks.Presentation;
 using Game.ClientContent;
-using Game.ContentReaders;
 using Game.Managers;
 using Game.Modding;
 using Game.Modding.Blocks;
@@ -21,25 +21,25 @@ public sealed class ClientContentRuntimeTest
     [Fact]
     public void DirectoryListingsRefreshAfterResourceChanges()
     {
-        ContentManager.Initialize();
-        var resource = new ContentInfo("Audio/Splashes/Test.ogg");
-        var replacement = new ContentInfo(resource.AbsolutePath);
+        AssetManager.Initialize();
+        var resource = new AssetInfo("Audio/Splashes/Test.ogg");
+        var replacement = new AssetInfo(resource.AbsolutePath);
         var owner = ResourceId.Parse("example.sounds:splash").Namespace;
         try
         {
-            Assert.Empty(ContentManager.List("Audio/Splashes"));
-            ContentManager.AddOwned(owner, resource);
-            Assert.Same(resource, Assert.Single(ContentManager.List("Audio/Splashes/")));
-            ContentManager.AddOwned(owner, replacement);
-            Assert.Same(replacement, Assert.Single(ContentManager.List("Audio/Splashes")));
-            ContentManager.RemoveOwner(owner);
-            Assert.Empty(ContentManager.List("Audio/Splashes"));
-            ContentManager.AddOwned(owner, new ContentInfo(resource.AbsolutePath));
-            Assert.Single(ContentManager.List("Audio/Splashes"));
-            ContentManager.Initialize();
-            Assert.Empty(ContentManager.List("Audio/Splashes"));
+            Assert.Empty(AssetManager.List("Audio/Splashes"));
+            AssetManager.AddOwned(owner, resource);
+            Assert.Same(resource, Assert.Single(AssetManager.List("Audio/Splashes/")));
+            AssetManager.AddOwned(owner, replacement);
+            Assert.Same(replacement, Assert.Single(AssetManager.List("Audio/Splashes")));
+            AssetManager.RemoveOwner(owner);
+            Assert.Empty(AssetManager.List("Audio/Splashes"));
+            AssetManager.AddOwned(owner, new AssetInfo(resource.AbsolutePath));
+            Assert.Single(AssetManager.List("Audio/Splashes"));
+            AssetManager.Initialize();
+            Assert.Empty(AssetManager.List("Audio/Splashes"));
         }
-        finally { ContentManager.Initialize(); }
+        finally { AssetManager.Initialize(); }
     }
 
     [Fact]
@@ -109,9 +109,9 @@ public sealed class ClientContentRuntimeTest
     {
         Assert.Null(CurrentModRuntime.Value);
         ClientApplication.ReleaseContent();
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         var reader = new TrackingAssetReader();
-        ContentManager.RegisterReader(reader);
+        AssetManager.RegisterReader(reader);
         var resources = new[] { "example.one:first.bin", "example.one:second.bin", "example.two:third.bin" }
             .Select(ResourceId.Parse)
             .Select(id => new RegisteredContentResource(
@@ -127,8 +127,8 @@ public sealed class ClientContentRuntimeTest
         var previous = new ClientContentRuntime([module]);
         previous.InstallResources(resources);
         previous.InitializePreview(rules);
-        var oldResources = ContentManager.List().ToArray();
-        var oldAssets = resources.Select(resource => ContentManager.Get<TrackingAsset>(resource.ContentPath[..^4]))
+        var oldResources = AssetManager.List().ToArray();
+        var oldAssets = resources.Select(resource => AssetManager.Get<TrackingAsset>(resource.ContentPath[..^4]))
             .ToArray();
         var first = GameModRuntime.Start();
         var next = GameModRuntime.Start();
@@ -145,7 +145,7 @@ public sealed class ClientContentRuntimeTest
             Assert.All(oldResources, resource => Assert.True(resource.IsDisposed));
             Assert.All(
                 resources,
-                resource => Assert.False(ContentManager.ContainsOwned(resource.Id.Namespace, resource.ContentPath))
+                resource => Assert.False(AssetManager.ContainsOwned(resource.Id.Namespace, resource.ContentPath))
             );
             Assert.Equal(1, Assert.Single(module.Created).DisposeCount);
             previous.Dispose();
@@ -156,7 +156,7 @@ public sealed class ClientContentRuntimeTest
             var replacement = new ClientContentRuntime([]);
             replacement.InstallResources(resources);
             ClientApplication.InstallContent(replacement);
-            var asset = ContentManager.Get<TrackingAsset>("example.one/first");
+            var asset = AssetManager.Get<TrackingAsset>("example.one/first");
             Assert.DoesNotContain(asset, oldAssets);
             Assert.Equal(0, asset.DisposeCount);
         }
@@ -164,7 +164,7 @@ public sealed class ClientContentRuntimeTest
         {
             GameEntry.SetModRuntime(null);
             StartupManager.Current.Session.HttpCommandEnabled = previousHttpEnabled;
-            ContentManager.Initialize();
+            AssetManager.Initialize();
         }
     }
 
@@ -179,7 +179,7 @@ public sealed class ClientContentRuntimeTest
         }
     }
 
-    private sealed class TrackingAssetReader : IContentReader
+    private sealed class TrackingAssetReader : AssetReader
     {
         private bool _created;
 
@@ -187,7 +187,7 @@ public sealed class ClientContentRuntimeTest
 
         public override string[] DefaultSuffix => ["bin"];
 
-        public override object Get(ContentInfo[] contents)
+        public override object Get(AssetInfo[] contents)
         {
             var asset = new TrackingAsset(!_created);
             _created = true;

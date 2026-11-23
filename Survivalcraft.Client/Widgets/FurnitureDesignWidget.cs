@@ -90,7 +90,7 @@ public class FurnitureDesignWidget : Widget
             }
 
             var color2 = new Color(64, 64, 64, 255) * GlobalColorTransform;
-            var fontBatch3D = _primitivesRenderer3D.FontBatch(ContentManager.Get<BitmapFont>("Fonts/Pericles"), 1);
+            var fontBatch3D = _primitivesRenderer3D.FontBatch(AssetManager.Get<BitmapFont>("Fonts/Pericles"), 1);
             fontBatch3D.QueueText(
                 "Front",
                 new Vector3(0.5f, 0f, 0f),

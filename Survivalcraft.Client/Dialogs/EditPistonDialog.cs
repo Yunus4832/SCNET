@@ -42,7 +42,7 @@ public class EditPistonDialog : Dialog
 
     public EditPistonDialog(BlockPresentationCatalog catalog, int data, Action<int> handler)
     {
-        var node = ContentManager.Get<XElement>("Dialogs/EditPistonDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/EditPistonDialog");
         LoadContents(this, node);
         _title = Children.Find<LabelWidget>("EditPistonDialog.Title")!;
         _slider1 = Children.Find<SliderWidget>("EditPistonDialog.Slider1")!;

@@ -31,7 +31,7 @@ public class CreativeInventoryWidget : CanvasWidget
     public CreativeInventoryWidget(Entity entity)
     {
         _componentCreativeInventory = entity.FindComponent<ComponentCreativeInventory>(true)!;
-        var node = ContentManager.Get<XElement>("Widgets/CreativeInventoryWidget");
+        var node = AssetManager.Get<XElement>("Widgets/CreativeInventoryWidget");
         LoadContents(this, node);
         _categoryLeftButton = Children.Find<ButtonWidget>("CategoryLeftButton")!;
         _categoryRightButton = Children.Find<ButtonWidget>("CategoryRightButton")!;

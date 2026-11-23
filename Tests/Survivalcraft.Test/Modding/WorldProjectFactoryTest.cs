@@ -42,7 +42,7 @@ public sealed class WorldProjectFactoryTest
     public void ClientSnapshotFailureReleasesOnlyItsOwnResources()
     {
         Dispatcher.Initialize();
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         using var authority = new RuntimeTestProject(RuntimeSide.Authority);
         using var mods = GameModRuntime.Start();
         mods.InitializeContentData();
@@ -78,7 +78,7 @@ public sealed class WorldProjectFactoryTest
     public void AClientSnapshotBuildsASeparateProjectInTheSameDatabase()
     {
         Dispatcher.Initialize();
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         using var authority = new RuntimeTestProject(RuntimeSide.Authority);
         using var mods = GameModRuntime.Start();
         mods.InitializeContentData();

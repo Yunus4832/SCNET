@@ -7,7 +7,7 @@
         <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND $([MSBuild]::IsOSPlatform('Windows'))">win-x64</RuntimeIdentifier>
         <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == '' AND $([MSBuild]::IsOSPlatform('Linux'))">linux-x64</RuntimeIdentifier>
         <RuntimeIdentifiers>linux-x64;win-x64</RuntimeIdentifiers>
-        <UsePackResourceTarget>true</UsePackResourceTarget>
+        <UsePackAssetsTarget>true</UsePackAssetsTarget>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">

@@ -81,7 +81,7 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
                 zero.X -= 2f * vector.X / (float)Math.PI + 0.05f * MathUtils.Sin(5f * secondsSinceCrossing);
                 zero.Y += 2f * vector.Y / (float)Math.PI +
                           (_isUnderWater ? 0.75f * secondsSinceCrossing : -0.75f * secondsSinceCrossing);
-                var texture = ContentManager.Get<Texture2D>("Textures/SplashOverlay");
+                var texture = AssetManager.Get<Texture2D>("Textures/SplashOverlay");
                 DrawTexturedOverlay(camera, texture, new Color(156, 206, 210), splashIntensity, splashIntensity, zero);
             }
         }
@@ -297,7 +297,7 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
 
         var color = Color.MultiplyColorOnly(Color.White, _light.Value);
         _random.Seed(0);
-        var texture = ContentManager.Get<Texture2D>("Textures/IceOverlay");
+        var texture = AssetManager.Get<Texture2D>("Textures/IceOverlay");
         var texturedBatch3D = PrimitivesRenderer3D.TexturedBatch(
             texture,
             false,
@@ -340,7 +340,7 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
 
     public void DrawFloatingMessage(Camera camera, string message, float factor)
     {
-        var font = ContentManager.Get<BitmapFont>("Fonts/Pericles");
+        var font = AssetManager.Get<BitmapFont>("Fonts/Pericles");
         if (!camera.Eye.HasValue)
         {
             var position = camera.ViewportSize / 2f;
@@ -392,7 +392,7 @@ public class ComponentScreenOverlays : Component, IDrawable, IUpdateable
 
     public void DrawMessage(Camera camera, string message, float factor)
     {
-        var font = ContentManager.Get<BitmapFont>("Fonts/Pericles");
+        var font = AssetManager.Get<BitmapFont>("Fonts/Pericles");
         if (!camera.Eye.HasValue)
         {
             var position = new Vector2(camera.ViewportSize.X / 2f, camera.ViewportSize.Y - 25f);

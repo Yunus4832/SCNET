@@ -32,7 +32,7 @@ public class ManageContentScreen : Screen
 
     public ManageContentScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/ManageContentScreen");
+        var node = AssetManager.Get<XElement>("Screens/ManageContentScreen");
         LoadContents(this, node);
         _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
         _contentList = Children.Find<ListPanelWidget>("ContentList")!;
@@ -65,7 +65,7 @@ public class ManageContentScreen : Screen
             ContainerWidget containerWidget;
             if (listItem.Type == ContentType.BlocksTexture)
             {
-                var node2 = ContentManager.Get<XElement>("Widgets/BlocksTextureItem");
+                var node2 = AssetManager.Get<XElement>("Widgets/BlocksTextureItem");
                 containerWidget = (ContainerWidget)LoadWidget(this, node2, null);
                 var rectangleWidget = containerWidget.Children.Find<RectangleWidget>("BlocksTextureItem.Icon")!;
                 var labelWidget = containerWidget.Children.Find<LabelWidget>("BlocksTextureItem.Text")!;
@@ -102,7 +102,7 @@ public class ManageContentScreen : Screen
                         throw new InvalidOperationException(Localization.ClientLanguage.Catalog.Get(_typeName, 10));
                     }
 
-                    var node3 = ContentManager.Get<XElement>("Widgets/FurniturePackItem");
+                    var node3 = AssetManager.Get<XElement>("Widgets/FurniturePackItem");
                     containerWidget = (ContainerWidget)LoadWidget(this, node3, null);
                     var labelWidget3 = containerWidget.Children.Find<LabelWidget>("FurniturePackItem.Text")!;
                     var labelWidget4 = containerWidget.Children.Find<LabelWidget>("FurniturePackItem.Details")!;
@@ -135,7 +135,7 @@ public class ManageContentScreen : Screen
                     }
                 }
 
-                var node4 = ContentManager.Get<XElement>("Widgets/CharacterSkinItem");
+                var node4 = AssetManager.Get<XElement>("Widgets/CharacterSkinItem");
                 containerWidget = (ContainerWidget)LoadWidget(this, node4, null);
                 var playerModelWidget = containerWidget.Children.Find<CharacterModelWidget>("CharacterSkinItem.Model")!;
                 var labelWidget5 = containerWidget.Children.Find<LabelWidget>("CharacterSkinItem.Text")!;

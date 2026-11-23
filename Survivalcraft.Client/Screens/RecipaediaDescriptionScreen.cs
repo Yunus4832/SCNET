@@ -33,7 +33,7 @@ public class RecipaediaDescriptionScreen : Screen
 
     public RecipaediaDescriptionScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/RecipaediaDescriptionScreen");
+        var node = AssetManager.Get<XElement>("Screens/RecipaediaDescriptionScreen");
         LoadContents(this, node);
         _blockIconWidget = Children.Find<BlockIconWidget>("Icon")!;
         _blockIconWidget.Catalog = ClientApplication.Content.PreviewCatalog;

@@ -16,7 +16,7 @@ public class EditBatteryDialog : Dialog
 
     public EditBatteryDialog(int voltageLevel, Action<int> handler)
     {
-        var node = ContentManager.Get<XElement>("Dialogs/EditBatteryDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/EditBatteryDialog");
         LoadContents(this, node);
         _okButton = Children.Find<ButtonWidget>("EditBatteryDialog.OK")!;
         _cancelButton = Children.Find<ButtonWidget>("EditBatteryDialog.Cancel")!;

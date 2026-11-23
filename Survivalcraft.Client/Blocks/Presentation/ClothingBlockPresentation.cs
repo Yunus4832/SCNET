@@ -105,7 +105,7 @@ public class ClothingBlockPresentation(ClothingBlock block, BlockPresentationCat
     {
         foreach (var definition in Block.ClothingDefinitions)
         {
-            _clothingTextures.Add(definition.Index, ContentManager.Get<Texture2D>(definition.TextureName));
+            _clothingTextures.Add(definition.Index, AssetManager.Get<Texture2D>(definition.TextureName));
         }
 
         var playerModel = CharacterSkinsManager.GetCharacterModel(CharacterSex.Male);

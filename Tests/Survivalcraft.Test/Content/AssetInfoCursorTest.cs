@@ -4,14 +4,14 @@ using Game.Managers;
 
 namespace Survivalcraft.Test.Content;
 
-public sealed class ContentInfoCursorTest
+public sealed class AssetInfoCursorTest
 {
     [Fact]
     public async Task ConcurrentReadCursorsAreIndependentAndCannotMutateTheAsset()
     {
         var input = Encoding.UTF8.GetBytes(new string('a', 65536) + "end");
-        using var content = new ContentInfo("test/data.txt");
-        content.SetContentStream(new MemoryStream(input));
+        using var content = new AssetInfo("test/data.txt");
+        content.SetAssetStream(new MemoryStream(input));
         input[0] = (byte)'z';
         var factory = content.CreateStreamFactory();
         var readers = Enumerable.Range(0, 4).Select(_ => Task.Run(() =>
@@ -31,8 +31,8 @@ public sealed class ContentInfoCursorTest
     [Fact]
     public void RetirementPreventsNewBorrowsButDoesNotDestroyAnOwnedPreparationInput()
     {
-        var content = new ContentInfo("test/data.bin");
-        content.SetContentStream(new MemoryStream([1, 2, 3]));
+        var content = new AssetInfo("test/data.bin");
+        content.SetAssetStream(new MemoryStream([1, 2, 3]));
         var factory = content.CreateStreamFactory();
         content.Dispose();
         Assert.Throws<ObjectDisposedException>(() => content.Duplicate());

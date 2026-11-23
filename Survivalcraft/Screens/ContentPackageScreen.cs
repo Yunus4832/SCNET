@@ -46,7 +46,7 @@ public sealed class ContentPackageScreen : Screen
 
     public ContentPackageScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/ContentPackageScreen");
+        var node = AssetManager.Get<XElement>("Screens/ContentPackageScreen");
         LoadContents(this, node);
         _packageList = Children.Find<ListPanelWidget>("PackageList")!;
         _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
@@ -70,7 +70,7 @@ public sealed class ContentPackageScreen : Screen
             var package = (ContentPackageCacheEntry)item;
             var widget = (ContainerWidget)LoadWidget(
                 this,
-                ContentManager.Get<XElement>("Widgets/ContentServerItem"),
+                AssetManager.Get<XElement>("Widgets/ContentServerItem"),
                 null
             );
             widget.Children.Find<LabelWidget>("ContentServerItem.Name")!.Text =

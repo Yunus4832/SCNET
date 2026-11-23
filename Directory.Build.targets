@@ -1,7 +1,7 @@
 <Project>
-    <!-- 检查是否定义了 UsePackResourceTarget 属性 -->
+    <!-- 检查是否定义了 UsePackAssetsTarget 属性 -->
     <PropertyGroup>
-        <UsePackResourceTarget Condition="'$(UsePackResourceTarget)' == ''">false</UsePackResourceTarget>
+        <UsePackAssetsTarget Condition="'$(UsePackAssetsTarget)' == ''">false</UsePackAssetsTarget>
         <SolutionRoot>$(MSBuildThisFileDirectory)</SolutionRoot>
     </PropertyGroup>
 
@@ -14,16 +14,16 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <MyContentFiles Include="$(SolutionRoot)Assets/**/*.*"
+        <AssetFiles Include="$(SolutionRoot)Assets/**/*.*"
                         Exclude="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)"/>
-        <MyContentFiles Include="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)"/>
+        <AssetFiles Include="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)"/>
         <_GuiAtlasSources Include="$(_GuiAtlasSourceDirectory)/**/*.svg;$(_GuiAtlasSourceDirectory)/**/*.png;$(_GuiAtlasSourceDirectory)/**/*.webp"/>
         <_GuiAtlasToolSources Include="$(SolutionRoot)Tools/GuiAtlasTool/**/*.cs;$(SolutionRoot)Tools/GuiAtlasTool/GuiAtlasTool.csproj"
                               Exclude="$(SolutionRoot)Tools/GuiAtlasTool/bin/**/*;$(SolutionRoot)Tools/GuiAtlasTool/obj/**/*"/>
     </ItemGroup>
 
     <!-- 图集工具作为主机工具参与构建依赖排序。 -->
-    <ItemGroup Condition="'$(UsePackResourceTarget)' == 'true'">
+    <ItemGroup Condition="'$(UsePackAssetsTarget)' == 'true'">
         <ProjectReference Include="$(_GuiAtlasToolProject)"
                           ReferenceOutputAssembly="false"
                           Private="false"
@@ -34,34 +34,34 @@
     </ItemGroup>
 
     <Target Name="GenerateGuiAtlas"
-            BeforeTargets="GenerateContentManifest"
-            Condition="'$(UsePackResourceTarget)' == 'true'"
+            BeforeTargets="GenerateAssetManifest"
+            Condition="'$(UsePackAssetsTarget)' == 'true'"
             Inputs="@(_GuiAtlasSources);$(_GuiAtlasSourceDirectory);@(_GuiAtlasToolSources)"
             Outputs="$(_GuiAtlasTexture);$(_GuiAtlasDefinition)">
         <Exec Command="dotnet &quot;$(_GuiAtlasToolAssembly)&quot; generate &quot;$(_GuiAtlasSourceDirectory)&quot; &quot;$(_GuiAtlasTexture)&quot; &quot;$(_GuiAtlasDefinition)&quot;"/>
     </Target>
 
-    <Target Name="GenerateContentManifest"
-            BeforeTargets="PackResource"
-            Condition="'$(UsePackResourceTarget)' == 'true'">
+    <Target Name="GenerateAssetManifest"
+            BeforeTargets="PackAssets"
+            Condition="'$(UsePackAssetsTarget)' == 'true'">
         <PropertyGroup>
-            <_ContentManifest>$(IntermediateOutputPath)ContentFiles.manifest</_ContentManifest>
+            <_AssetManifest>$(IntermediateOutputPath)AssetFiles.manifest</_AssetManifest>
         </PropertyGroup>
         <MakeDir Directories="$(IntermediateOutputPath)"/>
-        <WriteLinesToFile File="$(_ContentManifest)"
-                          Lines="@(MyContentFiles->'%(FullPath)')"
+        <WriteLinesToFile File="$(_AssetManifest)"
+                          Lines="@(AssetFiles->'%(FullPath)')"
                           Overwrite="true"
                           WriteOnlyWhenDifferent="true"/>
     </Target>
 
     <!-- 增量打包资源 -->
-    <Target Name="PackResource"
+    <Target Name="PackAssets"
             BeforeTargets="BeforeBuild"
             DependsOnTargets="ResolveProjectReferences"
-            Condition="'$(UsePackResourceTarget)' == 'true'"
-            Inputs="@(MyContentFiles);$(_ContentManifest)"
+            Condition="'$(UsePackAssetsTarget)' == 'true'"
+            Inputs="@(AssetFiles);$(_AssetManifest)"
             Outputs="$(MSBuildProjectDirectory)/Assets.zip">
-        <Message Text="[PackResource] 正在执行增量打包..." Importance="high"/>
+        <Message Text="[PackAssets] 正在执行增量打包..." Importance="high"/>
         <ZipDirectory SourceDirectory="$(SolutionRoot)Assets" DestinationFile="$(MSBuildProjectDirectory)/Assets.zip" Overwrite="true"/>
     </Target>
 

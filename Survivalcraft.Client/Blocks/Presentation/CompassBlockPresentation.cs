@@ -53,7 +53,7 @@ public class CompassBlockPresentation(CompassBlock block, BlockPresentationCatal
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Compass");
+        var model = AssetManager.Get<Model>("Models/Compass");
         var caseNode = model.FindNode("Case")!;
         var pointerNode = model.FindNode("Pointer")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(caseNode);

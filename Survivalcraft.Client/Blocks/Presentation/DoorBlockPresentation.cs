@@ -89,7 +89,7 @@ public abstract class DoorBlockPresentation(DoorBlock block, BlockPresentationCa
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>(ModelName);
+        var model = AssetManager.Get<Model>(ModelName);
         var doorNode = model.FindNode("Door")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(doorNode);
         for (var i = 0; i < 16; i++)

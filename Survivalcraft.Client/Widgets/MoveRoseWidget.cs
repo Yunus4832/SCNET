@@ -102,8 +102,8 @@ public class MoveRoseWidget : Widget
 
     public override void Draw(DrawContext dc)
     {
-        var subtexture = ContentManager.Get<Subtexture>("Textures/Atlas/MoveRose");
-        var subtexture2 = ContentManager.Get<Subtexture>("Textures/Atlas/MoveRose_Pressed");
+        var subtexture = AssetManager.Get<Subtexture>("Textures/Atlas/MoveRose");
+        var subtexture2 = AssetManager.Get<Subtexture>("Textures/Atlas/MoveRose_Pressed");
         var texturedBatch2D = dc.PrimitivesRenderer2D.TexturedBatch(subtexture.Texture);
         var texturedBatch2D2 = dc.PrimitivesRenderer2D.TexturedBatch(subtexture2.Texture);
         var count = texturedBatch2D.TriangleVertices.Count;

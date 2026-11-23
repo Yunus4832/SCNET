@@ -143,7 +143,7 @@ public class SubsystemShadows : Subsystem, IDrawable
         _subsystemSky = Project.FindSubsystem<SubsystemSkyPresentation>(true)!;
         _blockPresentation = Project.FindSubsystem<SubsystemBlockPresentation>(true)!;
         _batch = PrimitivesRenderer3D.TexturedBatch(
-            ContentManager.Get<Texture2D>("Textures/Shadow"),
+            AssetManager.Get<Texture2D>("Textures/Shadow"),
             false,
             0,
             DepthStencilState.DepthRead,

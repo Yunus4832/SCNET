@@ -69,7 +69,7 @@ public class BuildFurnitureDialog : Dialog
     {
         _catalog = catalog;
         _paletteWorld = paletteWorld;
-        var node = ContentManager.Get<XElement>("Dialogs/BuildFurnitureDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/BuildFurnitureDialog");
         LoadContents(this, node);
         _nameLabel = Children.Find<LabelWidget>("BuildFurnitureDialog.Name")!;
         _statusLabel = Children.Find<LabelWidget>("BuildFurnitureDialog.Status")!;

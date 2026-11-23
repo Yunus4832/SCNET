@@ -44,7 +44,7 @@ public class WoodenClubBlockPresentation(WoodenClubBlock block, BlockPresentatio
     public override void Initialize()
     {
         var textureSlot = 47;
-        var model = ContentManager.Get<Model>("Models/WoodenClub");
+        var model = AssetManager.Get<Model>("Models/WoodenClub");
         var handleNode = model.FindNode("Handle")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(handleNode);
         var blockMesh = new BlockMesh();

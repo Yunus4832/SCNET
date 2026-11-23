@@ -113,7 +113,7 @@ public static class CharacterSkinsManager
             }
             else
             {
-                image = ContentManager.Get<Texture2D>("Textures/Creatures/Human" + name[1..].Replace(" ", ""));
+                image = AssetManager.Get<Texture2D>("Textures/Creatures/Human" + name[1..].Replace(" ", ""));
             }
 
             return true;
@@ -206,7 +206,7 @@ public static class CharacterSkinsManager
             _ => throw new InvalidOperationException("Unknown player class.")
         };
 
-        value = ContentManager.Get<Model>(
+        value = AssetManager.Get<Model>(
             valuesDictionary.GetValue<ValuesDictionary>("HumanModel")
                 .GetValue<string>("ModelName")
         );
@@ -229,7 +229,7 @@ public static class CharacterSkinsManager
             _ => throw new InvalidOperationException("Unknown player class.")
         };
 
-        value = ContentManager.Get<Model>(
+        value = AssetManager.Get<Model>(
             valuesDictionary.GetValue<ValuesDictionary>("OuterClothingModel")
                 .GetValue<string>("ModelName")
         );

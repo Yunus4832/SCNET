@@ -214,18 +214,18 @@ public class ModPackageTest
         host.LoadAndStart([package.CreateDescriptor()]);
         var catalog = ContentCatalog.Compile(host.Extensions);
 
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         using (var client = new ClientContentRuntime([]))
         {
             client.InstallResources(catalog.RegisteredResources);
-            Assert.Equal("namespaced content", ContentManager.Get<string>("example.assets/text/readme"));
+            Assert.Equal("namespaced content", AssetManager.Get<string>("example.assets/text/readme"));
             Assert.Contains("zh-CN", catalog.LanguageTypes);
             client.PublishLanguage(catalog.CreateLanguageCatalog("zh-CN"));
             Assert.Equal("OK", Game.Localization.ClientLanguage.Catalog.Ok);
             Assert.Equal("中文", Game.Localization.ClientLanguage.Catalog.GetLanguageDisplayName("zh-CN"));
         }
 
-        Assert.False(ContentManager.ContainsKey("example.assets/text/readme.txt"));
+        Assert.False(AssetManager.ContainsKey("example.assets/text/readme.txt"));
         host.StopAll();
     }
 

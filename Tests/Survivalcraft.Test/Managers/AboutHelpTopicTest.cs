@@ -28,7 +28,7 @@ public sealed class AboutHelpTopicTest
     [InlineData("ru-RU")]
     public void AboutReadsRunningAssembliesAndActualFormatVersions(string culture)
     {
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         using var runtime = GameModRuntime.Start();
         Game.Localization.ClientLanguage.Publish(runtime.Content.CreateLanguageCatalog(culture));
         var topic = HelpTopic.Create("52", new JsonObject { ["Name"] = "About" });
@@ -66,7 +66,7 @@ public sealed class AboutHelpTopicTest
     [InlineData("ru-RU")]
     public void AdmissionAndIdentityHelpFollowP2PInEveryLanguage(string culture)
     {
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         using var runtime = GameModRuntime.Start();
         Game.Localization.ClientLanguage.Publish(runtime.Content.CreateLanguageCatalog(culture));
         var topics = (JsonObject)Game.Localization.ClientLanguage.Catalog.KeyWords["Help"]!;
@@ -92,7 +92,7 @@ public sealed class AboutHelpTopicTest
     [InlineData("ru-RU")]
     public void LocalizedHelpBodiesRenderWithoutBrokenEscapeSequences(string culture)
     {
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         using var runtime = GameModRuntime.Start();
         Game.Localization.ClientLanguage.Publish(runtime.Content.CreateLanguageCatalog(culture));
         var topics = (JsonObject)Game.Localization.ClientLanguage.Catalog.KeyWords["Help"]!;

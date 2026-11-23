@@ -26,7 +26,7 @@ public class CraftingRecipeWidget : CanvasWidget
 
     public CraftingRecipeWidget()
     {
-        var node = ContentManager.Get<XElement>("Widgets/CraftingRecipe");
+        var node = AssetManager.Get<XElement>("Widgets/CraftingRecipe");
         LoadContents(this, node);
         _nameWidget = Children.Find<LabelWidget>("CraftingRecipeWidget.Name")!;
         _descriptionWidget = Children.Find<LabelWidget>("CraftingRecipeWidget.Description")!;

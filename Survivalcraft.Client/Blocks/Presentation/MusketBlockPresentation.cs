@@ -71,7 +71,7 @@ public class MusketBlockPresentation(MusketBlock block, BlockPresentationCatalog
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Musket");
+        var model = AssetManager.Get<Model>("Models/Musket");
         var musketNode = model.FindNode("Musket")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(musketNode);
         var hammerNode = model.FindNode("Hammer")!;

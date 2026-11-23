@@ -43,7 +43,7 @@ public sealed class SelectionDrawerWidget : CanvasWidget
 
     public SelectionDrawerWidget()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Widgets/SelectionDrawerWidget"));
+        LoadContents(this, AssetManager.Get<XElement>("Widgets/SelectionDrawerWidget"));
         _surface = Children.Find<CanvasWidget>("SelectionDrawer.Surface")!;
         _background = Children.Find<BevelledRectangleWidget>("SelectionDrawer.Background")!;
         _header = Children.Find<CanvasWidget>("SelectionDrawer.Header")!;

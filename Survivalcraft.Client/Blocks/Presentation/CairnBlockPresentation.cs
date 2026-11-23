@@ -46,7 +46,7 @@ public class CairnBlockPresentation(CairnBlock block, BlockPresentationCatalog c
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Cairn");
+        var model = AssetManager.Get<Model>("Models/Cairn");
         var cairnNode = model.FindNode("Cairn")!;
         var woodNode = model.FindNode("Wood")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(cairnNode);

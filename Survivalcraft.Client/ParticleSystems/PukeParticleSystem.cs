@@ -15,7 +15,7 @@ public class PukeParticleSystem : ParticleSystem<PukeParticleSystem.Particle>
     public PukeParticleSystem(SubsystemTerrain terrain) : base(80)
     {
         _subsystemTerrain = terrain;
-        Texture = ContentManager.Get<Texture2D>("Textures/PukeParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/PukeParticle");
         TextureSlotsCount = 3;
     }
 

@@ -52,7 +52,7 @@ public abstract class GunpowderKegBlockPresentation(
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>(ModelName);
+        var model = AssetManager.Get<Model>(ModelName);
         var kegNode = model.FindNode("Keg")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(kegNode);
         var blockMesh = new BlockMesh();

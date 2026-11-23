@@ -47,7 +47,7 @@ public abstract class PickaxeBlockPresentation(
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Pickaxe");
+        var model = AssetManager.Get<Model>("Models/Pickaxe");
         var handleNode = model.FindNode("Handle")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(handleNode);
         var headNode = model.FindNode("Head")!;

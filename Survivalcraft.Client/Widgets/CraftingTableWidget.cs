@@ -17,7 +17,7 @@ public class CraftingTableWidget : CanvasWidget
     public CraftingTableWidget(IInventory inventory, ComponentCraftingTable componentCraftingTable)
     {
         _componentCraftingTable = componentCraftingTable;
-        var node = ContentManager.Get<XElement>("Widgets/CraftingTableWidget");
+        var node = AssetManager.Get<XElement>("Widgets/CraftingTableWidget");
         LoadContents(this, node);
         _inventoryGrid = Children.Find<GridPanelWidget>("InventoryGrid")!;
         _craftingGrid = Children.Find<GridPanelWidget>("CraftingGrid")!;

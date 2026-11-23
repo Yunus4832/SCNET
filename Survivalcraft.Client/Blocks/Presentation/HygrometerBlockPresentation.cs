@@ -79,7 +79,7 @@ public class HygrometerBlockPresentation(HygrometerBlock block, BlockPresentatio
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Hygrometer");
+        var model = AssetManager.Get<Model>("Models/Hygrometer");
         var caseNode = model.FindNode("Case")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(caseNode);
         var pointerNode = model.FindNode("Pointer")!;

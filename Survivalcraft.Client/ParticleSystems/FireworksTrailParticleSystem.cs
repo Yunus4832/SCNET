@@ -12,7 +12,7 @@ public class FireworksTrailParticleSystem : ParticleSystem<FireworksTrailParticl
 
     public FireworksTrailParticleSystem() : base(60)
     {
-        Texture = ContentManager.Get<Texture2D>("Textures/FireParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/FireParticle");
         TextureSlotsCount = 3;
     }
 

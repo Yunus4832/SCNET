@@ -36,7 +36,7 @@ public class BestiaryDescriptionScreen : Screen
 
     public BestiaryDescriptionScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/BestiaryDescriptionScreen");
+        var node = AssetManager.Get<XElement>("Screens/BestiaryDescriptionScreen");
         LoadContents(this, node);
         _modelWidget = Children.Find<ModelWidget>("Model")!;
         _nameWidget = Children.Find<LabelWidget>("Name")!;
@@ -198,7 +198,7 @@ public class BestiaryDescriptionScreen : Screen
                 new LabelWidget
                 {
                     Margin = new Vector2(20f, 0f),
-                    Font = ContentManager.Get<BitmapFont>("Fonts/Pericles"),
+                    Font = AssetManager.Get<BitmapFont>("Fonts/Pericles"),
                     Text = Localization.ClientLanguage.Catalog.Get("Usual", "nothing")
                 }
             );

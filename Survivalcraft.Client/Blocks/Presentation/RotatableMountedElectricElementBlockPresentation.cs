@@ -63,7 +63,7 @@ public abstract class RotatableMountedElectricElementBlockPresentation(
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>(ModelName);
+        var model = AssetManager.Get<Model>(ModelName);
         var modelNode = model.FindNode(Block.CollisionNodeName)!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(modelNode);
         for (var i = 0; i < 6; i++)

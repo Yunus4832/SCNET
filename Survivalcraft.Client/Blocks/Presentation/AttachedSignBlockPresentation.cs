@@ -151,7 +151,7 @@ public abstract class AttachedSignBlockPresentation(
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>(ModelName);
+        var model = AssetManager.Get<Model>(ModelName);
         var signNode = model.FindNode("Sign")!;
         var surfaceNode = model.FindNode("Surface")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(signNode);

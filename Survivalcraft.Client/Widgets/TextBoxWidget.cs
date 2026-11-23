@@ -128,7 +128,7 @@ public class TextBoxWidget : Widget
         ClampToBounds = true;
         Color = Color.White;
         TextureLinearFilter = true;
-        Font = ContentManager.Get<BitmapFont>("Fonts/Pericles");
+        Font = AssetManager.Get<BitmapFont>("Fonts/Pericles");
         FontScale = 1f;
     }
 

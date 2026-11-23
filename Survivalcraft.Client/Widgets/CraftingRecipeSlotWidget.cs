@@ -24,7 +24,7 @@ public class CraftingRecipeSlotWidget : CanvasWidget
 
     public CraftingRecipeSlotWidget()
     {
-        var node = ContentManager.Get<XElement>("Widgets/CraftingRecipeSlot");
+        var node = AssetManager.Get<XElement>("Widgets/CraftingRecipeSlot");
         LoadContents(this, node);
         _blockIconWidget = Children.Find<BlockIconWidget>("CraftingRecipeSlotWidget.Icon")!;
         _labelWidget = Children.Find<LabelWidget>("CraftingRecipeSlotWidget.Count")!;

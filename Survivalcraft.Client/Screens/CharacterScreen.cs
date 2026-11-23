@@ -63,7 +63,7 @@ public class CharacterScreen : Screen
 
     public CharacterScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/CharacterScreen");
+        var node = AssetManager.Get<XElement>("Screens/CharacterScreen");
         LoadContents(this, node);
         _playerModel = Children.Find<CharacterModelWidget>("Model")!;
         _characterSexButton = Children.Find<ButtonWidget>("CharacterSexButton")!;
@@ -216,7 +216,7 @@ public class CharacterScreen : Screen
                 64f,
                 delegate(object item)
                 {
-                    var node = ContentManager.Get<XElement>("Widgets/CharacterSkinItem");
+                    var node = AssetManager.Get<XElement>("Widgets/CharacterSkinItem");
                     var obj = (ContainerWidget)LoadWidget(this, node, null);
                     var texture = _characterSkinsCache.GetTexture((string)item);
                     obj.Children.Find<LabelWidget>("CharacterSkinItem.Text")!.Text =

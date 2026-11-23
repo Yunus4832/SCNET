@@ -31,7 +31,7 @@ public class PlayScreen : Screen
 
     public PlayScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/PlayScreen");
+        var node = AssetManager.Get<XElement>("Screens/PlayScreen");
         LoadContents(this, node);
         _worldsListWidget = Children.Find<ListPanelWidget>("WorldsList")!;
         _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
@@ -58,7 +58,7 @@ public class PlayScreen : Screen
             (Func<object, Widget>)delegate(object item)
             {
                 var worldInfo = (WorldInfo)item;
-                var node2 = ContentManager.Get<XElement>("Widgets/SavedWorldItem");
+                var node2 = AssetManager.Get<XElement>("Widgets/SavedWorldItem");
                 var containerWidget = (ContainerWidget)LoadWidget(this, node2, null);
                 var labelWidget = containerWidget.Children.Find<LabelWidget>("WorldItem.Name")!;
                 var labelWidget2 = containerWidget.Children.Find<LabelWidget>("WorldItem.Details")!;

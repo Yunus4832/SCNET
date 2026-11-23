@@ -59,7 +59,7 @@ public class JackOLanternBlockPresentation(JackOLanternBlock block, BlockPresent
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Pumpkins");
+        var model = AssetManager.Get<Model>("Models/Pumpkins");
         var jackOLanternNode = model.FindNode("JackOLantern")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(jackOLanternNode);
         for (var i = 0; i < 4; i++)

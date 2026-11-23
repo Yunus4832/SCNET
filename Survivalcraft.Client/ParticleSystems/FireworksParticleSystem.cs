@@ -20,7 +20,7 @@ public class FireworksParticleSystem : ParticleSystem<FireworksParticleSystem.Pa
         float particleSize
     ) : base(300)
     {
-        Texture = ContentManager.Get<Texture2D>("Textures/FireworksParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/FireworksParticle");
         _color = color;
         _flickering = flickering;
         TextureSlotsCount = 2;

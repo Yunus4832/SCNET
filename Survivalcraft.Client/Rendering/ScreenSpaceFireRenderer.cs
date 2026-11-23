@@ -14,7 +14,7 @@ public class ScreenSpaceFireRenderer
 
     public ScreenSpaceFireRenderer(int particlesCount)
     {
-        _texture = ContentManager.Get<Texture2D>("Textures/FireParticle");
+        _texture = AssetManager.Get<Texture2D>("Textures/FireParticle");
         for (var i = 0; i < particlesCount; i++)
         {
             _particles.Add(new Particle());

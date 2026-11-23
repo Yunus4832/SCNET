@@ -28,7 +28,7 @@ public class ShortInventoryWidget : CanvasWidget
 
     public ShortInventoryWidget()
     {
-        var node = ContentManager.Get<XElement>("Widgets/ShortInventoryWidget");
+        var node = AssetManager.Get<XElement>("Widgets/ShortInventoryWidget");
         LoadContents(this, node);
         _inventoryGrid = Children.Find<GridPanelWidget>("InventoryGrid")!;
         _previousPageButton = Children.Find<ButtonWidget>("PreviousPageButton")!;

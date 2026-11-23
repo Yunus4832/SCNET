@@ -62,7 +62,7 @@ public class OneLedBlockPresentation(OneLedBlock block, BlockPresentationCatalog
 
     public override void Initialize()
     {
-        var ledNode = ContentManager.Get<Model>("Models/Leds").FindNode("OneLed")!;
+        var ledNode = AssetManager.Get<Model>("Models/Leds").FindNode("OneLed")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(ledNode);
         for (var i = 0; i < 6; i++)
         {

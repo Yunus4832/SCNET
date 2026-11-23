@@ -22,7 +22,7 @@ public class ContentScreen : Screen
 
     public ContentScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/ContentScreen");
+        var node = AssetManager.Get<XElement>("Screens/ContentScreen");
         LoadContents(this, node);
         _modsButton = Children.Find<ButtonWidget>("Mods")!;
         _manageButton = Children.Find<BevelledButtonWidget>("Manage")!;

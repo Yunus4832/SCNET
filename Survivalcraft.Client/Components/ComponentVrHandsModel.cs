@@ -188,6 +188,6 @@ public class ComponentVrHandsModel : Component, IDrawable, IUpdateable
         _blockPresentations = Project.FindSubsystem<SubsystemBlockPresentation>(true)!.Catalog;
         _componentCharacter = Entity.FindComponent<ComponentCharacter>(true)!;
         _componentMiner = Entity.FindComponent<ComponentMiner>(true)!;
-        _vrHandModel = ContentManager.Get<Model>(valuesDictionary.GetValue<string>("VrHandModelName"));
+        _vrHandModel = AssetManager.Get<Model>(valuesDictionary.GetValue<string>("VrHandModelName"));
     }
 }

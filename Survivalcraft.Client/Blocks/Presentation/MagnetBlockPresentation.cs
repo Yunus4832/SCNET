@@ -59,7 +59,7 @@ public class MagnetBlockPresentation(MagnetBlock block, BlockPresentationCatalog
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Magnet");
+        var model = AssetManager.Get<Model>("Models/Magnet");
         var magnetNode = model.FindNode("Magnet")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(magnetNode);
         for (var i = 0; i < 2; i++)

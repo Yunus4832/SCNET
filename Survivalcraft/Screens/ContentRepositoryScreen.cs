@@ -41,7 +41,7 @@ public sealed class ContentRepositoryScreen : Screen
 
     public ContentRepositoryScreen()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Screens/ContentRepositoryScreen"));
+        LoadContents(this, AssetManager.Get<XElement>("Screens/ContentRepositoryScreen"));
         _repositoryList = Children.Find<ListPanelWidget>("RepositoryList")!;
         _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
         _statusLabel = Children.Find<LabelWidget>("Status")!;
@@ -105,7 +105,7 @@ public sealed class ContentRepositoryScreen : Screen
         var repository = (ContentRepository)item;
         var widget = (ContainerWidget)LoadWidget(
             null,
-            ContentManager.Get<XElement>("Widgets/ContentRepositoryItem"),
+            AssetManager.Get<XElement>("Widgets/ContentRepositoryItem"),
             null
         );
         widget.Children.Find<LabelWidget>("ContentRepositoryItem.Name")!.Text = repository.Name;

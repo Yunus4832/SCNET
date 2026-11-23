@@ -15,7 +15,7 @@ public class SettingsGraphicsScreen : Screen
 
     public SettingsGraphicsScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/SettingsGraphicsScreen");
+        var node = AssetManager.Get<XElement>("Screens/SettingsGraphicsScreen");
         LoadContents(this, node);
         _virtualRealityButton = Children.Find<BevelledButtonWidget>("VirtualRealityButton")!;
         _brightnessSlider = Children.Find<SliderWidget>("BrightnessSlider")!;

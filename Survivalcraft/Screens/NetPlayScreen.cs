@@ -101,7 +101,7 @@ public sealed class NetPlayScreen : Screen
 
     public NetPlayScreen()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Screens/NetPlayScreen"));
+        LoadContents(this, AssetManager.Get<XElement>("Screens/NetPlayScreen"));
         _serverList = Children.Find<ListPanelWidget>("ServerList")!;
         _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
         _searchTextBox = Children.Find<TextBoxWidget>("Search")!;

@@ -1,15 +1,15 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-namespace Game.ContentReaders;
+namespace Game.AssetReaders;
 
-public class JsonArrayReader : IContentReader
+public class JsonArrayReader : AssetReader
 {
     public override string Type => "JsonArray";
 
     public override string[] DefaultSuffix => ["json"];
 
-    public override object Get(ContentInfo[] contents)
+    public override object Get(AssetInfo[] contents)
     {
         return JsonSerializer.Deserialize<JsonArray>(new StreamReader(contents[0].Duplicate()).ReadToEnd()) ??
                throw new InvalidOperationException("Cannot Deserialize to JsonArray");

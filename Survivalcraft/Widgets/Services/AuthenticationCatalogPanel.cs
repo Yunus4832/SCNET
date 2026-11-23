@@ -58,7 +58,7 @@ public sealed class AuthenticationCatalogPanel : ServicePanelWidget
     public AuthenticationCatalogPanel(AuthenticationManager manager)
     {
         _manager = manager;
-        LoadContents(this, ContentManager.Get<XElement>("Widgets/Services/AuthenticationCatalogPanel"));
+        LoadContents(this, AssetManager.Get<XElement>("Widgets/Services/AuthenticationCatalogPanel"));
         _actions = Children.Find<ActionPanelWidget>("Actions")!;
         _repositories = Children.Find<SelectionDrawerWidget>("RepositoryFilter")!;
         _search = Children.Find<TextBoxWidget>("Search")!;
@@ -205,7 +205,7 @@ public sealed class AuthenticationCatalogPanel : ServicePanelWidget
     private Widget CreateRow(object item)
     {
         var source = (RegisteredAuthenticationService)item;
-        var row = (ContainerWidget)LoadWidget(null, ContentManager.Get<XElement>("Widgets/ServerSourceItem"), null);
+        var row = (ContainerWidget)LoadWidget(null, AssetManager.Get<XElement>("Widgets/ServerSourceItem"), null);
         row.Children.Find<LabelWidget>("ServerSourceItem.Name")!.Text = source.Name;
         row.Children.Find<LabelWidget>("ServerSourceItem.Address")!.Text = source.ServiceUrl;
         row.Children.Find<LabelWidget>("ServerSourceItem.State")!.Text =

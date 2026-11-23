@@ -42,7 +42,7 @@ public class FurBlockPresentation(FurBlock block, BlockPresentationCatalog catal
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Fur");
+        var model = AssetManager.Get<Model>("Models/Fur");
         var furNode = model.FindNode("Fur")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(furNode);
         StandaloneBlockMesh.AppendModelPrimitive(

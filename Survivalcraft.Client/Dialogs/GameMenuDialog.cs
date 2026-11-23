@@ -21,7 +21,7 @@ public class GameMenuDialog : Dialog
 
     public GameMenuDialog(ComponentCharacter componentCharacter)
     {
-        var node = ContentManager.Get<XElement>("Dialogs/GameMenuDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/GameMenuDialog");
         LoadContents(this, node);
         var statsPanel = Children.Find<StackPanelWidget>("StatsPanel")!;
         _componentCharacter = componentCharacter;
@@ -73,8 +73,8 @@ public class GameMenuDialog : Dialog
         var characterStats = componentCharacter.CharacterStats;
         var subsystemGameInfo = project.FindSubsystem<SubsystemGameInfo>(true)!;
         var subsystemFurnitureBlockBehavior = project.FindSubsystem<SubsystemFurnitureBlockBehavior>(true)!;
-        var font = ContentManager.Get<BitmapFont>("Fonts/Pericles");
-        var font2 = ContentManager.Get<BitmapFont>("Fonts/Pericles");
+        var font = AssetManager.Get<BitmapFont>("Fonts/Pericles");
+        var font2 = AssetManager.Get<BitmapFont>("Fonts/Pericles");
         var white = Color.White;
         var stackPanelWidget = new StackPanelWidget
         {
@@ -649,7 +649,7 @@ public class GameMenuDialog : Dialog
 
     private void AddStat(ContainerWidget containerWidget, string title, string value1, string value2, Color color)
     {
-        var font = ContentManager.Get<BitmapFont>("Fonts/Pericles");
+        var font = AssetManager.Get<BitmapFont>("Fonts/Pericles");
         var gray = Color.Gray;
         containerWidget.Children.Add(
             new UniformSpacingPanelWidget

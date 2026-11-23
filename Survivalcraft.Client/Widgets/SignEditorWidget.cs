@@ -34,7 +34,7 @@ public sealed class SignEditorWidget : CanvasWidget, IGameInputCapturingWidget
 
     public SignEditorWidget(SignData? signData, Action<SignData> save, Action close)
     {
-        LoadContents(this, ContentManager.Get<XElement>("Widgets/SignEditorWidget"));
+        LoadContents(this, AssetManager.Get<XElement>("Widgets/SignEditorWidget"));
         _save = save;
         _close = close;
         _saveButton = Children.Find<ButtonWidget>("SignEditor.Save")!;

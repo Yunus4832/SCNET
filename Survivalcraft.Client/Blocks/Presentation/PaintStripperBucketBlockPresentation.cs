@@ -32,7 +32,7 @@ public class PaintStripperBucketBlockPresentation(PaintStripperBucketBlock block
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/FullBucket");
+        var model = AssetManager.Get<Model>("Models/FullBucket");
         var bucketNode = model.FindNode("Bucket")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(bucketNode);
         var contensNode = model.FindNode("Contents")!;

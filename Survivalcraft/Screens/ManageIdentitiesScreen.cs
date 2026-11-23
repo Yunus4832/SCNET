@@ -58,7 +58,7 @@ public sealed class ManageIdentitiesScreen : Screen
     {
         _identities = identities;
         _authentication = authentication;
-        LoadContents(this, ContentManager.Get<XElement>("Screens/ManageIdentitiesScreen"));
+        LoadContents(this, AssetManager.Get<XElement>("Screens/ManageIdentitiesScreen"));
         _playerTab = Children.Find<ButtonWidget>("PlayerTab")!;
         _serverTab = Children.Find<ButtonWidget>("ServerTab")!;
         _list = Children.Find<ListPanelWidget>("Identities")!;
@@ -130,7 +130,7 @@ public sealed class ManageIdentitiesScreen : Screen
     private Widget CreateIdentityRow(object item)
     {
         var identity = (LocalIdentityEntry)item;
-        var row = (ContainerWidget)LoadWidget(null, ContentManager.Get<XElement>("Widgets/IdentityItem"), null);
+        var row = (ContainerWidget)LoadWidget(null, AssetManager.Get<XElement>("Widgets/IdentityItem"), null);
         row.Children.Find<LabelWidget>("Name")!.Text = IdentityName(identity);
         row.Children.Find<LabelWidget>("Address")!.Text = IdentityAddressDisplay.Abbreviate(identity.Address);
         row.Children.Find<LabelWidget>("Current")!.Text = identity.Address == _identities.GetSelectedAddress(Purpose)

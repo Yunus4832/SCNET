@@ -21,7 +21,7 @@
 
     <!--声明需要打包资源-->
     <PropertyGroup>
-        <UsePackResourceTarget>true</UsePackResourceTarget>
+        <UsePackAssetsTarget>true</UsePackAssetsTarget>
     </PropertyGroup>
 
     <ItemGroup>

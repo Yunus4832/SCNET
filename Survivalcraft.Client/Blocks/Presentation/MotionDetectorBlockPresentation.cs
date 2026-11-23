@@ -71,7 +71,7 @@ public class MotionDetectorBlockPresentation(MotionDetectorBlock block, BlockPre
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/MotionDetector");
+        var model = AssetManager.Get<Model>("Models/MotionDetector");
         var motionDetectorNode = model.FindNode("MotionDetector")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(motionDetectorNode);
         for (var i = 0; i < 6; i++)

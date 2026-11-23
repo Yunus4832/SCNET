@@ -80,7 +80,7 @@ public class WorldOptionsScreen : Screen
 
     public WorldOptionsScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/WorldOptionsScreen");
+        var node = AssetManager.Get<XElement>("Screens/WorldOptionsScreen");
         LoadContents(this, node);
         _creativeModePanel = Children.Find<Widget>("CreativeModePanel")!;
         _creativeDigTimeSlider = Children.Find<SliderWidget>("CreativeDigTimeSlider")!;
@@ -403,7 +403,7 @@ public class WorldOptionsScreen : Screen
                 64f,
                 delegate(object item)
                 {
-                    var node = ContentManager.Get<XElement>("Widgets/BlocksTextureItem");
+                    var node = AssetManager.Get<XElement>("Widgets/BlocksTextureItem");
                     var obj = (ContainerWidget)LoadWidget(this, node, null);
                     var texture2 = _blockTexturesCache.GetTexture((string)item);
                     obj.Children.Find<LabelWidget>("BlocksTextureItem.Text")!.Text =

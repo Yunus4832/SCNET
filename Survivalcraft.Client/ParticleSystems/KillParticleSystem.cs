@@ -12,7 +12,7 @@ public class KillParticleSystem : ParticleSystem<KillParticleSystem.Particle>
         float size
     ) : base(20)
     {
-        Texture = ContentManager.Get<Texture2D>("Textures/KillParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/KillParticle");
         SetLightOrigin(terrain, position);
         TextureSlotsCount = 2;
         var white = Color.White;

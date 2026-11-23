@@ -31,7 +31,7 @@ public class AlertDialog : Dialog
     {
         _okHandler = ok;
         _dismissHandler = dismiss;
-        var node = ContentManager.Get<XElement>("Dialogs/MessageDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/MessageDialog");
         LoadContents(this, node);
         var size = new Vector2(-1f);
         Size = new Vector2(size.X >= 0f ? size.X : Size.X, size.Y >= 0f ? size.Y : Size.Y);

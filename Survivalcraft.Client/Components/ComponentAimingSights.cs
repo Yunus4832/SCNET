@@ -72,7 +72,7 @@ public class ComponentAimingSights : Component, IUpdateable, IDrawable
                 (Configuration.ClientConfiguration.Preferences.LookControlMode == LookControlMode.SplitTouch ||
                  !_componentCharacter.Entity.FindComponent<ComponentInput>(true)!.IsTouchInputActive))
             {
-                var subtexture = ContentManager.Get<Subtexture>("Textures/Atlas/Crosshair");
+                var subtexture = AssetManager.Get<Subtexture>("Textures/Atlas/Crosshair");
                 var s2 = 1.25f;
                 var v3 = camera.ViewPosition + camera.ViewDirection * 50f;
                 var sightRight = Vector3.Normalize(Vector3.Cross(camera.ViewDirection, Vector3.UnitY));

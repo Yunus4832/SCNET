@@ -145,7 +145,7 @@ public abstract class StairsBlockPresentation(
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Stairs");
+        var model = AssetManager.Get<Model>("Models/Stairs");
         var stairsNode = model.FindNode("Stairs")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(stairsNode);
         var stairsOuterCornerNode = model.FindNode("StairsOuterCorner")!;

@@ -43,7 +43,7 @@ public class ViewGameLogDialog : Dialog
 
     public ViewGameLogDialog()
     {
-        var node = ContentManager.Get<XElement>("Dialogs/ViewGameLogDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/ViewGameLogDialog");
         LoadContents(this, node);
         _listPanel = Children.Find<ListPanelWidget>("ViewGameLogDialog.ListPanel")!;
         _actionPanel = Children.Find<ActionPanelWidget>("ViewGameLogDialog.Actions")!;

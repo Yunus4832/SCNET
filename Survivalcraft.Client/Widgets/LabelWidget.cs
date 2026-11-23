@@ -35,7 +35,7 @@ public class LabelWidget : Widget
 
     public LabelWidget()
     {
-        Font = ContentManager.Get<BitmapFont>("Fonts/Pericles");
+        Font = AssetManager.Get<BitmapFont>("Fonts/Pericles");
         Text = string.Empty;
         FontScale = 1f;
         Color = Color.White;

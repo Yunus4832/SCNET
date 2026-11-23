@@ -95,7 +95,7 @@ public sealed class SubsystemGlowPresentation : Subsystem, IDrawable
         _subsystemSky = Project.FindSubsystem<SubsystemSkyPresentation>(true)!;
 
         _batchesByType[0] = PrimitivesRenderer3D.TexturedBatch(
-            ContentManager.Get<Texture2D>("Textures/RoundGlow"),
+            AssetManager.Get<Texture2D>("Textures/RoundGlow"),
             false,
             0,
             DepthStencilState.DepthRead,
@@ -104,7 +104,7 @@ public sealed class SubsystemGlowPresentation : Subsystem, IDrawable
             SamplerState.LinearClamp
         );
         _batchesByType[1] = PrimitivesRenderer3D.TexturedBatch(
-            ContentManager.Get<Texture2D>("Textures/SquareGlow"),
+            AssetManager.Get<Texture2D>("Textures/SquareGlow"),
             false,
             0,
             DepthStencilState.DepthRead,
@@ -113,7 +113,7 @@ public sealed class SubsystemGlowPresentation : Subsystem, IDrawable
             SamplerState.LinearClamp
         );
         _batchesByType[2] = PrimitivesRenderer3D.TexturedBatch(
-            ContentManager.Get<Texture2D>("Textures/HorizontalRectGlow"),
+            AssetManager.Get<Texture2D>("Textures/HorizontalRectGlow"),
             false,
             0,
             DepthStencilState.DepthRead,
@@ -122,7 +122,7 @@ public sealed class SubsystemGlowPresentation : Subsystem, IDrawable
             SamplerState.LinearClamp
         );
         _batchesByType[3] = PrimitivesRenderer3D.TexturedBatch(
-            ContentManager.Get<Texture2D>("Textures/VerticalRectGlow"),
+            AssetManager.Get<Texture2D>("Textures/VerticalRectGlow"),
             false,
             0,
             DepthStencilState.DepthRead,

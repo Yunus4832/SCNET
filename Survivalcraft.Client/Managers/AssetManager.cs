@@ -6,17 +6,17 @@ using Engine.Graphics;
 using Engine.Media.Audio;
 using Engine.Media.Images;
 
-using Game.ContentReaders;
+using Game.AssetReaders;
 
 namespace Game.Managers;
 
-public static class ContentManager
+public static class AssetManager
 {
-    private static readonly Dictionary<string, ContentInfo> _resources = new();
+    private static readonly Dictionary<string, AssetInfo> _resources = new();
 
-    private static readonly Dictionary<string, ReadOnlyList<ContentInfo>> _directoryLists = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, ReadOnlyList<AssetInfo>> _directoryLists = new(StringComparer.Ordinal);
 
-    internal static readonly Dictionary<string, IContentReader> readerList = new();
+    internal static readonly Dictionary<string, AssetReader> readerList = new();
 
     private static readonly Dictionary<string, List<object>> _caches = new();
 
@@ -48,7 +48,7 @@ public static class ContentManager
         }
     }
 
-    public static void RegisterReader(IContentReader reader)
+    public static void RegisterReader(AssetReader reader)
     {
         ArgumentNullException.ThrowIfNull(reader);
         lock (_syncObj)
@@ -62,7 +62,7 @@ public static class ContentManager
         return (T)Get(typeof(T), name, suffix);
     }
 
-    internal static Stream OpenRelativeResource(ContentInfo owner, string resource)
+    internal static Stream OpenRelativeResource(AssetInfo owner, string resource)
     {
         if (Uri.TryCreate(resource, UriKind.Absolute, out _) || resource.Contains('\\'))
         {
@@ -150,25 +150,25 @@ public static class ContentManager
                 throw new InvalidOperationException("未找到对应资源的读取器");
             }
 
-            var contents = new List<ContentInfo>();
+            var contents = new List<AssetInfo>();
             string nameWithSuffix;
             if (string.IsNullOrEmpty(suffix))
             {
                 foreach (var s in reader.DefaultSuffix)
                 {
                     nameWithSuffix = name + "." + s;
-                    if (_resources.TryGetValue(nameWithSuffix, out var contentInfo))
+                    if (_resources.TryGetValue(nameWithSuffix, out var assetInfo))
                     {
-                        contents.Add(contentInfo);
+                        contents.Add(assetInfo);
                     }
                 }
             }
             else
             {
                 nameWithSuffix = name + suffix;
-                if (_resources.TryGetValue(nameWithSuffix, out var contentInfo))
+                if (_resources.TryGetValue(nameWithSuffix, out var assetInfo))
                 {
-                    contents.Add(contentInfo);
+                    contents.Add(assetInfo);
                 }
             }
 
@@ -208,42 +208,42 @@ public static class ContentManager
         };
     }
 
-    public static void Add(ContentInfo contentInfo)
+    public static void Add(AssetInfo assetInfo)
     {
         lock (_syncObj)
         {
-            if (_resourceOwners.TryGetValue(contentInfo.AbsolutePath, out var owner))
+            if (_resourceOwners.TryGetValue(assetInfo.AbsolutePath, out var owner))
             {
                 throw new InvalidOperationException(
-                    $"Content {contentInfo.AbsolutePath} is owned by mod {owner} and cannot be replaced by legacy content."
+                    $"Asset {assetInfo.AbsolutePath} is owned by mod {owner} and cannot be replaced by legacy content."
                 );
             }
 
-            Replace(contentInfo);
+            Replace(assetInfo);
         }
     }
 
-    public static void AddOwned(ModId owner, ContentInfo contentInfo)
+    public static void AddOwned(ModId owner, AssetInfo assetInfo)
     {
         lock (_syncObj)
         {
-            if (_resources.ContainsKey(contentInfo.AbsolutePath) &&
-                !_resourceOwners.TryGetValue(contentInfo.AbsolutePath, out var existingOwner))
+            if (_resources.ContainsKey(assetInfo.AbsolutePath) &&
+                !_resourceOwners.TryGetValue(assetInfo.AbsolutePath, out var existingOwner))
             {
                 throw new InvalidOperationException(
-                    $"Content {contentInfo.AbsolutePath} already exists without a mod owner."
+                    $"Asset {assetInfo.AbsolutePath} already exists without a mod owner."
                 );
             }
 
-            if (_resourceOwners.TryGetValue(contentInfo.AbsolutePath, out existingOwner) && existingOwner != owner)
+            if (_resourceOwners.TryGetValue(assetInfo.AbsolutePath, out existingOwner) && existingOwner != owner)
             {
                 throw new InvalidOperationException(
-                    $"Content {contentInfo.AbsolutePath} is already owned by mod {existingOwner}."
+                    $"Asset {assetInfo.AbsolutePath} is already owned by mod {existingOwner}."
                 );
             }
 
-            Replace(contentInfo);
-            _resourceOwners[contentInfo.AbsolutePath] = owner;
+            Replace(assetInfo);
+            _resourceOwners[assetInfo.AbsolutePath] = owner;
         }
     }
 
@@ -268,7 +268,7 @@ public static class ContentManager
 
                 _directoryLists.Clear();
 
-                try { Invalidate(resource.ContentPath); }
+                try { Invalidate(resource.AssetPath); }
                 catch (Exception error) { errors.Add(error); }
 
                 try { resource.Dispose(); }
@@ -317,7 +317,7 @@ public static class ContentManager
         }
     }
 
-    public static bool IsContent(object content)
+    public static bool IsAsset(object content)
     {
         return _caches.Values.SelectMany(l => l).Any(d => d == content);
     }
@@ -337,20 +337,20 @@ public static class ContentManager
         }
     }
 
-    public static ReadOnlyList<ContentInfo> List()
+    public static ReadOnlyList<AssetInfo> List()
     {
-        return new ReadOnlyList<ContentInfo>(_resources.Values.ToDynamicArray());
+        return new ReadOnlyList<AssetInfo>(_resources.Values.ToDynamicArray());
     }
 
-    private static void Replace(ContentInfo contentInfo)
+    private static void Replace(AssetInfo assetInfo)
     {
-        if (_resources.TryGetValue(contentInfo.AbsolutePath, out var previous))
+        if (_resources.TryGetValue(assetInfo.AbsolutePath, out var previous))
         {
-            Invalidate(previous.ContentPath);
+            Invalidate(previous.AssetPath);
             previous.Dispose();
         }
 
-        _resources[contentInfo.AbsolutePath] = contentInfo;
+        _resources[assetInfo.AbsolutePath] = assetInfo;
         _directoryLists.Clear();
     }
 
@@ -384,7 +384,7 @@ public static class ContentManager
 
     private static void DisposeAllCaches() => DisposeCaches(_caches.Keys.ToArray());
 
-    public static ReadOnlyList<ContentInfo> List(string directory)
+    public static ReadOnlyList<AssetInfo> List(string directory)
     {
         if (!directory.EndsWith('/'))
         {
@@ -395,9 +395,9 @@ public static class ContentManager
         {
             if (!_directoryLists.TryGetValue(directory, out var contents))
             {
-                contents = new ReadOnlyList<ContentInfo>(
+                contents = new ReadOnlyList<AssetInfo>(
                     _resources.Values
-                        .Where(content => content.ContentPath.StartsWith(directory, StringComparison.Ordinal))
+                        .Where(content => content.AssetPath.StartsWith(directory, StringComparison.Ordinal))
                         .ToList()
                 );
                 _directoryLists.Add(directory, contents);

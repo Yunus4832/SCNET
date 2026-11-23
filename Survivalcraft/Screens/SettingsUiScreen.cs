@@ -37,7 +37,7 @@ public class SettingsUiScreen : Screen
 
     public SettingsUiScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/SettingsUiScreen");
+        var node = AssetManager.Get<XElement>("Screens/SettingsUiScreen");
         LoadContents(this, node);
         _windowModeContainer = Children.Find<ContainerWidget>("WindowModeContainer")!;
         _languageSelection = Children.Find<InlineSelectionWidget>("LanguageSelection")!;

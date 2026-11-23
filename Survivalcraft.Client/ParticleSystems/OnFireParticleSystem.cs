@@ -13,7 +13,7 @@ public class OnFireParticleSystem : ParticleSystem<OnFireParticleSystem.Particle
     public OnFireParticleSystem()
         : base(25)
     {
-        Texture = ContentManager.Get<Texture2D>("Textures/FireParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/FireParticle");
         TextureSlotsCount = 3;
     }
 

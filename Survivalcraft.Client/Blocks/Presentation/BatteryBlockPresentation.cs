@@ -47,7 +47,7 @@ public class BatteryBlockPresentation(BatteryBlock block, BlockPresentationCatal
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Battery");
+        var model = AssetManager.Get<Model>("Models/Battery");
         var batteryNode = model.FindNode("Battery")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(batteryNode);
         StandaloneBlockMesh.AppendModelPrimitive(

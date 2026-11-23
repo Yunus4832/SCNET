@@ -153,7 +153,7 @@ public abstract class FenceBlockPresentation(
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>(ModelName);
+        var model = AssetManager.Get<Model>(ModelName);
         var postNode = model.FindNode("Post")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(postNode);
         var planksNode = model.FindNode("Planks")!;

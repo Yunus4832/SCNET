@@ -15,7 +15,7 @@ public class RainSplashParticleSystem : ParticleSystem<RainSplashParticleSystem.
     public RainSplashParticleSystem(BlockContentCatalog catalog) : base(150)
     {
         _catalog = catalog;
-        Texture = ContentManager.Get<Texture2D>("Textures/RainSplashParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/RainSplashParticle");
         TextureSlotsCount = 1;
     }
 

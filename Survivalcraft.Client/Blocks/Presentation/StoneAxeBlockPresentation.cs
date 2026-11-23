@@ -45,7 +45,7 @@ public class StoneAxeBlockPresentation(StoneAxeBlock block, BlockPresentationCat
     {
         var handleTextureSlot = 47;
         var headTextureSlot = 1;
-        var model = ContentManager.Get<Model>("Models/StoneAxe");
+        var model = AssetManager.Get<Model>("Models/StoneAxe");
         var handleNode = model.FindNode("Handle")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(handleNode);
         var headNode = model.FindNode("Head")!;

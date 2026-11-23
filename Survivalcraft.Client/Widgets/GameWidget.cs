@@ -89,7 +89,7 @@ public class GameWidget : CanvasWidget
         GameWidgetIndex = gameViewIndex;
         SubsystemGameWidgets = characterData.Project.FindSubsystem<SubsystemGameWidgets>(true)!;
         SubsystemTime = SubsystemGameWidgets.Project.FindSubsystem<SubsystemTime>();
-        LoadContents(this, ContentManager.Get<XElement>("Widgets/GameWidget"));
+        LoadContents(this, AssetManager.Get<XElement>("Widgets/GameWidget"));
         _messageButton = Children.Find<BitmapButtonWidget>("MsgButton")!;
         NetCharacterListButton = Children.Find<BitmapButtonWidget>("CharacterListButton")!;
         NetCharacterListButton.NormalSubtexture = TextureAtlasManager.GetSubtexture("Textures/Atlas/CharacterList");

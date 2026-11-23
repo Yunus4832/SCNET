@@ -83,7 +83,7 @@ public class EditColorDialog : Dialog
                     Text = Localization.ClientLanguage.Catalog.Get(nameof(EditColorDialog), 2),
                     Color = Color.Gray,
                     VerticalAlignment = WidgetAlignment.Center,
-                    Font = ContentManager.Get<BitmapFont>("Fonts/Pericles")
+                    Font = AssetManager.Get<BitmapFont>("Fonts/Pericles")
                 },
                 new CanvasWidget
                 {
@@ -118,7 +118,7 @@ public class EditColorDialog : Dialog
                     Text = Localization.ClientLanguage.Catalog.Get(nameof(EditColorDialog), 3),
                     Color = Color.Gray,
                     VerticalAlignment = WidgetAlignment.Center,
-                    Font = ContentManager.Get<BitmapFont>("Fonts/Pericles")
+                    Font = AssetManager.Get<BitmapFont>("Fonts/Pericles")
                 },
                 new CanvasWidget
                 {
@@ -153,7 +153,7 @@ public class EditColorDialog : Dialog
                     Text = Localization.ClientLanguage.Catalog.Get(nameof(EditColorDialog), 4),
                     Color = Color.Gray,
                     VerticalAlignment = WidgetAlignment.Center,
-                    Font = ContentManager.Get<BitmapFont>("Fonts/Pericles")
+                    Font = AssetManager.Get<BitmapFont>("Fonts/Pericles")
                 },
                 new CanvasWidget
                 {
@@ -199,7 +199,7 @@ public class EditColorDialog : Dialog
         {
             HorizontalAlignment = WidgetAlignment.Center,
             VerticalAlignment = WidgetAlignment.Center,
-            Font = ContentManager.Get<BitmapFont>("Fonts/Pericles")
+            Font = AssetManager.Get<BitmapFont>("Fonts/Pericles")
         };
         _label = obj12;
         children13.Add(obj12);

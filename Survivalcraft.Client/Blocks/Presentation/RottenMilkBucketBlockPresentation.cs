@@ -32,7 +32,7 @@ public class RottenMilkBucketBlockPresentation(RottenMilkBucketBlock block, Bloc
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/FullBucket");
+        var model = AssetManager.Get<Model>("Models/FullBucket");
         var bucketNode = model.FindNode("Bucket")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(bucketNode);
         var contentsNode = model.FindNode("Contents")!;

@@ -20,7 +20,7 @@ public class MusketWidget : CanvasWidget
     {
         _inventory = inventory;
         _slotIndex = slotIndex;
-        var node = ContentManager.Get<XElement>("Widgets/MusketWidget");
+        var node = AssetManager.Get<XElement>("Widgets/MusketWidget");
         LoadContents(this, node);
         _inventoryGrid = Children.Find<GridPanelWidget>("InventoryGrid")!;
         _inventorySlotWidget = Children.Find<InventorySlotWidget>("InventorySlot")!;

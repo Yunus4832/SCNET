@@ -17,7 +17,7 @@ public class BevelledButtonWidget : ButtonWidget
     public BevelledButtonWidget()
     {
         BevelSize = 2f;
-        var node = ContentManager.Get<XElement>("Widgets/BevelledButtonContents");
+        var node = AssetManager.Get<XElement>("Widgets/BevelledButtonContents");
         LoadChildren(this, node);
         _rectangleWidget = Children.Find<BevelledRectangleWidget>("BevelledButton.Rectangle")!;
         _imageWidget = Children.Find<RectangleWidget>("BevelledButton.Image")!;

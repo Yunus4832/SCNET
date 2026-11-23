@@ -43,7 +43,7 @@ public class DiamondChunkBlockPresentation(DiamondChunkBlock block, BlockPresent
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Diamond");
+        var model = AssetManager.Get<Model>("Models/Diamond");
         var diamondNode = model.FindNode("Diamond")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(diamondNode);
         StandaloneBlockMesh.AppendModelPrimitive(

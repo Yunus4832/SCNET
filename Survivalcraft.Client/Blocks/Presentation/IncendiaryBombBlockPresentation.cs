@@ -43,7 +43,7 @@ public class IncendiaryBombBlockPresentation(IncendiaryBombBlock block, BlockPre
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Bomb");
+        var model = AssetManager.Get<Model>("Models/Bomb");
         var bombNode = model.FindNode("Bomb")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(bombNode);
         StandaloneBlockMesh.AppendModelPrimitive(

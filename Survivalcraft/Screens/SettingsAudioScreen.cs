@@ -10,7 +10,7 @@ public class SettingsAudioScreen : Screen
 
     public SettingsAudioScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/SettingsAudioScreen");
+        var node = AssetManager.Get<XElement>("Screens/SettingsAudioScreen");
         LoadContents(this, node);
         _soundsVolumeSlider = Children.Find<SliderWidget>("SoundsVolumeSlider")!;
         _musicVolumeSlider = Children.Find<SliderWidget>("MusicVolumeSlider")!;

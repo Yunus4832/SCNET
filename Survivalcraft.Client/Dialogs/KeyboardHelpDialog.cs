@@ -12,7 +12,7 @@ public class KeyboardHelpDialog : Dialog
 
     public KeyboardHelpDialog()
     {
-        var node = ContentManager.Get<XElement>("Dialogs/KeyboardHelpDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/KeyboardHelpDialog");
         LoadContents(this, node);
         _okButton = Children.Find<ButtonWidget>("OkButton")!;
         _helpButton = Children.Find<ButtonWidget>("HelpButton")!;

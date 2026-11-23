@@ -47,7 +47,7 @@ public abstract class HammerBlockPresentation(
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Hammer");
+        var model = AssetManager.Get<Model>("Models/Hammer");
         var handleNode = model.FindNode("Handle")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(handleNode);
         var headNode = model.FindNode("Head")!;

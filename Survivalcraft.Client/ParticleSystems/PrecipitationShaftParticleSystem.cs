@@ -353,7 +353,7 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
                 var maxFallSpeed = 12f;
                 _averageSpeed = (minFallSpeed + maxFallSpeed) / 2f;
                 _size = new Vector2(0.02f, 0.15f);
-                Texture = ContentManager.Get<Texture2D>("Textures/RainParticle");
+                Texture = AssetManager.Get<Texture2D>("Textures/RainParticle");
                 foreach (var obj in _particles)
                 {
                     obj.IsActive = false;
@@ -372,7 +372,7 @@ public class PrecipitationShaftParticleSystem : ParticleSystemBase
                 var maxFallSpeed = 3f;
                 _averageSpeed = (minFallSpeed + maxFallSpeed) / 2f;
                 _size = new Vector2(0.07f, 0.07f);
-                Texture = ContentManager.Get<Texture2D>("Textures/SnowParticle");
+                Texture = AssetManager.Get<Texture2D>("Textures/SnowParticle");
                 foreach (var particle in _particles)
                 {
                     particle.IsActive = false;

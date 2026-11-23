@@ -30,7 +30,7 @@ public sealed class TruthTableEditorWidget : CanvasWidget
 
     public TruthTableEditorWidget(TruthTableData data, Action<bool> completed, Action close)
     {
-        LoadContents(this, ContentManager.Get<XElement>("Widgets/TruthTableEditorWidget"));
+        LoadContents(this, AssetManager.Get<XElement>("Widgets/TruthTableEditorWidget"));
         _sourceData = data;
         _temporaryData = (TruthTableData)data.Copy();
         _completed = completed;

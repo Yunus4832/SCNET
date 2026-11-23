@@ -43,7 +43,7 @@ public abstract class IngotBlockPresentation(IngotBlock block, BlockPresentation
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Ingots");
+        var model = AssetManager.Get<Model>("Models/Ingots");
         var modelNode = model.FindNode(MeshName)!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(modelNode);
         StandaloneBlockMesh.AppendModelPrimitive(

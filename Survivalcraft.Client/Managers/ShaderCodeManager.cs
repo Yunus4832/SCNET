@@ -16,7 +16,7 @@ public static class ShaderCodeManager
         var extension = fileName.LastIndexOf('.');
         if (extension <= 0) { throw new InvalidDataException($"Shader source has no extension: {fileName}"); }
 
-        return ContentManager.Get<string>(fileName[..extension], fileName[extension..]);
+        return AssetManager.Get<string>(fileName[..extension], fileName[extension..]);
     }
 
     private static string ExpandIncludes(string source, Func<string, string> readSource, HashSet<string> active)

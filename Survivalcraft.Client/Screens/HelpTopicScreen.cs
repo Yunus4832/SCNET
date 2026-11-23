@@ -14,7 +14,7 @@ public class HelpTopicScreen : Screen
 
     public HelpTopicScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/HelpTopicScreen");
+        var node = AssetManager.Get<XElement>("Screens/HelpTopicScreen");
         LoadContents(this, node);
         _titleLabel = Children.Find<LabelWidget>("Title")!;
         _textLabel = Children.Find<LabelWidget>("Text")!;

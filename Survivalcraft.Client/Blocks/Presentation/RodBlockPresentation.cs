@@ -42,7 +42,7 @@ public class RodBlockPresentation(RodBlock block, BlockPresentationCatalog catal
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Rod");
+        var model = AssetManager.Get<Model>("Models/Rod");
         var ironRodNode = model.FindNode("IronRod")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(ironRodNode);
         StandaloneBlockMesh.AppendModelPrimitive(

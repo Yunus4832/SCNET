@@ -26,7 +26,7 @@ public class ClothingWidget : CanvasWidget
     {
         _componentCharacter = componentCharacter;
         _presentation = componentCharacter.Entity.FindComponent<ComponentClothingPresentation>(true)!;
-        var node = ContentManager.Get<XElement>("Widgets/ClothingWidget");
+        var node = AssetManager.Get<XElement>("Widgets/ClothingWidget");
         LoadContents(this, node);
         _clothingStack = Children.Find<StackPanelWidget>("ClothingStack")!;
         _inventoryGrid = Children.Find<GridPanelWidget>("InventoryGrid")!;

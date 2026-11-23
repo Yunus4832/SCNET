@@ -11,9 +11,6 @@
         "2": "original",
         "3": "api version"
     },
-    "ContentManager": {
-        "1": "Content \"{0}\" has type {1}, requested type was {2}"
-    },
     "ContentScreen": {
         "2": "Content Management",
         "12": "Manage global and world mods",

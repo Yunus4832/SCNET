@@ -61,7 +61,7 @@ public class HitValueParticleSystem : ParticleSystem<HitValueParticleSystem.Part
         }
 
         _batch ??= SubsystemParticles.PrimitivesRenderer.FontBatch(
-            ContentManager.Get<BitmapFont>("Fonts/Pericles"),
+            AssetManager.Get<BitmapFont>("Fonts/Pericles"),
             0,
             DepthStencilState.None
         );

@@ -79,7 +79,7 @@ public class SeaUrchinBlockPresentation(SeaUrchinBlock block, BlockPresentationC
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/SeaUrchin");
+        var model = AssetManager.Get<Model>("Models/SeaUrchin");
         var urchinNode = model.FindNode("Urchin")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(urchinNode);
         var bottomNode = model.FindNode("Bottom")!;

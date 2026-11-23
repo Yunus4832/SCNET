@@ -27,7 +27,7 @@ public class FireParticleSystem : ParticleSystem<FireParticleSystem.Particle>
         _position = position;
         _size = size;
         _maxVisibilityDistance = maxVisibilityDistance;
-        Texture = ContentManager.Get<Texture2D>("Textures/FireParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/FireParticle");
         TextureSlotsCount = 3;
     }
 

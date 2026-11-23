@@ -23,7 +23,7 @@ public class BurntDebrisParticleSystem : ParticleSystem<BurntDebrisParticleSyste
         : base(ParticleCount)
     {
         _subsystemTerrain = terrain;
-        Texture = ContentManager.Get<Texture2D>("Textures/FireParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/FireParticle");
         TextureSlotsCount = 3;
         SetLightOrigin(terrain, position);
         var white = Color.White;

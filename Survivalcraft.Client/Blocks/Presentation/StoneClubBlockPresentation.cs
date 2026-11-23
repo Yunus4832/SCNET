@@ -45,7 +45,7 @@ public class StoneClubBlockPresentation(StoneClubBlock block, BlockPresentationC
     {
         var handleTextureSlot = 47;
         var headTextureSlot = 1;
-        var model = ContentManager.Get<Model>("Models/StoneClub");
+        var model = AssetManager.Get<Model>("Models/StoneClub");
         var handleNode = model.FindNode("Handle")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(handleNode);
         var spikesNode = model.FindNode("Spikes")!;

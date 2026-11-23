@@ -47,7 +47,7 @@ public abstract class AxeBlockPresentation(
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Axe");
+        var model = AssetManager.Get<Model>("Models/Axe");
         var handleNode = model.FindNode("Handle")!;
         var headNode = model.FindNode("Head")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(handleNode);

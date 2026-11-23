@@ -106,7 +106,7 @@ public class PressurePlateBlockPresentation(PressurePlateBlock block, BlockPrese
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/PressurePlate");
+        var model = AssetManager.Get<Model>("Models/PressurePlate");
         for (var i = 0; i < 2; i++)
         {
             var pressurePlateNode = model.FindNode("PressurePlate")!;

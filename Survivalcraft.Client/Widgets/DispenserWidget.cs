@@ -27,7 +27,7 @@ public class DispenserWidget : CanvasWidget
         _componentDispenser = componentDispenser;
         _componentBlockEntity = componentDispenser.Entity.FindComponent<ComponentBlockEntity>(true)!;
         _subsystemTerrain = componentDispenser.Project.FindSubsystem<SubsystemTerrain>(true)!;
-        var node = ContentManager.Get<XElement>("Widgets/DispenserWidget");
+        var node = AssetManager.Get<XElement>("Widgets/DispenserWidget");
         LoadContents(this, node);
         _inventoryGrid = Children.Find<GridPanelWidget>("InventoryGrid")!;
         _dispenserGrid = Children.Find<GridPanelWidget>("DispenserGrid")!;

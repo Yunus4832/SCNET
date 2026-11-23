@@ -188,7 +188,7 @@ public class ComponentDiggingCracks : Component, IDrawable
         _textures = new Texture2D[8];
         for (var i = 0; i < 8; i++)
         {
-            _textures[i] = ContentManager.Get<Texture2D>($"Textures/Cracks{i + 1}");
+            _textures[i] = AssetManager.Get<Texture2D>($"Textures/Cracks{i + 1}");
         }
     }
 

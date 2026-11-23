@@ -18,7 +18,7 @@ public static class BlocksTexturesManager
     public static void Initialize()
     {
         Storage.CreateDirectory(ClientApplication.Paths.BlockTextures);
-        DefaultBlocksTexture = ContentManager.Get<Texture2D>("Textures/Blocks");
+        DefaultBlocksTexture = AssetManager.Get<Texture2D>("Textures/Blocks");
     }
 
     public static bool IsBuiltIn(string name)

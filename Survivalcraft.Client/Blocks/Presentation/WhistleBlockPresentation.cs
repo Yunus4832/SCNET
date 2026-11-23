@@ -43,7 +43,7 @@ public class WhistleBlockPresentation(WhistleBlock block, BlockPresentationCatal
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Whistle");
+        var model = AssetManager.Get<Model>("Models/Whistle");
         var whistleNode = model.FindNode("Whistle")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(whistleNode);
         StandaloneBlockMesh.AppendModelPrimitive(

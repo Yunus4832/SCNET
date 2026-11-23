@@ -22,7 +22,7 @@ public sealed class GameAnnouncementsDialog : Dialog
 
     public GameAnnouncementsDialog(string title, IReadOnlyList<GameAnnouncement> announcements)
     {
-        LoadContents(this, ContentManager.Get<XElement>("Dialogs/GameAnnouncementsDialog"));
+        LoadContents(this, AssetManager.Get<XElement>("Dialogs/GameAnnouncementsDialog"));
         Children.Find<LabelWidget>("GameAnnouncementsDialog.Header")!.Text = title;
         _listPanel = Children.Find<ListPanelWidget>("GameAnnouncementsDialog.List")!;
         _titleLabel = Children.Find<LabelWidget>("GameAnnouncementsDialog.Title")!;

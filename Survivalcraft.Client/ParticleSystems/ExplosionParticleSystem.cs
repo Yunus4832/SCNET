@@ -16,7 +16,7 @@ public class ExplosionParticleSystem : ParticleSystem<ExplosionParticleSystem.Pa
 
     public ExplosionParticleSystem() : base(1000)
     {
-        Texture = ContentManager.Get<Texture2D>("Textures/FireParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/FireParticle");
         TextureSlotsCount = 3;
         _inactiveParticles.AddRange(Particles);
     }

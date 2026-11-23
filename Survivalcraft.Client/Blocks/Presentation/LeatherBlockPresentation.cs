@@ -43,7 +43,7 @@ public class LeatherBlockPresentation(LeatherBlock block, BlockPresentationCatal
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Leather");
+        var model = AssetManager.Get<Model>("Models/Leather");
         var leatherNode = model.FindNode("Leather")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(leatherNode);
         StandaloneBlockMesh.AppendModelPrimitive(

@@ -1,8 +1,8 @@
-using Android.Content.Res;
+using AndroidAssetManager = Android.Content.Res.AssetManager;
 
 namespace Survivalcraft.Android;
 
-internal sealed class AndroidAssetsStorageRoot(AssetManager assets) : IStorageRoot
+internal sealed class AndroidAssetsStorageRoot(AndroidAssetManager assets) : IStorageRoot
 {
     public long FreeSpace => long.MaxValue;
 

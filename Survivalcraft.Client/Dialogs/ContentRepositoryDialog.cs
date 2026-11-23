@@ -33,7 +33,7 @@ public sealed class ContentRepositoryDialog : Dialog
     {
         ArgumentNullException.ThrowIfNull(handler);
         _handler = handler;
-        LoadContents(this, ContentManager.Get<XElement>("Dialogs/ContentRepositoryDialog"));
+        LoadContents(this, AssetManager.Get<XElement>("Dialogs/ContentRepositoryDialog"));
 
         Children.Find<LabelWidget>("ContentRepositoryDialog.Title")!.Text = title;
         _namePlaceholder = Children.Find<LabelWidget>("ContentRepositoryDialog.NamePlaceholder")!;

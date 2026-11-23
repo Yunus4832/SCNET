@@ -20,7 +20,7 @@ public class WhalePlumeParticleSystem : ParticleSystem<WhalePlumeParticleSystem.
         float duration
     ) : base(100)
     {
-        Texture = ContentManager.Get<Texture2D>("Textures/WaterSplashParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/WaterSplashParticle");
         TextureSlotsCount = 2;
         _size = size;
         _duration = duration;

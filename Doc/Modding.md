@@ -46,7 +46,9 @@ payload/assets/<mod-id>/**
 跨网络的提示、拒绝与断开原因携带 `LocalizedText` 资源和参数，由接收端解析语言。
 
 
-图像资产使用普通直通 Alpha，默认采用无损 WebP，也支持 PNG。默认内容查找优先选择 WebP。
+模组的内容包和注册目录使用 `Content` 命名。纹理、音频、模型等供客户端加载的资源使用 `Asset` 命名。例如，`ClientContentRuntime` 将已注册的模组资源安装到 `AssetManager`，表现代码再通过 `AssetManager.Get<Texture2D>(path)` 读取纹理。
+
+图像资产使用普通直通 Alpha，默认采用无损 WebP，也支持 PNG。默认资源查找优先选择 WebP。
 `Image` 保留原始像素；`Texture2D.Load` 在上传 GPU 前由 CPU 预乘，不修改输入图片，资源作者无需预乘。
 GUI 图集也输出直通 Alpha 的 WebP，约定见 [图集工具](../Tools/GuiAtlasTool/README.md)。
 自定义着色器应使用预乘纹理的混合约定；对纹理数据的底层指针或数组上传仍由图形调用方保证 GPU 像素表示。

@@ -12,7 +12,7 @@ public class UnSeasonSpawnDialog : Dialog
 
     public UnSeasonSpawnDialog()
     {
-        var node = ContentManager.Get<XElement>("Dialogs/UnSeasonSpawnDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/UnSeasonSpawnDialog");
         LoadContents(this, node);
         _largeLabelWidget = Children.Find<LabelWidget>("UnSeasonSpawnDialog.LargeLabel")!;
         _smallLabelWidget = Children.Find<LabelWidget>("UnSeasonSpawnDialog.SmallLabel")!;

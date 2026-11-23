@@ -97,7 +97,7 @@ public sealed class MessagePanelWidget : CanvasWidget
         _messageService = characterData.Project.FindSubsystem<SubsystemMessages>(true)!.Service;
         _messagingEnabled = messagingEnabled;
 
-        LoadContents(this, ContentManager.Get<XElement>("Widgets/MessagePanelWidget"));
+        LoadContents(this, AssetManager.Get<XElement>("Widgets/MessagePanelWidget"));
         var transcriptHost = Children.Find<CanvasWidget>("TranscriptHost")!;
         var inputHost = Children.Find<CanvasWidget>("InputHost")!;
 

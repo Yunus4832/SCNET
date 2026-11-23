@@ -59,7 +59,7 @@ public class CampfireBlockPresentation(CampfireBlock block, BlockPresentationCat
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Campfire");
+        var model = AssetManager.Get<Model>("Models/Campfire");
         var woodNode = model.FindNode("Wood")!;
         var ashesNode = model.FindNode("Ashes")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(woodNode);

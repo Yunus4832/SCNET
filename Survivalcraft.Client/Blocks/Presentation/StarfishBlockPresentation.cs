@@ -80,7 +80,7 @@ public class StarfishBlockPresentation(StarfishBlock block, BlockPresentationCat
     public override void Initialize()
     {
         var textureSlot = 63;
-        var model = ContentManager.Get<Model>("Models/Starfish");
+        var model = AssetManager.Get<Model>("Models/Starfish");
         var starfishNode = model.FindNode("Starfish")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(starfishNode);
         var bottomNode = model.FindNode("Bottom")!;

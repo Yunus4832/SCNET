@@ -19,7 +19,7 @@ public class GunSmokeParticleSystem : ParticleSystem<GunSmokeParticleSystem.Part
     public GunSmokeParticleSystem(SubsystemTerrain terrain, Vector3 position, Vector3 direction)
         : base(50)
     {
-        Texture = ContentManager.Get<Texture2D>("Textures/GunSmokeParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/GunSmokeParticle");
         TextureSlotsCount = 3;
         _position = position;
         _direction = Vector3.Normalize(direction);

@@ -20,7 +20,7 @@ public class SettingsDiagnosticsScreen : Screen
 
     public SettingsDiagnosticsScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/SettingsDiagnosticsScreen");
+        var node = AssetManager.Get<XElement>("Screens/SettingsDiagnosticsScreen");
         LoadContents(this, node);
         _displayDebugInfoButton = Children.Find<ButtonWidget>("DisplayDebugInfoButton")!;
         _displayFpsRibbonButton = Children.Find<ButtonWidget>("DisplayFpsRibbonButton")!;

@@ -10,7 +10,7 @@ public class BusyDialog : Dialog
 
     public BusyDialog(string largeMessage, string smallMessage)
     {
-        var node = ContentManager.Get<XElement>("Dialogs/BusyDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/BusyDialog");
         LoadContents(this, node);
         _largeLabelWidget = Children.Find<LabelWidget>("BusyDialog.LargeLabel")!;
         _smallLabelWidget = Children.Find<LabelWidget>("BusyDialog.SmallLabel")!;

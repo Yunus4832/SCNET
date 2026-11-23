@@ -64,7 +64,7 @@ public class CrossbowBlockPresentation(CrossbowBlock block, BlockPresentationCat
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Crossbows");
+        var model = AssetManager.Get<Model>("Models/Crossbows");
         var bodyNode = model.FindNode("Body")!;
         var bowRelaxedNode = model.FindNode("BowRelaxed")!;
         var stringRelaxedNode = model.FindNode("StringRelaxed")!;

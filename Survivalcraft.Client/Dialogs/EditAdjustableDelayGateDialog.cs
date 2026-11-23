@@ -22,7 +22,7 @@ public class EditAdjustableDelayGateDialog : Dialog
 
     public EditAdjustableDelayGateDialog(int delay, Action<int> handler)
     {
-        var node = ContentManager.Get<XElement>("Dialogs/EditAdjustableDelayGateDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/EditAdjustableDelayGateDialog");
         LoadContents(this, node);
         _delaySlider = Children.Find<SliderWidget>("EditAdjustableDelayGateDialog.DelaySlider")!;
         _plusButton = Children.Find<ButtonWidget>("EditAdjustableDelayGateDialog.PlusButton")!;

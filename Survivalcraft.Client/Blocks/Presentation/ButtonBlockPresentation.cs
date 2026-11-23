@@ -71,7 +71,7 @@ public class ButtonBlockPresentation(ButtonBlock block, BlockPresentationCatalog
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Button");
+        var model = AssetManager.Get<Model>("Models/Button");
         var buttonNode = model.FindNode("Button")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(buttonNode);
         for (var i = 0; i < 6; i++)

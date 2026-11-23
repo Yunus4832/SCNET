@@ -137,7 +137,7 @@ public class ChristmasTreeBlockPresentation(ChristmasTreeBlock block, BlockPrese
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/ChristmasTree");
+        var model = AssetManager.Get<Model>("Models/ChristmasTree");
         var standTrunkNode = model.FindNode("StandTrunk")!;
         var leavesNode = model.FindNode("Leaves")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(standTrunkNode);

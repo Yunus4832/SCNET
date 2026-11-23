@@ -84,7 +84,7 @@ public sealed class ComponentVitalStatsPresentation : Component, IUpdateable
             > 22 => 6, > 18 => 5, > 14 => 4, > 10 => 3, > 6 => 2, > 2 => 1, _ => 0
         };
         _character.Entity.FindComponent<ComponentGui>(true)!.TemperatureBarWidget.BarSubtexture =
-            ContentManager.Get<Subtexture>("Textures/Atlas/Temperature" + index);
+            AssetManager.Get<Subtexture>("Textures/Atlas/Temperature" + index);
         _lastFood = _vitals.Food;
         _lastStamina = _vitals.Stamina;
         _lastSleep = _vitals.Sleep;

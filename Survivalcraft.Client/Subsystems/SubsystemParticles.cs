@@ -43,7 +43,7 @@ public class SubsystemParticles : Subsystem, IDrawable, IUpdateable
             key.Draw(camera);
         }
 
-        var shader = ContentManager.Get<Shader>("Shaders/AlphaTested");
+        var shader = AssetManager.Get<Shader>("Shaders/AlphaTested");
         shader.GetParameter("u_origin").SetValue(Vector2.Zero);
         shader.GetParameter("u_viewProjectionMatrix").SetValue(camera.ViewProjectionMatrix);
         shader.GetParameter("u_viewPosition").SetValue(camera.ViewPosition);

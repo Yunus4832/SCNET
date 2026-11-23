@@ -33,7 +33,7 @@ public class SettingsControlsScreen : Screen
 
     public SettingsControlsScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/SettingsControlsScreen");
+        var node = AssetManager.Get<XElement>("Screens/SettingsControlsScreen");
         LoadContents(this, node);
         _moveControlModeButton = Children.Find<ButtonWidget>("MoveControlMode")!;
         _lookControlModeSelection = Children.Find<InlineSelectionWidget>("LookControlMode")!;

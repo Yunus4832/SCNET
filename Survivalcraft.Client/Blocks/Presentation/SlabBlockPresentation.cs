@@ -141,7 +141,7 @@ public abstract class SlabBlockPresentation(SlabBlock block, BlockPresentationCa
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Slab");
+        var model = AssetManager.Get<Model>("Models/Slab");
         var slabNode = model.FindNode("Slab")!;
         var meshPart = slabNode.RequireMesh().Primitives[0];
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(slabNode);

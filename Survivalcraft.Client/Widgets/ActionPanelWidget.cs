@@ -38,7 +38,7 @@ public sealed class ActionPanelWidget : CanvasWidget
 
     public ActionPanelWidget()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Widgets/ActionPanelWidget"));
+        LoadContents(this, AssetManager.Get<XElement>("Widgets/ActionPanelWidget"));
         _primaryPanel = Children.Find<ContainerWidget>("ActionPanel.Primary")!;
         _primaryAccessoryHost = Children.Find<CanvasWidget>("ActionPanel.PrimaryAccessory")!;
         _primaryTrailingActionHost = Children.Find<CanvasWidget>("ActionPanel.PrimaryTrailingAction")!;

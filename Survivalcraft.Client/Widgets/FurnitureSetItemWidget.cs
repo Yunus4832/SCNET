@@ -19,7 +19,7 @@ public class FurnitureSetItemWidget : CanvasWidget, IDragTargetWidget
     {
         _furnitureInventoryPanel = furnitureInventoryWidget;
         _furnitureSet = furnitureSet;
-        var node = ContentManager.Get<XElement>("Widgets/FurnitureSetItemWidget");
+        var node = AssetManager.Get<XElement>("Widgets/FurnitureSetItemWidget");
         LoadContents(this, node);
         var labelWidget = Children.Find<LabelWidget>("FurnitureSetItem.Name")!;
         var labelWidget2 = Children.Find<LabelWidget>("FurnitureSetItem.DesignsCount")!;

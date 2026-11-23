@@ -5,7 +5,7 @@
         <TargetFramework>$(AndroidTargetFramework)</TargetFramework>
         <SupportedOSPlatformVersion>$(MinAndroidApiVersion)</SupportedOSPlatformVersion>
         <OutputType>Exe</OutputType>
-        <UsePackResourceTarget>true</UsePackResourceTarget>
+        <UsePackAssetsTarget>true</UsePackAssetsTarget>
         <UseRenameApkTarget Condition="'$(Configuration)' == 'Release'">true</UseRenameApkTarget>
         <AndroidManifest>../SharedResources/Android/AndroidManifest.xml</AndroidManifest>
         <ApplicationVersion>$(AndroidReleaseCode)</ApplicationVersion>

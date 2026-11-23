@@ -30,7 +30,7 @@ public sealed class AuthenticationConsentDialog : Dialog
                            string.Format(Text("Fingerprint"), endpoint.Identity.Address) +
                            "\n" +
                            string.Format(Text("Server"), serverAddress);
-        LoadContents(this, ContentManager.Get<XElement>("Dialogs/AuthenticationConsentDialog"));
+        LoadContents(this, AssetManager.Get<XElement>("Dialogs/AuthenticationConsentDialog"));
         Children.Find<LabelWidget>("Description")!.Text = Text(descriptionKey);
         Children.Find<LabelWidget>("Service")!.Text = endpoint.Description.DisplayName;
         Children.Find<LabelWidget>("Url")!.Text = endpoint.BaseUri.AbsoluteUri;

@@ -67,7 +67,7 @@ public class BowBlockPresentation(BowBlock block, BlockPresentationCatalog catal
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Bows");
+        var model = AssetManager.Get<Model>("Models/Bows");
         var bowRelaxedNode = model.FindNode("BowRelaxed")!;
         var stringRelaxedNode = model.FindNode("StringRelaxed")!;
         var bowTensedNode = model.FindNode("BowTensed")!;

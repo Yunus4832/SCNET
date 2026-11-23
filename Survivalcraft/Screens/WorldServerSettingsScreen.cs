@@ -86,7 +86,7 @@ public class WorldServerSettingsScreen : Screen
 
     public WorldServerSettingsScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/WorldServerSettingsScreen");
+        var node = AssetManager.Get<XElement>("Screens/WorldServerSettingsScreen");
         LoadContents(this, node);
         _runServerButton = Children.Find<ButtonWidget>("RunServer")!;
         _serverOptions = Children.Find<ContainerWidget>("ServerOptions")!;

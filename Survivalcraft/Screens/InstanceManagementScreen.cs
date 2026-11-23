@@ -31,7 +31,7 @@ public class InstanceManagementScreen : Screen
 
     public InstanceManagementScreen()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Screens/InstanceManagementScreen"));
+        LoadContents(this, AssetManager.Get<XElement>("Screens/InstanceManagementScreen"));
         _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
         _instancesList = Children.Find<ListPanelWidget>("InstancesList")!;
         _actionPanel.ItemTextProvider = item => Text(item.ToString()!);
@@ -120,7 +120,7 @@ public class InstanceManagementScreen : Screen
         var instance = (InstanceItem)item;
         var widget = (ContainerWidget)LoadWidget(
             null,
-            ContentManager.Get<XElement>("Widgets/InstanceItem"),
+            AssetManager.Get<XElement>("Widgets/InstanceItem"),
             null
         );
         var idLabel = widget.Children.Find<LabelWidget>("InstanceItem.Id")!;

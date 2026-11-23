@@ -18,7 +18,7 @@ public sealed class ManageServicesScreen : Screen
 
     public ManageServicesScreen()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Screens/ManageServicesScreen"));
+        LoadContents(this, AssetManager.Get<XElement>("Screens/ManageServicesScreen"));
         _panels = Children.Find<CanvasWidget>("Panels")!;
         foreach (var kind in Enum.GetValues<ServiceKind>())
         {

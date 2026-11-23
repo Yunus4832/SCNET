@@ -25,7 +25,7 @@ public sealed class BlockDigOutcomeTest
     public void AClientShakeCreatesEightRealLeafParticlesAndNoOrdinaryDebris()
     {
         Dispatcher.Initialize();
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         var node = new NetNode(
             NetNodeOptions.Default,
             clientPresentation: true,
@@ -36,7 +36,7 @@ public sealed class BlockDigOutcomeTest
         Assert.True(WorldRuntimeContext.For(scope.Project).HasPresentation);
         using var content = new ClientContentRuntime([new BuiltInClientContentModule()]);
         content.InstallResources(scope.Runtime.Content.RegisteredResources);
-        _ = ContentManager.Get<Texture2D>("Textures/LeafParticle");
+        _ = AssetManager.Get<Texture2D>("Textures/LeafParticle");
         using var terrain = new Terrain();
         var subsystem = new SubsystemTerrain { Terrain = terrain };
         scope.Project.InitializeSubsystem(subsystem);

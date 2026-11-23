@@ -61,7 +61,7 @@ public class WireBlockPresentation(WireBlock block, BlockPresentationCatalog cat
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Wire");
+        var model = AssetManager.Get<Model>("Models/Wire");
         var wireNode = model.FindNode("Wire")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(wireNode);
         StandaloneBlockMesh.AppendModelPrimitive(

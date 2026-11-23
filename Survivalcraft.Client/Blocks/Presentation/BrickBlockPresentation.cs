@@ -43,7 +43,7 @@ public class BrickBlockPresentation(BrickBlock block, BlockPresentationCatalog c
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Brick");
+        var model = AssetManager.Get<Model>("Models/Brick");
         var brickNode = model.FindNode("Brick")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(brickNode);
         StandaloneBlockMesh.AppendModelPrimitive(

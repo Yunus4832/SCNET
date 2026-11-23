@@ -71,7 +71,7 @@ public class FourLedBlockPresentation(FourLedBlock block, BlockPresentationCatal
 
     public override void Initialize()
     {
-        var fourLedNode = ContentManager.Get<Model>("Models/Leds").FindNode("FourLed")!;
+        var fourLedNode = AssetManager.Get<Model>("Models/Leds").FindNode("FourLed")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(fourLedNode);
         for (var i = 0; i < 6; i++)
         {

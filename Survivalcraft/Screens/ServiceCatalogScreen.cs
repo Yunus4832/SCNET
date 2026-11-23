@@ -18,7 +18,7 @@ public sealed class ServiceCatalogScreen : Screen
 
     public ServiceCatalogScreen()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Screens/ServiceCatalogScreen"));
+        LoadContents(this, AssetManager.Get<XElement>("Screens/ServiceCatalogScreen"));
         _panels = Children.Find<CanvasWidget>("Panels")!;
         _type = Children.Find<SelectionDrawerWidget>("ServiceType")!;
         _type.ItemTextProvider = item =>

@@ -35,7 +35,7 @@ public class SettingsPerformanceScreen : Screen
 
     public SettingsPerformanceScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/SettingsPerformanceScreen");
+        var node = AssetManager.Get<XElement>("Screens/SettingsPerformanceScreen");
         LoadContents(this, node);
         _resolutionSelection = Children.Find<InlineSelectionWidget>("ResolutionButton")!;
         _resolutionSelection.ConfigureEnum<ResolutionMode>(

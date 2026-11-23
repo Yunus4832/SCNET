@@ -55,7 +55,7 @@ public class ExperienceBlockPresentation(ExperienceBlock block, BlockPresentatio
 
     public override void Initialize()
     {
-        Texture = ContentManager.Get<Texture2D>("Textures/Experience");
+        Texture = AssetManager.Get<Texture2D>("Textures/Experience");
         base.Initialize();
     }
 }

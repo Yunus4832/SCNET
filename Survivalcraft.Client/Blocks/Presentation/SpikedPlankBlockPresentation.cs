@@ -65,7 +65,7 @@ public class SpikedPlankBlockPresentation(SpikedPlankBlock block, BlockPresentat
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/SpikedPlanks");
+        var model = AssetManager.Get<Model>("Models/SpikedPlanks");
         var array = new[]
         {
             "SpikedPlankRetracted",

@@ -24,7 +24,7 @@ public class TextBoxDialog : Dialog
     {
         _handler = handler;
         _invokeHandlerOnCancel = invokeHandlerOnCancel;
-        var node = ContentManager.Get<XElement>("Dialogs/TextBoxDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/TextBoxDialog");
         LoadContents(this, node);
         var titleWidget = Children.Find<LabelWidget>("TextBoxDialog.Title")!;
         _textBoxWidget = Children.Find<TextBoxWidget>("TextBoxDialog.TextBox")!;
@@ -51,7 +51,7 @@ public class TextBoxDialog : Dialog
         _handler = handler;
         var handler3 = handler2;
         _invokeHandlerOnCancel = invokeHandlerOnCancel;
-        var node = ContentManager.Get<XElement>("Dialogs/TextBoxDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/TextBoxDialog");
         LoadContents(this, node);
         var titleWidget = Children.Find<LabelWidget>("TextBoxDialog.Title")!;
         _textBoxWidget = Children.Find<TextBoxWidget>("TextBoxDialog.TextBox")!;

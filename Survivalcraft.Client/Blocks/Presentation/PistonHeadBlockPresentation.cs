@@ -62,7 +62,7 @@ public class PistonHeadBlockPresentation(PistonHeadBlock block, BlockPresentatio
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Pistons");
+        var model = AssetManager.Get<Model>("Models/Pistons");
         for (var i = 0; i < 2; i++)
         {
             var name = i == 0 ? "PistonHead" : "PistonShaft";

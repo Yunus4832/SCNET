@@ -159,14 +159,14 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
         _subsystemWeather = Project.FindSubsystem<SubsystemWeather>(true)!;
         _subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true)!;
         _subsystemFluidBlockBehavior = Project.FindSubsystem<SubsystemFluidBlockBehavior>(true)!;
-        _sunTexture = ContentManager.Get<Texture2D>("Textures/Sun");
-        _glowTexture = ContentManager.Get<Texture2D>("Textures/SkyGlow");
-        _cloudsTexture = ContentManager.Get<Texture2D>("Textures/Clouds");
+        _sunTexture = AssetManager.Get<Texture2D>("Textures/Sun");
+        _glowTexture = AssetManager.Get<Texture2D>("Textures/SkyGlow");
+        _cloudsTexture = AssetManager.Get<Texture2D>("Textures/Clouds");
         _primitiveRender = new SkyPrimitiveRender();
         for (var i = 0; i < 8; i++)
         {
             _moonTextures[i] =
-                ContentManager.Get<Texture2D>("Textures/Moon" + (i + 1).ToString(CultureInfo.InvariantCulture));
+                AssetManager.Get<Texture2D>("Textures/Moon" + (i + 1).ToString(CultureInfo.InvariantCulture));
         }
 
         VisibilityRange = Configuration.ClientConfiguration.Preferences.VisibilityRange;
@@ -671,7 +671,7 @@ public class SubsystemSkyPresentation : Subsystem, IDrawable, IUpdateable
                                                camera.ViewProjectionMatrix;
 
         _shaderTextured.Color = new Vector4(starBrightness);
-        _shaderTextured.Texture = ContentManager.Get<Texture2D>("Textures/Star");
+        _shaderTextured.Texture = AssetManager.Get<Texture2D>("Textures/Star");
         _shaderTextured.SamplerState = SamplerState.LinearClamp;
         Display.DrawIndexed(
             PrimitiveType.TriangleList,

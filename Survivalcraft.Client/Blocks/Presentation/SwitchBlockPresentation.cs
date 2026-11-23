@@ -71,7 +71,7 @@ public class SwitchBlockPresentation(SwitchBlock block, BlockPresentationCatalog
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Switch");
+        var model = AssetManager.Get<Model>("Models/Switch");
         var bodyNode = model.FindNode("Body")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(bodyNode);
         var leverNode = model.FindNode("Lever")!;

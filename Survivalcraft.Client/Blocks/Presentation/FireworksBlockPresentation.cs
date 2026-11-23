@@ -86,7 +86,7 @@ public class FireworksBlockPresentation(FireworksBlock block, BlockPresentationC
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Fireworks");
+        var model = AssetManager.Get<Model>("Models/Fireworks");
         var bodyNode = model.FindNode("Body")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(bodyNode);
         var finsNode = model.FindNode("Fins")!;

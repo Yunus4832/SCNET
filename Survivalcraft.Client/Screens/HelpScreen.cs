@@ -19,7 +19,7 @@ public class HelpScreen : Screen
 
     public HelpScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/HelpScreen");
+        var node = AssetManager.Get<XElement>("Screens/HelpScreen");
         LoadContents(this, node);
         _topicsList = Children.Find<ListPanelWidget>("TopicsList")!;
         _recipaediaButton = Children.Find<ButtonWidget>("RecipaediaButton")!;
@@ -27,7 +27,7 @@ public class HelpScreen : Screen
         _topicsList.ItemWidgetFactory = delegate(object item)
         {
             var helpTopic3 = (HelpTopic)item;
-            var node2 = ContentManager.Get<XElement>("Widgets/HelpTopicItem");
+            var node2 = AssetManager.Get<XElement>("Widgets/HelpTopicItem");
             var obj = (ContainerWidget)LoadWidget(this, node2, null);
             obj.Children.Find<LabelWidget>("HelpTopicItem.Title")!.Text = helpTopic3.Title;
             return obj;

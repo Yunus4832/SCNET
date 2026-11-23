@@ -71,7 +71,7 @@ public class DetonatorBlockPresentation(DetonatorBlock block, BlockPresentationC
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Detonator");
+        var model = AssetManager.Get<Model>("Models/Detonator");
         var detonatorNode = model.FindNode("Detonator")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(detonatorNode);
         for (var i = 0; i < 6; i++)

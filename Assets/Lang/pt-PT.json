@@ -11,9 +11,6 @@
         "2": "Editores originais",
         "3": "Edição API Editor"
     },
-    "ContentManager": {
-        "1": "Conteúdo [{0}] tem o tipo {1}, mas o tipo necessário é {2}"
-    },
     "ContentScreen": {
         "2": "Gestão de Recursos",
         "12": "Gerir mods globais e dos mundos",

@@ -35,7 +35,7 @@ public class NewWorldScreen : Screen
 
     public NewWorldScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/NewWorldScreen");
+        var node = AssetManager.Get<XElement>("Screens/NewWorldScreen");
         LoadContents(this, node);
         _nameTextBox = Children.Find<TextBoxWidget>("Name")!;
         _seedTextBox = Children.Find<TextBoxWidget>("Seed")!;

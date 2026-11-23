@@ -67,7 +67,7 @@ public static class GameEntry
         Window.Resized += OnWindowResized;
         Window.Closing += PrepareClose;
         Window.Closed += Closed;
-        Display.DeviceReset += ContentManager.DisplayDeviceReset;
+        Display.DeviceReset += AssetManager.DisplayDeviceReset;
         Window.UnhandledException += delegate(UnhandledExceptionInfo e)
         {
             DialogsManager.Alert(
@@ -229,7 +229,7 @@ public static class GameEntry
     {
         var content = ClientApplication.Content;
         content.InitializePreview(runtime.PreviewCatalog);
-        var gradient = ContentManager.Get<Texture2D>("Textures/SeasonsSlider").Tag as Engine.Media.Images.Image ??
+        var gradient = AssetManager.Get<Texture2D>("Textures/SeasonsSlider").Tag as Engine.Media.Images.Image ??
                        throw new InvalidOperationException("Season gradient image is not available.");
         content.Seasons.InitializeGradient(gradient);
     }
@@ -290,7 +290,7 @@ public static class GameEntry
         ContentRepositoryManager.Initialize(ExceptionManager.ReportExceptionToUser);
         ServerDirectoryManager.Initialize(ExceptionManager.ReportExceptionToUser);
         RendezvousManager.Initialize(ExceptionManager.ReportExceptionToUser);
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         ScreensManager.Initialize(new LoadingScreen());
     }
 

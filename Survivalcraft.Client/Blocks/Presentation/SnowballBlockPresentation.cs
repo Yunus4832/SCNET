@@ -43,7 +43,7 @@ public class SnowballBlockPresentation(SnowballBlock block, BlockPresentationCat
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Snowball");
+        var model = AssetManager.Get<Model>("Models/Snowball");
         var snowballNode = model.FindNode("Snowball")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(snowballNode);
         StandaloneBlockMesh.AppendModelPrimitive(

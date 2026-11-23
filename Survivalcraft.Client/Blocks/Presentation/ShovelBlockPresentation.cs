@@ -47,7 +47,7 @@ public abstract class ShovelBlockPresentation(
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Shovel");
+        var model = AssetManager.Get<Model>("Models/Shovel");
         var handleNode = model.FindNode("Handle")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(handleNode);
         var headNode = model.FindNode("Head")!;

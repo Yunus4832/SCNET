@@ -43,7 +43,7 @@ public class BoatBlockPresentation(BoatBlock block, BlockPresentationCatalog cat
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/BoatItem");
+        var model = AssetManager.Get<Model>("Models/BoatItem");
         var boatNode = model.FindNode("Boat")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(boatNode);
         StandaloneBlockMesh.AppendModelPrimitive(

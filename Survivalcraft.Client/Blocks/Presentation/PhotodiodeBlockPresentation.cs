@@ -71,7 +71,7 @@ public class PhotodiodeBlockPresentation(PhotodiodeBlock block, BlockPresentatio
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Photodiode");
+        var model = AssetManager.Get<Model>("Models/Photodiode");
         var photodiodeNode = model.FindNode("Photodiode")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(photodiodeNode);
         for (var i = 0; i < 6; i++)

@@ -23,7 +23,7 @@ public class FurnaceWidget : CanvasWidget
     public FurnaceWidget(IInventory inventory, ComponentFurnace componentFurnace)
     {
         _componentFurnace = componentFurnace;
-        var node = ContentManager.Get<XElement>("Widgets/FurnaceWidget");
+        var node = AssetManager.Get<XElement>("Widgets/FurnaceWidget");
         LoadContents(this, node);
         _inventoryGrid = Children.Find<GridPanelWidget>("InventoryGrid")!;
         _furnaceGrid = Children.Find<GridPanelWidget>("FurnaceGrid")!;

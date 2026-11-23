@@ -310,7 +310,7 @@ public class Widget : IDisposable
                     if (attribute.Value.StartsWith('{') && attribute.Value.EndsWith('}'))
                     {
                         var name = attribute.Value.Substring(1, attribute.Value.Length - 2);
-                        var value = ContentManager.Get(propertyInfo.PropertyType, name);
+                        var value = AssetManager.Get(propertyInfo.PropertyType, name);
                         propertyInfo.SetValue(this, value, null);
                     }
                     else

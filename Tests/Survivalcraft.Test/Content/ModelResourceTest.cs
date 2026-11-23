@@ -14,13 +14,13 @@ public sealed class ModelResourceTest
     [Fact]
     public void GltfDependenciesResolveRelativeToPackagedModelIncludingEscapedNames()
     {
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         try
         {
-            var resource = new ContentInfo("example.models/shared mesh.bin");
-            resource.SetContentStream(new MemoryStream(BitConverter.GetBytes(1f)));
-            ContentManager.Add(resource);
-            var owner = new ContentInfo("example.models/models/model.gltf");
+            var resource = new AssetInfo("example.models/shared mesh.bin");
+            resource.SetAssetStream(new MemoryStream(BitConverter.GetBytes(1f)));
+            AssetManager.Add(resource);
+            var owner = new AssetInfo("example.models/models/model.gltf");
             using var stream = new MemoryStream(
                 Encoding.UTF8.GetBytes(
                     """
@@ -29,12 +29,12 @@ public sealed class ModelResourceTest
                     """
                 )
             );
-            var model = ModelData.Load(stream, uri => ContentManager.OpenRelativeResource(owner, uri));
+            var model = ModelData.Load(stream, uri => AssetManager.OpenRelativeResource(owner, uri));
             Assert.Equal(1, Assert.Single(model.Accessors).GetComponent(0, 0));
         }
         finally
         {
-            ContentManager.Initialize();
+            AssetManager.Initialize();
         }
     }
 }

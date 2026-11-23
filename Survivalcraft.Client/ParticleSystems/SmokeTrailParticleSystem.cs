@@ -29,7 +29,7 @@ public class SmokeTrailParticleSystem : ParticleSystem<SmokeTrailParticleSystem.
     {
         _size = size;
         _maxDuration = maxDuration;
-        Texture = ContentManager.Get<Texture2D>("Textures/FireParticle");
+        Texture = AssetManager.Get<Texture2D>("Textures/FireParticle");
         TextureSlotsCount = 3;
         _textureSlotMultiplier = _random.Float(1.1f, 1.9f);
         _textureSlotOffset = _random.Float(0f, 1f) < 0.33f ? 3 : 0;

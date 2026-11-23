@@ -13,7 +13,7 @@ public class ChestWidget : CanvasWidget
     public ChestWidget(IInventory inventory, ComponentChest componentChest)
     {
         _componentChest = componentChest;
-        var node = ContentManager.Get<XElement>("Widgets/ChestWidget");
+        var node = AssetManager.Get<XElement>("Widgets/ChestWidget");
         LoadContents(this, node);
         _inventoryGrid = Children.Find<GridPanelWidget>("InventoryGrid")!;
         _chestGrid = Children.Find<GridPanelWidget>("ChestGrid")!;

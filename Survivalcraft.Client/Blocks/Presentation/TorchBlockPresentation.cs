@@ -64,7 +64,7 @@ public class TorchBlockPresentation(TorchBlock block, BlockPresentationCatalog c
             BlockMeshesByVariant[i] = new BlockMesh();
         }
 
-        var model = ContentManager.Get<Model>("Models/Torch");
+        var model = AssetManager.Get<Model>("Models/Torch");
         var torchNode = model.FindNode("Torch")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(torchNode);
         var flameNode = model.FindNode("Flame")!;

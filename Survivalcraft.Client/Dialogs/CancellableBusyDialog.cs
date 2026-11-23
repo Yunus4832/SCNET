@@ -16,7 +16,7 @@ public class CancellableBusyDialog : Dialog
 
     public CancellableBusyDialog(string largeMessage, bool autoHideOnCancel, bool canHideDialog = false)
     {
-        var node = ContentManager.Get<XElement>("Dialogs/CancellableBusyDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/CancellableBusyDialog");
         LoadContents(this, node);
         _largeLabelWidget = Children.Find<LabelWidget>("CancellableBusyDialog.LargeLabel")!;
         _smallLabelWidget = Children.Find<LabelWidget>("CancellableBusyDialog.SmallLabel")!;
@@ -36,7 +36,7 @@ public class CancellableBusyDialog : Dialog
 
     public CancellableBusyDialog(string largeMessage, string hideButtonName, bool autoHideOnCancel)
     {
-        var node = ContentManager.Get<XElement>("Dialogs/CancellableBusyDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/CancellableBusyDialog");
         LoadContents(this, node);
         _largeLabelWidget = Children.Find<LabelWidget>("CancellableBusyDialog.LargeLabel")!;
         _smallLabelWidget = Children.Find<LabelWidget>("CancellableBusyDialog.SmallLabel")!;

@@ -39,7 +39,7 @@ public sealed class RendezvousManagementPanel : ServicePanelWidget
 
     public RendezvousManagementPanel()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Widgets/Services/RendezvousManagementPanel"));
+        LoadContents(this, AssetManager.Get<XElement>("Widgets/Services/RendezvousManagementPanel"));
         _sourceList = Children.Find<ListPanelWidget>("SourceList")!;
         _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
         _statusLabel = Children.Find<LabelWidget>("Status")!;
@@ -89,7 +89,7 @@ public sealed class RendezvousManagementPanel : ServicePanelWidget
     private static Widget CreateSourceWidget(object item)
     {
         var source = (InstalledRendezvousService)item;
-        var widget = (ContainerWidget)LoadWidget(null, ContentManager.Get<XElement>("Widgets/ServerSourceItem"), null);
+        var widget = (ContainerWidget)LoadWidget(null, AssetManager.Get<XElement>("Widgets/ServerSourceItem"), null);
         widget.Children.Find<LabelWidget>("ServerSourceItem.Name")!.Text = source.Name;
         widget.Children.Find<LabelWidget>("ServerSourceItem.Address")!.Text = source.ControlUrl;
         widget.Children.Find<LabelWidget>("ServerSourceItem.State")!.Text = source.IsEnabled

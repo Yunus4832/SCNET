@@ -39,7 +39,7 @@ public sealed class ServerSourceManagementPanel : ServicePanelWidget
 
     public ServerSourceManagementPanel()
     {
-        LoadContents(this, ContentManager.Get<XElement>("Widgets/Services/ServerSourceManagementPanel"));
+        LoadContents(this, AssetManager.Get<XElement>("Widgets/Services/ServerSourceManagementPanel"));
         _sourceList = Children.Find<ListPanelWidget>("SourceList")!;
         _actionPanel = Children.Find<ActionPanelWidget>("Actions")!;
         _statusLabel = Children.Find<LabelWidget>("Status")!;
@@ -89,7 +89,7 @@ public sealed class ServerSourceManagementPanel : ServicePanelWidget
     private static Widget CreateSourceWidget(object item)
     {
         var source = (InstalledServerSource)item;
-        var widget = (ContainerWidget)LoadWidget(null, ContentManager.Get<XElement>("Widgets/ServerSourceItem"), null);
+        var widget = (ContainerWidget)LoadWidget(null, AssetManager.Get<XElement>("Widgets/ServerSourceItem"), null);
         widget.Children.Find<LabelWidget>("ServerSourceItem.Name")!.Text = source.Name;
         widget.Children.Find<LabelWidget>("ServerSourceItem.Address")!.Text = source.ApiUrl;
         widget.Children.Find<LabelWidget>("ServerSourceItem.State")!.Text = source.IsEnabled

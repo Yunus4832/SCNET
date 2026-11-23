@@ -86,7 +86,7 @@ public sealed class CharacterTemplateTest
                     var owners = new[]
                     {
                         typeof(SubsystemTime).Assembly, typeof(SubsystemWorldHosting).Assembly,
-                        typeof(ComponentGui).Assembly, typeof(Game.Managers.ContentManager).Assembly
+                        typeof(ComponentGui).Assembly, typeof(Game.Managers.AssetManager).Assembly
                     }.Distinct();
                     var candidates = owners.Select(owner => owner.GetType(name, false)).Where(type => type is not null)
                         .ToArray();

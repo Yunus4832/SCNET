@@ -27,14 +27,14 @@ public class GameModRuntimeTest
     public void AuthorityCatalogInGuiModeInitializesSimulationDataWithoutAWindow()
     {
         Dispatcher.Initialize();
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         using var mods = GameModRuntime.Start();
         mods.InitializeDatabase();
         var runtime = new WorldRuntimeContext(RuntimeSide.Authority, false);
         try
         {
             var catalog = mods.CreateWorldCatalog(runtime, BlockIndexMapping.Empty);
-            var cache = (Dictionary<string, List<object>>)typeof(ContentManager)
+            var cache = (Dictionary<string, List<object>>)typeof(AssetManager)
                 .GetField("_caches", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
             Assert.DoesNotContain(
                 cache.Values.SelectMany(contents => contents),
@@ -82,17 +82,17 @@ public class GameModRuntimeTest
     [Fact]
     public void RuntimeInstallsBuiltInAssetsAndLanguage()
     {
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         using var runtime = GameModRuntime.Start();
 
         using var client = new ClientContentRuntime([]);
         client.InstallResources(runtime.Content.RegisteredResources);
         client.PublishLanguage(runtime.Content.CreateLanguageCatalog("zh-CN"));
 
-        Assert.True(ContentManager.ContainsKey("BlocksData.txt"));
-        Assert.True(ContentManager.ContainsKey("Fonts/Pericles.lst"));
-        var playerPanelTemplate = ContentManager.Get<XElement>("Widgets/MultiplayerPanelWidget");
-        var messagePanelTemplate = ContentManager.Get<XElement>("Widgets/MessagePanelWidget");
+        Assert.True(AssetManager.ContainsKey("BlocksData.txt"));
+        Assert.True(AssetManager.ContainsKey("Fonts/Pericles.lst"));
+        var playerPanelTemplate = AssetManager.Get<XElement>("Widgets/MultiplayerPanelWidget");
+        var messagePanelTemplate = AssetManager.Get<XElement>("Widgets/MessagePanelWidget");
         Assert.Equal("MultiplayerPanelWidget", playerPanelTemplate.Name.LocalName);
         Assert.Equal("MessagePanelWidget", messagePanelTemplate.Name.LocalName);
 
@@ -120,7 +120,7 @@ public class GameModRuntimeTest
     public void RuntimeBuildsAndReleasesWorldContentWithoutPreview()
     {
         Dispatcher.Initialize();
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         using var runtime = GameModRuntime.Start();
         runtime.InitializeContentData();
         Assert.NotNull(DatabaseManager.DatabaseNodeField);
@@ -143,7 +143,7 @@ public class GameModRuntimeTest
     public void WorldsHaveIndependentBlocksAndCanBeReleasedIndependently()
     {
         Dispatcher.Initialize();
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         using var runtime = GameModRuntime.Start();
         runtime.InitializeContentData();
         var authorityRuntime = new WorldRuntimeContext(RuntimeSide.Authority, false);
@@ -192,7 +192,7 @@ public class GameModRuntimeTest
     public void BuiltInFactoriesRegisteredAsModBlocksKeepTheirOwnCreativeIndices()
     {
         Dispatcher.Initialize();
-        ContentManager.Initialize();
+        AssetManager.Initialize();
         using var runtime = GameModRuntime.Start(
             [
                 new ModDescriptor(
@@ -236,7 +236,7 @@ public class GameModRuntimeTest
         var mod = new BrokenBlockMod();
         {
             Dispatcher.Initialize();
-            ContentManager.Initialize();
+            AssetManager.Initialize();
             using var runtime = GameModRuntime.Start(
                 [
                     new ModDescriptor(new ModManifest("test", "Broken", "1.0.0"), () => mod)

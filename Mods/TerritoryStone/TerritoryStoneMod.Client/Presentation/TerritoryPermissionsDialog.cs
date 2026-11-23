@@ -34,7 +34,7 @@ public sealed class TerritoryPermissionsDialog : Dialog
         HorizontalAlignment = WidgetAlignment.Center;
         VerticalAlignment = WidgetAlignment.Center;
         ClampToBounds = true;
-        Children.Add(new BevelledRectangleWidget { Style = ContentManager.Get<XElement>("Styles/DialogArea") });
+        Children.Add(new BevelledRectangleWidget { Style = AssetManager.Get<XElement>("Styles/DialogArea") });
         Children.Add(
             new LabelWidget
             {

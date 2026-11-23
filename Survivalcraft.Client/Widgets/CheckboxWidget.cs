@@ -40,7 +40,7 @@ public class CheckboxWidget : CanvasWidget
 
     public CheckboxWidget()
     {
-        var node = ContentManager.Get<XElement>("Widgets/CheckboxContents");
+        var node = AssetManager.Get<XElement>("Widgets/CheckboxContents");
         LoadChildren(this, node);
         _canvasWidget = Children.Find<CanvasWidget>("Checkbox.Canvas")!;
         _rectangleWidget = Children.Find<BevelledRectangleWidget>("Checkbox.Rectangle")!;

@@ -170,7 +170,7 @@ public abstract class PostedSignBlockPresentation(
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>(ModelName);
+        var model = AssetManager.Get<Model>(ModelName);
         var signNode = model.FindNode("Sign")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(signNode);
         var postNode = model.FindNode("Post")!;

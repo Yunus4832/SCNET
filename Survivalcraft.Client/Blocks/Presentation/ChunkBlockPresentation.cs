@@ -50,8 +50,8 @@ public abstract class ChunkBlockPresentation(
     public override void Initialize()
     {
         var model = Smooth
-            ? ContentManager.Get<Model>("Models/ChunkSmooth")
-            : ContentManager.Get<Model>("Models/Chunk");
+            ? AssetManager.Get<Model>("Models/ChunkSmooth")
+            : AssetManager.Get<Model>("Models/Chunk");
         var matrix = BlockMesh.GetNodeAbsoluteTransform(model.MeshNodes[0]) *
                      Transform;
         StandaloneBlockMesh.AppendModelPrimitive(

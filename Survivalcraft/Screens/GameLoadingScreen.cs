@@ -82,7 +82,7 @@ public class GameLoadingScreen : Screen
 
     public GameLoadingScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/GameLoadingScreen");
+        var node = AssetManager.Get<XElement>("Screens/GameLoadingScreen");
         LoadContents(this, node);
         _stateMachine.AddState(
             "WaitingForFadeIn",

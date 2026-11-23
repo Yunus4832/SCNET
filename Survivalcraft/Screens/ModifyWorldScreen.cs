@@ -53,7 +53,7 @@ public class ModifyWorldScreen : Screen
 
     public ModifyWorldScreen()
     {
-        var node = ContentManager.Get<XElement>("Screens/ModifyWorldScreen");
+        var node = AssetManager.Get<XElement>("Screens/ModifyWorldScreen");
         LoadContents(this, node);
         _nameTextBox = Children.Find<TextBoxWidget>("Name")!;
         _seedLabel = Children.Find<LabelWidget>("Seed")!;

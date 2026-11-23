@@ -16,7 +16,7 @@ public class EditVoltageLevelDialog : Dialog
 
     public EditVoltageLevelDialog(int voltageLevel, Action<int> handler)
     {
-        var node = ContentManager.Get<XElement>("Dialogs/EditVoltageLevelDialog");
+        var node = AssetManager.Get<XElement>("Dialogs/EditVoltageLevelDialog");
         LoadContents(this, node);
         _okButton = Children.Find<ButtonWidget>("EditVoltageLevelDialog.OK")!;
         _cancelButton = Children.Find<ButtonWidget>("EditVoltageLevelDialog.Cancel")!;

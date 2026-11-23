@@ -85,7 +85,7 @@ public class LedBlockPresentation(LedBlock block, BlockPresentationCatalog catal
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Leds");
+        var model = AssetManager.Get<Model>("Models/Leds");
         var ledNode = model.FindNode("Led")!;
         var ledBulbNode = model.FindNode("LedBulb")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(ledNode);

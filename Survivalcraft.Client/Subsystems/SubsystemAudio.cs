@@ -167,11 +167,11 @@ public class SubsystemAudio : Subsystem, IUpdateable
     {
         if (!WorldRuntimeContext.For(Project).HasPresentation) { return; }
 
-        var readOnlyList = ContentManager.List(directory);
+        var readOnlyList = AssetManager.List(directory);
         if (readOnlyList.Count > 0)
         {
             var index = _random.Int(0, readOnlyList.Count - 1);
-            PlaySound(readOnlyList[index].ContentPath, volume, pitch, pan, delay);
+            PlaySound(readOnlyList[index].AssetPath, volume, pitch, pan, delay);
         }
         else
         {
@@ -213,7 +213,7 @@ public class SubsystemAudio : Subsystem, IUpdateable
             throw new InvalidOperationException("Only a presentation world can create audio resources.");
         }
 
-        var sound = new Sound(ContentManager.Get<SoundBuffer>(name), cancellation: _lifetime.Token);
+        var sound = new Sound(AssetManager.Get<SoundBuffer>(name), cancellation: _lifetime.Token);
         _sounds.Add(sound);
         return sound;
     }

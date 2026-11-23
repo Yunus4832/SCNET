@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json.Nodes;
 
-using Game.ContentReaders;
+using Game.AssetReaders;
 using Game.Managers;
 using Game.Rendering;
 
@@ -12,9 +12,9 @@ public sealed class ClientAssemblyBoundaryTest
     [Fact]
     public void ActualContentAndRenderTypesLiveInTheIndependentClientAssembly()
     {
-        var assembly = typeof(ContentManager).Assembly;
+        var assembly = typeof(AssetManager).Assembly;
         Assert.Equal("Survivalcraft.Client", assembly.GetName().Name);
-        Assert.Same(assembly, typeof(ContentInfo).Assembly);
+        Assert.Same(assembly, typeof(AssetInfo).Assembly);
         Assert.Same(assembly, typeof(GltfModelReader).Assembly);
         Assert.Same(assembly, typeof(TextureAtlasManager).Assembly);
         Assert.Same(assembly, typeof(InstancedModelsManager).Assembly);
@@ -29,8 +29,8 @@ public sealed class ClientAssemblyBoundaryTest
     [Fact]
     public void MovedReaderConsumesTheActualPublicContentCarrierWithoutApplicationServices()
     {
-        var content = new ContentInfo("example/data.json");
-        content.SetContentStream(new MemoryStream(Encoding.UTF8.GetBytes("{\"value\":7}")));
+        var content = new AssetInfo("example/data.json");
+        content.SetAssetStream(new MemoryStream(Encoding.UTF8.GetBytes("{\"value\":7}")));
         try
         {
             var value = Assert.IsType<JsonObject>(new JsonObjectReader().Get([content]));

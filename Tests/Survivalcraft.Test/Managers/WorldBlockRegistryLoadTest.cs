@@ -45,7 +45,7 @@ public sealed class WorldBlockRegistryLoadTest
         try
         {
             Dispatcher.Initialize();
-            ContentManager.Initialize();
+            AssetManager.Initialize();
             using var runtime = GameModRuntime.Start(
                 [
                     new ModDescriptor(new ModManifest("test", "Metadata", "1.0.0"), static () => new MetadataMod())

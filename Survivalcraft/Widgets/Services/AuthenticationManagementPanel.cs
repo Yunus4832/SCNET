@@ -68,7 +68,7 @@ public sealed class AuthenticationManagementPanel : ServicePanelWidget
         _manager = manager;
         _currentSubject = currentSubject ??
                           (() => LocalIdentityManager.Current.GetSelectedAddress(IdentityPurpose.Player)!);
-        LoadContents(this, ContentManager.Get<XElement>("Widgets/Services/AuthenticationManagementPanel"));
+        LoadContents(this, AssetManager.Get<XElement>("Widgets/Services/AuthenticationManagementPanel"));
         _actions = Children.Find<ActionPanelWidget>("Actions")!;
         _list = Children.Find<ListPanelWidget>("Services")!;
         _list.ItemWidgetFactory = CreateRow;
@@ -194,7 +194,7 @@ public sealed class AuthenticationManagementPanel : ServicePanelWidget
     private Widget CreateRow(object item)
     {
         var service = (InstalledAuthenticationService)item;
-        var row = (ContainerWidget)LoadWidget(null, ContentManager.Get<XElement>("Widgets/ServerSourceItem"), null);
+        var row = (ContainerWidget)LoadWidget(null, AssetManager.Get<XElement>("Widgets/ServerSourceItem"), null);
         row.Children.Find<LabelWidget>("ServerSourceItem.Name")!.Text = service.Endpoint.Description.DisplayName;
         row.Children.Find<LabelWidget>("ServerSourceItem.Address")!.Text = service.Endpoint.BaseUri.AbsoluteUri;
         row.Children.Find<LabelWidget>("ServerSourceItem.State")!.Text = Text(service.Enabled ? "Enabled" : "Disabled");

@@ -135,7 +135,7 @@ public class LightbulbBlockPresentation(LightbulbBlock block, BlockPresentationC
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Lightbulbs");
+        var model = AssetManager.Get<Model>("Models/Lightbulbs");
         var topNode = model.FindNode("Top")!;
         var nodeAbsoluteTransform = BlockMesh.GetNodeAbsoluteTransform(topNode);
         var sidesNode = model.FindNode("Sides")!;

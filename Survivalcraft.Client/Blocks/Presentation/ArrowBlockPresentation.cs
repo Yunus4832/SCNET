@@ -68,7 +68,7 @@ public class ArrowBlockPresentation(ArrowBlock block, BlockPresentationCatalog c
 
     public override void Initialize()
     {
-        var model = ContentManager.Get<Model>("Models/Arrows");
+        var model = AssetManager.Get<Model>("Models/Arrows");
         foreach (var enumValue in EnumUtils.GetEnumValues(typeof(ArrowType)))
         {
             if (enumValue > 15)

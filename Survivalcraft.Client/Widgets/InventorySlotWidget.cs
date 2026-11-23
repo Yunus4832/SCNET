@@ -94,7 +94,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         array[2] = blockIconWidget;
         var obj4 = new LabelWidget
         {
-            Font = ContentManager.Get<BitmapFont>("Fonts/Pericles"),
+            Font = AssetManager.Get<BitmapFont>("Fonts/Pericles"),
             FontScale = 1f,
             HorizontalAlignment = WidgetAlignment.Far,
             VerticalAlignment = WidgetAlignment.Far,
@@ -113,7 +113,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
             LitBarColor = new Color(32, 128, 0),
             UnlitBarColor = new Color(24, 24, 24, 64),
             BarSize = new Vector2(12f, 12f),
-            BarSubtexture = ContentManager.Get<Subtexture>("Textures/Atlas/ProgressBar"),
+            BarSubtexture = AssetManager.Get<Subtexture>("Textures/Atlas/ProgressBar"),
             Margin = new Vector2(4f, 4f)
         };
         var valueBarWidget = obj5;
@@ -128,7 +128,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         var children2 = obj6.Children;
         var obj7 = new RectangleWidget
         {
-            Subtexture = ContentManager.Get<Subtexture>("Textures/Atlas/InteractiveItemOverlay"),
+            Subtexture = AssetManager.Get<Subtexture>("Textures/Atlas/InteractiveItemOverlay"),
             Size = new Vector2(13f, 14f),
             FillColor = new Color(160, 160, 160),
             OutlineColor = Color.Transparent
@@ -139,7 +139,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         var children3 = obj6.Children;
         var obj8 = new RectangleWidget
         {
-            Subtexture = ContentManager.Get<Subtexture>("Textures/Atlas/EditItemOverlay"),
+            Subtexture = AssetManager.Get<Subtexture>("Textures/Atlas/EditItemOverlay"),
             Size = new Vector2(12f, 14f),
             FillColor = new Color(160, 160, 160),
             OutlineColor = Color.Transparent
@@ -150,7 +150,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         var children4 = obj6.Children;
         var obj9 = new RectangleWidget
         {
-            Subtexture = ContentManager.Get<Subtexture>("Textures/Atlas/FoodItemOverlay"),
+            Subtexture = AssetManager.Get<Subtexture>("Textures/Atlas/FoodItemOverlay"),
             Size = new Vector2(11f, 14f),
             FillColor = new Color(160, 160, 160),
             OutlineColor = Color.Transparent
@@ -162,7 +162,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         var obj10 = new LabelWidget
         {
             Text = "Split",
-            Font = ContentManager.Get<BitmapFont>("Fonts/Pericles"),
+            Font = AssetManager.Get<BitmapFont>("Fonts/Pericles"),
             Color = new Color(255, 64, 0),
             HorizontalAlignment = WidgetAlignment.Near,
             VerticalAlignment = WidgetAlignment.Near,
@@ -432,7 +432,7 @@ public class InventorySlotWidget : CanvasWidget, IDragTargetWidget
         var draggedCount = dragMode != 0 ? 1 : slotCount;
         var subsystemTerrain = _inventory.Project.FindSubsystem<SubsystemTerrain>();
         var containerWidget =
-            (ContainerWidget)LoadWidget(null, ContentManager.Get<XElement>("Widgets/InventoryDragWidget"), null);
+            (ContainerWidget)LoadWidget(null, AssetManager.Get<XElement>("Widgets/InventoryDragWidget"), null);
         containerWidget.Children.Find<BlockIconWidget>("InventoryDragWidget.Icon")!.Catalog =
             PresentationCatalog;
         containerWidget.Children.Find<BlockIconWidget>("InventoryDragWidget.Icon")!.Value =
