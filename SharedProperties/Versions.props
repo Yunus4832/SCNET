@@ -1,28 +1,28 @@
 <Project>
     <!-- Release versions are independent; change only the units being released. -->
     <PropertyGroup>
-        <GameVersion>0.2.4</GameVersion>
-        <EngineVersion>0.2.3</EngineVersion>
-        <ImageCodecsVersion>0.1.1</ImageCodecsVersion>
-        <OpenALVersion>0.1.0</OpenALVersion>
-        <SDLVersion>0.1.0</SDLVersion>
-        <ContentPackagingVersion>0.1.6</ContentPackagingVersion>
-        <ContentToolVersion>0.1.6</ContentToolVersion>
-        <ModTemplatesVersion>0.1.9</ModTemplatesVersion>
+        <GameVersion>0.2.5</GameVersion>
+        <EngineVersion>0.2.4</EngineVersion>
+        <ImageCodecsVersion>0.1.2</ImageCodecsVersion>
+        <OpenALVersion>0.1.1</OpenALVersion>
+        <SDLVersion>0.1.1</SDLVersion>
+        <ContentPackagingVersion>0.1.7</ContentPackagingVersion>
+        <ContentToolVersion>0.1.7</ContentToolVersion>
+        <ModTemplatesVersion>0.1.10</ModTemplatesVersion>
         <InitialModVersion>0.1.0</InitialModVersion>
-        <ServerSourceProtocolVersion>0.1.0</ServerSourceProtocolVersion>
-        <RendezvousProtocolVersion>0.1.1</RendezvousProtocolVersion>
-        <ContentServerVersion>0.1.7</ContentServerVersion>
-        <RendezvousServerVersion>0.1.1</RendezvousServerVersion>
-        <TerritoryStoneVersion>0.1.10</TerritoryStoneVersion>
-        <BeaconVersion>0.1.7</BeaconVersion>
-        <UiPreviewToolVersion>0.1.7</UiPreviewToolVersion>
-        <ToolsVersion>0.1.7</ToolsVersion>
-        <AuthenticationServerVersion>0.1.1</AuthenticationServerVersion>
-        <AuthenticationProtocolPackageVersion>0.1.1</AuthenticationProtocolPackageVersion>
-        <GameProtocolPackageVersion>0.1.4</GameProtocolPackageVersion>
+        <ServerSourceProtocolVersion>0.1.1</ServerSourceProtocolVersion>
+        <RendezvousProtocolVersion>0.1.2</RendezvousProtocolVersion>
+        <ContentServerVersion>0.1.8</ContentServerVersion>
+        <RendezvousServerVersion>0.1.2</RendezvousServerVersion>
+        <TerritoryStoneVersion>0.1.11</TerritoryStoneVersion>
+        <BeaconVersion>0.1.8</BeaconVersion>
+        <UiPreviewToolVersion>0.1.8</UiPreviewToolVersion>
+        <ToolsVersion>0.1.8</ToolsVersion>
+        <AuthenticationServerVersion>0.1.2</AuthenticationServerVersion>
+        <AuthenticationProtocolPackageVersion>0.1.2</AuthenticationProtocolPackageVersion>
+        <GameProtocolPackageVersion>0.1.5</GameProtocolPackageVersion>
         <GameProtocolVersion>1</GameProtocolVersion>
-        <AndroidReleaseCode>9</AndroidReleaseCode>
+        <AndroidReleaseCode>10</AndroidReleaseCode>
     </PropertyGroup>
 
 </Project>
