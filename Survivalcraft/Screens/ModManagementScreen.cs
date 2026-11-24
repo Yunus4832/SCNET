@@ -34,6 +34,10 @@ public sealed class ModManagementScreen : Screen
 
     private readonly LabelWidget _pickerUnavailableLabel;
 
+    private readonly SelectionDrawerWidget _versions;
+
+    private ManagedModItem? SelectedPackage => _versions.SelectedItem as ManagedModItem;
+
     private bool _busy;
 
     private ModProfile _globalProfile = new();
@@ -49,6 +53,21 @@ public sealed class ModManagementScreen : Screen
         _emptyLabel = Children.Find<LabelWidget>("Empty")!;
         _modsList = Children.Find<ListPanelWidget>("ModsList")!;
         _pickerUnavailableLabel = Children.Find<LabelWidget>("PickerUnavailable")!;
+        _versions = new SelectionDrawerWidget
+        {
+            Size = new Vector2(140f, 60f),
+            ExpansionDirection = SelectionDrawerDirection.Up,
+            MaxVisibleItems = 5,
+            PlaceholderText =
+                Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(OnlineContentScreen), "Version"),
+            ItemTextProvider = item => FormatVersion(
+                (ManagedModItem)item,
+                _modsList.SelectedItem as ManagedModItem[] ?? []
+            )
+        };
+        _versions.SelectionChanged += _actionPanel.Refresh;
+        _modsList.SelectionChanged += PopulateVersions;
+        _actionPanel.PrimaryAccessory = _versions;
         _actionPanel.ItemTextProvider = GetActionText;
         _actionPanel.ItemEnabledProvider = IsActionEnabled;
         _actionPanel.ItemColorProvider = item => item is ModAction.DeleteCache ? new Color(150, 50, 35) : null;
@@ -59,7 +78,7 @@ public sealed class ModManagementScreen : Screen
                 ModAction.Export,
                 ModAction.Global
             ],
-            [1f, 1f, 1f, 0f]
+            [1.8f, 0.8f, 0.8f, 1.1f]
         );
         _actionPanel.SetSecondaryItems(
             [
@@ -80,6 +99,7 @@ public sealed class ModManagementScreen : Screen
     public override void Leave()
     {
         _operationGeneration++;
+        _versions.Close();
         _busy = false;
         if (_operationDialog is not null)
         {
@@ -91,6 +111,12 @@ public sealed class ModManagementScreen : Screen
         _modsList.SelectedItem = null;
     }
 
+    public override void Dispose()
+    {
+        _versions.Close();
+        base.Dispose();
+    }
+
     public override void Update()
     {
         var pickerAvailable = FilePicker.IsAvailable;
@@ -100,7 +126,8 @@ public sealed class ModManagementScreen : Screen
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
-            ScreensManager.SwitchScreen("Content");
+            if (_versions.IsOpen) { _versions.Close(); }
+            else { ScreensManager.SwitchScreen("Content"); }
         }
     }
 
@@ -111,7 +138,7 @@ public sealed class ModManagementScreen : Screen
             return false;
         }
 
-        var selected = _modsList.SelectedItem as ManagedModItem;
+        var selected = SelectedPackage;
         return action switch
         {
             ModAction.Import => FilePicker.IsAvailable,
@@ -131,7 +158,7 @@ public sealed class ModManagementScreen : Screen
             return;
         }
 
-        var selected = _modsList.SelectedItem as ManagedModItem;
+        var selected = SelectedPackage;
         switch (action)
         {
             case ModAction.Import:
@@ -141,7 +168,9 @@ public sealed class ModManagementScreen : Screen
                 ExportPackage(selected);
                 break;
             case ModAction.Details when selected?.LocalEntry is { } local:
-                DialogsManager.Alert($"{local.Name}\n\n{local.Description}");
+                DialogsManager.Alert(
+                    $"{local.Name}\n{selected.ModId}@{selected.Version}\n{selected.PackageHash}\n\n{local.Description}"
+                );
                 break;
             case ModAction.Global when selected is not null:
                 ToggleGlobal(selected);
@@ -162,7 +191,7 @@ public sealed class ModManagementScreen : Screen
             return string.Empty;
         }
 
-        var selected = _modsList.SelectedItem as ManagedModItem;
+        var selected = SelectedPackage;
         return action switch
         {
             ModAction.Global => Localization.ClientLanguage.Catalog.Get(
@@ -206,24 +235,48 @@ public sealed class ModManagementScreen : Screen
             .OfType<ModProfile>()
             .ToArray();
         var repository = CreateRepository();
-        var selected = _modsList.SelectedItem as ManagedModItem;
+        var selected = SelectedPackage;
         var items = ModManagementCatalog.Build(
             repository.ListAll(),
             _globalProfile,
             worldProfiles,
             CurrentModRuntime.Value?.LoadedProfile
         );
+        PopulateGroups(items, selected);
+    }
+
+    private void PopulateGroups(IReadOnlyList<ManagedModItem> items, ManagedModItem? selected)
+    {
+        var scroll = _modsList.ScrollPosition;
         _modsList.ClearItems();
-        foreach (var item in items)
+        foreach (var packages in items.GroupBy(item => item.ModId, StringComparer.OrdinalIgnoreCase))
         {
-            _modsList.AddItem(item);
-            if (selected is not null && IsSamePackage(selected, item))
+            var group = packages.ToArray();
+            _modsList.AddItem(group);
+            if (string.Equals(packages.Key, selected?.ModId, StringComparison.OrdinalIgnoreCase))
             {
-                _modsList.SelectedItem = item;
+                _modsList.SelectedItem = group;
+                if (group.FirstOrDefault(item => IsSamePackage(item, selected!)) is { } restored)
+                {
+                    _versions.SelectedItem = restored;
+                }
             }
         }
 
+        _modsList.ScrollPosition = scroll;
         _emptyLabel.IsVisible = items.Count == 0;
+        if (_modsList.SelectedItem is null) { PopulateVersions(); }
+    }
+
+    private void PopulateVersions()
+    {
+        _versions.Close();
+        var packages = _modsList.SelectedItem as ManagedModItem[] ?? [];
+        _versions.SetItems(packages);
+        _versions.SelectedItem = packages.FirstOrDefault(item => item.IsGlobal) ??
+                                 packages.FirstOrDefault(item => !item.IsMissing) ?? packages.FirstOrDefault();
+        _versions.IsEnabled = packages.Length > 1;
+        _actionPanel.Refresh();
     }
 
     private void ConfirmDeleteCache(ManagedModItem item)
@@ -231,7 +284,7 @@ public sealed class ModManagementScreen : Screen
         var message = string.Format(
             Localization.ClientLanguage.Catalog.Get(_typeName, "DeleteCacheQuestion"),
             item.ModId,
-            item.Version
+            $"{item.Version} · {item.PackageHash[..8]}"
         );
         DialogsManager.ShowDialog(
             null,
@@ -470,39 +523,37 @@ public sealed class ModManagementScreen : Screen
                string.Equals(first.PackageHash, second.PackageHash, StringComparison.Ordinal);
     }
 
+    private static string FormatVersion(ManagedModItem package, ManagedModItem[] group) =>
+        group.Count(other => other.Version == package.Version) > 1
+            ? $"{package.Version} · {package.PackageHash[..8]}"
+            : package.Version;
+
     private static Widget CreateModItemWidget(object item)
     {
-        var mod = (ManagedModItem)item;
-        var status = new List<string>();
-        status.Add(
-            Localization.ClientLanguage.Catalog.Get(_typeName, mod.IsMissing ? "StatusMissing" : "StatusCached")
-        );
-        if (mod.IsGlobal)
+        var group = (ManagedModItem[])item;
+        var global = group.FirstOrDefault(package => package.IsGlobal);
+        var mod = global?.LocalEntry is not null
+            ? global
+            : group.FirstOrDefault(package => !package.IsMissing) ?? group[0];
+        var widget = (ContainerWidget)LoadWidget(null, AssetManager.Get<XElement>("Widgets/ModListItem"), null);
+        widget.Children.Find<LabelWidget>("Name")!.Text = mod.LocalEntry?.Name ?? mod.ModId;
+        var globalStatus = global is null
+            ? Localization.ClientLanguage.Catalog.Get(_typeName, "GlobalOff")
+            : $"{Localization.ClientLanguage.Catalog.Get(_typeName, "StatusGlobal")} · {FormatVersion(global, group)}";
+        var count = string.Format(Localization.ClientLanguage.Catalog.Get(_typeName, "PackageCount"), group.Length);
+        var details = widget.Children.Find<LabelWidget>("Details")!;
+        details.Text = $"{globalStatus}  |  {count}";
+        if ((global ?? mod).IsMissing)
         {
-            status.Add(Localization.ClientLanguage.Catalog.Get(_typeName, "StatusGlobal"));
+            details.Text += $"  |  {Localization.ClientLanguage.Catalog.Get(_typeName, "StatusMissing")}";
+            details.Color = new Color(255, 180, 80);
         }
 
-        if (mod.IsWorld)
+        if (mod.LocalEntry?.Name is { Length: > 0 } name && name != mod.ModId)
         {
-            status.Add(Localization.ClientLanguage.Catalog.Get(_typeName, "StatusWorld"));
+            details.Text += $"  |  {mod.ModId}";
         }
 
-        if (mod.IsRuntime)
-        {
-            status.Add(Localization.ClientLanguage.Catalog.Get(_typeName, "StatusRuntime"));
-        }
-
-        var widget = (ContainerWidget)LoadWidget(
-            null,
-            AssetManager.Get<XElement>("Widgets/ModManagementItem"),
-            null
-        );
-        widget.Children.Find<LabelWidget>("ModManagementItem.Name")!.Text = mod.LocalEntry?.Name ?? mod.ModId;
-        widget.Children.Find<LabelWidget>("ModManagementItem.Summary")!.Text = mod.LocalEntry?.Summary ?? string.Empty;
-        widget.Children.Find<LabelWidget>("ModManagementItem.Id")!.Text = mod.ModId;
-        widget.Children.Find<LabelWidget>("ModManagementItem.Version")!.Text = mod.Version;
-        widget.Children.Find<LabelWidget>("ModManagementItem.Status")!.Text = string.Join(" / ", status);
-        widget.Children.Find<LabelWidget>("ModManagementItem.Hash")!.Text = mod.PackageHash;
         return widget;
     }
 }

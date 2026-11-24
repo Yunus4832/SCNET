@@ -36,6 +36,18 @@ public sealed class WorldModEditTest : IDisposable
     }
 
     [Theory]
+    [InlineData("0.1.11", "0.1.11", true)]
+    [InlineData("0.1.11", "0.1.12", true)]
+    [InlineData("0.1.11", "0.2.0", false)]
+    [InlineData("0.0.1", "0.0.2", false)]
+    [InlineData("1.9.0", "1.10.0", true)]
+    [InlineData("1.9.0", "2.0.0", false)]
+    public void WorldVersionDrawerUsesOriginalCompatibilityLine(string installed, string candidate, bool expected)
+    {
+        Assert.Equal(expected, Game.Screens.WorldModsScreen.CanReplaceVersion(installed, candidate));
+    }
+
+    [Theory]
     [InlineData("海岛", "海岛@24153045")]
     [InlineData("基地@北岸", "基地@北岸@24153045")]
     [InlineData("基地@北岸@01010203", "基地@北岸@24153045")]

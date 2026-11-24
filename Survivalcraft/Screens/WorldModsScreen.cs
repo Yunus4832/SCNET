@@ -1,5 +1,7 @@
 using System.Xml.Linq;
 
+using Content.Packaging;
+
 using Game.Application;
 
 namespace Game.Screens;
@@ -19,6 +21,10 @@ public sealed class WorldModsScreen : Screen
     private sealed record ModItem(ManagedModItem Package, bool? CanRemoveFromWorld, string? Error);
 
     private readonly ActionPanelWidget _actions;
+
+    private readonly SelectionDrawerWidget _versions;
+
+    private ModItem? Candidate => _versions.SelectedItem as ModItem;
 
     private readonly LabelWidget _emptyLabel;
 
@@ -44,20 +50,42 @@ public sealed class WorldModsScreen : Screen
         _modsList = Children.Find<ListPanelWidget>("ModsList")!;
         _unavailableLabel = Children.Find<LabelWidget>("Unavailable")!;
         _modsList.ItemWidgetFactory = CreateModItemWidget;
+        _versions = new SelectionDrawerWidget
+        {
+            Size = new Vector2(140f, 60f),
+            ExpansionDirection = SelectionDrawerDirection.Up,
+            MaxVisibleItems = 5,
+            PlaceholderText = VersionLabel()
+        };
+        _versions.ItemTextProvider = value =>
+        {
+            var package = ((ModItem)value).Package;
+            return _items.Any(other =>
+                string.Equals(other.Package.ModId, package.ModId, StringComparison.OrdinalIgnoreCase) &&
+                other.Package.Version == package.Version &&
+                other.Package.PackageHash != package.PackageHash
+            )
+                ? $"{package.Version} · {package.PackageHash[..8]}"
+                : package.Version;
+        };
+        _versions.SelectionChanged += _actions.Refresh;
+        _modsList.SelectionChanged += RefreshVersions;
+        _actions.PrimaryAccessory = _versions;
         _actions.ItemTextProvider = GetActionText;
         _actions.ItemEnabledProvider = item => (ModAction)item switch
         {
-            ModAction.Toggle => _modsList.SelectedItem is ModItem selected && CanToggle(selected),
-            ModAction.Details => _modsList.SelectedItem is ModItem,
+            ModAction.Toggle => Candidate is { } selected && CanToggle(selected),
+            ModAction.Details => Candidate is not null,
             ModAction.Refresh => true,
             _ => false
         };
         _actions.ItemColorProvider = item => (ModAction)item == ModAction.Toggle &&
-                                             _modsList.SelectedItem is ModItem selected
+                                             Candidate is { } selected
             ? IsSelected(selected) ? new Color(150, 50, 35) : new Color(50, 150, 35)
             : null;
         _actions.ItemClicked += ExecuteAction;
-        _actions.SetPrimaryItems([ModAction.Toggle, ModAction.Details, ModAction.Refresh], [1f, 1f, 1f, 0f]);
+        _actions.SetPrimaryItems([ModAction.Toggle, ModAction.Details], [1.2f, 1f, 1f, 0f]);
+        _actions.SetSecondaryItems([ModAction.Refresh]);
     }
 
     /// <summary>接收独立草稿、返回界面名及可为空的原始世界配置，保留调用方的对象所有权。</summary>
@@ -75,16 +103,30 @@ public sealed class WorldModsScreen : Screen
 
     public override void Leave()
     {
+        _versions.Close();
+        _versions.ClearItems();
         _modsList.ClearItems();
         _items = [];
         _originalProfile = null;
         _draft = null!;
     }
 
+    public override void Dispose()
+    {
+        _versions.Close();
+        base.Dispose();
+    }
+
     public override void Update()
     {
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
         {
+            if (_versions.IsOpen)
+            {
+                _versions.Close();
+                return;
+            }
+
             ScreensManager.SwitchScreen(_returnScreen);
             return;
         }
@@ -154,7 +196,7 @@ public sealed class WorldModsScreen : Screen
             return Text(item.ToString()!);
         }
 
-        if (_modsList.SelectedItem is not ModItem selected)
+        if (Candidate is not { } selected)
         {
             return Text("Select");
         }
@@ -174,10 +216,10 @@ public sealed class WorldModsScreen : Screen
     {
         switch ((ModAction)item)
         {
-            case ModAction.Toggle when _modsList.SelectedItem is ModItem selected:
+            case ModAction.Toggle when Candidate is { } selected:
                 TogglePackage(selected);
                 break;
-            case ModAction.Details when _modsList.SelectedItem is ModItem selected:
+            case ModAction.Details when Candidate is { } selected:
                 DialogsManager.Alert(
                     selected.Package.LocalEntry?.Name ?? selected.Package.ModId,
                     string.Join(
@@ -250,22 +292,65 @@ public sealed class WorldModsScreen : Screen
     {
         var scrollPosition = _modsList.ScrollPosition;
         _modsList.ClearItems();
-        foreach (var item in _items.Where(item => !item.Package.IsMissing || IsSelected(item)))
+        foreach (var group in _items.Where(item => !item.Package.IsMissing || IsSelected(item))
+                     .GroupBy(item => item.Package.ModId, StringComparer.OrdinalIgnoreCase))
         {
-            _modsList.AddItem(item);
-            if (selected is not null &&
-                string.Equals(item.Package.ModId, selected.Package.ModId, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(item.Package.Version, selected.Package.Version, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(item.Package.PackageHash, selected.Package.PackageHash, StringComparison.Ordinal))
+            var row = group.FirstOrDefault(IsSelected) ??
+                      group.FirstOrDefault(item => item.Error is null) ?? group.First();
+            _modsList.AddItem(row);
+            if (string.Equals(group.Key, selected?.Package.ModId, StringComparison.OrdinalIgnoreCase))
             {
-                _modsList.SelectedItem = item;
+                _modsList.SelectedItem = row;
             }
         }
 
+        RefreshVersions();
         _modsList.ScrollPosition = scrollPosition;
         _emptyLabel.IsVisible = _modsList.Items.Count == 0;
         _languageRevision = Localization.ClientLanguage.Revision;
         _actions.Refresh();
+    }
+
+    private static string VersionLabel() =>
+        Localization.ClientLanguage.Catalog.GetContentWidgets(nameof(OnlineContentScreen), "Version");
+
+    private void RefreshVersions()
+    {
+        _versions.Close();
+        _versions.PlaceholderText = VersionLabel();
+        if (_modsList.SelectedItem is not ModItem row)
+        {
+            _versions.ClearItems();
+            _versions.IsEnabled = false;
+            return;
+        }
+
+        var baseline = _originalProfile?.Packages.FirstOrDefault(package =>
+            string.Equals(package.ModId, row.Package.ModId, StringComparison.OrdinalIgnoreCase)
+        )?.Version;
+        var choices = _items.Where(item => item == row ||
+                                           (string.Equals(
+                                                item.Package.ModId,
+                                                row.Package.ModId,
+                                                StringComparison.OrdinalIgnoreCase
+                                            ) &&
+                                            !item.Package.IsMissing &&
+                                            item.Error is null &&
+                                            (baseline is null || CanReplaceVersion(baseline, item.Package.Version)))
+        ).ToArray();
+        _versions.SetItems(choices);
+        _versions.SelectedItem = row;
+        _versions.IsEnabled = choices.Length > 1;
+    }
+
+    internal static bool CanReplaceVersion(string installed, string candidate)
+    {
+        var current = SemanticVersion.Parse(installed);
+        var next = SemanticVersion.Parse(candidate);
+        return current.Major == next.Major &&
+               (current.Major != 0 ||
+                current.Minor == next.Minor &&
+                (current.Minor != 0 || current.Patch == next.Patch));
     }
 
     private string GetStatus(ModItem item)
@@ -290,13 +375,12 @@ public sealed class WorldModsScreen : Screen
     private Widget CreateModItemWidget(object item)
     {
         var mod = (ModItem)item;
-        var widget = (ContainerWidget)LoadWidget(null, AssetManager.Get<XElement>("Widgets/WorldModItem"), null);
+        var widget = (ContainerWidget)LoadWidget(null, AssetManager.Get<XElement>("Widgets/ModListItem"), null);
         widget.Children.Find<LabelWidget>("Name")!.Text = mod.Package.LocalEntry?.Name ?? mod.Package.ModId;
-        widget.Children.Find<LabelWidget>("Identity")!.Text = $"{mod.Package.ModId}@{mod.Package.Version}";
-        var status = widget.Children.Find<LabelWidget>("Status")!;
-        status.Text = GetStatus(mod);
-        status.Color = mod.CanRemoveFromWorld.HasValue ? new Color(120, 190, 120) : new Color(255, 180, 80);
-        widget.Children.Find<LabelWidget>("Hash")!.Text = mod.Package.PackageHash;
+        var details = widget.Children.Find<LabelWidget>("Details")!;
+        details.Text = $"{mod.Package.Version}  |  {GetStatus(mod)}";
+        if (mod.CanRemoveFromWorld is null) { details.Color = new Color(255, 180, 80); }
+
         return widget;
     }
 }

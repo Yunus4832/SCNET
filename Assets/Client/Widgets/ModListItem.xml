@@ -1,0 +1,8 @@
+<StackPanelWidget xmlns="runtime-namespace:Game.Widgets" Direction="Horizontal" VerticalAlignment="Center" Margin="0, 0">
+    <RectangleWidget Size="64, 64" Subtexture="{Textures/Atlas/ModIcon}" FillColor="255, 255, 255"
+                     OutlineColor="0, 0, 0, 0" VerticalAlignment="Center"/>
+    <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" Margin="10, 0">
+        <LabelWidget Name="Name" Ellipsis="true" MaxLines="1"/>
+        <LabelWidget Name="Details" Color="174, 174, 174" FontScale="0.9" Ellipsis="true" MaxLines="1"/>
+    </StackPanelWidget>
+</StackPanelWidget>
