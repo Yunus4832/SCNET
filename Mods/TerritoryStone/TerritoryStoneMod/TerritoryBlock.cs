@@ -13,6 +13,15 @@ public class TerritoryBlock : CubeBlock
 {
     public static ResourceId Id { get; } = new(new ModId(ModEntry.ModId), "territory_stone");
 
+    private readonly BoundingBox[] _collision =
+    [
+        new(new Vector3(0.06f, 0, 0.06f), new Vector3(0.94f, 0.19f, 0.94f)),
+        new(new Vector3(0.19f, 0.19f, 0.19f), new Vector3(0.81f, 0.87f, 0.81f)),
+        new(new Vector3(0.27f, 0.87f, 0.27f), new Vector3(0.73f, 0.98f, 0.73f))
+    ];
+
+    public override BoundingBox[] GetCustomCollisionBoxes(SubsystemTerrain terrain, int value) => _collision;
+
     private const int _requiredPlayerLevel = 5;
 
     private string[] _needIngredients = [];

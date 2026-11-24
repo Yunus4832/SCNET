@@ -387,11 +387,7 @@ public sealed class TerritorySubsystem : Subsystem, IUpdateable
 
     public string? ChangeSettings(WorldConnection? actor, Territory territory, TerritorySettings settings)
     {
-        if (!TerritoryMessages.CanChangeSettings(Runtime, actor, territory.Owner) ||
-            !ReferenceEquals(
-                Project.FindSubsystem<SubsystemPlayers>()?.Store.Find(territory.Owner),
-                actor is null ? null : Game.Players.WorldConnectionResolver.FindPlayer(actor)
-            ))
+        if (!TerritoryMessages.CanChangeSettings(Runtime, actor, territory.Owner))
         {
             return "OwnerOnly";
         }

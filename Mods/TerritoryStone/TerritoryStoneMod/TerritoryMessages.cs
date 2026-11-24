@@ -25,14 +25,14 @@ public static class TerritoryMessages
     public static bool CanChangeSettings(WorldRuntimeContext runtime, WorldConnection? sender, PlayerAddress owner) =>
         !runtime.IsClosed &&
         sender is not null &&
-        Game.Players.WorldConnectionResolver.FindPlayer(sender) is { Ban: null } &&
         owner != default &&
         sender.PlayerAddress == owner &&
         (runtime.IsAuthority
-            ? ReferenceEquals(
-                WorldConnections.For(runtime).Members.GetValueOrDefault(sender.ID),
-                sender
-            )
+            ? Game.Players.WorldConnectionResolver.FindPlayer(sender) is { Ban: null } &&
+              ReferenceEquals(
+                  WorldConnections.For(runtime).Members.GetValueOrDefault(sender.ID),
+                  sender
+              )
             : ReferenceEquals(WorldConnections.For(runtime).Self, sender));
 
     public static TerritorySnapshot Capture(Territory territory) => new(

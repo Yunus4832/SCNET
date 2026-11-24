@@ -17,6 +17,8 @@
     </ItemGroup>
 
     <ItemGroup>
+        <EmbeddedResource Include="Resources/Models/TerritoryStone.glb"/>
+        <EmbeddedResource Include="Resources/Models/TerritoryStone.png"/>
         <EmbeddedResource Include="Resources/Shaders/*.vsh"/>
         <EmbeddedResource Include="Resources/Shaders/*.psh"/>
     </ItemGroup>

@@ -20,7 +20,11 @@ dotnet build Mods/TerritoryStone/TerritoryStone.slnx
 `metadata.clientContentEntrypoint` 为 `TerritoryStoneMod.Client.Presentation.TerritoryClientContentModule, TerritoryStoneMod.Client`，
 只在客户端装配方块表现。单独构建规则项目不会生成完整模组包。
 
+方块在地形、手持和物品栏中使用同一座削角石碑和铜质方位纹章。256×256 PNG 使用 GLB 的 UV 展开，重新导出改变几何的模型后需要同步调整贴图。OpenSCAD 源文件、贴图与游戏读取的 GLB 一起存放在 [Resources/Models](TerritoryStoneMod.Client/Resources/Models)。源文件以毫米为单位，可用 openscad-tui 打开并执行 `model export TerritoryStone.glb`。
+
 ## 范围与权限
+
+单人游玩时，放置者也可以修改自己的领地设置。以后将同一存档开放联机时，原有范围和授权继续生效。
 
 - 领地石所在格子始终为正方形范围的中心，`Size` 表示水平半径，不再按区块原点对齐。
   半径范围 4–32 格（9×9 至 65×65），默认 16 格（33×33）；保护贯穿世界高度，暂不支持高度分区。

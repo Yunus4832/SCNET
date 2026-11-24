@@ -1,6 +1,8 @@
 using Engine.Core.Mathematics;
 
+using Game.Network;
 using Game.Protocol.Identity;
+using Game.World;
 
 using TerritoryStoneMod;
 
@@ -10,6 +12,24 @@ namespace TerritoryStoneMod.Test;
 
 public class TerritoryAccessTest
 {
+    [Fact]
+    public void ClientCanRequestOwnerSettingsWithoutAuthorityPlayerRecords()
+    {
+        var runtime = new WorldRuntimeContext(RuntimeSide.Client, true);
+        try
+        {
+            var owner = Address();
+            var self = new WorldConnection(1, playerAddress: owner);
+            new WorldConnections(runtime).SetSelf(self);
+            Assert.True(TerritoryMessages.CanChangeSettings(runtime, self, owner));
+            Assert.False(TerritoryMessages.CanChangeSettings(runtime, self, Address()));
+            Assert.False(
+                TerritoryMessages.CanChangeSettings(runtime, new WorldConnection(1, playerAddress: owner), owner)
+            );
+        }
+        finally { runtime.Close(); }
+    }
+
     [Theory]
     [InlineData("enter,dig", (global::TerritoryStoneMod.TerritoryPermission)5)]
     [InlineData("all", (global::TerritoryStoneMod.TerritoryPermission)15)]

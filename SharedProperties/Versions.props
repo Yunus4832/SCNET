@@ -14,7 +14,7 @@
         <RendezvousProtocolVersion>0.1.2</RendezvousProtocolVersion>
         <ContentServerVersion>0.1.8</ContentServerVersion>
         <RendezvousServerVersion>0.1.2</RendezvousServerVersion>
-        <TerritoryStoneVersion>0.1.11</TerritoryStoneVersion>
+        <TerritoryStoneVersion>0.1.12</TerritoryStoneVersion>
         <BeaconVersion>0.1.8</BeaconVersion>
         <UiPreviewToolVersion>0.1.8</UiPreviewToolVersion>
         <ToolsVersion>0.1.8</ToolsVersion>
