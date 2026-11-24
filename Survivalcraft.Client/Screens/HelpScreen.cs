@@ -49,9 +49,8 @@ public class HelpScreen : Screen
             return;
         }
 
-        foreach (var (key, item) in kvs.OrderBy(pair =>
-                     pair.Value is JsonObject topic && (string?)topic["Name"] == "Disclaimer"
-                 ))
+        foreach (var (key, item) in kvs.OrderBy(pair => HelpTopic.DisplayOrder(pair.Key))
+                     .ThenBy(pair => pair.Key, StringComparer.Ordinal))
         {
             if (item is not JsonObject item3)
             {

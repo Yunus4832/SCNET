@@ -10,6 +10,14 @@ Use the repository tool instead of manually editing `Assets/Shared/Lang/*.json`.
 Run commands from the repository root. Use `rules` for key conventions and `overview . --depth 1`
 to locate the section before inspecting individual keys.
 
+## 玩家帮助的顺序与排版
+
+- 目录按玩家查阅任务排列：基础操作与物品、生存与角色、采集制作与建造、联机与内容，最后是关于与免责声明。新增内置主题时在 `HelpTopic` 的阅读顺序中选定位置，保留现有数字键和用于直达页面的 `Name`。四种语言共用这个顺序。
+- 页面标题使用 `Title`，由帮助界面居中显示并留出固定间距。正文各行居中、按屏宽自动折行；首尾不加空行，也不在正文重复标题。
+- 一个主题或操作阶段写成一段。段内句子按本语言正常连接，段落之间空一行。列表项、逐行对照或必须逐行执行的步骤可用单换行。向 LanguageTool 传实际换行，JSON 序列化负责转义。
+- 排版修改保留原有解释、例子、步骤、数值及警告。各语言按自身语义分段，无需强行对齐句数。动态“关于”页和专用控制对话框按各自组件排版。
+- 纯排版改动须逐语言对照正文：忽略布局空白后文字应完全一致。用 `LanguageTool check` 核对键，再预览一篇长教程和一篇分步骤帮助，检查窄屏折行、段落和标题间距。
+
 ## Workflow
 
 1. Inspect the key rules and nearby key structure before adding new ones:

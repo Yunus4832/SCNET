@@ -70,7 +70,10 @@ public sealed class AboutHelpTopicTest
         using var runtime = GameModRuntime.Start();
         Game.Localization.ClientLanguage.Publish(runtime.Content.CreateLanguageCatalog(culture));
         var topics = (JsonObject)Game.Localization.ClientLanguage.Catalog.KeyWords["Help"]!;
-        var names = topics.Select(pair => (string?)pair.Value?["Name"]).ToArray();
+        var ordered = topics.OrderBy(pair => HelpTopic.DisplayOrder(pair.Key)).ToArray();
+        Assert.Equal("7", ordered[0].Key);
+        Assert.Equal(["52", "51"], ordered.TakeLast(2).Select(pair => pair.Key));
+        var names = ordered.Select(pair => (string?)pair.Value?["Name"]).ToArray();
         var p2p = Array.IndexOf(names, "P2P");
         Assert.True(p2p >= 0);
         Assert.Equal(["P2P", "Admission", "PlayerIdentity"], names.Skip(p2p).Take(3));
@@ -105,6 +108,8 @@ public sealed class AboutHelpTopicTest
 
             var text = Game.Localization.ClientLanguage.Catalog.GetHelpTopic(key, "value");
             Assert.False(string.IsNullOrWhiteSpace(text));
+            Assert.Equal(text.Trim(), text);
+            Assert.DoesNotContain("\n\n\n", text);
             Assert.DoesNotMatch(@"\\(?:\s|[nrt])", text);
         }
     }

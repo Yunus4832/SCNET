@@ -44,7 +44,7 @@ After editing, search for stale names and contradictory descriptions in `README.
 For an explicit full review, inventory tracked Markdown, project README files, skill entrypoints and
 references, non-Markdown specifications or examples, and the localized in-game help under
 `Assets/Shared/Lang/*.json`. Use `scnet-language-management` to inspect and update `Help` topics,
-keyboard/gamepad help and `About` text when user-facing operations change. Markdown link checks do
+keyboard/gamepad help and `About` text when user-facing operations change. Follow the [player help layout rules](../scnet-language-management/SKILL.md#玩家帮助的顺序与排版) for player-facing text. Markdown link checks do
 not cover these resources; verify four-language structure, runtime topic IDs and actual UI entrypoints.
 Exclude generated outputs, dependency
 copies, licenses and game data from prose review, but validate referenced schemas/vectors as data.

@@ -332,22 +332,7 @@ public sealed class LanguageCatalog
         return Get("ContentWidgets", name, prop);
     }
 
-    public string GetHelpTopic(string key, string property)
-    {
-        var value = Get("Help", key, property);
-        if (!string.Equals(property, "value", StringComparison.Ordinal))
-        {
-            return value;
-        }
-
-        var text = string.Empty;
-        var array = value.Split(["\n"], StringSplitOptions.None);
-        text = array.Aggregate(text, (current, text2) => current + text2.Trim() + " ");
-        text = text.Replace("\r", "");
-        text = text.Replace("â€™", "'");
-        text = text.Replace("\\n", "\n");
-        return text;
-    }
+    public string GetHelpTopic(string key, string property) => Get("Help", key, property);
 
     public string GetContentWidgets(string name, int pos)
     {
