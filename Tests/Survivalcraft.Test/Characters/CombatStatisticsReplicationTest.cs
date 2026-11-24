@@ -3,11 +3,23 @@ using Engine.Core.Mathematics;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Characters;
+using Game.Dialogs;
+using Game.Widgets;
 
 namespace Survivalcraft.Test.Characters;
 
 public sealed class CombatStatisticsReplicationTest
 {
+    [Theory]
+    [InlineData(0)]
+    [InlineData(12)]
+    public void MenuOmitsDeathHistoryWhenCharacterHasNeverDied(int blocksDug)
+    {
+        var panel = new StackPanelWidget();
+        GameMenuDialog.AddDeathHistory(panel, new CharacterStats { BlocksDug = blocksDug });
+        Assert.Empty(panel.Children);
+    }
+
     [Fact]
     public void SurvivalSnapshotPreservesCombatHistoryAndMovementAndIsIdempotent()
     {

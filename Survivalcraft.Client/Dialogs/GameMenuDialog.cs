@@ -74,7 +74,6 @@ public class GameMenuDialog : Dialog
         var subsystemGameInfo = project.FindSubsystem<SubsystemGameInfo>(true)!;
         var subsystemFurnitureBlockBehavior = project.FindSubsystem<SubsystemFurnitureBlockBehavior>(true)!;
         var font = AssetManager.Get<BitmapFont>("Fonts/Pericles");
-        var font2 = AssetManager.Get<BitmapFont>("Fonts/Pericles");
         var white = Color.White;
         var stackPanelWidget = new StackPanelWidget
         {
@@ -473,41 +472,32 @@ public class GameMenuDialog : Dialog
             Localization.ClientLanguage.Catalog.Get(_typeName, 74),
             Localization.ClientLanguage.Catalog.Get("GameMode", easiestModeUsed.ToString())
         );
-        if (characterStats.DeathRecords.Count > 0)
-        {
-            stackPanelWidget.Children.Add(
-                new LabelWidget
-                {
-                    Text = Localization.ClientLanguage.Catalog.Get(_typeName, 75),
-                    Font = font,
-                    HorizontalAlignment = WidgetAlignment.Center,
-                    Margin = new Vector2(0f, 10f),
-                    Color = white
-                }
-            );
-            foreach (var deathRecord in characterStats.DeathRecords)
+        AddDeathHistory(stackPanelWidget, characterStats);
+    }
+
+    internal static void AddDeathHistory(ContainerWidget container, CharacterStats characterStats)
+    {
+        var deathRecords = characterStats.DeathRecords;
+        if (deathRecords.Count == 0) { return; }
+
+        container.Children.Add(
+            new LabelWidget
             {
-                AddStat(
-                    stackPanelWidget,
-                    $"Day {Math.Floor(deathRecord.Day) + 1.0:0}",
-                    "",
-                    Localization.ClientLanguage.Resolver.Resolve(deathRecord.Cause)
-                );
+                Text = Localization.ClientLanguage.Catalog.Get(_typeName, 75),
+                Font = AssetManager.Get<BitmapFont>("Fonts/Pericles"),
+                HorizontalAlignment = WidgetAlignment.Center,
+                Margin = new Vector2(0f, 10f),
+                Color = Color.White
             }
-        }
-        else
+        );
+        foreach (var deathRecord in deathRecords)
         {
-            stackPanelWidget.Children.Add(
-                new LabelWidget
-                {
-                    Text = Localization.ClientLanguage.Catalog.Get(_typeName, 81),
-                    WordWrap = true,
-                    Font = font2,
-                    HorizontalAlignment = WidgetAlignment.Center,
-                    TextAnchor = TextAnchor.HorizontalCenter,
-                    Margin = new Vector2(20f, 10f),
-                    Color = white
-                }
+            AddStat(
+                container,
+                $"Day {Math.Floor(deathRecord.Day) + 1.0:0}",
+                "",
+                Localization.ClientLanguage.Resolver.Resolve(deathRecord.Cause),
+                Color.White
             );
         }
     }
@@ -647,7 +637,13 @@ public class GameMenuDialog : Dialog
         AddStat(containerWidget, title, value1, value2, Color.White);
     }
 
-    private void AddStat(ContainerWidget containerWidget, string title, string value1, string value2, Color color)
+    private static void AddStat(
+        ContainerWidget containerWidget,
+        string title,
+        string value1,
+        string value2,
+        Color color
+    )
     {
         var font = AssetManager.Get<BitmapFont>("Fonts/Pericles");
         var gray = Color.Gray;
