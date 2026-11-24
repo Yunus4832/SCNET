@@ -141,9 +141,9 @@ public class InstanceManagementScreen : Screen
         return widget;
     }
 
-    private void RefreshInstances()
+    private void RefreshInstances(string? preferredId = null)
     {
-        var selectedId = (_instancesList.SelectedItem as InstanceItem)?.Id;
+        var selectedId = preferredId ?? (_instancesList.SelectedItem as InstanceItem)?.Id;
         var instances = StarterInstanceManager.ListInstances()
             .Select(instanceId => new InstanceItem(
                     instanceId,
@@ -153,7 +153,7 @@ public class InstanceManagementScreen : Screen
                 )
             )
             .ToArray();
-        if (_instancesList.Items.Cast<InstanceItem>().SequenceEqual(instances))
+        if (preferredId is null && _instancesList.Items.Cast<InstanceItem>().SequenceEqual(instances))
         {
             return;
         }
@@ -211,25 +211,24 @@ public class InstanceManagementScreen : Screen
 
     private void ShowCloneDialog(InstanceItem source)
     {
+        var target = StarterInstanceManager.GetCloneId(source.Id, DateTime.Now);
         DialogsManager.ShowDialog(
             null,
-            new TextBoxDialog(
-                string.Format(Text("CloneTitle"), source.Id),
-                string.Empty,
-                32,
-                targetInstanceId =>
+            new MessageDialog(
+                Text("CloneTitle"),
+                string.Format(Text("CloneQuestion"), source.Id, target),
+                Text("Clone"),
+                Localization.ClientLanguage.Catalog.Cancel,
+                button =>
                 {
-                    if (string.IsNullOrWhiteSpace(targetInstanceId))
+                    if (button == MessageDialogButton.Button1)
                     {
-                        return;
+                        ExecuteLongOperation(
+                            new CloneInstanceCommand(source.Id, target),
+                            () => RefreshInstances(target)
+                        );
                     }
-
-                    ExecuteLongOperation(
-                        new CloneInstanceCommand(source.Id, targetInstanceId.Trim()),
-                        RefreshInstances
-                    );
-                },
-                false
+                }
             )
         );
     }

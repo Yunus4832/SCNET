@@ -13,6 +13,7 @@ public sealed class ModClientContentLoadingTest
               "id":"example.separated",
               "name":"Separated",
               "version":"1.0.0",
+               "canRemoveFromWorld":false,
               "entrypoint":"Survivalcraft.Test.Modding.PackageEntrypointMod, Survivalcraft.Test",
               "clientContentEntrypoint":"Missing.Client.Content, Missing.Client"
             }
@@ -39,6 +40,7 @@ public sealed class ModClientContentLoadingTest
               "id":"example.presentation",
               "name":"Presentation",
               "version":"1.0.0",
+               "canRemoveFromWorld":false,
               "clientContentEntrypoint":"Survivalcraft.Test.Modding.ClientContentEntryFixture, Survivalcraft.Test"
             }
             """,
@@ -69,6 +71,7 @@ public sealed class ModClientContentLoadingTest
                 "id":"example.shared",
                 "name":"Shared",
                 "version":"1.0.0",
+                 "canRemoveFromWorld":false,
                 "entrypoint":"{{coreEntry}}",
                 "clientContentEntrypoint":"{{clientEntry}}"
               }

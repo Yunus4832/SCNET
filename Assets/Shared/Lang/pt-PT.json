@@ -13,7 +13,7 @@
     },
     "ContentScreen": {
         "2": "Gestão de Recursos",
-        "12": "Gerir mods globais e dos mundos",
+        "12": "Gerir a cache e os mods globais",
         "13": "Mods",
         "14": "Gestão de utilizadores"
     },
@@ -35,13 +35,10 @@
         "Export": "Exportar",
         "AddGlobal": "Adicionar",
         "RemoveGlobal": "Remover",
-        "World": "Mundo",
         "DeleteCacheTitle": "Apagar cache",
         "DeleteCacheQuestion": "Apagar cache local {0}@{1}?",
         "ExportComplete": "Exportação concluída",
         "ExportModFailed": "Falha ao exportar mod",
-        "NoWorldTitle": "Sem mundos",
-        "NoWorldMessage": "Crie primeiro um mundo.",
         "StatusCached": "Em cache",
         "StatusGlobal": "Global",
         "StatusWorld": "Mundo",
@@ -2666,7 +2663,7 @@
         "BlocksTexture_Description": "Selecione a textura de quadrados para usar ao desenhar o mundo. Você pode mudar completamente a aparência do mundo usando diferentes texturas de quadrados.",
         "InstanceCreate_Description": "Criar uma instância de dados",
         "InstanceDelete_Description": "Eliminar uma instância de dados",
-        "InstanceInvalidId_Message": "Os IDs de instância só podem conter letras ASCII, números, “-” e “_”.",
+        "InstanceInvalidId_Message": "O ID da instância só pode conter letras ASCII, dígitos, «-», «_» e «@».",
         "InstanceAlreadyExists_Message": "A instância já existe: {0}.",
         "InstanceCreated_Message": "Instância {0} criada.",
         "InstanceCurrentDeleteForbidden_Message": "Não é possível eliminar a instância atual.",
@@ -3031,7 +3028,7 @@
             "1": "Escolha o método de aquisição",
             "8": "Gerir texturas de blocos, aparências de personagens e conjuntos de mobília instalados",
             "9": "Gerir conteúdo instalado",
-            "12": "Gerir mods globais e dos mundos",
+            "12": "Gerir a cache e os mods globais",
             "13": "Mods",
             "RemoteDescription": "Explorar recursos aprovados do servidor de conteúdos",
             "Remote": "Conteúdo online",
@@ -3196,7 +3193,8 @@
             "CloneFailed": "Falha ao clonar mundo",
             "DeleteTitle": "Eliminar mundo",
             "DeleteQuestion": "Eliminar o mundo “{0}”? Esta ação não pode ser anulada.",
-            "RunServer": "Iniciar servidor"
+            "RunServer": "Iniciar servidor",
+            "CloneQuestion": "Será criada uma cópia independente com o nome «{0}»."
         },
         "RecipaediaDescriptionScreen": {
             "1": "Descrição do bloco"
@@ -3315,9 +3313,6 @@
             "HotbarSlotsCountDescription": "Define a capacidade da barra rápida para o modo atual; use páginas quando o espaço for limitado",
             "DaysCount": "{0} dias"
         },
-        "ModWorldSelectionDialog": {
-            "Title": "Adicionar ou substituir versão do mod no mundo"
-        },
         "InstanceManagementScreen": {
             "Title": "Gestão de instâncias",
             "Create": "Criar",
@@ -3330,12 +3325,13 @@
             "RunningElsewhere": "Em execução noutro processo",
             "NotRunning": "Não está em execução",
             "Clone": "Clonar",
-            "CloneTitle": "Clonar a instância “{0}” para um novo ID",
+            "CloneTitle": "Clonar instância",
             "Working": "A processar a instância",
             "OperationFailed": "A operação da instância falhou.",
             "Launch": "Abrir em nova janela",
             "LaunchFailed": "Não foi possível iniciar esta instância numa nova janela.",
-            "ConfirmLaunch": "Abrir a instância “{0}” numa nova janela?"
+            "ConfirmLaunch": "Abrir a instância “{0}” numa nova janela?",
+            "CloneQuestion": "Criar uma cópia independente de «{0}» com o nome «{1}»?"
         },
         "ContentPackageScreen": {
             "Title": "Cache de pacotes de conteúdo",
@@ -3781,6 +3777,29 @@
             "Authentication": "Autent.",
             "NotConfigured": "Não configurado",
             "NoRendezvous": "Instale ou adicione um serviço de sinalização na página Conteúdo"
+        },
+        "WorldModsScreen": {
+            "Title": "Mods do mundo",
+            "Empty": "Sem mods disponíveis",
+            "CacheUnavailable": "A cache local de mods não está disponível",
+            "Select": "Adicionar ao mundo",
+            "Replace": "Substituir versão",
+            "Remove": "Remover do mundo",
+            "Details": "Detalhes",
+            "Refresh": "Atualizar",
+            "RemovalRequired": "Este mod não pode ser removido do mundo",
+            "RemovalUnavailable": "A declaração de remoção do pacote original não está disponível",
+            "PackageIdentityMismatch": "A identidade do pacote em cache não corresponde",
+            "StatusSelected": "Selecionado",
+            "StatusMissing": "Em falta na cache",
+            "StatusCached": "Em cache",
+            "StatusRemovable": "Removível",
+            "StatusRequired": "Não removível",
+            "StatusUnavailable": "Estado de remoção indisponível",
+            "CloneBeforeApply": "Será criada uma cópia de segurança com o nome «{0}» antes de aplicar os mods e as definições selecionados a este mundo.",
+            "Applying": "A aplicar alterações ao mundo",
+            "ApplyFailed": "Não foi possível aplicar as alterações",
+            "ConfirmApply": "Aplicar alterações aos mods?"
         }
     },
     "FireworksBlock": {

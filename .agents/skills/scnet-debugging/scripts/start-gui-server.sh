@@ -41,8 +41,8 @@ if [[ -z "$instance_name" || -z "$session_name" || -z "$world_name" || -z "$play
     exit 2
 fi
 
-if ! [[ "$instance_name" =~ ^[A-Za-z0-9_-]+$ ]]; then
-    echo "--instance must contain only ASCII letters, digits, '-' and '_'." >&2
+if ! [[ "$instance_name" =~ ^[A-Za-z0-9_@-]+$ ]]; then
+    echo "--instance must contain only ASCII letters, digits, '-', '_' and '@'." >&2
     exit 2
 fi
 

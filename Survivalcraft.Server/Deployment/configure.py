@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Resolve configured mod versions and update the persistent game instance."""
+"""Prepare the new-world mod template without changing saved world profiles."""
 
 import json
 import os
@@ -94,8 +94,6 @@ def profile_xml(profile_id, packages):
 
 def main():
     instance_path = pathlib.Path(os.environ["SCNET_INSTANCE_PATH"])
-    session_name = os.environ["SCNET_SESSION"]
-    world_name = os.environ["SCNET_WORLD"]
     base_url = os.environ.get("CONTENT_SERVER", "").strip()
     if base_url:
         parsed_url = urllib.parse.urlsplit(base_url)
@@ -123,27 +121,10 @@ def main():
             "Priority": "0",
         })
 
-    world_path = instance_path / "Data" / "Worlds" / world_name
-    sessions_path = config_path / "SessionInfo.xml"
-    session_id = None
-    if sessions_path.exists():
-        sessions = ET.parse(sessions_path).getroot()
-        for session in sessions.findall("SessionInfo"):
-            if session.get("Name") == session_name:
-                session_id = session.get("SessionId", "")
-                if not re.fullmatch(r"[0-9a-f]{32}", session_id):
-                    fail(f"Invalid session ID for {session_name}")
-                break
-
     if base_url:
         write_xml(repositories_path, repositories)
     write_xml(config_path / "ModProfile.xml", profile_xml("default", packages))
-    if world_path.is_dir():
-        write_xml(world_path / "WorldModProfile.xml", profile_xml(world_name, packages))
-    if session_id:
-        write_xml(config_path / "SessionProfiles" / f"{session_id}.xml",
-                  profile_xml(session_id, packages))
-    print(f"Configured {len(packages)} mods in {instance_path}")
+    print(f"Configured new-world template with {len(packages)} mods in {instance_path}")
 
 
 if __name__ == "__main__":

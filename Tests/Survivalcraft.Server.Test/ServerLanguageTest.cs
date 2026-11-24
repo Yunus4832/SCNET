@@ -22,7 +22,11 @@ public sealed class ServerLanguageTest
             )
         );
         Storage.RegisterFileSystemRoot("app", AppContext.BaseDirectory, readOnly: true);
-        using var mods = GameModRuntime.Start();
+        using var mods = GameModRuntime.StartFromProfile(
+            new ModProfile(),
+            Path.GetTempPath(),
+            includeClientAssets: false
+        );
         var runtimeField = typeof(ServerStarter).GetField(
             "_modRuntime",
             BindingFlags.Static | BindingFlags.NonPublic

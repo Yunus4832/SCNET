@@ -288,7 +288,7 @@ public class GameModRuntimeTest
     }
 
     [Fact]
-    public void RuntimeCachesEffectiveProfileAndModDataHash()
+    public void RuntimeCachesLoadedProfileAndModDataHash()
     {
         var directory = Path.Combine(Path.GetTempPath(), $"scnet-runtime-test-{Guid.NewGuid():N}");
         Directory.CreateDirectory(directory);
@@ -300,7 +300,8 @@ public class GameModRuntimeTest
                 {
                   "id": "example.addon",
                   "name": "Addon",
-                  "version": "1.0.0"
+                  "version": "1.0.0",
+                  "canRemoveFromWorld": false
                 }
                 """,
                 new Dictionary<string, string>
@@ -312,11 +313,11 @@ public class GameModRuntimeTest
             var descriptors = ModPackageCatalog.CreateLoadPlan(directory);
             using var runtime = GameModRuntime.Start(descriptors);
 
-            var requirement = Assert.Single(runtime.EffectiveProfile.Packages);
+            var requirement = Assert.Single(runtime.LoadedProfile.Packages);
             Assert.Equal("example.addon", requirement.ModId);
             Assert.Equal("1.0.0", requirement.Version);
             Assert.False(string.IsNullOrWhiteSpace(requirement.PackageHash));
-            Assert.Equal(ModProfileFingerprint.Compute(runtime.EffectiveProfile), runtime.ModDataHash);
+            Assert.Equal(ModProfileFingerprint.Compute(runtime.LoadedProfile), runtime.ModDataHash);
         }
         finally
         {
@@ -337,7 +338,8 @@ public class GameModRuntimeTest
                 {
                   "id": "example.addon",
                   "name": "Addon",
-                  "version": "1.0.0"
+                  "version": "1.0.0",
+                  "canRemoveFromWorld": false
                 }
                 """,
                 new Dictionary<string, string>

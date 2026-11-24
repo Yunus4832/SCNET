@@ -21,11 +21,9 @@ public sealed class ModManagementScreen : Screen
 
         Global = 3,
 
-        World = 4,
+        DeleteCache = 4,
 
-        DeleteCache = 5,
-
-        Refresh = 6
+        Refresh = 5
     }
 
     private readonly ActionPanelWidget _actionPanel;
@@ -59,9 +57,9 @@ public sealed class ModManagementScreen : Screen
             [
                 ModAction.Import,
                 ModAction.Export,
-                ModAction.Global,
-                ModAction.World
-            ]
+                ModAction.Global
+            ],
+            [1f, 1f, 1f, 0f]
         );
         _actionPanel.SetSecondaryItems(
             [
@@ -118,7 +116,7 @@ public sealed class ModManagementScreen : Screen
         {
             ModAction.Import => FilePicker.IsAvailable,
             ModAction.Export => FilePicker.IsAvailable && selected?.LocalEntry is not null,
-            ModAction.Global or ModAction.World => selected is not null,
+            ModAction.Global => selected is not null,
             ModAction.Details => selected?.LocalEntry is not null,
             ModAction.DeleteCache => selected?.LocalEntry is not null,
             ModAction.Refresh => true,
@@ -147,9 +145,6 @@ public sealed class ModManagementScreen : Screen
                 break;
             case ModAction.Global when selected is not null:
                 ToggleGlobal(selected);
-                break;
-            case ModAction.World when selected is not null:
-                SelectWorldsForPackage(selected);
                 break;
             case ModAction.DeleteCache when selected is not null:
                 ConfirmDeleteCache(selected);
@@ -216,7 +211,7 @@ public sealed class ModManagementScreen : Screen
             repository.ListAll(),
             _globalProfile,
             worldProfiles,
-            CurrentModRuntime.Value?.EffectiveProfile
+            CurrentModRuntime.Value?.LoadedProfile
         );
         _modsList.ClearItems();
         foreach (var item in items)
@@ -443,49 +438,6 @@ public sealed class ModManagementScreen : Screen
                 _busy = false;
             }
         }
-    }
-
-    private void SelectWorldsForPackage(ManagedModItem item)
-    {
-        ClientApplication.Worlds.UpdateWorldsList();
-        if (ClientApplication.Worlds.WorldInfos.Count == 0)
-        {
-            DialogsManager.Alert(
-                Localization.ClientLanguage.Catalog.Get(_typeName, "NoWorldTitle"),
-                Localization.ClientLanguage.Catalog.Get(_typeName, "NoWorldMessage")
-            );
-            return;
-        }
-
-        DialogsManager.ShowDialog(
-            null,
-            new ModWorldSelectionDialog(
-                $"{item.ModId}@{item.Version}",
-                ClientApplication.Worlds.WorldInfos,
-                world => ModProfileManager.LoadWorldProfile(world.DirectoryName) is { } profile &&
-                         ModManagementCatalog.ContainsExact(profile, item),
-                selections =>
-                {
-                    foreach (var selection in selections)
-                    {
-                        var profile = ModProfileManager.LoadWorldProfile(selection.World.DirectoryName) ??
-                                      new ModProfile();
-                        if (selection.IsChecked)
-                        {
-                            AddPackage(profile, item);
-                        }
-                        else if (ModManagementCatalog.ContainsExact(profile, item))
-                        {
-                            RemovePackage(profile, item.ModId);
-                        }
-
-                        ModProfileManager.SaveWorldProfile(selection.World.DirectoryName, profile);
-                    }
-
-                    RefreshState();
-                }
-            )
-        );
     }
 
     private static void AddPackage(ModProfile profile, ManagedModItem item)

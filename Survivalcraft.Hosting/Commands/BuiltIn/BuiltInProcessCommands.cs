@@ -212,7 +212,7 @@ public sealed class BuiltInProcessCommands(
             return CommandResult.LocalizedFail(
                 "application.instance.invalid_id",
                 "InstanceInvalidId_Message",
-                "实例 ID 只能包含英文字母、数字、'-' 和 '_'。"
+                "实例 ID 只能包含英文字母、数字、'-'、'_' 和 '@'。"
             );
         }
         catch (InvalidOperationException)
@@ -293,7 +293,7 @@ public sealed class BuiltInProcessCommands(
             return CommandResult.LocalizedFail(
                 "application.instance.invalid_id",
                 "InstanceInvalidId_Message",
-                "实例 ID 只能包含英文字母、数字、'-' 和 '_'。"
+                "实例 ID 只能包含英文字母、数字、'-'、'_' 和 '@'。"
             );
         }
 

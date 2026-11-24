@@ -6,6 +6,51 @@ namespace Content.Packaging.Test;
 public sealed class ContentPackageReaderTest
 {
     [Theory]
+    [InlineData("")]
+    [InlineData("\"canRemoveFromWorld\": null,")]
+    [InlineData("\"canRemoveFromWorld\": \"false\",")]
+    [InlineData("\"canRemoveFromWorld\": 0,")]
+    public void RejectsMissingOrMalformedRemovalDeclaration(string declaration)
+    {
+        var json = _modManifest.Replace("\"canRemoveFromWorld\": false,", declaration, StringComparison.Ordinal);
+        var manifest = ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(json));
+        using var stream = new MemoryStream();
+
+        var exception = Assert.Throws<ContentPackageException>(() => ContentPackageWriter.Write(
+                stream,
+                manifest,
+                [Entry("payload/mod.json", "{\"formatVersion\":1}"), Entry("payload/data/example.txt", "data")]
+            )
+        );
+
+        Assert.Contains("canRemoveFromWorld", exception.Message);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void RemovalDeclarationSurvivesPackageRoundTrip(bool canRemove)
+    {
+        var json = _modManifest.Replace(
+            "\"canRemoveFromWorld\": false",
+            "\"canRemoveFromWorld\": " + canRemove.ToString().ToLowerInvariant(),
+            StringComparison.Ordinal
+        );
+        var manifest = ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(json));
+        using var stream = new MemoryStream();
+        ContentPackageWriter.Write(
+            stream,
+            manifest,
+            [Entry("payload/mod.json", "{\"formatVersion\":1}"), Entry("payload/data/example.txt", "data")]
+        );
+        stream.Position = 0;
+
+        var inspection = ContentPackageReader.Inspect(stream);
+
+        Assert.Equal(canRemove, inspection.Manifest.Metadata.GetProperty("canRemoveFromWorld").GetBoolean());
+    }
+
+    [Theory]
     [InlineData("\"side\": \"common\", \"entrypoints\": {}")]
     [InlineData("\"entrypoint\": \"\"")]
     [InlineData("\"entrypoint\": {}")]
@@ -104,7 +149,7 @@ public sealed class ContentPackageReaderTest
 
         var hash = ContentPackageWriter.Write(package, manifest, entries);
 
-        Assert.Equal("31e5363e2ad6ec1e3e934fae5995be26066d286d2cc8fe041db90759803ca831", hash);
+        Assert.Equal("ede046e0aa5548c81c19890f0d2ef587768d9aead961182f9706dd3fb19c281f", hash);
     }
 
     [Fact]
@@ -548,7 +593,7 @@ public sealed class ContentPackageReaderTest
         {
             {
                 _modManifest, ContentPackageType.Mod,
-                "d65e7f64fae3cb6c1a04b8666ae2d7c4bc9e644ef85055364223ff1c2e217a29", [
+                "4b091e14728ff86c256f0d891519c315673e6ccd1a0dc30d3dc864eabc6e018e", [
                     Entry("payload/mod.json", "{\"formatVersion\":1}"),
                     Entry("payload/data/example.txt", "golden mod data")
                 ]
@@ -751,6 +796,7 @@ public sealed class ContentPackageReaderTest
                                           },
                                           "metadata": {
                                             "entrypoint": null,
+                                            "canRemoveFromWorld": false,
                                             "dependencies": []
                                           }
                                         }

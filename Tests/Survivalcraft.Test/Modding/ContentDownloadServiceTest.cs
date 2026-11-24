@@ -264,7 +264,8 @@ public sealed class ContentDownloadServiceTest : IDisposable
               {
                 "id": "{{identifier}}",
                 "name": "{{identifier}}",
-                "version": "{{version}}"
+                "version": "{{version}}",
+                "canRemoveFromWorld": false
               }
               """,
             new Dictionary<string, string> { ["data/marker.txt"] = "data" }

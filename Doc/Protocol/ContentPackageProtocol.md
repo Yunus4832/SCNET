@@ -113,7 +113,7 @@ Writer 必须用 UTF-8 无 BOM、两空格缩进、LF 换行和上表字段顺�
 公开的逐字节测试向量位于 [PackageHashVectors.json](./PackageHashVectors.json)，其他语言实现必须得到其中记录的
 `packageHash`，不能仅以同一实现内 Writer/Reader 结果相等作为互操作证据。
 可由 Writer 直接打包的最小 Mod 黄金源位于 `Tests/Content.Packaging.Test/Assets/GoldenMod/`，其固定 PackageHash 为
-`31e5363e2ad6ec1e3e934fae5995be26066d286d2cc8fe041db90759803ca831`。测试程序集还固定了五类最小逻辑包的 manifest、payload
+`ede046e0aa5548c81c19890f0d2ef587768d9aead961182f9706dd3fb19c281f`。测试程序集还固定了五类最小逻辑包的 manifest、payload
 字节和预期 PackageHash，任何协议实现变更都必须显式更新并审查这些值，不能由测试在运行时自行接受新 hash。
 
 长度前缀和排序消除了连接歧义；ZIP 条目顺序、压缩等级、压缩方式、时间戳、extra fields 和 ZIP 注释不参与。manifest 的空白或字段顺序变化会改变 `PackageHash`，因为它改变了实际 manifest 字节。ContentServer 可另存原始 ZIP 的 `BlobHash`，但它不是公开包身份，不能替代 `PackageHash`。
@@ -138,6 +138,7 @@ Writer 必须用 UTF-8 无 BOM、两空格缩进、LF 换行和上表字段顺�
 },
 "metadata": {
   "entrypoint": "Example.ModEntry, Example",
+  "canRemoveFromWorld": false,
   "dependencies": [
     { "identifier": "example.core", "minimumVersion": "1.2.0", "optional": false }
   ]
@@ -155,7 +156,10 @@ payload/assets/<identifier>/**
 程序集只允许文件名为 `*.dll` 的直接子项；data 与 assets 中只允许文件。`assets/<identifier>/` 的 Identifier 必须与 manifest 精确一致。模组贡献、程序集加载和资源命名空间见 [模组开发](../Modding.md)；权威字段由
 统一 `manifest.json` 和 metadata 提供，不另外读取旧模组清单格式。
 
-metadata 字段顺序为 `entrypoint`、`dependencies`。`entrypoint` 必须存在，其值为非空程序集限定类型名，
+metadata 包含 `entrypoint`、`canRemoveFromWorld`、可选的 `clientContentEntrypoint` 和 `dependencies`。
+`canRemoveFromWorld` 是作者必须显式填写的 Boolean，不能省略或使用 `null`。它声明模组是否允许从已使用它的世界移除；
+作者负责保证移除后世界仍能打开、运行和保存。它不承诺无损恢复或清理全部残留。
+`entrypoint` 必须存在，其值为非空程序集限定类型名，
 或纯数据/资源包使用的 `null`；为 `null` 时包必须至少含一项 data/assets 贡献。一个包只声明一个定义入口，
 不按宿主进程选择客户端或服务端版本；世界职责见 [模组开发](../Modding.md#模组定义与世界状态)。
 dependencies 按 identifier ordinal 升序写出；每项字段顺序为 `identifier`、`minimumVersion`、`optional`，

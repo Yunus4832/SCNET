@@ -11,7 +11,9 @@ public class ModManifestTest
     [InlineData("\"entrypoints\":{\"server\":\"Example.Server, Example\"}")]
     public void ProcessSpecificEntrypointsAreRejected(string field)
     {
-        var json = "{\"id\":\"example.test\",\"name\":\"Test\",\"version\":\"1.0.0\"," + field + "}";
+        var json = "{\"id\":\"example.test\",\"name\":\"Test\",\"version\":\"1.0.0\",\"canRemoveFromWorld\":false," +
+                   field +
+                   "}";
         Assert.Throws<JsonException>(() => ModManifest.Parse(json));
     }
 
@@ -23,6 +25,7 @@ public class ModManifestTest
                               "id": "example.content",
                               "name": "Example Content",
                               "version": "1.2.0",
+                              "canRemoveFromWorld": true,
                               "entrypoint": "Example.ModEntry, Example",
                               "dependencies": [
                                 { "id": "game.content", "minimumVersion": "1.0.0" }
@@ -34,6 +37,7 @@ public class ModManifestTest
 
         Assert.Equal(new ModId("example.content"), manifest.ModId);
         Assert.Equal("Example.ModEntry, Example", manifest.Entrypoint);
+        Assert.True(manifest.CanRemoveFromWorld);
         Assert.Equal("game.content", Assert.Single(manifest.RequiredDependencies).Id);
     }
 
@@ -45,6 +49,7 @@ public class ModManifestTest
                               "id": "example.content",
                               "name": "Example Content",
                               "version": "1.0.0",
+                              "canRemoveFromWorld": false,
                               "dependencies": [
                                 { "id": "example.content" }
                               ]
@@ -54,5 +59,17 @@ public class ModManifestTest
         var exception = Assert.Throws<InvalidOperationException>(() => ModManifest.Parse(json));
 
         Assert.Contains("cannot depend on itself", exception.Message);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(",\"canRemoveFromWorld\":null")]
+    [InlineData(",\"canRemoveFromWorld\":\"true\"")]
+    [InlineData(",\"canRemoveFromWorld\":1")]
+    public void ParseRequiresExplicitBooleanRemovalDeclaration(string declaration)
+    {
+        var json = "{\"id\":\"example.test\",\"name\":\"Test\",\"version\":\"1.0.0\"" + declaration + "}";
+
+        Assert.Throws<JsonException>(() => ModManifest.Parse(json));
     }
 }

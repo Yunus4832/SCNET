@@ -2,8 +2,11 @@ using System.Xml.Linq;
 
 using Engine.Network;
 
+using EntitySystem.TemplatesDatabase;
+
 using Game.Admission;
 using Game.Servers;
+using Game.World;
 
 namespace Game.Startup;
 
@@ -173,6 +176,11 @@ public static class SessionInfoSerializer
             );
         }
 
+        if (sessionInfo.WorldCreation is { } worldCreation)
+        {
+            element.Add(SerializeWorldCreation(worldCreation));
+        }
+
         return element;
     }
 
@@ -202,6 +210,12 @@ public static class SessionInfoSerializer
         sessionInfo.Target = ParseTarget(element.Attribute(nameof(SessionInfo.Target))?.Value);
         sessionInfo.World = NormalizeWorld(element.Attribute(nameof(SessionInfo.World))?.Value);
         sessionInfo.CreateWorldIfMissing = (bool?)element.Attribute(nameof(SessionInfo.CreateWorldIfMissing)) ?? false;
+        sessionInfo.WorldCreation = null;
+        if (element.Element(nameof(SessionInfo.WorldCreation)) is { } worldCreation)
+        {
+            sessionInfo.WorldCreation = ParseWorldCreation(worldCreation);
+        }
+
         sessionInfo.ForceWorldRunServer = (bool?)element.Attribute(nameof(SessionInfo.ForceWorldRunServer)) ?? false;
         sessionInfo.Seed = element.Attribute(nameof(SessionInfo.Seed))?.Value ?? string.Empty;
         sessionInfo.GameMode = ParseGameMode(element.Attribute(nameof(SessionInfo.GameMode))?.Value);
@@ -385,6 +399,32 @@ public static class SessionInfoSerializer
         };
     }
 
+    private static XElement SerializeWorldCreation(WorldCreationRequest creation)
+    {
+        var values = new ValuesDictionary();
+        creation.Settings.Save(values, false);
+        creation.Hosting.Save(values, creation.Settings.Name);
+        values.SetValue("Admission", creation.Admission.Save());
+        var element = new XElement(nameof(SessionInfo.WorldCreation));
+        values.Save(element);
+        return element;
+    }
+
+    private static WorldCreationRequest ParseWorldCreation(XElement element)
+    {
+        var values = new ValuesDictionary();
+        values.ApplyOverrides(element);
+        var settings = new WorldSettings();
+        settings.Load(values);
+        var hosting = new WorldHostingSettings();
+        hosting.Load(values);
+        return new WorldCreationRequest(
+            settings,
+            hosting,
+            ServerAdmissionPolicy.Load(values.GetValue<ValuesDictionary>("Admission"))
+        );
+    }
+
     public static SessionInfo Clone(SessionInfo source)
     {
         return new SessionInfo
@@ -394,6 +434,9 @@ public static class SessionInfoSerializer
             Target = source.Target,
             World = source.World,
             CreateWorldIfMissing = source.CreateWorldIfMissing,
+            WorldCreation = source.WorldCreation is { } creation
+                ? ParseWorldCreation(SerializeWorldCreation(creation))
+                : null,
             ForceWorldRunServer = source.ForceWorldRunServer,
             Seed = source.Seed,
             GameMode = source.GameMode,

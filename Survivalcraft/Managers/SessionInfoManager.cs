@@ -155,7 +155,8 @@ public static class SessionInfoManager
         var worldInfo = ResolveWorldSession(
             sessionInfo,
             createIfMissing,
-            StartupManager.Current.Request.ForceWorldRunServer
+            StartupManager.Current.Request.ForceWorldRunServer,
+            CurrentModRuntime.Value!.LoadedProfile
         );
         if (worldInfo is null) { return false; }
 
@@ -166,7 +167,8 @@ public static class SessionInfoManager
     internal static WorldInfo? ResolveWorldSession(
         SessionInfo sessionInfo,
         bool createIfMissing,
-        bool forceWorldRunServer
+        bool forceWorldRunServer,
+        ModProfile loadedProfile
     )
     {
         createIfMissing |= sessionInfo.CreateWorldIfMissing;
@@ -181,13 +183,28 @@ public static class SessionInfoManager
                 return null;
             }
 
-            worldInfo = CreateWorld(
-                sessionInfo.World,
-                sessionInfo.Seed,
-                sessionInfo.GameMode,
-                sessionInfo.TerrainCreation,
-                runServer: forceWorldRunServer
-            );
+            if (sessionInfo.WorldCreation is { } creation)
+            {
+                worldInfo = ClientApplication.Worlds.CreateWorld(
+                    DatabaseManager.GameDatabase,
+                    creation.Settings,
+                    creation.Hosting,
+                    loadedProfile,
+                    sessionInfo.World,
+                    creation.Admission
+                );
+            }
+            else
+            {
+                worldInfo = CreateWorld(
+                    sessionInfo.World,
+                    sessionInfo.Seed,
+                    sessionInfo.GameMode,
+                    sessionInfo.TerrainCreation,
+                    loadedProfile,
+                    runServer: forceWorldRunServer
+                );
+            }
         }
         else
         {
@@ -211,6 +228,7 @@ public static class SessionInfoManager
         if (sessionInfo.Target == SessionTarget.HostedWorld) { worldInfo!.Hosting.RunServer = true; }
 
         sessionInfo.CreateWorldIfMissing = false;
+        sessionInfo.WorldCreation = null;
         sessionInfo.ForceWorldRunServer = false;
         return worldInfo;
     }
@@ -265,6 +283,7 @@ public static class SessionInfoManager
         string? seed,
         GameMode? gameMode,
         TerrainCreationOptions terrainCreation,
+        ModProfile initialProfile,
         bool runServer
     )
     {
@@ -281,6 +300,7 @@ public static class SessionInfoManager
             DatabaseManager.GameDatabase,
             worldSettings,
             new WorldHostingSettings { RunServer = runServer },
+            initialProfile,
             customWorldDirectoryName
         );
     }

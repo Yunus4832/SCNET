@@ -119,7 +119,7 @@ public sealed class ContentPackageCacheTest : IDisposable
     {
         using var stream = ScpkgTestPackage.Create(
             """
-            {"id":"cache.example","name":"Cache Example","version":"1.0.0"}
+            {"id":"cache.example","name":"Cache Example","version":"1.0.0","canRemoveFromWorld":false}
             """,
             new Dictionary<string, string> { ["data/marker.txt"] = "cache" }
         );

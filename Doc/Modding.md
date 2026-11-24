@@ -70,6 +70,11 @@ GUI 图集也输出直通 Alpha 的 WebP，约定见 [图集工具](../Tools/Gui
 
 ## 模组定义与世界状态
 
+模组清单的 metadata 必须显式声明 `canRemoveFromWorld`。模板默认是 `false`：
+加入已有世界后，游戏禁止移除该 ModId；同一 ModId 替换版本或精确包仍可执行，但操作前克隆。
+作者只有在验证完全不加载模组时世界仍能打开、运行、保存后，才应声明为 `true`。
+允许移除不保证内容无损或残留清零，游戏不提供通用永久卸载回调。
+
 - **共享规则**：`metadata.entrypoint` 使用带程序集名的 `IMod` 类型名，纯数据包填写 `null`。
   同一模组环境只加载一次共享程序集并执行 `Configure` 和 `Start` 注册。权威世界与客户端世界分别持有运行状态。
 - **客户端表现**：可通过 `metadata.clientContentEntrypoint` 声明带程序集名的 `IClientContentModule`。

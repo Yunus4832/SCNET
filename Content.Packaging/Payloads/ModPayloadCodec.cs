@@ -14,12 +14,19 @@ public sealed class ModPayloadCodec : IContentPayloadCodec
             "scnet.mod-v1",
             "payload/mod.json",
             "application/json",
-            ["entrypoint", "clientContentEntrypoint", "dependencies"],
+            ["entrypoint", "clientContentEntrypoint", "dependencies", "canRemoveFromWorld"],
             allowAdditionalPayload: true
         );
         if (!manifest.Metadata.TryGetProperty("entrypoint", out var entrypoint))
         {
             throw new ContentPackageException("Mod metadata.entrypoint is required; data-only packages use null.");
+        }
+
+        var canRemoveFromWorld =
+            ContentPackageManifest.GetRequiredProperty(manifest.Metadata, "canRemoveFromWorld", "manifest.metadata");
+        if (canRemoveFromWorld.ValueKind is not (JsonValueKind.True or JsonValueKind.False))
+        {
+            throw new ContentPackageException("Mod metadata.canRemoveFromWorld must be a boolean.");
         }
 
         var dependencies =

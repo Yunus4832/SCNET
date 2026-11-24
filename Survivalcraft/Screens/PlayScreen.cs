@@ -139,12 +139,6 @@ public class PlayScreen : Screen
 
     public override void Update()
     {
-        if (_worldsListWidget.SelectedItem != null &&
-            ClientApplication.Worlds.WorldInfos.IndexOf((WorldInfo)_worldsListWidget.SelectedItem) < 0)
-        {
-            _worldsListWidget.SelectedItem = null;
-        }
-
         Children.Find<LabelWidget>("TopBar.Label")!.Text = string.Format(
             Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, 6),
             _worldsListWidget.Items.Count
@@ -233,15 +227,19 @@ public class PlayScreen : Screen
 
     private void ShowCloneDialog(WorldInfo worldInfo)
     {
-        var defaultName = ClientApplication.Worlds.GetUnusedWorldName();
+        var cloneName = WorldRepository.GetCloneName(worldInfo.WorldSettings.Name, DateTime.Now);
+        var language = Localization.ClientLanguage.Catalog;
         DialogsManager.ShowDialog(
             null,
-            new TextBoxDialog(
-                Localization.ClientLanguage.Catalog.GetContentWidgets(_typeName, "CloneTitle"),
-                defaultName,
-                128,
-                name => CloneWorld(worldInfo, string.IsNullOrWhiteSpace(name) ? defaultName : name.Trim()),
-                false
+            new MessageDialog(
+                language.GetContentWidgets(_typeName, "CloneTitle"),
+                string.Format(language.GetContentWidgets(_typeName, "CloneQuestion"), cloneName),
+                language.GetContentWidgets(_typeName, "Clone"),
+                language.Cancel,
+                button =>
+                {
+                    if (button == MessageDialogButton.Button1) { CloneWorld(worldInfo, cloneName); }
+                }
             )
         );
     }
@@ -335,7 +333,6 @@ public class PlayScreen : Screen
         DialogsManager.HideAllDialogs();
         var worldInfo = (WorldInfo)item;
         PrepareWorldModsAndPlay(worldInfo, SessionInfoManager.CreateWorldSession(worldInfo, target));
-        _worldsListWidget.SelectedItem = null;
     }
 
     private void PrepareWorldModsAndPlay(WorldInfo worldInfo, SessionInfo session)

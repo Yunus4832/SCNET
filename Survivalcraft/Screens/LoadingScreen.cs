@@ -66,9 +66,10 @@ public class LoadingScreen : Screen
             delegate
             {
                 var startupSession = StartupManager.Current.Session;
+                var profile = ModProfileManager.ResolveStartupProfile(startupSession);
                 if (StartupModProfileBootstrapper.EnsureStartupSessionProfile(
-                        StartupManager.Current.Session.SessionId,
                         startupSession,
+                        profile,
                         Storage.GetSystemPath(ClientApplication.Paths.ContentPackageCache),
                         Log.Information
                     ))
@@ -77,10 +78,6 @@ public class LoadingScreen : Screen
                 }
 
                 Log.Information("初始化模组运行时");
-                var profile = ModProfileManager.LoadEffectiveProfile(
-                    StartupManager.Current.Session.SessionId,
-                    startupSession
-                );
                 GameEntry.SetModRuntime(
                     GameModRuntime.StartFromProfile(
                         profile,
@@ -197,6 +194,7 @@ public class LoadingScreen : Screen
         AddLoadAction(delegate { AddScreen("ContentRepositories", new ContentRepositoryScreen()); });
         AddLoadAction(delegate { AddScreen("ContentPackages", new ContentPackageScreen()); });
         AddLoadAction(delegate { AddScreen("ModManagement", new ModManagementScreen()); });
+        AddLoadAction(delegate { AddScreen("WorldMods", new WorldModsScreen()); });
         AddLoadAction(delegate { AddScreen("ManageContent", new ManageContentScreen()); });
         AddLoadAction(delegate { AddScreen("Character", new CharacterScreen()); });
         AddLoadAction(delegate { AddScreen("NetPlay", new NetPlayScreen()); });

@@ -148,6 +148,19 @@ public sealed class StarterInstanceManagerTest : IDisposable
         Assert.Throws<InvalidOperationException>(() => StarterInstanceManager.DeleteInstance("secondary"));
     }
 
+    [Fact]
+    public void TimestampedCloneIdCanBeClonedAgain()
+    {
+        StarterInstanceManager.CreateInstance("lab");
+        var time = new DateTime(2026, 11, 24, 15, 30, 45);
+        var first = StarterInstanceManager.GetCloneId("lab", time);
+        StarterInstanceManager.CloneInstance("lab", first);
+        var second = StarterInstanceManager.GetCloneId(first, time.AddSeconds(1));
+        StarterInstanceManager.CloneInstance(first, second);
+        Assert.Equal("lab@24153046", second);
+        Assert.Contains(second, StarterInstanceManager.ListInstances());
+    }
+
     [Theory]
     [InlineData("../escape")]
     [InlineData("with/slash")]

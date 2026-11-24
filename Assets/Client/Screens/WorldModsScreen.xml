@@ -1,0 +1,21 @@
+<Screen xmlns="runtime-namespace:Game.Widgets">
+    <PanoramaWidget/>
+    <StackPanelWidget Direction="Horizontal">
+        <CanvasWidget Style="{Widgets/TopBarContents}">
+            <LabelWidget Name="TopBar.Label" Text="[WorldModsScreen:Title]"/>
+        </CanvasWidget>
+        <StackPanelWidget Direction="Vertical" HorizontalAlignment="Center">
+            <CanvasWidget Style="{Styles/ScreenContentArea}">
+                <BevelledRectangleWidget Style="{Styles/Area}"/>
+                <ListPanelWidget Name="ModsList" Direction="Vertical" Margin="3, 3" ItemSize="96"
+                                 SelectionColor="10, 70, 0, 90"/>
+                <LabelWidget Name="Empty" Text="[WorldModsScreen:Empty]" HorizontalAlignment="Center"
+                             VerticalAlignment="Center" Color="160, 160, 160"/>
+            </CanvasWidget>
+            <LabelWidget Name="Unavailable" Text="[WorldModsScreen:CacheUnavailable]" IsVisible="false"
+                         Color="255, 180, 80" FontScale="0.55" Margin="10, 2"
+                         WordWrap="true" MaxLines="2"/>
+            <ActionPanelWidget Name="Actions" Style="{Styles/ScreenActionPanel}"/>
+        </StackPanelWidget>
+    </StackPanelWidget>
+</Screen>

@@ -44,6 +44,7 @@ public sealed class WorldRepository
         _worldsDirectoryName = worldsDirectory;
         SetNewWorldNames(newWorldNames);
         Storage.CreateDirectory(_worldsDirectoryName);
+        RecoverInterruptedEdits();
     }
 
     public void SetNewWorldNames(IEnumerable<string> names)
@@ -144,6 +145,8 @@ public sealed class WorldRepository
             using var output = Storage.OpenFile(target, OpenFileMode.Create);
             input.CopyTo(output);
         }
+
+        ModProfileManager.SaveWorldProfile(directoryName, new ModProfile());
     }
 
     private IDisposable BeginFileOperation(string directoryName)
@@ -487,10 +490,12 @@ public sealed class WorldRepository
         GameDatabase database,
         WorldSettings worldSettings,
         WorldHostingSettings hosting,
+        ModProfile initialProfile,
         string customWorldDirectoryName = "",
         Admission.ServerAdmissionPolicy? admission = null
     )
     {
+        ModProfileValidation.Validate(initialProfile);
         string unusedWorldDirectoryName;
         if (string.IsNullOrEmpty(customWorldDirectoryName))
         {
@@ -506,7 +511,6 @@ public sealed class WorldRepository
             unusedWorldDirectoryName = customWorldDirectoryName;
         }
 
-        Storage.CreateDirectory(unusedWorldDirectoryName);
         if (!ValidateWorldName(worldSettings.Name))
         {
             throw new InvalidOperationException($"World name \"{worldSettings.Name}\" is invalid.");
@@ -538,9 +542,118 @@ public sealed class WorldRepository
         }
 
         projectNode.Add(BlockIndexMapping.Empty.ToXml());
-        SaveWorldMetadata(Storage.CombinePaths(unusedWorldDirectoryName, "Project.xml"), projectNode);
+        using var operation = BeginFileOperation(unusedWorldDirectoryName);
+        var staging = CreateStagingDirectory(unusedWorldDirectoryName);
+        try
+        {
+            SaveWorldMetadata(Storage.CombinePaths(staging, "Project.xml"), projectNode);
+            ModProfileManager.SaveWorldProfile(staging, initialProfile);
+            Storage.MoveDirectory(staging, unusedWorldDirectoryName);
+        }
+        finally { DeleteStagingDirectory(staging); }
 
         return GetWorldInfo(unusedWorldDirectoryName) ?? throw new ArgumentException("Create world failed");
+    }
+
+    /// <summary>检查模组变更，必要时先克隆完整旧世界，再向当前世界应用编辑结果。</summary>
+    public WorldInfo? ApplyWorldEdit(
+        string directoryName,
+        WorldSettings worldSettings,
+        WorldHostingSettings hosting,
+        Admission.ServerAdmissionPolicy admission,
+        ModProfile desiredProfile,
+        LocalModRepository packages,
+        string? cloneName
+    )
+    {
+        ArgumentNullException.ThrowIfNull(packages);
+        ModProfileValidation.Validate(desiredProfile);
+        if (!ValidateWorldName(worldSettings.Name))
+        {
+            throw new InvalidOperationException($"World name \"{worldSettings.Name}\" is invalid.");
+        }
+
+        using var operation = BeginFileOperation(directoryName);
+        var original = ModProfileManager.LoadWorldProfile(directoryName) ??
+                       throw new InvalidOperationException("World mod profile is missing.");
+        var changed = !ModProfileIdentity.AreEquivalent(original, desiredProfile);
+        WorldInfo? clone = null;
+        if (changed)
+        {
+            foreach (var removed in original.Packages.Where(package =>
+                         !desiredProfile.Packages.Any(target =>
+                             string.Equals(target.ModId, package.ModId, StringComparison.OrdinalIgnoreCase)
+                         )
+                     ))
+            {
+                if (!ReadPackage(removed).Manifest.CanRemoveFromWorld)
+                {
+                    throw new InvalidOperationException($"Mod '{removed.ModId}' cannot be removed from this world.");
+                }
+            }
+
+            var descriptors = new List<ModDescriptor> { BuiltInContentMod.CreateDescriptor() };
+            try
+            {
+                foreach (var requirement in desiredProfile.Packages)
+                {
+                    descriptors.Add(ReadPackage(requirement).CreateDescriptor());
+                }
+
+                ModDependencyResolver.Resolve(descriptors);
+            }
+            finally
+            {
+                foreach (var descriptor in descriptors)
+                {
+                    descriptor.Lifetime?.Dispose();
+                }
+            }
+
+            ArgumentException.ThrowIfNullOrWhiteSpace(cloneName);
+            clone = CloneWorld(directoryName, cloneName);
+        }
+
+        if (changed)
+        {
+            var staging = CreateStagingDirectory(directoryName);
+            try
+            {
+                CopyDirectory(directoryName, staging);
+                ModProfileManager.SaveWorldProfile(staging, desiredProfile);
+                ChangeWorld(staging, worldSettings, hosting, admission, refreshAdventureSnapshot: true);
+
+                PublishEditedWorld(staging, directoryName);
+            }
+            finally { DeleteStagingDirectory(staging); }
+        }
+        else { ChangeWorld(directoryName, worldSettings, hosting, admission); }
+
+        return clone;
+
+        ModPackage ReadPackage(ModPackageRequirement requirement)
+        {
+            var entry = packages.Find(requirement) ??
+                        throw new InvalidOperationException(
+                            $"Mod package '{requirement.ModId}@{requirement.Version}' is not available locally."
+                        );
+            using var stream = File.OpenRead(entry.Path);
+            var package = ModPackage.Read(entry.Path, stream);
+            if (!string.Equals(package.PackageHash, requirement.PackageHash, StringComparison.Ordinal) ||
+                !string.Equals(package.Manifest.Id, requirement.ModId, StringComparison.OrdinalIgnoreCase) ||
+                !string.Equals(package.Manifest.Version, requirement.Version, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException($"Mod package '{requirement.ModId}' does not match its profile.");
+            }
+
+            return package;
+        }
+    }
+
+    /// <summary>生成确认框和实际副本共用的名称，仅替换末尾已有的克隆时间戳。</summary>
+    public static string GetCloneName(string sourceName, DateTime localTime)
+    {
+        return CloneNaming.Create(sourceName, localTime, 128);
     }
 
     public WorldInfo CloneWorld(string sourceDirectoryName, string name)
@@ -601,6 +714,17 @@ public sealed class WorldRepository
         Admission.ServerAdmissionPolicy? admission = null
     )
     {
+        ChangeWorld(directoryName, worldSettings, hosting, admission, refreshAdventureSnapshot: false);
+    }
+
+    private void ChangeWorld(
+        string directoryName,
+        WorldSettings worldSettings,
+        WorldHostingSettings hosting,
+        Admission.ServerAdmissionPolicy? admission,
+        bool refreshAdventureSnapshot
+    )
+    {
         var xmlFile = Storage.CombinePaths(directoryName, "Project.xml");
         if (!Storage.FileExists(xmlFile))
         {
@@ -631,7 +755,7 @@ public sealed class WorldRepository
 
         SaveWorldMetadata(xmlFile, projectNode);
 
-        if (worldSettings.GameMode == value)
+        if (worldSettings.GameMode == value && !(refreshAdventureSnapshot && value == GameMode.Adventure))
         {
             return;
         }
@@ -667,6 +791,50 @@ public sealed class WorldRepository
         finally
         {
             if (File.Exists(temporary)) { File.Delete(temporary); }
+        }
+    }
+
+    private string CreateStagingDirectory(string target)
+    {
+        var staging = Storage.CombinePaths(_worldsDirectoryName + ".staging", Storage.GetFileName(target));
+        DeleteStagingDirectory(staging);
+        Storage.CreateDirectory(staging);
+        return staging;
+    }
+
+    private static void DeleteStagingDirectory(string staging)
+    {
+        if (Storage.DirectoryExists(staging)) { Storage.DeleteDirectoryRecursive(staging); }
+    }
+
+    private void PublishEditedWorld(string staging, string target)
+    {
+        var previousRoot = _worldsDirectoryName + ".previous";
+        Storage.CreateDirectory(previousRoot);
+        var previous = Storage.CombinePaths(previousRoot, Storage.GetFileName(target));
+        Storage.MoveDirectory(target, previous);
+        try { Storage.MoveDirectory(staging, target); }
+        catch
+        {
+            Storage.MoveDirectory(previous, target);
+            throw;
+        }
+
+        Storage.DeleteDirectoryRecursive(previous);
+    }
+
+    /// <summary>完成进程中断时尚未结束的目录替换；玩家命名的独立副本另行保存。</summary>
+    private void RecoverInterruptedEdits()
+    {
+        var previousRoot = _worldsDirectoryName + ".previous";
+        if (!Storage.DirectoryExists(previousRoot)) { return; }
+
+        foreach (var name in Storage.ListDirectoryNames(previousRoot))
+        {
+            var previous = Storage.CombinePaths(previousRoot, name);
+            var target = Storage.CombinePaths(_worldsDirectoryName, name);
+            if (Storage.DirectoryExists(target)) { Storage.DeleteDirectoryRecursive(previous); }
+            else { Storage.MoveDirectory(previous, target); }
         }
     }
 

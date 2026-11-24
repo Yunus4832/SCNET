@@ -384,7 +384,12 @@ public static class ServerStarter
         if (ProcessStopRequest()) { return 0; }
 
         var startupSession = startup.Session;
-        var world = ServerWorldSelection.Resolve(startup, _repository, DatabaseManager.GameDatabase);
+        var world = ServerWorldSelection.Resolve(
+            startup,
+            _repository,
+            DatabaseManager.GameDatabase,
+            _modRuntime!.LoadedProfile
+        );
         var serverPort = startupSession.ServerPort > 0
             ? startupSession.ServerPort
             : HostingConfiguration.Preferences.ServerPort;
@@ -748,7 +753,7 @@ public static class ServerStarter
         ServerDirectoryManager.Initialize();
         _repository = new WorldRepository(GamePaths.Worlds, [], _activity, WorldProjectPersistence.WaitForPendingSaves);
         ModProfileManager.Initialize(_repository);
-        var profile = ModProfileManager.LoadEffectiveProfile(startup.Session.SessionId, startup.Session);
+        var profile = ModProfileManager.ResolveStartupProfile(startup.Session);
         ModProfileResolver.EnsurePackagesAvailable(
             profile,
             Storage.GetSystemPath(GamePaths.ContentPackageCache),

@@ -31,8 +31,9 @@ done
 export SCNET_P2P="$P2P" SCNET_RENDEZVOUS="$RENDEZVOUS" SCNET_ROOM_NAME="$ROOM_NAME"
 export SCNET_ROOM_DESCRIPTION="$ROOM_DESCRIPTION" SCNET_ROOM_PUBLIC="$ROOM_PUBLIC"
 
-for name in "$INSTANCE" "$SESSION" "$WORLD"; do
-    [[ "$name" =~ ^[A-Za-z0-9_-]+$ ]] || { echo "Invalid instance, session or world name: $name" >&2; exit 2; }
+[[ "$INSTANCE" =~ ^[A-Za-z0-9_@-]+$ ]] || { echo "Invalid instance ID: $INSTANCE" >&2; exit 2; }
+for name in "$SESSION" "$WORLD"; do
+    [[ "$name" =~ ^[A-Za-z0-9_-]+$ ]] || { echo "Invalid session or world name: $name" >&2; exit 2; }
 done
 [[ "$SEED" =~ ^[A-Za-z0-9_-]+$ ]] || { echo "Invalid seed: $SEED" >&2; exit 2; }
 case "$GAME_MODE" in Creative|Harmless|Survival|Challenging|Cruel|Adventure) ;; *) echo "Invalid GAME_MODE" >&2; exit 2 ;; esac

@@ -23,19 +23,21 @@ public static class ModProfileManager
 
     public static string EmptyDataHash => GameProtocol.EmptyModDataHash;
 
-    public static ModProfile LoadEffectiveProfile(string? sessionId)
+    /// <summary>按启动目标选择完整配置，已有世界以存档为准，联机重启使用已准备的会话配置。</summary>
+    public static ModProfile ResolveStartupProfile(SessionInfo session)
     {
-        return LoadEffectiveProfile(sessionId, null);
-    }
-
-    public static ModProfile LoadEffectiveProfile(string? sessionId, SessionInfo? sessionInfo)
-    {
-        if (TryLoadSessionProfile(sessionId, out var sessionProfile))
+        if (session.Target is SessionTarget.World or SessionTarget.HostedWorld)
         {
-            return sessionProfile;
+            if (TryResolveWorldDirectory(session, out var directory)) { return LoadRequiredWorldProfile(directory); }
+
+            if (session.WorldCreation is not null)
+            {
+                return LoadSessionProfile(session.SessionId) ??
+                       throw new InvalidOperationException("Pending world creation profile is missing.");
+            }
         }
 
-        return ResolveProfileForSessionTarget(sessionInfo);
+        return LoadSessionProfile(session.SessionId) ?? LoadGlobalProfile();
     }
 
     public static ModProfile LoadGlobalProfile()
@@ -49,22 +51,6 @@ public static class ModProfileManager
         var normalized = Normalize(profile);
         normalized.Id = "default";
         SaveProfile(GlobalProfilePath, normalized);
-    }
-
-    public static ModProfile ResolveProfileForSessionTarget(SessionInfo? sessionInfo)
-    {
-        var globalProfile = LoadGlobalProfile();
-        if (TryResolveWorldProfileContext(sessionInfo, out var worldContext))
-        {
-            return ResolveWorldEffectiveProfile(
-                globalProfile,
-                worldContext.WorldDirectoryName,
-                worldContext.WorldName,
-                worldContext.Strategy
-            );
-        }
-
-        return globalProfile;
     }
 
     public static ModProfile? LoadSessionProfile(string? sessionId)
@@ -294,9 +280,9 @@ public static class ModProfileManager
         };
     }
 
-    private static bool TryResolveWorldProfileContext(SessionInfo? sessionInfo, out WorldProfileContext context)
+    private static bool TryResolveWorldDirectory(SessionInfo? sessionInfo, out string worldDirectoryName)
     {
-        context = default;
+        worldDirectoryName = string.Empty;
         if (sessionInfo == null ||
             sessionInfo.Target is not (SessionTarget.World or SessionTarget.HostedWorld) ||
             string.IsNullOrWhiteSpace(sessionInfo.World))
@@ -307,20 +293,19 @@ public static class ModProfileManager
         Worlds.UpdateWorldsList();
         var normalizedWorld = sessionInfo.World.Trim();
         var worldInfo = Worlds.WorldInfos.FirstOrDefault(world =>
-                            string.Equals(world.DirectoryName, normalizedWorld, StringComparison.OrdinalIgnoreCase) ||
-                            string.Equals(
-                                world.WorldSettings.Name,
-                                normalizedWorld,
-                                StringComparison.OrdinalIgnoreCase
-                            )
-                        ) ??
-                        null;
+            string.Equals(world.DirectoryName, normalizedWorld, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(
+                world.WorldSettings.Name,
+                normalizedWorld,
+                StringComparison.OrdinalIgnoreCase
+            )
+        );
         if (worldInfo == null)
         {
-            var worldDirectoryName = Storage.CombinePaths(GamePaths.Worlds, normalizedWorld);
+            worldDirectoryName = Storage.CombinePaths(GamePaths.Worlds, normalizedWorld);
             if (Storage.DirectoryExists(worldDirectoryName))
             {
-                worldInfo = Worlds.GetWorldInfo(worldDirectoryName);
+                return true;
             }
         }
 
@@ -329,98 +314,16 @@ public static class ModProfileManager
             return false;
         }
 
-        context = new WorldProfileContext(
-            worldInfo.DirectoryName,
-            worldInfo.WorldSettings.Name,
-            worldInfo.Hosting.ModProfileResolutionStrategy
-        );
+        worldDirectoryName = worldInfo.DirectoryName;
         return true;
     }
 
-    private static ModProfile ResolveWorldEffectiveProfile(
-        ModProfile globalProfile,
-        string worldDirectoryName,
-        string worldName,
-        ModProfileResolutionStrategy strategy
-    )
+    public static ModProfile LoadRequiredWorldProfile(string worldDirectoryName)
     {
-        var hasWorldProfile = TryLoadWorldProfile(worldDirectoryName, out var worldProfile);
-        return strategy switch
-        {
-            ModProfileResolutionStrategy.WorldOnly => hasWorldProfile
-                ? CloneProfile(worldProfile!, GetWorldProfileId(worldDirectoryName))
-                : CreateDefault(GetWorldProfileId(worldDirectoryName)),
-            ModProfileResolutionStrategy.GlobalPlusWorld => hasWorldProfile
-                ? MergeProfiles(
-                    globalProfile,
-                    worldProfile!,
-                    worldName,
-                    worldOverrides: true
-                )
-                : CloneProfile(globalProfile, worldName),
-            ModProfileResolutionStrategy.WorldPlusGlobal => hasWorldProfile
-                ? MergeProfiles(
-                    worldProfile!,
-                    globalProfile,
-                    worldName,
-                    worldOverrides: false
-                )
-                : CloneProfile(globalProfile, worldName),
-            _ => CloneProfile(globalProfile, worldName)
-        };
-    }
-
-    private static ModProfile MergeProfiles(
-        ModProfile primary,
-        ModProfile secondary,
-        string resultId,
-        bool worldOverrides
-    )
-    {
-        var packages = new Dictionary<string, ModPackageRequirement>(StringComparer.OrdinalIgnoreCase);
-        foreach (var package in primary.Packages)
-        {
-            packages[package.ModId] = CloneRequirement(package);
-        }
-
-        foreach (var package in secondary.Packages)
-        {
-            if (worldOverrides || !packages.ContainsKey(package.ModId))
-            {
-                packages[package.ModId] = CloneRequirement(package);
-            }
-        }
-
-        return Normalize(
-            new ModProfile
-            {
-                Id = string.IsNullOrWhiteSpace(resultId) ? "default" : resultId.Trim(),
-                Packages = packages.Values
-                    .OrderBy(package => package.ModId, StringComparer.OrdinalIgnoreCase)
-                    .ThenBy(package => package.Version, StringComparer.OrdinalIgnoreCase)
-                    .ToList()
-            }
-        );
-    }
-
-    private static ModProfile CloneProfile(ModProfile profile, string id)
-    {
-        profile = Normalize(profile);
-        return new ModProfile
-        {
-            Id = string.IsNullOrWhiteSpace(id) ? profile.Id : id.Trim(),
-            Packages = profile.Packages.Select(CloneRequirement).ToList()
-        };
-    }
-
-    private static ModPackageRequirement CloneRequirement(ModPackageRequirement package)
-    {
-        return new ModPackageRequirement
-        {
-            ModId = package.ModId,
-            Version = package.Version,
-            PackageHash = package.PackageHash
-        };
+        return LoadWorldProfile(worldDirectoryName) ??
+               throw new InvalidOperationException(
+                   $"Existing world is missing its complete mod profile '{GetWorldProfilePath(worldDirectoryName)}'."
+               );
     }
 
     private static string GetWorldProfileId(string worldDirectoryName)
@@ -432,10 +335,4 @@ public static class ModProfileManager
     {
         return string.IsNullOrWhiteSpace(sessionId) ? "default" : sessionId.Trim();
     }
-
-    private readonly record struct WorldProfileContext(
-        string WorldDirectoryName,
-        string WorldName,
-        ModProfileResolutionStrategy Strategy
-    );
 }

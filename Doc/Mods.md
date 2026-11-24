@@ -1,7 +1,7 @@
 # 模组使用说明
 
 1. 在「内容 → 在线内容」下载模组，或在「内容 → 模组」导入 `.scpkg` 文件。
-2. 在模组管理中把该包加入全局配置或目标存档的配置。下载或导入时，包先进入本地缓存。
+2. 模组管理负责包缓存与全局配置；在世界创建或世界编辑中选择该世界使用的模组。下载或导入不会自动启用包。
 3. 进入存档。如果目标组合和当前运行的模组不同，按提示重启。加入服务器时，游戏按服务器要求准备模组包。
 
 ## 核心概念
@@ -46,13 +46,24 @@ Mod 管理界面以缓存、全局 Profile、全部世界 Profile 和当前 Runt
 - 世界 profile：`<world>/WorldModProfile.xml`
 - 会话 profile：`config:SessionProfiles/<sessionId>.xml`
 
-世界 profile 的合并方式由世界设置里的 `ModProfileResolutionStrategy` 决定：
+进入世界前优先使用会话指定的 Profile（包括空组合），未指定时加载全局 Profile。全局 Profile 支持主菜单等前置 UI 扩展，同时为创建世界的模组草稿提供初始列表。
+玩家可以在创建时调整或清空，确认后世界保存完整、独立的 Profile，空列表也会明确保存。
+创建完成后不再动态合并全局配置；之后修改全局模组不会改变已有世界。
 
-- `WorldOnly`
-- `GlobalPlusWorld`
-- `WorldPlusGlobal`
+会话 Profile 用于跨重启准备精确运行环境及远程联机。已有本地世界以自己的 Profile 为准，
+会话不能覆盖它；待创建世界可以通过会话保留玩家选择的初始组合。当前运行组合位于
+`CurrentModRuntime.Value.LoadedProfile`。
 
-会话 profile 优先级最高，通常由进入 world 或远程联机前的重启流程生成。启动完成后，当前已生效的模组组合保存在 `CurrentModRuntime.Value.EffectiveProfile` 中。
+## 编辑世界模组
+
+创建世界时配置初始组合只产生一个存档。编辑已有世界时，选择页只修改草稿，最终点击“应用”才保存。
+点击列表行选中模组，再通过底部按钮添加、替换或移除。应用模组组合变更时，确认框显示自动生成的副本名（编辑前的世界名称加 `@ddHHmmss` 本地时间戳）。手动克隆同样只需确认。再次克隆时替换末尾时间戳，保留名称中其他 `@`。确认模组变更后先克隆完整旧世界，再将变更应用到当前存档。
+应用时先在临时目录准备完整存档和目标模组配置，再替换当前目录。磁盘需要同时容纳原存档、独立克隆和临时存档。冒险模式的重开快照也使用目标模组组合。
+克隆失败则不应用。取消、恢复原组合或仅调整顺序不因模组规则产生克隆。
+
+模组作者必须声明是否允许移除。不可移除的模组不能从已有世界移除；同一 ModId 更换版本或包 hash 仍允许，但需要克隆。
+缺少原包、无法检查声明时也不允许移除。克隆是普通独立世界，没有主从或恢复关系；新组合失败后不会自动覆盖当前存档。
+这保留了玩家修改前的内容，不保证作者声明错误时新组合依然可用，也不自动清理模组留下的数据。
 
 ## 内容仓库
 
@@ -78,11 +89,12 @@ GUI 启动时：
 
 1. 按目标 world 解析有效 `ModProfile`
 2. 按完整 requirement 从缓存或持久仓库补全缺失 Mod
-3. 比较目标 profile 和 `CurrentModRuntime.Value.EffectiveProfile`
+3. 比较目标 profile 和 `CurrentModRuntime.Value.LoadedProfile`
 4. 如果相同，直接进入世界
 5. 如果不同，创建临时 session profile 并请求重启
 
-如果 profile 为空或缺失，则只加载内置内容。空 profile 也会参与比较；例如当前 runtime 已加载模组，而目标世界不启用模组时，也需要重启来卸载模组。
+空世界 Profile 表示只加载内置内容；已有世界缺少 Profile 是配置错误，不回退全局。
+空 Profile 也参与比较：当前 runtime 有模组而目标世界为空时，需要切换运行环境。
 
 独立服务器启动时没有 GUI 中途切换流程。它会直接解析启动 session 对应的有效 profile，下载缺失包，并以服务端侧 runtime 启动。
 
@@ -96,7 +108,7 @@ GUI 启动时：
 1. 读取服务器下发的 required profile
 2. 检查本地缓存是否已有 required mods
 3. 缺失时依次使用临时候选仓库和持久仓库补全同一 PackageHash
-4. 如果 `CurrentModRuntime.Value.EffectiveProfile` 已经是同一组精确 requirement，直接继续连接
+4. 如果 `CurrentModRuntime.Value.LoadedProfile` 已经是同一组精确 requirement，直接继续连接
 5. 否则创建临时 session profile 并请求重启
 
 服务器没有启用模组时也会明确下发空 required profile。客户端若仍加载全局模组，同样会创建空的临时 session profile 并请求重启，以卸载这些模组后再连接。

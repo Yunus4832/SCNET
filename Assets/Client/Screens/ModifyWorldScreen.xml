@@ -51,6 +51,13 @@
                                                   Text="[NewWorldScreen:22]" VerticalAlignment="Center"
                                                   Margin="20, 0"/>
                         </UniformSpacingPanelWidget>
+                        <UniformSpacingPanelWidget Direction="Horizontal" Margin="0, 3">
+                            <LabelWidget Text="[WorldModsScreen:Title]" HorizontalAlignment="Far"
+                                         VerticalAlignment="Center" TextAnchor="Right" Margin="20, 0"/>
+                            <BevelledButtonWidget Name="Mods" Style="{Styles/ButtonStyle_310x60}"
+                                                  Text="[WorldModsScreen:Title]" VerticalAlignment="Center"
+                                                  Margin="20, 0"/>
+                        </UniformSpacingPanelWidget>
                     </StackPanelWidget>
                 </ScrollPanelWidget>
             </CanvasWidget>

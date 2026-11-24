@@ -35,6 +35,14 @@ public class ModifyWorldScreen : Screen
 
     private readonly ButtonWidget _gameModeButton;
 
+    private readonly ButtonWidget _modsButton;
+
+    private ModProfile _modProfile = new();
+
+    private ModProfile _originalProfile = new();
+
+    private bool _busy;
+
     private readonly TextBoxWidget _nameTextBox;
 
     private readonly ValuesDictionary _originalWorldSettingsData = new();
@@ -58,6 +66,7 @@ public class ModifyWorldScreen : Screen
         _nameTextBox = Children.Find<TextBoxWidget>("Name")!;
         _seedLabel = Children.Find<LabelWidget>("Seed")!;
         _gameModeButton = Children.Find<ButtonWidget>("GameMode")!;
+        _modsButton = Children.Find<ButtonWidget>("Mods")!;
         _worldOptionsButton = Children.Find<ButtonWidget>("WorldOptions")!;
         _serverSettingsButton = Children.Find<ButtonWidget>("ServerSettings")!;
         _errorLabel = Children.Find<LabelWidget>("Error")!;
@@ -68,7 +77,7 @@ public class ModifyWorldScreen : Screen
     public override void Enter(object[] parameters)
     {
         if (ScreensManager.PreviousScreen == null ||
-            ScreensManager.PreviousScreen.GetType() == typeof(WorldOptionsScreen))
+            ScreensManager.PreviousScreen is WorldOptionsScreen or WorldModsScreen)
         {
             return;
         }
@@ -80,6 +89,9 @@ public class ModifyWorldScreen : Screen
         _hosting = parameters.OfType<WorldHostingSettings>().FirstOrDefault() ?? _hosting;
         if (!isReturningFromServerSettings)
         {
+            _originalProfile = ModProfileManager.LoadWorldProfile(_directoryName) ??
+                               throw new InvalidOperationException("World mod profile is missing.");
+            _modProfile = ModProfileManager.CreateSessionProfile("draft", _originalProfile);
             _admission = new WorldAdmissionDraft
                 { Configuration = ClientApplication.Worlds.ReadAdmissionPolicy(_directoryName) };
             _originalAdmission = _admission.Configuration.Fingerprint();
@@ -94,6 +106,11 @@ public class ModifyWorldScreen : Screen
 
     public override void Update()
     {
+        if (_busy)
+        {
+            return;
+        }
+
         if (_gameModeButton.IsClicked && _changingGameModeAllowed)
         {
             DialogsManager.ShowDialog(
@@ -111,7 +128,8 @@ public class ModifyWorldScreen : Screen
         WorldSettings.Save(_currentWorldSettingsData, true);
         _hosting.Save(_currentWorldSettingsData, WorldSettings.Name);
         var hasChanges = !CompareValueDictionaries(_originalWorldSettingsData, _currentWorldSettingsData) ||
-                         _originalAdmission != _admission.Configuration.Fingerprint();
+                         _originalAdmission != _admission.Configuration.Fingerprint() ||
+                         !ModProfileIdentity.AreEquivalent(_originalProfile, _modProfile);
         var isNameValid = ClientApplication.Worlds.ValidateWorldName(WorldSettings.Name);
         _nameTextBox.Text = WorldSettings.Name;
         _seedLabel.Text = WorldSettings.Seed;
@@ -138,15 +156,36 @@ public class ModifyWorldScreen : Screen
             );
         }
 
-        if ((_applyButton.IsClicked && isNameValid) & hasChanges)
+        if (_modsButton.IsClicked)
         {
-            if (WorldSettings.GameMode != 0 && WorldSettings.GameMode != GameMode.Adventure)
-            {
-                WorldSettings.ResetOptionsForNonCreativeMode(creatingWorld: false);
-            }
+            ScreensManager.SwitchScreen("WorldMods", _modProfile, "ModifyWorld", _originalProfile);
+        }
 
-            ClientApplication.Worlds.ChangeWorld(_directoryName, WorldSettings, _hosting, _admission.Configuration);
-            ScreensManager.SwitchScreen("Play");
+        if (_applyButton.IsClicked && isNameValid && hasChanges)
+        {
+            if (ModProfileIdentity.AreEquivalent(_originalProfile, _modProfile))
+            {
+                ApplyEdits(null);
+            }
+            else
+            {
+                var originalName = _originalWorldSettingsData.GetValue<string>("WorldName");
+                var cloneName = WorldRepository.GetCloneName(originalName, DateTime.Now);
+                var language = Localization.ClientLanguage.Catalog;
+                DialogsManager.ShowDialog(
+                    null,
+                    new MessageDialog(
+                        language.GetContentWidgets("WorldModsScreen", "ConfirmApply"),
+                        string.Format(language.GetContentWidgets("WorldModsScreen", "CloneBeforeApply"), cloneName),
+                        language.Ok,
+                        language.Cancel,
+                        button =>
+                        {
+                            if (button == MessageDialogButton.Button1) { ApplyEdits(cloneName); }
+                        }
+                    )
+                );
+            }
         }
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
@@ -175,6 +214,57 @@ public class ModifyWorldScreen : Screen
                 ScreensManager.SwitchScreen("Play");
             }
         }
+    }
+
+    private void ApplyEdits(string? cloneName)
+    {
+        if (WorldSettings.GameMode != GameMode.Creative && WorldSettings.GameMode != GameMode.Adventure)
+        {
+            WorldSettings.ResetOptionsForNonCreativeMode(creatingWorld: false);
+        }
+
+        _busy = true;
+        var dialog = new BusyDialog(
+            Localization.ClientLanguage.Catalog.GetContentWidgets("WorldModsScreen", "Applying"),
+            string.Empty
+        );
+        DialogsManager.ShowDialog(null, dialog);
+        Task.Run(() =>
+            {
+                try
+                {
+                    ClientApplication.Worlds.ApplyWorldEdit(
+                        _directoryName,
+                        WorldSettings,
+                        _hosting,
+                        _admission.Configuration,
+                        _modProfile,
+                        new LocalModRepository(Storage.GetSystemPath(ClientApplication.Paths.ContentPackageCache)),
+                        cloneName
+                    );
+                    Dispatcher.Dispatch(() =>
+                        {
+                            _busy = false;
+                            DialogsManager.HideDialog(dialog);
+                            ScreensManager.SwitchScreen("Play");
+                        }
+                    );
+                }
+                catch (Exception exception)
+                {
+                    Dispatcher.Dispatch(() =>
+                        {
+                            _busy = false;
+                            DialogsManager.HideDialog(dialog);
+                            DialogsManager.Alert(
+                                Localization.ClientLanguage.Catalog.GetContentWidgets("WorldModsScreen", "ApplyFailed"),
+                                exception.Message
+                            );
+                        }
+                    );
+                }
+            }
+        );
     }
 
     private static bool CompareValueDictionaries(ValuesDictionary d1, ValuesDictionary d2)

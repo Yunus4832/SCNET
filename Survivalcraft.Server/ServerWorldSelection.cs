@@ -5,6 +5,7 @@ using EntitySystem.Core;
 
 using Game.FileStorage;
 using Game.Managers;
+using Game.Modding;
 using Game.Startup;
 using Game.Terrains;
 using Game.World;
@@ -13,7 +14,12 @@ namespace Survivalcraft.Server;
 
 internal static class ServerWorldSelection
 {
-    public static WorldInfo Resolve(StartupContext context, WorldRepository worlds, GameDatabase database)
+    public static WorldInfo Resolve(
+        StartupContext context,
+        WorldRepository worlds,
+        GameDatabase database,
+        ModProfile initialProfile
+    )
     {
         var sessionInfo = context.Session;
         StartupSessionLifecycle.ConsumePending(context, StartupManager.Profiles);
@@ -54,6 +60,7 @@ internal static class ServerWorldSelection
                 database,
                 worldSettings,
                 new WorldHostingSettings { RunServer = true },
+                initialProfile,
                 customWorldDirectoryName
             );
         }

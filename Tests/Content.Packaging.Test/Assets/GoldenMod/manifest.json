@@ -13,6 +13,7 @@
   },
   "metadata": {
     "entrypoint": null,
+    "canRemoveFromWorld": false,
     "dependencies": []
   }
 }

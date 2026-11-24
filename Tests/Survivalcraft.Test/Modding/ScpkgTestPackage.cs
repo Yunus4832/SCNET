@@ -28,6 +28,7 @@ internal static class ScpkgTestPackage
             new Dictionary<string, object?>
             {
                 ["entrypoint"] = definition.Entrypoint,
+                ["canRemoveFromWorld"] = definition.CanRemoveFromWorld,
                 ["clientContentEntrypoint"] = definition.ClientContentEntrypoint,
                 ["dependencies"] = dependencies
             }

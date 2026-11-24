@@ -13,7 +13,7 @@
     },
     "ContentScreen": {
         "2": "Content Management",
-        "12": "Manage global and world mods",
+        "12": "Manage cached and global mods",
         "13": "Mods",
         "14": "User Management"
     },
@@ -35,13 +35,10 @@
         "Export": "Export",
         "AddGlobal": "Add Global",
         "RemoveGlobal": "Remove",
-        "World": "World",
         "DeleteCacheTitle": "Delete Cache",
         "DeleteCacheQuestion": "Delete local cache {0}@{1}?",
         "ExportComplete": "Export Complete",
         "ExportModFailed": "Failed to export mod",
-        "NoWorldTitle": "No Worlds",
-        "NoWorldMessage": "Create a world first.",
         "StatusCached": "Cached",
         "StatusGlobal": "Global",
         "StatusWorld": "World",
@@ -2666,7 +2663,7 @@
         "BlocksTexture_Description": "Choose blocks texture to use when drawing the world. You can completely change appearance of the world by using a different blocks texture.",
         "InstanceCreate_Description": "Create a data instance",
         "InstanceDelete_Description": "Delete a data instance",
-        "InstanceInvalidId_Message": "Instance IDs can contain only ASCII letters, digits, “-”, and “_”.",
+        "InstanceInvalidId_Message": "Instance IDs may contain ASCII letters, digits, “-”, “_” and “@”.",
         "InstanceAlreadyExists_Message": "Instance already exists: {0}.",
         "InstanceCreated_Message": "Created instance {0}.",
         "InstanceCurrentDeleteForbidden_Message": "The current instance cannot be deleted.",
@@ -3031,7 +3028,7 @@
             "1": "Choose Content Type",
             "8": "Manage installed block textures, character skins, and furniture packs",
             "9": "Manage Installed Content",
-            "12": "Manage global and world mods",
+            "12": "Manage cached and global mods",
             "13": "Mods",
             "RemoteDescription": "Browse approved resources from the content server",
             "Remote": "Online Content",
@@ -3196,7 +3193,8 @@
             "CloneFailed": "Failed to Clone World",
             "DeleteTitle": "Delete World",
             "DeleteQuestion": "Delete world “{0}”? This cannot be undone.",
-            "RunServer": "Run server"
+            "RunServer": "Run server",
+            "CloneQuestion": "An independent world named “{0}” will be created."
         },
         "RecipaediaDescriptionScreen": {
             "1": "Block Description"
@@ -3315,9 +3313,6 @@
             "HotbarSlotsCountDescription": "Sets the hotbar capacity for the current game mode; use pages when space is limited",
             "DaysCount": "{0} days"
         },
-        "ModWorldSelectionDialog": {
-            "Title": "Add or Replace World Mod Version"
-        },
         "InstanceManagementScreen": {
             "Title": "Instance Management",
             "Create": "Create",
@@ -3330,12 +3325,13 @@
             "RunningElsewhere": "Running elsewhere",
             "NotRunning": "Not running",
             "Clone": "Clone",
-            "CloneTitle": "Clone instance “{0}” to a new ID",
+            "CloneTitle": "Clone instance",
             "Working": "Processing instance",
             "OperationFailed": "The instance operation failed.",
             "Launch": "Open in New Window",
             "LaunchFailed": "Could not start this instance in a new window.",
-            "ConfirmLaunch": "Open instance “{0}” in a new window?"
+            "ConfirmLaunch": "Open instance “{0}” in a new window?",
+            "CloneQuestion": "Create an independent copy of “{0}” named “{1}”?"
         },
         "ContentPackageScreen": {
             "Title": "Content Package Cache",
@@ -3781,6 +3777,29 @@
             "Authentication": "Auth",
             "NotConfigured": "Not configured",
             "NoRendezvous": "Install or add a signaling service from the Content screen first"
+        },
+        "WorldModsScreen": {
+            "Title": "World Mods",
+            "Empty": "No mods available",
+            "CacheUnavailable": "The local mod cache is unavailable",
+            "Select": "Add to World",
+            "Replace": "Replace Version",
+            "Remove": "Remove from World",
+            "Details": "Details",
+            "Refresh": "Refresh",
+            "RemovalRequired": "This mod cannot be removed from the world",
+            "RemovalUnavailable": "The original package removal declaration is unavailable",
+            "PackageIdentityMismatch": "The cached package identity does not match",
+            "StatusSelected": "Selected",
+            "StatusMissing": "Missing from cache",
+            "StatusCached": "Cached",
+            "StatusRemovable": "Removable",
+            "StatusRequired": "Cannot be removed",
+            "StatusUnavailable": "Removal status unavailable",
+            "CloneBeforeApply": "A backup named “{0}” will be created before the selected mods and settings are applied to this world.",
+            "Applying": "Applying world changes",
+            "ApplyFailed": "Could not apply world changes",
+            "ConfirmApply": "Apply mod changes?"
         }
     },
     "FireworksBlock": {

@@ -211,7 +211,8 @@ public sealed class ContentServerClientModTest : IDisposable
               {
                 "id": "{{modId}}",
                 "name": "{{modId}}",
-                "version": "{{version}}"
+                "version": "{{version}}",
+                "canRemoveFromWorld": false
               }
               """,
             new Dictionary<string, string> { ["data/marker.txt"] = "data" }

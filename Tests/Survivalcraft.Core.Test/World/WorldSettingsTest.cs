@@ -43,7 +43,7 @@ public class WorldSettingsTest
         var settings = new WorldSettings { Name = "World", TimeOfYear = 0.75f, KeywordBlocking = "one;two" };
         var values = new ValuesDictionary();
         settings.Save(values, false);
-        foreach (var key in new[] { "RunServer", "P2P", "ServerIdentityAddress", "ModProfileResolutionStrategy" })
+        foreach (var key in new[] { "RunServer", "P2P", "ServerIdentityAddress" })
         {
             Assert.False(values.ContainsKey(key));
         }

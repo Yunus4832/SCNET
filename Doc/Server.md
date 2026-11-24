@@ -30,7 +30,9 @@ tar -xzf game-server-<版本>-linux-amd64.tar.gz
 ./deploy.sh
 ```
 
-配置文件是由服务器管理员维护的可信 Shell 文件。`MODS` 每行填写一个 `模组标识 版本号`；空列表无需内容服务器。配置模组时，部署主机需要能访问 ContentServer，容器自身也需要能够访问该地址来下载缺失的包。部署脚本会在实例的 `ContentRepositories.xml` 中配置内容服务器，并同步全局、当前世界和当前会话的模组 profile；`Instances/` 目录持久化世界、设置和模组缓存。
+配置文件是由服务器管理员维护的可信 Shell 文件。`MODS` 每行填写一个 `模组标识 版本号`，只更新新世界的全局初始模板；空列表表示空模板，生成它无需内容服务器。配置模组时，部署主机需要能访问 ContentServer，容器自身也需要能够访问该地址来下载缺失的包。部署脚本在实例的 `ContentRepositories.xml` 中配置内容服务器，不改写世界或已准备的会话 profile；`Instances/` 目录持久化世界、设置和模组缓存。
+
+再次部署已有世界时，世界继续使用自己的完整 profile，包括明确的空列表。修改或清空 `MODS` 不会增删已有世界的模组，也不会创建克隆。已有世界仍可能需要内容服务器来准备自身缺失的精确包。脚本不提供已有世界的模组编辑功能。
 
 端口和世界参数来自 `server.conf`，每次启动都会用 `--save` 保存启动会话。种子只在首次创建世界时生效。容器使用 Linux 宿主网络，游戏 UDP 端口直接监听宿主机；容器不启用用于局域网发现的广播端口。部署主机还需要 `sha256sum`、Python 3 和相应的 Docker Compose 或 Podman Compose。
 
@@ -240,14 +242,17 @@ Instances/<实例名>/
 - 世界 profile：`<world>/WorldModProfile.xml`
 - 会话 profile：`config:SessionProfiles/<sessionId>.xml`
 
-独立服务器启动时会解析当前会话对应的有效模组 profile，并确保缺失的包已下载到本地缓存。解析结果会直接成为本进程的 `CurrentModRuntime.Value.EffectiveProfile`。独立服务器不通过“请求重启”来准备模组。
+独立服务器启动时会解析当前会话对应的有效模组 profile，并确保缺失的包已下载到本地缓存。解析结果会直接成为本进程的 `CurrentModRuntime.Value.LoadedProfile`。独立服务器不通过“请求重启”来准备模组。
+
+已有本地世界的 `WorldModProfile.xml` 是唯一组合依据，空 `Packages` 也不回退到全局配置；会话 profile 不能覆盖它。已有世界缺少完整 profile 时启动报错，不自动补齐或合并配置。
+世界尚未创建时，先使用已经准备好的会话 profile；没有会话 profile 时才使用全局模板。服务器先按该组合准备模组运行时，再创建世界，并将同一完整组合写入世界 profile。
 
 ## 世界解析
 
 独立服务器启动时：
 
 - 如果 session 指向的世界存在，直接加载该世界
-- 如果世界不存在，会按 session 中的 `World` 和 `Seed` 创建
+- 如果世界不存在，会按 session 中的 `World` 和 `Seed` 创建，并保存本次准备好的完整模组 profile
 - 如果世界已存在，`Seed` 不再影响该世界
 - session 含 `GameMode` 时，新世界以该模式创建；已有世界以该模式运行，但保存仍保留原存档模式
 - 如果世界没有开启 `RunServer`，独立服务器会自动启用它并保存世界设置
@@ -274,7 +279,7 @@ Profile 不保存仓库地址。未配置可用仓库时，只要所有 requirem
 - 运行 20 TPS 左右的主循环
 - 退出时保存世界和设置
 
-独立服务器进程运行期间不会像 GUI 一样在进入 world 前弹窗请求重启；如果要切换模组组合，需要用新的 session/profile 重新启动进程。
+独立服务器进程运行期间不会像 GUI 一样在进入 world 前弹窗请求重启。已有世界的模组变更通过世界编辑流程完成；重新启动时加载该世界保存的完整组合，新的 session 或部署模板不会替换它。
 
 `language` 查询控制台语言，`language en-US` 切换语言并保存到当前实例设置的 `ConsoleLanguageType`。
 服务端在更新边界处理外部停止请求，保存和资源释放由世界所属线程执行。

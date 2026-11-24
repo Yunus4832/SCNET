@@ -41,6 +41,11 @@ Hosting 中的实例 `StartupProfileStore` 负责启动配置和会话文件的�
 
 随后 `StartupManager` 按“显式 session、pending session、default session、临时新 session”的顺序选出 session id，将请求覆盖合并到 `SessionInfo`，最终生成 `StartupContext(Settings, Request, Session)`。GUI、独立服务器、玩家初始化和模组加载只消费这个已经解析好的上下文，不再各自重复合并启动参数。
 
+世界创建页面先准备玩家选定的完整模组组合，再生成存档。需要重启时，`SessionInfo.WorldCreation`
+携带一次性的世界设置、托管设置与准入配置，所选包组合保存在现有 session Profile 中。
+重启后不能用新的全局模板覆盖这份选择；模组环境就绪后才创建世界及完整世界 Profile，并消费创建请求。
+已有世界以自身 Profile 为准，不被本地 session Profile 覆盖；全局 Profile 仍负责前置 UI 与新世界初始草稿。
+
 ### 实例、会话和世界
 
 | 参数 | 用途 |
@@ -101,6 +106,8 @@ Starter 使用两阶段 Storage 注册：先将程序基础目录注册为 `star
 2. `NextInstance`；消费后写入 `CurrentInstance` 并清空
 3. `CurrentInstance`
 4. `default`
+
+实例管理页克隆时显示自动生成的目标 ID，确认后创建并选中副本。例如 `test@24153045`，再次克隆只替换末尾时间戳。
 
 命令行选择实例不会修改 `CurrentInstance`，因此可以同时启动互不干扰的 GUI 和 独立服务器调试实例。普通应用重启保持当前进程的实例；`GameExitAction.SwitchInstance` 则消费 `NextInstance` 并进入目标实例。实例内部的 `RunningSetting` 和 session 不保存实例 ID。
 
@@ -302,8 +309,8 @@ GUI 与 独立服务器共用命令行覆盖。优先级为命令行、环境变
 下一次启动时：
 
 1. `PendingSessionId` 被解析为 `StartupContext.Session`
-2. 启动流程读取对应 session 和 session profile
-3. session profile 被解析成运行时有效 profile，并用于初始化 `GameModRuntime`
+2. 启动流程按 session 的目标选择模组配置
+3. 已有本地世界使用存档配置；待创建世界和远程联机重启使用准备好的会话配置，并据此初始化 `GameModRuntime`
 4. session 中的玩家名和 HTTP 命令覆盖随远程目标一起恢复
 5. session 被消费后清理 pending 状态
 
@@ -344,7 +351,9 @@ Starter 会在实例的 `.runtime` 目录登记当前进程的 PID 和启动时�
 
 这三个字段共同构成精确 requirement。Profile 不保存 ContentServer 地址，缺失或非法 hash 不会退化为按版本模糊匹配。
 
-启动完成后，代码应当以 `CurrentModRuntime.Value.EffectiveProfile` 作为当前有效 profile。`SessionProfiles/<sessionId>.xml` 只是启动前的恢复输入，不能在运行期当作“当前已生效模组”的判断依据。
+主菜单、世界列表和服务器浏览器优先加载当前会话的 Profile，包括明确保存的空组合；会话没有 Profile 时加载全局配置。首次直连远端且没有准备好的会话配置时也从全局配置启动，联机准备阶段再核对服务器要求。
+
+启动完成后，代码应当以 `CurrentModRuntime.Value.LoadedProfile` 作为当前有效 profile。`SessionProfiles/<sessionId>.xml` 只是启动前的恢复输入，不能在运行期当作“当前已生效模组”的判断依据。
 
 持久内容仓库保存在实例的 `ContentRepositories.xml` 中，由仓库集合统一维护稳定 ID、名称、基础地址、启用状态和顺序。GUI 与 独立服务器
 启动都先按精确 PackageHash 查询 ContentPackageCache，本地缺失时再使用启用的持久仓库；调用方不区分一个或多个仓库。

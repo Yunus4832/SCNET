@@ -13,7 +13,8 @@ public sealed record ModManifest(
     string Version,
     IReadOnlyList<ModDependency>? Dependencies = null,
     string? Entrypoint = null,
-    string? ClientContentEntrypoint = null
+    string? ClientContentEntrypoint = null,
+    [property: JsonRequired] bool CanRemoveFromWorld = false
 )
 {
     public ModId ModId => new(Id);

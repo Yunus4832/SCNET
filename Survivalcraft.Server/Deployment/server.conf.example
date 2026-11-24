@@ -15,7 +15,9 @@ HTTP_COMMAND_ACCESS_TOKEN=''
 # Required only when MODS is nonempty. The URL must be reachable from the container.
 CONTENT_SERVER=
 
-# One "mod-id version" pair per line. Empty means no mods.
+# New-world template: one "mod-id version" pair per line. Empty means no mods.
+# Existing worlds retain their saved complete profile when this template changes.
+# Prepared creation-session profiles remain unchanged; existing worlds always use their own profile.
 MODS='
 '
 

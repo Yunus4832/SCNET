@@ -13,7 +13,7 @@ public sealed class GameModRuntime : IDisposable
         NamespacedRegistry<BlockDataRegistration> blockDataRegistry,
         GameDataCatalog data,
         ContentCatalog content,
-        ModProfile effectiveProfile,
+        ModProfile loadedProfile,
         IReadOnlyList<LoadedModInfo> loadedMods
     )
     {
@@ -22,9 +22,9 @@ public sealed class GameModRuntime : IDisposable
         _blockDataRegistry = blockDataRegistry;
         Data = data;
         Content = content;
-        EffectiveProfile = effectiveProfile;
+        LoadedProfile = loadedProfile;
         LoadedMods = loadedMods;
-        ModDataHash = ModProfileFingerprint.Compute(effectiveProfile);
+        ModDataHash = ModProfileFingerprint.Compute(loadedProfile);
     }
 
     public ModHost Host { get; }
@@ -184,7 +184,7 @@ public sealed class GameModRuntime : IDisposable
 
     public ContentCatalog Content { get; }
 
-    public ModProfile EffectiveProfile { get; }
+    public ModProfile LoadedProfile { get; }
 
     public string ModDataHash { get; }
 
@@ -202,7 +202,7 @@ public sealed class GameModRuntime : IDisposable
 
     public ModProfile CreateServerRequiredProfile()
     {
-        var packages = EffectiveProfile.Packages
+        var packages = LoadedProfile.Packages
             .Select(package => new ModPackageRequirement
                 {
                     ModId = package.ModId,
@@ -305,7 +305,7 @@ public sealed class GameModRuntime : IDisposable
 
     private static GameModRuntime StartFromDescriptors(
         IEnumerable<ModDescriptor> descriptors,
-        ModProfile? effectiveProfile,
+        ModProfile? loadedProfile,
         Action<IModCommands, ModId>? registerAppCommands,
         bool includeClientAssets
     )
@@ -330,7 +330,7 @@ public sealed class GameModRuntime : IDisposable
                 dataRegistry,
                 data,
                 content,
-                CreateEffectiveProfile(loadedMods, effectiveProfile),
+                CreateLoadedProfile(loadedMods, loadedProfile),
                 loadedMods
             );
         }
@@ -368,7 +368,7 @@ public sealed class GameModRuntime : IDisposable
             .ToArray();
     }
 
-    private static ModProfile CreateEffectiveProfile(IReadOnlyList<LoadedModInfo> loadedMods, ModProfile? profile)
+    private static ModProfile CreateLoadedProfile(IReadOnlyList<LoadedModInfo> loadedMods, ModProfile? profile)
     {
         if (profile is not null)
         {

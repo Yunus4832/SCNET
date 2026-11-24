@@ -110,7 +110,8 @@ public sealed class ModPackage
             entrypoint,
             metadata.TryGetProperty("clientContentEntrypoint", out var clientContentEntrypoint)
                 ? clientContentEntrypoint.GetString()
-                : null
+                : null,
+            metadata.GetProperty("canRemoveFromWorld").GetBoolean()
         );
     }
 

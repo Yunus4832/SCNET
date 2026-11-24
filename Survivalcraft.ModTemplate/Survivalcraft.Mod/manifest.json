@@ -13,6 +13,7 @@
   },
   "metadata": {
     "entrypoint": "Survivalcraft.ModTemplate.ModEntry, Survivalcraft.ModTemplate",
+    "canRemoveFromWorld": false,
     "dependencies": [],
     "clientContentEntrypoint": "Survivalcraft.ModTemplate.Client.ClientContentModule, Survivalcraft.ModTemplate.Client"
   }

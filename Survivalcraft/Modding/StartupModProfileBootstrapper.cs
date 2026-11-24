@@ -3,8 +3,8 @@ namespace Game.Modding;
 public static class StartupModProfileBootstrapper
 {
     public static bool EnsureStartupSessionProfile(
-        string? activeSessionId,
         SessionInfo startupSession,
+        ModProfile desiredProfile,
         string localRepositoryPath,
         Action<string>? log = null
     )
@@ -16,8 +16,7 @@ public static class StartupModProfileBootstrapper
             return false;
         }
 
-        var desiredProfile = ModProfileManager.ResolveProfileForSessionTarget(startupSession);
-        var existingProfile = ModProfileManager.LoadSessionProfile(activeSessionId);
+        var existingProfile = ModProfileManager.LoadSessionProfile(startupSession.SessionId);
         var downloadedAny = ModProfileResolver.EnsurePackagesAvailable(desiredProfile, localRepositoryPath, log);
 
         if (ModProfileIdentity.AreEquivalent(existingProfile, desiredProfile) && !downloadedAny)

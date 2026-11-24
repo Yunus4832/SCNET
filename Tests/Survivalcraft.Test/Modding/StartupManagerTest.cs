@@ -25,6 +25,7 @@ public sealed class StartupManagerTest : IDisposable
 
     public StartupManagerTest()
     {
+        Engine.Core.Runtime.Dispatcher.Initialize();
         DeleteIfExists(StartupManager.Profiles.RunningSettingsPath);
         DeleteIfExists(StartupManager.Profiles.SessionsPath);
     }
@@ -53,7 +54,7 @@ public sealed class StartupManagerTest : IDisposable
             initialSessionId = startup.Session.SessionId;
             if (existingWorld)
             {
-                world = SessionInfoManager.ResolveWorldSession(startup.Session, true, false);
+                world = SessionInfoManager.ResolveWorldSession(startup.Session, true, false, mods.LoadedProfile);
                 Assert.NotNull(world);
                 Assert.False(world.Hosting.RunServer);
             }
@@ -75,9 +76,24 @@ public sealed class StartupManagerTest : IDisposable
             // Exercise the same restart handoff without opening a test window.
 
             GameExitManager.BeginSession();
-            Assert.True(
-                StartupModProfileBootstrapper.EnsureStartupSessionProfile(initialSessionId, startup.Session, directory)
-            );
+            if (existingWorld)
+            {
+                Assert.True(
+                    StartupModProfileBootstrapper.EnsureStartupSessionProfile(
+                        startup.Session,
+                        ModProfileManager.ResolveStartupProfile(startup.Session),
+                        directory
+                    )
+                );
+            }
+            else
+            {
+                var creationSession = SessionInfoSerializer.Clone(startup.Session);
+                creationSession.CreateWorldIfMissing = true;
+                creationSession.ForceWorldRunServer = true;
+                GameExitManager.RequestRestart(creationSession, new ModProfile());
+            }
+
             pendingSessionId = StartupManager.Profiles.LoadRunningSettings().PendingSessionId;
             Assert.False(string.IsNullOrWhiteSpace(pendingSessionId));
             var resumed = StartupManager.Load([]);
@@ -89,7 +105,7 @@ public sealed class StartupManagerTest : IDisposable
             Assert.Equal("RestartPlayer", resumed.Session.AutoJoinCharacterName);
             Assert.False(startup.Session.CreateWorldIfMissing);
             Assert.False(startup.Session.ForceWorldRunServer);
-            world = SessionInfoManager.ResolveWorldSession(resumed.Session, false, false);
+            world = SessionInfoManager.ResolveWorldSession(resumed.Session, false, false, mods.LoadedProfile);
             Assert.NotNull(world);
             Assert.True(world.Hosting.RunServer);
             Assert.False(resumed.Session.CreateWorldIfMissing);
@@ -97,10 +113,13 @@ public sealed class StartupManagerTest : IDisposable
             Assert.True(ClientApplication.Worlds.GetWorldInfo(world.DirectoryName)!.Hosting.RunServer);
             world.Hosting.RunServer = false;
             ClientApplication.Worlds.ChangeWorld(world.DirectoryName, world.WorldSettings, world.Hosting);
-            Assert.False(SessionInfoManager.ResolveWorldSession(resumed.Session, false, false)!.Hosting.RunServer);
+            Assert.False(
+                SessionInfoManager.ResolveWorldSession(resumed.Session, false, false, mods.LoadedProfile)!.Hosting
+                    .RunServer
+            );
             ClientApplication.Worlds.DeleteWorld(world.DirectoryName);
             world = null;
-            Assert.Null(SessionInfoManager.ResolveWorldSession(resumed.Session, false, false));
+            Assert.Null(SessionInfoManager.ResolveWorldSession(resumed.Session, false, false, mods.LoadedProfile));
         }
         finally
         {

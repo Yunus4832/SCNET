@@ -47,7 +47,7 @@ public static class ModRestartHelper
         }
 
         cancellationToken.ThrowIfCancellationRequested();
-        if (ModProfileIdentity.AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, sessionProfile))
+        if (ModProfileIdentity.AreEquivalent(CurrentModRuntime.Value?.LoadedProfile, sessionProfile))
         {
             return RemoteModSessionPreparation.Ready();
         }
@@ -68,7 +68,27 @@ public static class ModRestartHelper
         ArgumentNullException.ThrowIfNull(worldInfo);
 
         var worldSession = session ?? SessionInfoManager.CreateWorldSession(worldInfo);
-        var desiredProfile = ModProfileManager.ResolveProfileForSessionTarget(worldSession);
+        var desiredProfile = ModProfileManager.LoadRequiredWorldProfile(worldInfo.DirectoryName);
+        return PrepareWorldProfile(worldSession, desiredProfile, log);
+    }
+
+    /// <summary>在创建存档前准备玩家选定的模组组合，并保留跨重启的创建请求。</summary>
+    public static RemoteModSessionPreparation PrepareWorldCreation(
+        SessionInfo creationSession,
+        ModProfile desiredProfile,
+        Action<string>? log = null
+    )
+    {
+        ArgumentNullException.ThrowIfNull(creationSession.WorldCreation);
+        return PrepareWorldProfile(creationSession, desiredProfile, log);
+    }
+
+    private static RemoteModSessionPreparation PrepareWorldProfile(
+        SessionInfo worldSession,
+        ModProfile desiredProfile,
+        Action<string>? log
+    )
+    {
         var sessionProfile = ModProfileManager.CreateSessionProfile(string.Empty, desiredProfile);
         var downloadedAny = desiredProfile.Packages.Count > 0 &&
                             ModProfileResolver.EnsurePackagesAvailable(
@@ -77,7 +97,7 @@ public static class ModRestartHelper
                                 log,
                                 Localization.ClientLanguage.Resolver
                             );
-        if (ModProfileIdentity.AreEquivalent(CurrentModRuntime.Value?.EffectiveProfile, desiredProfile))
+        if (ModProfileIdentity.AreEquivalent(CurrentModRuntime.Value?.LoadedProfile, desiredProfile))
         {
             return RemoteModSessionPreparation.Ready();
         }

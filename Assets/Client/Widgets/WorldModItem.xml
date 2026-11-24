@@ -1,0 +1,8 @@
+<CanvasWidget xmlns="runtime-namespace:Game.Widgets" Size="Infinity, 96">
+    <StackPanelWidget Direction="Vertical" VerticalAlignment="Center" Margin="12, 4">
+        <LabelWidget Name="Name" Color="255, 255, 255" FontScale="0.75" Ellipsis="true" MaxLines="1"/>
+        <LabelWidget Name="Identity" Color="220, 220, 220" FontScale="0.55" Ellipsis="true" MaxLines="1"/>
+        <LabelWidget Name="Status" Color="120, 190, 120" FontScale="0.55" Ellipsis="true" MaxLines="1"/>
+        <LabelWidget Name="Hash" Color="128, 128, 128" FontScale="0.45" Ellipsis="true" MaxLines="1"/>
+    </StackPanelWidget>
+</CanvasWidget>

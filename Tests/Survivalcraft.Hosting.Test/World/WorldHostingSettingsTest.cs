@@ -1,6 +1,5 @@
 using EntitySystem.TemplatesDatabase;
 
-using Game.Modding;
 using Game.Servers;
 using Game.World;
 
@@ -15,7 +14,6 @@ public class WorldHostingSettingsTest
         var hosting = new WorldHostingSettings
         {
             RunServer = true,
-            ModProfileResolutionStrategy = ModProfileResolutionStrategy.WorldOnly,
             P2P = new P2PRoomSettings { Enabled = true, IsPublic = false }
         };
         var values = new ValuesDictionary();
@@ -27,7 +25,6 @@ public class WorldHostingSettingsTest
         loadedHosting.Load(values);
         Assert.Equal(0.75f, loadedRules.TimeOfYear);
         Assert.True(loadedHosting.RunServer);
-        Assert.Equal(ModProfileResolutionStrategy.WorldOnly, loadedHosting.ModProfileResolutionStrategy);
         Assert.True(loadedHosting.P2P.Enabled);
         Assert.False(loadedHosting.P2P.IsPublic);
         Assert.Equal("World", loadedHosting.P2P.Name);
@@ -43,6 +40,5 @@ public class WorldHostingSettingsTest
         Assert.False(settings.RunServer);
         Assert.Null(settings.ServerIdentityAddress);
         Assert.False(settings.P2P.Enabled);
-        Assert.Equal(ModProfileResolutionStrategy.GlobalPlusWorld, settings.ModProfileResolutionStrategy);
     }
 }

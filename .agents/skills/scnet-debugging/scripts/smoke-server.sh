@@ -89,8 +89,8 @@ fi
 if [[ -z "$instance_name" ]]; then
     instance_name="smoke-${session_name}"
 fi
-if ! [[ "$instance_name" =~ ^[A-Za-z0-9_-]+$ ]]; then
-    echo "--instance must contain only ASCII letters, digits, '-' and '_'." >&2
+if ! [[ "$instance_name" =~ ^[A-Za-z0-9_@-]+$ ]]; then
+    echo "--instance must contain only ASCII letters, digits, '-', '_' and '@'." >&2
     exit 2
 fi
 for port_value in "$server_port" "$broadcast_port"; do

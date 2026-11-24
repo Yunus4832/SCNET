@@ -2,6 +2,7 @@ using System.Xml.Linq;
 
 using Game.Admission;
 using Game.Application;
+using Game.FileStorage;
 
 namespace Game.Screens;
 
@@ -14,6 +15,8 @@ public class NewWorldScreen : Screen
     private readonly LabelWidget _errorLabel;
 
     private readonly ButtonWidget _gameModeButton;
+
+    private readonly ButtonWidget _modsButton;
 
     private readonly TextBoxWidget _nameTextBox;
 
@@ -31,6 +34,8 @@ public class NewWorldScreen : Screen
 
     private WorldHostingSettings _hosting = new();
 
+    private ModProfile _modProfile = new();
+
     private WorldAdmissionDraft _admission = new();
 
     public NewWorldScreen()
@@ -40,6 +45,7 @@ public class NewWorldScreen : Screen
         _nameTextBox = Children.Find<TextBoxWidget>("Name")!;
         _seedTextBox = Children.Find<TextBoxWidget>("Seed")!;
         _gameModeButton = Children.Find<ButtonWidget>("GameMode")!;
+        _modsButton = Children.Find<ButtonWidget>("Mods")!;
         _startingPositionSelection = Children.Find<InlineSelectionWidget>("StartingPosition")!;
         _startingPositionSelection.ConfigureEnum<StartingPositionMode>(
             item => Localization.ClientLanguage.Catalog.Get("StartingPositionMode", item.ToString()),
@@ -62,15 +68,18 @@ public class NewWorldScreen : Screen
             _worldSettings = worldSettings;
             _hosting = parameters.OfType<WorldHostingSettings>().FirstOrDefault() ?? _hosting;
             if (parameters.OfType<WorldAdmissionDraft>().FirstOrDefault() is { } draft) { _admission = draft; }
-            else if (ScreensManager.PreviousScreen is not WorldOptionsScreen and not WorldServerSettingsScreen)
+            else if (ScreensManager.PreviousScreen is not WorldOptionsScreen and not WorldServerSettingsScreen
+                     and not WorldModsScreen)
             {
                 _admission = new WorldAdmissionDraft();
             }
         }
-        else if (ScreensManager.PreviousScreen?.GetType() != typeof(WorldOptionsScreen))
+        else if (ScreensManager.PreviousScreen is not WorldOptionsScreen and not WorldServerSettingsScreen
+                 and not WorldModsScreen)
         {
             _admission = new WorldAdmissionDraft();
             _hosting = new WorldHostingSettings();
+            _modProfile = ModProfileManager.CreateSessionProfile("draft", ModProfileManager.LoadGlobalProfile());
             _worldSettings = new WorldSettings
             {
                 Name = ClientApplication.Worlds.GetUnusedWorldName()
@@ -125,20 +134,19 @@ public class NewWorldScreen : Screen
             );
         }
 
+        if (_modsButton.IsClicked)
+        {
+            ScreensManager.SwitchScreen("WorldMods", _modProfile, "NewWorld");
+        }
+
         if (_playButton.IsClicked && ClientApplication.Worlds.ValidateWorldName(_nameTextBox.Text))
         {
-            var worldInfo = ClientApplication.Worlds.CreateWorld(
-                DatabaseManager.GameDatabase,
-                _worldSettings,
-                _hosting,
-                admission: _admission.Configuration
-            );
             if (_worldSettings.GameMode != GameMode.Creative)
             {
                 _worldSettings.ResetOptionsForNonCreativeMode(creatingWorld: true);
             }
 
-            PrepareWorldModsAndPlay(worldInfo);
+            PrepareWorldModsAndPlay();
         }
 
         if (Input.Back || Input.Cancel || Children.Find<ButtonWidget>("TopBar.Back")!.IsClicked)
@@ -147,8 +155,15 @@ public class NewWorldScreen : Screen
         }
     }
 
-    private void PrepareWorldModsAndPlay(WorldInfo worldInfo)
+    private void PrepareWorldModsAndPlay()
     {
+        var creation = new SessionInfo
+        {
+            Target = _hosting.RunServer ? SessionTarget.HostedWorld : SessionTarget.World,
+            World = Storage.CombinePaths(GamePaths.Worlds, Guid.NewGuid().ToString("N")),
+            CreateWorldIfMissing = true,
+            WorldCreation = new WorldCreationRequest(_worldSettings, _hosting, _admission.Configuration)
+        };
         var busyDialog = new BusyDialog(
             Localization.ClientLanguage.Catalog.GetContentWidgets("PlayScreen", 12),
             Localization.ClientLanguage.Catalog.GetContentWidgets("PlayScreen", 13)
@@ -158,16 +173,25 @@ public class NewWorldScreen : Screen
             {
                 try
                 {
-                    var result = ModRestartHelper.PrepareWorldSession(
-                        worldInfo,
+                    var result = ModRestartHelper.PrepareWorldCreation(
+                        creation,
+                        _modProfile,
                         message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message)
                     );
+                    var worldInfo = result.RequiresRestart
+                        ? null
+                        : SessionInfoManager.ResolveWorldSession(
+                            creation,
+                            true,
+                            false,
+                            CurrentModRuntime.Value!.LoadedProfile
+                        );
                     Dispatcher.Dispatch(() =>
                         {
                             DialogsManager.HideDialog(busyDialog);
                             if (!result.RequiresRestart)
                             {
-                                PlayPreparedWorld(worldInfo);
+                                PlayPreparedWorld(worldInfo!);
                                 return;
                             }
 

@@ -13,7 +13,7 @@ public static class ModPackageReferenceTracker
 
     public static IReadOnlyList<ModPackageRequirement> GetCurrentRuntimeRequirements()
     {
-        return (CurrentModRuntime.Value?.EffectiveProfile.Packages ?? [])
+        return (CurrentModRuntime.Value?.LoadedProfile.Packages ?? [])
             .ToArray();
     }
 
@@ -36,7 +36,7 @@ public static class ModPackageReferenceTracker
     private static IEnumerable<ModProfile> EnumerateProfiles()
     {
         yield return ModProfileManager.LoadGlobalProfile();
-        if (CurrentModRuntime.Value?.EffectiveProfile is { } runtimeProfile)
+        if (CurrentModRuntime.Value?.LoadedProfile is { } runtimeProfile)
         {
             yield return runtimeProfile;
         }

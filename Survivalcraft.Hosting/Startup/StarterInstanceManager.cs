@@ -129,6 +129,12 @@ public static class StarterInstanceManager
         Storage.DeleteDirectoryRecursive(instancePath);
     }
 
+    public static string GetCloneId(string sourceInstanceId, DateTime localTime)
+    {
+        ValidateInstanceId(sourceInstanceId);
+        return CloneNaming.Create(sourceInstanceId, localTime, 255);
+    }
+
     public static void CloneInstance(string sourceInstanceId, string targetInstanceId)
     {
         ValidateInstanceId(sourceInstanceId);
@@ -226,10 +232,12 @@ public static class StarterInstanceManager
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(instanceId);
         if (instanceId is "." or ".." ||
-            instanceId.Any(character => !char.IsAsciiLetterOrDigit(character) && character is not '-' and not '_'))
+            instanceId.Any(character =>
+                !char.IsAsciiLetterOrDigit(character) && character is not '-' and not '_' and not '@'
+            ))
         {
             throw new ArgumentException(
-                "Instance id can contain only ASCII letters, digits, '-' and '_'.",
+                "Instance id can contain only ASCII letters, digits, '-', '_' and '@'.",
                 nameof(instanceId)
             );
         }
