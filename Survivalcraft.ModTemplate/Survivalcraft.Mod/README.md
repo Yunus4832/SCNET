@@ -14,7 +14,7 @@ dotnet build ExampleMod/ExampleMod.slnx
 | `both` (default) | `ExampleMod` for shared rules and `ExampleMod.Client` for client presentation | `ExampleMod.Client` |
 
 Build the solution or its packaging project to create
-`bin/<Configuration>/net10.0/packages/example.mod.scpkg` inside that project.
+`bin/<Configuration>/net10.0/packages/example.mod-<version>.scpkg` inside that project.
 
 - Register behavior in `ModEntry.cs` and block presentation factories in `ClientContentModule.cs`.
 - Keep scope, version and entrypoint declarations in the root `manifest.json`.

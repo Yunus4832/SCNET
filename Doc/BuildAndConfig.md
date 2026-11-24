@@ -266,7 +266,7 @@ dotnet build Survivalcraft.Android/Survivalcraft.Android.csproj
 
 Bash 脚本接受重复的 `--project` 或 `--project=名称`；`--` 后面的参数会传给所选项目的 `dotnet publish` 或模组 `dotnet build`。PowerShell 脚本使用 `-Project` 指定一个或多个项目，其他参数仍通过剩余参数传给对应的 .NET 命令。
 
-发布模组前先运行依赖准备脚本。两个模组入口构建客户端项目，并将 `scnet.beacon.scpkg` 和 `scnet.territory.scpkg` 写入 `Publish/Mods/`。
+发布模组前先运行依赖准备脚本。两个模组入口构建客户端项目，并按 `<mod-id>-<version>.scpkg` 命名发行包并写入 `Publish/Mods/`。
 
 NuGet 包是另一条发行流程，不由应用发布脚本生成。使用 `Scripts/pack-nuget.sh` 或 `Scripts/pack-nuget.ps1`，具体包边界和使用方式见 [NuGet 包](./NuGet.md)。共享游戏规则包 `SCNET.Survivalcraft.Core` 、宿主包 `SCNET.Survivalcraft.Hosting` 和客户端包 `SCNET.Survivalcraft.Client` 在游戏 SDK 之前打包，普通构建直接使用项目引用；内置模组通过游戏 SDK 的传递依赖获得它们。不要使用解决方案级 `dotnet publish` 或 `dotnet pack` 代替这些脚本；多目标共享项目应由下游入口按顺序独立处理。
 

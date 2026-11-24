@@ -22,7 +22,7 @@ dotnet build ExampleMod/ExampleMod.slnx
 ```
 
 三种 `--scope` 都会生成解决方案，默认是 `both`。构建后在对应项目的
-`bin/<Configuration>/<TargetFramework>/packages/<mod-id>.scpkg` 获取完整包。
+`bin/<Configuration>/<TargetFramework>/packages/<mod-id>-<version>.scpkg` 获取完整包。
 
 | 范围 | 生成项目 | 打包项目 |
 | --- | --- | --- |
@@ -64,7 +64,7 @@ GUI 图集也输出直通 Alpha 的 WebP，约定见 [图集工具](../Tools/Gui
 
 仓库内可构建 [信标](../Mods/Beacon/README.md) 与 [领地石](../Mods/TerritoryStone/README.md) 的独立解决方案。
 开发包在其客户端项目的 `bin/<Configuration>/<TargetFramework>/packages/` 下。
-如需把模组发行物收集到 `Publish/Mods/`，可从仓库根运行：
+如需按 `<mod-id>-<version>.scpkg` 命名并将发行包收集到 `Publish/Mods/`，可从仓库根运行：
 
 ```bash
 ./Scripts/publish.sh --project BeaconMod.Client

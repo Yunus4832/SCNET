@@ -11,6 +11,11 @@ internal static class ContentToolProgram
             return Task.FromResult(Pack(args[1], args[2], args[3]));
         }
 
+        if (args is ["pack", _, _, "--output-directory", _])
+        {
+            return Task.FromResult(Pack(args[1], args[2], args[4], true));
+        }
+
         if (args.Length != 2 || args[0] is not ("inspect" or "verify"))
         {
             WriteUsage();
@@ -55,9 +60,9 @@ internal static class ContentToolProgram
         }
     }
 
-    private static int Pack(string manifestPath, string payloadDirectory, string outputPath)
+    private static int Pack(string manifestPath, string payloadDirectory, string outputPath, bool useDirectory = false)
     {
-        if (!outputPath.EndsWith(ContentPackageReader.FileExtension, StringComparison.Ordinal) ||
+        if ((!useDirectory && !outputPath.EndsWith(ContentPackageReader.FileExtension, StringComparison.Ordinal)) ||
             !File.Exists(manifestPath) ||
             !Directory.Exists(payloadDirectory))
         {
@@ -65,13 +70,24 @@ internal static class ContentToolProgram
             return 2;
         }
 
-        var fullOutputPath = Path.GetFullPath(outputPath);
-        var outputDirectory = Path.GetDirectoryName(fullOutputPath)!;
-        Directory.CreateDirectory(outputDirectory);
-        var temporaryPath = Path.Combine(outputDirectory, $".{Path.GetFileName(outputPath)}.{Guid.NewGuid():N}.tmp");
+        string? temporaryPath = null;
         try
         {
             var manifest = ContentPackageManifest.Parse(File.ReadAllBytes(manifestPath));
+            var fullOutputPath = Path.GetFullPath(
+                useDirectory
+                    ? Path.Combine(
+                        outputPath,
+                        $"{manifest.Identifier}-{manifest.Version}{ContentPackageReader.FileExtension}"
+                    )
+                    : outputPath
+            );
+            var outputDirectory = Path.GetDirectoryName(fullOutputPath)!;
+            Directory.CreateDirectory(outputDirectory);
+            temporaryPath = Path.Combine(
+                outputDirectory,
+                $".{Path.GetFileName(fullOutputPath)}.{Guid.NewGuid():N}.tmp"
+            );
             var entries = Directory.EnumerateFiles(payloadDirectory, "*", SearchOption.AllDirectories)
                 .Select(path =>
                     {
@@ -117,6 +133,8 @@ internal static class ContentToolProgram
         Console.Error.WriteLine("Usage:");
         Console.Error.WriteLine("  ContentTool inspect <package.scpkg>");
         Console.Error.WriteLine("  ContentTool verify <package.scpkg>");
-        Console.Error.WriteLine("  ContentTool pack <manifest.json> <payload-directory> <output.scpkg>");
+        Console.Error.WriteLine(
+            "  ContentTool pack <manifest.json> <payload-directory> (<output.scpkg> | --output-directory <directory>)"
+        );
     }
 }

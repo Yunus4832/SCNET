@@ -30,7 +30,7 @@ dotnet build Mods/Beacon/Beacon.slnx
 ```
 
 `BeaconMod.Client` 使用 `SCNET.Survivalcraft.Client` 编译客户端表现，并通过 `SCNET.ContentTool` 生成完整包，输出为
-`Mods/Beacon/BeaconMod.Client/bin/Debug/net10.0/packages/scnet.beacon.scpkg`，同时包含规则与客户端程序集。
+`Mods/Beacon/BeaconMod.Client/bin/Debug/net10.0/packages/scnet.beacon-<version>.scpkg`，同时包含规则与客户端程序集。
 `BeaconMod` 规则项目使用 `SCNET.Survivalcraft.Core` 与 `SCNET.Survivalcraft.Hosting` 编译契约，不单独生成 `.scpkg`。通过游戏文件导入后加入全局或世界模组配置；联机双方须加载相同的包。
 
 `metadata.scope` 为 `both`。`metadata.entrypoint` 指向共享业务入口 `BeaconMod.ModEntry, BeaconMod`；
