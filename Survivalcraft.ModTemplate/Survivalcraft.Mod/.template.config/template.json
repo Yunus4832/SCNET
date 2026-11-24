@@ -13,6 +13,59 @@
       "datatype": "string",
       "defaultValue": "example.mod",
       "replaces": "example.mod"
+    },
+    "scope": {
+      "type": "parameter",
+      "datatype": "choice",
+      "description": "The side where the mod runs.",
+      "choices": [
+        { "choice": "server", "description": "Authority rules only." },
+        { "choice": "client", "description": "Client presentation only." },
+        { "choice": "both", "description": "Shared rules and client presentation." }
+      ],
+      "defaultValue": "both"
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "condition": "(scope != \"both\")",
+          "exclude": ["manifest.json"]
+        },
+        {
+          "condition": "(scope == \"server\")",
+          "exclude": ["Survivalcraft.ModTemplate.Client/**/*", "manifest.client.json"],
+          "rename": { "manifest.server.json": "manifest.json" }
+        },
+        {
+          "condition": "(scope == \"client\")",
+          "exclude": ["Survivalcraft.ModTemplate/**/*", "manifest.server.json"],
+          "rename": { "manifest.client.json": "manifest.json" }
+        },
+        {
+          "condition": "(scope == \"both\")",
+          "exclude": ["manifest.server.json", "manifest.client.json"]
+        }
+      ]
+    }
+  ],
+  "specialCustomOperations": {
+    "**/*.slnx": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "if": ["<!--#if"],
+            "else": ["<!--#else"],
+            "elseif": ["<!--#elseif"],
+            "endif": ["<!--#endif"],
+            "trim": true,
+            "wholeLine": true,
+            "evaluator": "C++"
+          }
+        }
+      ]
     }
   }
 }

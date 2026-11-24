@@ -81,12 +81,12 @@ public class ComponentShapeshifter : Component, IUpdateable
         var value = valuesDictionary.GetValue<float>("Probability");
         if (!string.IsNullOrEmpty(_dayEntityTemplateName))
         {
-            DatabaseManager.FindEntityValuesDictionary(_dayEntityTemplateName, true);
+            Project.GameDatabase.FindEntityValuesDictionary(_dayEntityTemplateName, true);
         }
 
         if (!string.IsNullOrEmpty(_nightEntityTemplateName))
         {
-            DatabaseManager.FindEntityValuesDictionary(_nightEntityTemplateName, true);
+            Project.GameDatabase.FindEntityValuesDictionary(_nightEntityTemplateName, true);
         }
 
         if (WorldRuntimeContext.For(Project).IsAuthority)

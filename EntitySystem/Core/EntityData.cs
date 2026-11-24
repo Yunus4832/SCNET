@@ -39,7 +39,7 @@ public class EntityData
 
         ValuesDictionary = new ValuesDictionary();
         ValuesDictionary.PopulateFromDatabaseObject(databaseObject);
-        ValuesDictionary.ApplyOverrides(entityNode);
+        ValuesDictionary.ApplyOverrides(entityNode, gameDatabase.Database.FindType);
     }
 
     public EntityData(GameDatabase gameDatabase, ValuesDictionary valuesDictionary)

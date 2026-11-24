@@ -12,6 +12,7 @@
         "mediaType": "application/json"
     },
     "metadata": {
+        "scope": "both",
         "clientContentEntrypoint": "BeaconMod.Client.Presentation.BeaconClientContentModule, BeaconMod.Client",
         "entrypoint": "BeaconMod.ModEntry, BeaconMod",
         "canRemoveFromWorld": false,

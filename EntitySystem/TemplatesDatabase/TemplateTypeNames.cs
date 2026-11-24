@@ -43,11 +43,11 @@ public static class TemplateTypeNames
     private static readonly Dictionary<string, string> _namesByFullName =
         _typesByName.ToDictionary(pair => pair.Value.FullName!, pair => pair.Key, StringComparer.Ordinal);
 
-    public static Type? Resolve(string name, bool throwIfNotFound = true)
+    public static Type? Resolve(string name, bool throwIfNotFound = true, Func<string, bool, Type?>? findType = null)
     {
         return _typesByName.TryGetValue(name, out var type)
             ? type
-            : RuntimeTypeResolver.FindType(name, throwIfNotFound);
+            : (findType ?? RuntimeTypeResolver.FindType)(name, throwIfNotFound);
     }
 
     public static string GetShortTypeName(string fullName)

@@ -8,7 +8,17 @@
 
 ### `.scpkg`
 
-`.scpkg` 是统一内容包。模组包可包含程序集、规则数据和资源。包清单及入口字段见[内容包协议](Protocol/ContentPackageProtocol.md)与[模组开发](Modding.md)。图形程序和独立服务器共用规则入口，客户端另行装配表现资源。
+`.scpkg` 是统一内容包。模组包可包含程序集、规则数据和资源。包清单及入口字段见[内容包协议](Protocol/ContentPackageProtocol.md)与[模组开发](Modding.md)。包清单的 `scope` 决定加载位置。同一份世界 Profile 可以同时列出三种模组。
+
+| 清单作用域 | 权威端运行时 | 客户端运行时 | 客户端连接时需要该包 |
+| --- | --- | --- | --- |
+| `server` | 加载 | | |
+| `client` | | 加载 | 是 |
+| `both` | 加载 | 加载 | 是 |
+
+服务端持有完整 Profile 和相应包，以便读取清单并确定客户端的精确要求。客户端按服务器指定的版本和哈希准备包。两端分别校验依赖，例如双端模组的必需依赖也必须在两端可用。
+
+图形程序启动菜单时创建客户端运行时。打开本地世界时，游戏另外创建权威端运行时，即使玩家只进行单机游戏。两端各有自己的模组实例和模板数据库。菜单预览使用独立的方块目录，进入世界后按该存档的方块 ID 映射构建目录。
 
 ### 本地缓存
 
@@ -89,7 +99,7 @@ GUI 启动时：
 
 1. 按目标 world 解析有效 `ModProfile`
 2. 按完整 requirement 从缓存或持久仓库补全缺失 Mod
-3. 比较目标 profile 和 `CurrentModRuntime.Value.LoadedProfile`
+3. 比较目标 Profile 的客户端包集合和 `CurrentModRuntime.Value.LoadedProfile`
 4. 如果相同，直接进入世界
 5. 如果不同，创建临时 session profile 并请求重启
 
@@ -100,7 +110,7 @@ GUI 启动时：
 
 ## 联机加载流程
 
-服务器启动 runtime 后，会根据实际有效 Profile 和已加载包生成 `RequiredModProfile`，其中每项都包含
+服务器从完整 Profile 选取 client 和 both 包生成 `RequiredModProfile`，其中每项都包含
 `ModId + Version + PackageHash`。服务器信息包把临时候选仓库集合放在 Profile 之外。
 
 客户端连接时：
@@ -114,8 +124,7 @@ GUI 启动时：
 服务器没有启用模组时也会明确下发空 required profile。客户端若仍加载全局模组，同样会创建空的临时 session profile 并请求重启，以卸载这些模组后再连接。
 
 非法、重复或互相冲突的 requirement 会在下载、创建 pending session 或重启前被拒绝。缓存准备完成后才会创建远程 pending
-session；重启后即使仓库离线，也能从内容寻址缓存恢复。联机校验还会比较运行时计算的 mod data hash，客户端和服务端有效模组
-不同会被拒绝。World、材质、皮肤和家具包不进入 RequiredModProfile，也不会在联机准备阶段自动安装。
+session；重启后即使仓库离线，也能从内容寻址缓存恢复。联机校验还会比较客户端包集合的指纹，客户端多加载、少加载或加载了不同版本的包都会被拒绝。World、材质、皮肤和家具包不进入 RequiredModProfile，也不会在联机准备阶段自动安装。
 
 ## 开发文档
 

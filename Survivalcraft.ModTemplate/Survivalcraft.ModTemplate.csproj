@@ -19,7 +19,7 @@
         <Content Include="Survivalcraft.Mod/.template.config/**/*" Pack="true"
                  PackagePath="content/.template.config/%(RecursiveDir)%(Filename)%(Extension)"/>
         <Content Include="Survivalcraft.Mod/**/*" Pack="true"
-                 Exclude="Survivalcraft.Mod/.template.config/**/*;Survivalcraft.Mod/**/*.csproj;Survivalcraft.Mod/manifest.json;Survivalcraft.Mod/**/bin/**/*;Survivalcraft.Mod/**/obj/**/*"
+                 Exclude="Survivalcraft.Mod/.template.config/**/*;Survivalcraft.Mod/**/*.csproj;Survivalcraft.Mod/manifest*.json;Survivalcraft.Mod/**/bin/**/*;Survivalcraft.Mod/**/obj/**/*"
                  PackagePath="content/%(RecursiveDir)%(Filename)%(Extension)"/>
     </ItemGroup>
 
@@ -28,16 +28,24 @@
             <_GeneratedTemplateDirectory>$(IntermediateOutputPath)template</_GeneratedTemplateDirectory>
             <_RuleProject>$(_GeneratedTemplateDirectory)/Survivalcraft.ModTemplate/Survivalcraft.ModTemplate.csproj</_RuleProject>
             <_ClientProject>$(_GeneratedTemplateDirectory)/Survivalcraft.ModTemplate.Client/Survivalcraft.ModTemplate.Client.csproj</_ClientProject>
-            <_RuleProjectText>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/Survivalcraft.Mod/Survivalcraft.ModTemplate/Survivalcraft.ModTemplate.csproj').Replace('__SCNET_GAME_VERSION__', '$(GameVersion)').Replace('__SCNET_MOD_VERSION__', '$(InitialModVersion)'))</_RuleProjectText>
+            <_RuleProjectText>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/Survivalcraft.Mod/Survivalcraft.ModTemplate/Survivalcraft.ModTemplate.csproj').Replace('__SCNET_GAME_VERSION__', '$(GameVersion)').Replace('__SCNET_CONTENT_TOOL_VERSION__', '$(ContentToolVersion)').Replace('__SCNET_MOD_VERSION__', '$(InitialModVersion)'))</_RuleProjectText>
             <_ClientProjectText>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/Survivalcraft.Mod/Survivalcraft.ModTemplate.Client/Survivalcraft.ModTemplate.Client.csproj').Replace('__SCNET_GAME_VERSION__', '$(GameVersion)').Replace('__SCNET_CONTENT_TOOL_VERSION__', '$(ContentToolVersion)').Replace('__SCNET_MOD_VERSION__', '$(InitialModVersion)'))</_ClientProjectText>
-            <_TemplateManifestText>$([System.IO.File]::ReadAllText('$(MSBuildProjectDirectory)/Survivalcraft.Mod/manifest.json').Replace('__SCNET_MOD_VERSION__', '$(InitialModVersion)'))</_TemplateManifestText>
         </PropertyGroup>
+
+        <ItemGroup>
+            <_TemplateManifest Include="$(MSBuildProjectDirectory)/Survivalcraft.Mod/manifest*.json"/>
+        </ItemGroup>
+
         <MakeDir Directories="$(_GeneratedTemplateDirectory)/Survivalcraft.ModTemplate;$(_GeneratedTemplateDirectory)/Survivalcraft.ModTemplate.Client"/>
         <WriteLinesToFile File="$(_RuleProject)" Lines="$(_RuleProjectText)" Overwrite="true" WriteOnlyWhenDifferent="true"/>
         <WriteLinesToFile File="$(_ClientProject)" Lines="$(_ClientProjectText)" Overwrite="true" WriteOnlyWhenDifferent="true"/>
-        <WriteLinesToFile File="$(_GeneratedTemplateDirectory)/manifest.json" Lines="$(_TemplateManifestText)" Overwrite="true" WriteOnlyWhenDifferent="true"/>
+        <WriteLinesToFile File="$(_GeneratedTemplateDirectory)/%(_TemplateManifest.Filename)%(_TemplateManifest.Extension)"
+                          Lines="$([System.IO.File]::ReadAllText('%(_TemplateManifest.FullPath)').Replace('__SCNET_MOD_VERSION__', '$(InitialModVersion)'))"
+                          Overwrite="true" WriteOnlyWhenDifferent="true"/>
+
         <ItemGroup>
-            <Content Include="$(_GeneratedTemplateDirectory)/manifest.json" Pack="true" PackagePath="content/manifest.json"/>
+            <Content Include="@(_TemplateManifest->'$(_GeneratedTemplateDirectory)/%(Filename)%(Extension)')" Pack="true"
+                     PackagePath="content/%(Filename)%(Extension)"/>
             <Content Include="$(_RuleProject)" Pack="true" PackagePath="content/Survivalcraft.ModTemplate/Survivalcraft.ModTemplate.csproj"/>
             <Content Include="$(_ClientProject)" Pack="true" PackagePath="content/Survivalcraft.ModTemplate.Client/Survivalcraft.ModTemplate.Client.csproj"/>
         </ItemGroup>

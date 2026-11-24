@@ -622,7 +622,10 @@ public class Widget : IDisposable
             var uri = new Uri(namespaceName);
             if (uri.Scheme == "runtime-namespace")
             {
-                return RuntimeTypeResolver.FindType(uri.AbsolutePath + "." + name)!;
+                var typeName = uri.AbsolutePath + "." + name;
+                return Game.Modding.CurrentModRuntime.Value is { } runtime
+                    ? runtime.FindType(typeName)!
+                    : RuntimeTypeResolver.FindType(typeName)!;
             }
 
             throw new InvalidOperationException(

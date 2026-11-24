@@ -12,6 +12,7 @@
     "mediaType": "application/json"
   },
   "metadata": {
+    "scope": "both",
     "entrypoint": "Survivalcraft.ModTemplate.ModEntry, Survivalcraft.ModTemplate",
     "canRemoveFromWorld": false,
     "dependencies": [],

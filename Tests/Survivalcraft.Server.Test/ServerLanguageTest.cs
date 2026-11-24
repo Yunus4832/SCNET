@@ -25,7 +25,7 @@ public sealed class ServerLanguageTest
         using var mods = GameModRuntime.StartFromProfile(
             new ModProfile(),
             Path.GetTempPath(),
-            includeClientAssets: false
+            side: Game.World.RuntimeSide.Authority
         );
         var runtimeField = typeof(ServerStarter).GetField(
             "_modRuntime",

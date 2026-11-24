@@ -353,13 +353,13 @@ Starter 会在实例的 `.runtime` 目录登记当前进程的 PID 和启动时�
 
 主菜单、世界列表和服务器浏览器优先加载当前会话的 Profile，包括明确保存的空组合；会话没有 Profile 时加载全局配置。首次直连远端且没有准备好的会话配置时也从全局配置启动，联机准备阶段再核对服务器要求。
 
-启动完成后，代码应当以 `CurrentModRuntime.Value.LoadedProfile` 作为当前有效 profile。`SessionProfiles/<sessionId>.xml` 只是启动前的恢复输入，不能在运行期当作“当前已生效模组”的判断依据。
+启动完成后，代码应当以 `CurrentModRuntime.Value.LoadedProfile` 作为该运行时所属端实际加载的 profile。`SessionProfiles/<sessionId>.xml` 只是启动前的恢复输入，不能在运行期当作“当前已生效模组”的判断依据。
 
 持久内容仓库保存在实例的 `ContentRepositories.xml` 中，由仓库集合统一维护稳定 ID、名称、基础地址、启用状态和顺序。GUI 与 独立服务器
 启动都先按精确 PackageHash 查询 ContentPackageCache，本地缺失时再使用启用的持久仓库；调用方不区分一个或多个仓库。
 内容仓库和服务器目录分别由自身的 Manager 初始化、修改和保存配置；网络请求由 ContentServer Client 和服务器源客户端执行。`SettingsManager` 只读取 `Settings.xml` 中的通用实例设置。
 
-远程联机握手中的 `RequiredModProfile` 只包含 Mod requirement；匿名临时候选仓库作为 `ServerInfoPackage` 的独立字段传输。
+远程联机握手中的 `RequiredModProfile` 只包含服务器指定的 client 和 both 模组的精确 requirement；匿名临时候选仓库作为 `ServerInfoPackage` 的独立字段传输。
 连接准备时临时仓库优先，持久仓库随后回退；临时集合不会写入实例配置、Profile、缓存索引或 pending session。GUI 只有在精确包
 全部准备完成后才创建 pending session 并重启，非法 requirement 或全部来源失败不会留下待恢复状态。
 

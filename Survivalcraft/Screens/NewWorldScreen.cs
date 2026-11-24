@@ -164,6 +164,7 @@ public class NewWorldScreen : Screen
             CreateWorldIfMissing = true,
             WorldCreation = new WorldCreationRequest(_worldSettings, _hosting, _admission.Configuration)
         };
+        var profile = ModProfileManager.CreateSessionProfile("draft", _modProfile);
         var busyDialog = new BusyDialog(
             Localization.ClientLanguage.Catalog.GetContentWidgets("PlayScreen", 12),
             Localization.ClientLanguage.Catalog.GetContentWidgets("PlayScreen", 13)
@@ -175,7 +176,7 @@ public class NewWorldScreen : Screen
                 {
                     var result = ModRestartHelper.PrepareWorldCreation(
                         creation,
-                        _modProfile,
+                        profile,
                         message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message)
                     );
                     var worldInfo = result.RequiresRestart
@@ -184,7 +185,8 @@ public class NewWorldScreen : Screen
                             creation,
                             true,
                             false,
-                            CurrentModRuntime.Value!.LoadedProfile
+                            profile,
+                            CurrentModRuntime.Value!.Database
                         );
                     Dispatcher.Dispatch(() =>
                         {

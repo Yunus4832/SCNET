@@ -6,7 +6,7 @@ namespace EntitySystem.TemplatesDatabase;
 
 public static class XmlDatabaseSerializer
 {
-    public static Database LoadDatabase(XElement node)
+    public static Database LoadDatabase(XElement node, Func<string, bool, Type?>? findType = null)
     {
         var dictionary = new Dictionary<string, DatabaseObjectType>();
         var xElement = XmlUtils.FindChildElement(node, "DatabaseObjectTypes", true)!;
@@ -86,7 +86,8 @@ public static class XmlDatabaseSerializer
                     name: "Root",
                     value: null
                 ),
-                dictionary.Values
+                dictionary.Values,
+                findType
             );
         foreach (var item4 in LoadDatabaseObjectsList(node2, database))
         {
@@ -291,7 +292,7 @@ public static class XmlDatabaseSerializer
         object? value = null;
         if (!string.IsNullOrEmpty(attributeValue5))
         {
-            var type = TemplateTypeNames.Resolve(attributeValue5)!;
+            var type = TemplateTypeNames.Resolve(attributeValue5, findType: database.FindType)!;
             value = XmlUtils.GetAttributeValue(node, "Value", type);
         }
 

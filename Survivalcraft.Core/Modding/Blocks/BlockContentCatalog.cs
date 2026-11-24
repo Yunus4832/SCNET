@@ -59,7 +59,12 @@ public sealed class BlockContentCatalog : IDisposable
         }
     }
 
-    public void Initialize(CollisionGeometryCatalog collisionGeometry, XElement? clothingData, XElement recipes)
+    public void Initialize(
+        CollisionGeometryCatalog collisionGeometry,
+        XElement? clothingData,
+        XElement recipes,
+        EntitySystem.Core.GameDatabase? database = null
+    )
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (_initialized)
@@ -87,6 +92,13 @@ public sealed class BlockContentCatalog : IDisposable
 
             foreach (var block in _registeredBlocks)
             {
+                if (block is EggBlock eggs)
+                {
+                    eggs.InitializeEggTypes(
+                        database ?? throw new InvalidOperationException("Egg definitions require a game database.")
+                    );
+                }
+
                 block.Initialize();
                 if (string.IsNullOrEmpty(block.CraftingId))
                 {

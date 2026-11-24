@@ -28,6 +28,7 @@ public class ModPackageTest
               "id": "example.test",
               "name": "Test Mod",
               "version": "1.0.0",
+              "scope": "both",
               "canRemoveFromWorld": false,
               "entrypoint": "Survivalcraft.Test.Modding.PackageEntrypointMod, Survivalcraft.Test"
             }
@@ -74,6 +75,7 @@ public class ModPackageTest
               "id": "example.test",
               "name": "Test Mod",
               "version": "1.0.0",
+              "scope": "both",
               "canRemoveFromWorld": false,
               "entrypoint": "Survivalcraft.Test.Modding.PackageEntrypointMod, Survivalcraft.Test"
             }
@@ -163,6 +165,7 @@ public class ModPackageTest
               "id": "example.data",
               "name": "Data Mod",
               "version": "1.0.0",
+              "scope": "both",
               "canRemoveFromWorld": false
             }
             """,
@@ -194,6 +197,7 @@ public class ModPackageTest
               "id": "example.assets",
               "name": "Asset Mod",
               "version": "1.0.0",
+              "scope": "both",
               "canRemoveFromWorld": false
             }
             """,
@@ -242,6 +246,7 @@ public class ModPackageTest
                   "id": "example.assets",
                   "name": "Asset Mod",
                   "version": "1.0.0",
+                  "scope": "both",
                   "canRemoveFromWorld": false,
                   "entrypoint": "Example.ModEntry, Example"
                 }
@@ -341,6 +346,7 @@ public class ModPackageTest
                    "id": "{{id}}",
                    "name": "{{id}}",
                    "version": "1.0.0",
+                   "scope": "both",
                    "canRemoveFromWorld": false,
                    "dependencies": {{dependencies}}
                  }

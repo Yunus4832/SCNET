@@ -202,6 +202,11 @@ public static class GameEntry
 
     public static void InitializeClientContent(GameModRuntime runtime)
     {
+        if (runtime.Side != RuntimeSide.Client)
+        {
+            throw new InvalidOperationException("Client content requires a client mod runtime.");
+        }
+
         var modules = new List<IClientContentModule> { new BuiltInClientContentModule() };
         foreach (var mod in runtime.Host.Runtimes)
         {
@@ -236,6 +241,11 @@ public static class GameEntry
 
     public static void SetModRuntime(GameModRuntime? runtime)
     {
+        if (runtime is { Side: RuntimeSide.Authority })
+        {
+            throw new InvalidOperationException("The GUI requires a client mod runtime.");
+        }
+
         using var replacement = CurrentModRuntime.BeginReplacement(runtime);
         try { ClientApplication.ReleaseContent(); }
         catch (Exception error) { Log.Error($"Client content retirement cleanup failed: {error}"); }

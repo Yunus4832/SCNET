@@ -6,9 +6,19 @@
         <Nullable>enable</Nullable>
         <AssemblyName>Survivalcraft.ModTemplate</AssemblyName>
         <RootNamespace>Survivalcraft.ModTemplate</RootNamespace>
+        <!--#if (scope == "server") -->
+        <SurvivalcraftModId>example.mod</SurvivalcraftModId>
+        <SurvivalcraftModManifest>$(MSBuildProjectDirectory)/../manifest.json</SurvivalcraftModManifest>
+        <SurvivalcraftModDataDirectory>$(MSBuildProjectDirectory)/../Data</SurvivalcraftModDataDirectory>
+        <SurvivalcraftModAssetsDirectory>$(MSBuildProjectDirectory)/../Assets</SurvivalcraftModAssetsDirectory>
+        <!--#endif -->
     </PropertyGroup>
+
     <ItemGroup>
         <PackageReference Include="SCNET.Survivalcraft.Core" Version="__SCNET_GAME_VERSION__" ExcludeAssets="runtime"/>
         <PackageReference Include="SCNET.Survivalcraft.Hosting" Version="__SCNET_GAME_VERSION__" ExcludeAssets="runtime"/>
+        <!--#if (scope == "server") -->
+        <PackageReference Include="SCNET.ContentTool" Version="__SCNET_CONTENT_TOOL_VERSION__" PrivateAssets="all"/>
+        <!--#endif -->
     </ItemGroup>
 </Project>

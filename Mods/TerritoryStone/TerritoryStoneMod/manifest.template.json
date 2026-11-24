@@ -12,6 +12,7 @@
         "mediaType": "application/json"
     },
     "metadata": {
+        "scope": "both",
         "clientContentEntrypoint": "TerritoryStoneMod.Client.Presentation.TerritoryClientContentModule, TerritoryStoneMod.Client",
         "entrypoint": "TerritoryStoneMod.ModEntry, TerritoryStoneMod",
         "canRemoveFromWorld": false,

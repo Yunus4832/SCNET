@@ -166,7 +166,8 @@ public sealed class GameWorldController(
                 { "GameInfo", new ValuesDictionary { { "WorldDirectoryName", request.World.DirectoryName } } }
             };
             token.ThrowIfCancellationRequested();
-            var catalog = request.Mods.CreateWorldCatalog(
+            var mods = request.AcquireMods(runtime);
+            var catalog = mods.CreateWorldCatalog(
                 runtime,
                 BlockIndexMapping.FromXml(node.Element("BlockRegistry"))
             );
@@ -174,7 +175,7 @@ public sealed class GameWorldController(
             var project = AuthorityWorldProjectFactory.Create(
                 runtime,
                 catalog,
-                request.Database,
+                mods.Database,
                 node,
                 overrides,
                 request.Policies,

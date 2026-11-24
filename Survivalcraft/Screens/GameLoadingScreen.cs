@@ -111,9 +111,7 @@ public class GameLoadingScreen : Screen
                         _clientNode = CommonLib.Net;
                         _clientNode.ConnectServer(
                             _serverPreparation,
-                            new ClientConnectionOptions(
-                                CurrentModRuntime.Value?.ModDataHash ?? GameProtocol.EmptyModDataHash
-                            )
+                            new ClientConnectionOptions(CurrentModRuntime.Value!.ModDataHash)
                         );
                         DialogsManager.ShowDialog(this, SpawnDialog);
                         _stateMachine.TransitionTo("WaitServerReply");

@@ -210,7 +210,9 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
         }
     }
 
-    public Stream OpenValidated(string packageHash)
+    public Stream OpenValidated(string packageHash) => OpenValidated(packageHash, out _);
+
+    internal Stream OpenValidated(string packageHash, out ContentPackageInspection inspection)
     {
         var path = GetPath(packageHash);
         var stream = new FileStream(
@@ -223,7 +225,7 @@ public sealed class ContentPackageCache(string directoryPath) : IContentPackageC
         );
         try
         {
-            var inspection = ContentPackageReader.Inspect(stream);
+            inspection = ContentPackageReader.Inspect(stream);
             if (!string.Equals(inspection.PackageHash, packageHash, StringComparison.OrdinalIgnoreCase))
             {
                 throw new ContentPackageException("Cached package file does not match its content address.");

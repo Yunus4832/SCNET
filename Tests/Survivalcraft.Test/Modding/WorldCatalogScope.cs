@@ -31,7 +31,7 @@ internal sealed class WorldCatalogScope : IDisposable
 
     private WorldCatalogScope(WorldRuntimeContext runtime, params ModDescriptor[] mods)
     {
-        _runtime = GameModRuntime.Start(mods);
+        _runtime = GameModRuntime.Start(mods, side: runtime.Side);
         var registry = BlockRuntimeCatalog.Compile(
             _runtime.Host.Extensions.GetRegistry<BlockRegistration>(BlockExtensions.RegistryName).Entries
         );

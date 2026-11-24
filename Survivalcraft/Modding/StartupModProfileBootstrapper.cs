@@ -1,34 +1,23 @@
 namespace Game.Modding;
 
+/// <summary>在 GUI 模组运行时初始化前准备启动目标的精确包组合。</summary>
 public static class StartupModProfileBootstrapper
 {
-    public static bool EnsureStartupSessionProfile(
+    public static ModLoadPlan PrepareLoadPlan(
         SessionInfo startupSession,
-        ModProfile desiredProfile,
         string localRepositoryPath,
         Action<string>? log = null
     )
     {
         ArgumentNullException.ThrowIfNull(startupSession);
-
-        if (startupSession.Target is not (SessionTarget.World or SessionTarget.HostedWorld))
+        var profile = ModProfileManager.ResolveStartupProfile(startupSession);
+        if (startupSession.Target is SessionTarget.World or SessionTarget.HostedWorld && profile.Packages.Count > 0)
         {
-            return false;
+            ModProfileResolver.EnsurePackagesAvailable(profile, localRepositoryPath, log);
         }
 
-        var existingProfile = ModProfileManager.LoadSessionProfile(startupSession.SessionId);
-        var downloadedAny = ModProfileResolver.EnsurePackagesAvailable(desiredProfile, localRepositoryPath, log);
-
-        if (ModProfileIdentity.AreEquivalent(existingProfile, desiredProfile) && !downloadedAny)
-        {
-            return false;
-        }
-
-        var sessionProfile = ModProfileManager.CreateSessionProfile(string.Empty, desiredProfile);
-        var restart = SessionInfoSerializer.Clone(startupSession);
-        restart.CreateWorldIfMissing |= StartupManager.Current.Request.HasExplicitSession;
-        restart.ForceWorldRunServer |= StartupManager.Current.Request.ForceWorldRunServer;
-        GameExitManager.RequestRestart(restart, sessionProfile);
-        return true;
+        return startupSession.Target == SessionTarget.RemoteServer
+            ? ModLoadPlan.ReadClientProfile(profile, localRepositoryPath, log)
+            : ModLoadPlan.Read(profile, localRepositoryPath, log);
     }
 }

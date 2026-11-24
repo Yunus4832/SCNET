@@ -6,7 +6,8 @@ using Game.Admission;
 
 namespace Game.Network.Handling;
 
-public sealed class ConnectionRequestPackageHandler(string modDataHash) : PackageHandlerBase<ConnectionRequestPackage>
+public sealed class ConnectionRequestPackageHandler(string clientModDataHash)
+    : PackageHandlerBase<ConnectionRequestPackage>
 {
     public override void Handle(ConnectionRequestPackage package, PackageReceiveContext context)
     {
@@ -110,8 +111,7 @@ public sealed class ConnectionRequestPackageHandler(string modDataHash) : Packag
             return ConnectionMessages.Create("ProtocolMismatch", "Client and server protocol versions do not match");
         }
 
-        var hash = modDataHash;
-        if (!string.Equals(package.ModDataHash, hash, StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(package.ModDataHash, clientModDataHash, StringComparison.OrdinalIgnoreCase))
         {
             return ConnectionMessages.Create(
                 "ModsMismatch",

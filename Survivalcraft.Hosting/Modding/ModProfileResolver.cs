@@ -6,36 +6,6 @@ namespace Game.Modding;
 
 public static class ModProfileResolver
 {
-    public static IReadOnlyList<ModPackageSource> ResolveRequiredPackages(
-        ModProfile profile,
-        string localRepositoryPath,
-        Action<string>? log = null
-    )
-    {
-        ArgumentNullException.ThrowIfNull(profile);
-        ModProfileValidation.Validate(profile);
-        Directory.CreateDirectory(localRepositoryPath);
-        var repository = new LocalModRepository(localRepositoryPath);
-        var download = CreateDownloadService(localRepositoryPath);
-        var context = ContentSourceContext.Persistent(ContentRepositoryManager.Current.Snapshot());
-        var resolvedSources = new List<ModPackageSource>();
-        foreach (var requirement in profile.Packages)
-        {
-            var localEntry = ResolveEntry(
-                requirement,
-                repository,
-                download,
-                context,
-                log,
-                CancellationToken.None,
-                out _
-            );
-            resolvedSources.Add(new ModPackageSource(localEntry.FileName, () => File.OpenRead(localEntry.Path)));
-        }
-
-        return resolvedSources;
-    }
-
     public static bool EnsurePackagesAvailable(
         ModProfile profile,
         string localRepositoryPath,

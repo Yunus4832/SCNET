@@ -14,9 +14,10 @@ public sealed class ModPayloadCodec : IContentPayloadCodec
             "scnet.mod-v1",
             "payload/mod.json",
             "application/json",
-            ["entrypoint", "clientContentEntrypoint", "dependencies", "canRemoveFromWorld"],
+            ["scope", "entrypoint", "clientContentEntrypoint", "dependencies", "canRemoveFromWorld"],
             allowAdditionalPayload: true
         );
+        var scope = ReadScope(manifest.Metadata);
         if (!manifest.Metadata.TryGetProperty("entrypoint", out var entrypoint))
         {
             throw new ContentPackageException("Mod metadata.entrypoint is required; data-only packages use null.");
@@ -54,13 +55,35 @@ public sealed class ModPayloadCodec : IContentPayloadCodec
             ValidateDependency(dependency, manifest.Identifier, dependencyIds);
         }
 
-        var hasContribution = context.Paths.Any(path =>
-            path.StartsWith("payload/data/", StringComparison.Ordinal) ||
+        var hasData = context.Paths.Any(path => path.StartsWith("payload/data/", StringComparison.Ordinal));
+        var hasAssets = context.Paths.Any(path =>
             path.StartsWith($"payload/assets/{manifest.Identifier}/", StringComparison.Ordinal)
         );
-        if (entrypoint.ValueKind == JsonValueKind.Null &&
-            (clientContentEntrypoint.ValueKind is JsonValueKind.Undefined or JsonValueKind.Null) &&
-            !hasContribution)
+        if (scope != ModScope.Both && hasData)
+        {
+            throw new ContentPackageException("Mod payload/data requires metadata.scope 'both'.");
+        }
+
+        var hasEntrypoint = entrypoint.ValueKind == JsonValueKind.String;
+        var hasClientEntrypoint = clientContentEntrypoint.ValueKind == JsonValueKind.String;
+        if (scope == ModScope.Client && hasEntrypoint)
+        {
+            throw new ContentPackageException("Mod metadata.entrypoint must be null for metadata.scope 'client'.");
+        }
+
+        if (scope == ModScope.Server && hasClientEntrypoint)
+        {
+            throw new ContentPackageException(
+                "Mod metadata.clientContentEntrypoint must be omitted or null for metadata.scope 'server'."
+            );
+        }
+
+        if (scope == ModScope.Server && !hasEntrypoint)
+        {
+            throw new ContentPackageException("Mod metadata.entrypoint is required for metadata.scope 'server'.");
+        }
+
+        if (!hasEntrypoint && !hasClientEntrypoint && !hasData && !hasAssets)
         {
             throw new ContentPackageException("Mod must define an applicable entrypoint or contribution.");
         }
@@ -103,6 +126,20 @@ public sealed class ModPayloadCodec : IContentPayloadCodec
 
             throw new ContentPackageException($"Mod payload path '{path}' is invalid.");
         }
+    }
+
+    /// <summary>
+    /// 读取 Mod 包清单中必填且区分大小写的运行范围。
+    /// </summary>
+    public static ModScope ReadScope(JsonElement metadata)
+    {
+        return ContentPackageManifest.GetRequiredString(metadata, "scope", "manifest.metadata") switch
+        {
+            "server" => ModScope.Server,
+            "client" => ModScope.Client,
+            "both" => ModScope.Both,
+            _ => throw new ContentPackageException("Mod metadata.scope must be 'server', 'client', or 'both'.")
+        };
     }
 
     private static void ValidateDependency(JsonElement dependency, string owner, ISet<string> ids)

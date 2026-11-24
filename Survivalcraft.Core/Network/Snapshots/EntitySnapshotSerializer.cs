@@ -15,7 +15,7 @@ public static class EntitySnapshotSerializer
     public static List<Entity> Deserialize(Project project, byte[] data)
     {
         var values = new ValuesDictionary();
-        values.ApplyOverridesUseMessagePack(data);
+        values.ApplyOverridesUseMessagePack(data, project.GameDatabase.Database.FindType);
         var entityData = new EntityDataList(project.GameDatabase, values, false);
         // Remove old components before replacements register the same inventories and entity IDs.
         foreach (var entity in entityData.EntitiesData)

@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 
 using Content.Packaging;
+using Content.Packaging.Payloads;
 
 using Game.Modding.Content;
 using Game.Modding.Data;
@@ -90,7 +91,7 @@ public sealed class ModPackage
         }
     }
 
-    private static ModManifest CreateRuntimeManifest(ContentPackageManifest packageManifest)
+    internal static ModManifest CreateRuntimeManifest(ContentPackageManifest packageManifest)
     {
         var metadata = packageManifest.Metadata;
         var entrypoint = metadata.GetProperty("entrypoint").GetString();
@@ -111,7 +112,8 @@ public sealed class ModPackage
             metadata.TryGetProperty("clientContentEntrypoint", out var clientContentEntrypoint)
                 ? clientContentEntrypoint.GetString()
                 : null,
-            metadata.GetProperty("canRemoveFromWorld").GetBoolean()
+            metadata.GetProperty("canRemoveFromWorld").GetBoolean(),
+            ModPayloadCodec.ReadScope(metadata)
         );
     }
 
@@ -323,6 +325,10 @@ internal sealed class ModAssemblyLoadScope(
         _created = true;
         return instance;
     }
+
+    public Type? FindLoadedType(string typeName) =>
+        _loadContext?.Assemblies.Select(assembly => assembly.GetType(typeName))
+            .SingleOrDefault(type => type is not null);
 
     public T CreateEntrypoint<T>(string entrypoint) where T : class
     {

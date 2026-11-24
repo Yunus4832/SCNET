@@ -80,7 +80,7 @@ public class Project : IDisposable
 
                 var value = item.GetValue<bool>("IsOptional");
                 var value2 = item.GetValue<string>("Class");
-                var type = RuntimeTypeResolver.FindType(value2, !value);
+                var type = gameDatabase.Database.FindType(value2, !value);
                 if (type is null)
                 {
                     continue;

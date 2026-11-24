@@ -322,7 +322,7 @@ public class ComponentCharacterPackageHandler : PackageHandlerBase<ComponentChar
                 PlayerEvent(player =>
                     {
                         var statistics = new EntitySystem.TemplatesDatabase.ValuesDictionary();
-                        statistics.ApplyOverridesUseMessagePack(message.Stat);
+                        statistics.ApplyOverridesUseMessagePack(message.Stat, project.GameDatabase.Database.FindType);
                         player.CharacterStats.ApplySnapshot(statistics);
                     }
                 );

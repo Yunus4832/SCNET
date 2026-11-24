@@ -46,7 +46,10 @@ public sealed class EntityPackageHandler : PackageHandlerBase<EntityPackage>
                     if (snapshot.Controller is { } controller)
                     {
                         var identityValues = new EntitySystem.TemplatesDatabase.ValuesDictionary();
-                        identityValues.ApplyOverridesUseMessagePack(snapshot.Data);
+                        identityValues.ApplyOverridesUseMessagePack(
+                            snapshot.Data,
+                            project.GameDatabase.Database.FindType
+                        );
                         if (identityValues.GetValue<Guid>("CharacterId") != controller.CharacterId ||
                             !ClientPackageHandler.InstallController(netNode, controller)) { return; }
                     }
@@ -56,7 +59,7 @@ public sealed class EntityPackageHandler : PackageHandlerBase<EntityPackage>
                 foreach (var snapshot in message1.Characters)
                 {
                     var values = new EntitySystem.TemplatesDatabase.ValuesDictionary();
-                    values.ApplyOverridesUseMessagePack(snapshot.Data);
+                    values.ApplyOverridesUseMessagePack(snapshot.Data, project.GameDatabase.Database.FindType);
                     var guid = values.GetValue("CharacterId", Guid.Empty);
                     var existing = players.Characters.FirstOrDefault(player => player.CharacterId == guid);
                     if (existing is null)
@@ -78,7 +81,10 @@ public sealed class EntityPackageHandler : PackageHandlerBase<EntityPackage>
                     if (snapshot.Controller is { } controller)
                     {
                         var identityValues = new EntitySystem.TemplatesDatabase.ValuesDictionary();
-                        identityValues.ApplyOverridesUseMessagePack(snapshot.Data);
+                        identityValues.ApplyOverridesUseMessagePack(
+                            snapshot.Data,
+                            project.GameDatabase.Database.FindType
+                        );
                         if (identityValues.GetValue<Guid>("CharacterId") != controller.CharacterId ||
                             !ClientPackageHandler.InstallController(netNode, controller)) { return; }
                     }
@@ -88,7 +94,7 @@ public sealed class EntityPackageHandler : PackageHandlerBase<EntityPackage>
                 foreach (var snapshot in message2.Characters)
                 {
                     var values = new EntitySystem.TemplatesDatabase.ValuesDictionary();
-                    values.ApplyOverridesUseMessagePack(snapshot.Data);
+                    values.ApplyOverridesUseMessagePack(snapshot.Data, project.GameDatabase.Database.FindType);
                     var guid = values.GetValue("CharacterId", Guid.Empty);
                     var existing = players.Characters.FirstOrDefault(player => player.CharacterId == guid);
                     if (existing is null)

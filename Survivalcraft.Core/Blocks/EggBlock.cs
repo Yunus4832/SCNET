@@ -11,13 +11,12 @@ public class EggBlock : Block
 
     public ReadOnlyList<EggType> ReadOnlyEggTypes => new(EggTypes);
 
-    public override void Initialize()
+    internal void InitializeEggTypes(EntitySystem.Core.GameDatabase database)
     {
         EggTypes.Clear();
-        var parameterSetType = DatabaseManager.GameDatabase.ParameterSetType;
+        var parameterSetType = database.ParameterSetType;
         var eggParameterSetGuid = new Guid("300ff557-775f-4c7c-a88a-26655369f00b");
-        var eggItems = from o in DatabaseManager
-                .GameDatabase
+        var eggItems = from o in database
                 .Database
                 .Root
                 .GetExplicitNestingChildren(parameterSetType, false)
@@ -60,8 +59,6 @@ public class EggBlock : Block
                 TextureSlot = item.GetNestedValue<int>("TextureSlot")
             };
         }
-
-        base.Initialize();
     }
 
 

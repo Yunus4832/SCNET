@@ -212,6 +212,7 @@ public sealed class ContentServerClientModTest : IDisposable
                 "id": "{{modId}}",
                 "name": "{{modId}}",
                 "version": "{{version}}",
+                "scope": "both",
                 "canRemoveFromWorld": false
               }
               """,

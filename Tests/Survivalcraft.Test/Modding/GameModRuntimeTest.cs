@@ -28,7 +28,7 @@ public class GameModRuntimeTest
     {
         Dispatcher.Initialize();
         AssetManager.Initialize();
-        using var mods = GameModRuntime.Start();
+        using var mods = GameModRuntime.Start(side: RuntimeSide.Authority);
         mods.InitializeDatabase();
         var runtime = new WorldRuntimeContext(RuntimeSide.Authority, false);
         try
@@ -60,8 +60,11 @@ public class GameModRuntimeTest
         using var server = GameModRuntime.StartFromProfile(
             new ModProfile { Id = "server" },
             Path.GetTempPath(),
-            includeClientAssets: false
+            side: RuntimeSide.Authority
         );
+        Assert.Throws<InvalidOperationException>(() => GameEntry.InitializeClientContent(server));
+        Assert.Throws<InvalidOperationException>(() => GameEntry.SetModRuntime(server));
+        Assert.Throws<InvalidOperationException>(() => server.PreviewCatalog);
         Assert.Equal(Assert.Single(client.LoadedMods).ResourcesMd5, Assert.Single(server.LoadedMods).ResourcesMd5);
         Assert.Contains(client.Content.RegisteredResources, asset => asset.RelativePath == "Textures/Blocks.webp");
         Assert.DoesNotContain(server.Content.RegisteredResources, asset => asset.RelativePath.StartsWith("Textures/"));
@@ -136,9 +139,9 @@ public class GameModRuntimeTest
     {
         Dispatcher.Initialize();
         AssetManager.Initialize();
-        using var runtime = GameModRuntime.Start();
+        using var runtime = GameModRuntime.Start(side: RuntimeSide.Authority);
         runtime.InitializeContentData();
-        Assert.NotNull(DatabaseManager.DatabaseNodeField);
+        Assert.NotNull(runtime.Database);
         Assert.Null(
             typeof(GameModRuntime).GetField(
                 "_previewCatalog",
@@ -159,7 +162,9 @@ public class GameModRuntimeTest
     {
         Dispatcher.Initialize();
         AssetManager.Initialize();
-        using var runtime = GameModRuntime.Start();
+        using var runtime = GameModRuntime.Start(side: RuntimeSide.Authority);
+        using var replicaMods = GameModRuntime.Start();
+        replicaMods.InitializeContentData();
         runtime.InitializeContentData();
         var authorityRuntime = new WorldRuntimeContext(RuntimeSide.Authority, false);
         var clientRuntime = new WorldRuntimeContext(
@@ -167,13 +172,14 @@ public class GameModRuntimeTest
             (true)
         );
         var authority = runtime.CreateWorldCatalog(authorityRuntime, BlockIndexMapping.Empty);
-        var client = runtime.CreateWorldCatalog(clientRuntime, authority.Registry.Mapping, true);
+        var client = replicaMods.CreateWorldCatalog(clientRuntime, authority.Registry.Mapping, true);
         Assert.Same(authority, WorldContentBinding.For(authorityRuntime).Catalog);
         Assert.Same(client, WorldContentBinding.For(clientRuntime).Catalog);
         using var authorityProject = new Project();
         authorityRuntime.BindProject(authorityProject);
         Assert.Same(authority, WorldContentBinding.For(authorityProject).Catalog);
-        Assert.Equal(2, runtime.WorldCatalogs.Count);
+        Assert.Single(runtime.WorldCatalogs);
+        Assert.Single(replicaMods.WorldCatalogs);
         foreach (var entry in authority.Registry.ById.Values)
         {
             var replica = client.GetBlock(entry.Id);
@@ -187,7 +193,8 @@ public class GameModRuntimeTest
         clientRuntime.BindProject(clientProject);
         clientRuntime.Close();
         Assert.Same(client, WorldContentBinding.For(clientRuntime).Catalog);
-        Assert.Equal(2, runtime.WorldCatalogs.Count);
+        Assert.Single(runtime.WorldCatalogs);
+        Assert.Single(replicaMods.WorldCatalogs);
         Assert.Throws<InvalidOperationException>(() => runtime.Dispose());
         clientProject.Dispose();
         Assert.Throws<InvalidOperationException>(() =>
@@ -214,7 +221,8 @@ public class GameModRuntimeTest
                     new ModManifest("clone", "Cloned blocks", "1.0.0", [new ModDependency("game")]),
                     static () => new CloneBlocksMod()
                 )
-            ]
+            ],
+            side: RuntimeSide.Authority
         );
         runtime.InitializeContentData();
         var world = runtime.CreateWorldCatalog(
@@ -255,7 +263,8 @@ public class GameModRuntimeTest
             using var runtime = GameModRuntime.Start(
                 [
                     new ModDescriptor(new ModManifest("test", "Broken", "1.0.0"), () => mod)
-                ]
+                ],
+                side: RuntimeSide.Authority
             );
             runtime.InitializeContentData();
             var exception = Assert.Throws<InvalidOperationException>(() =>
@@ -301,6 +310,7 @@ public class GameModRuntimeTest
                   "id": "example.addon",
                   "name": "Addon",
                   "version": "1.0.0",
+                  "scope": "both",
                   "canRemoveFromWorld": false
                 }
                 """,
@@ -339,6 +349,7 @@ public class GameModRuntimeTest
                   "id": "example.addon",
                   "name": "Addon",
                   "version": "1.0.0",
+                  "scope": "both",
                   "canRemoveFromWorld": false
                 }
                 """,

@@ -1131,19 +1131,11 @@ public sealed class NetPlayScreen : Screen
         CancellationTokenSource cancellation
     )
     {
-        var requiredProfile = prepared.Status.RequiredModProfile;
-        if (requiredProfile is null)
-        {
-            FinishConnectionPreparation(busyDialog, cancellation, true);
-            ConnectPreparedRemoteSession(prepared);
-            return;
-        }
-
         busyDialog.SmallMessage = Text("CheckingMods");
         var cancellationToken = cancellation.Token;
         Task.Run(() => ModRestartHelper.PrepareRemoteSession(
                     SessionInfoManager.CreateRemoteClientSession(prepared.Target),
-                    requiredProfile,
+                    prepared.Status.RequiredModProfile,
                     prepared.Status.TemporaryRepositories,
                     cancellationToken,
                     message => Dispatcher.Dispatch(() => busyDialog.SmallMessage = message)

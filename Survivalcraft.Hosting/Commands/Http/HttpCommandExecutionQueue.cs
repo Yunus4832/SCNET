@@ -86,7 +86,7 @@ public sealed class HttpCommandExecutionQueue(
                         request,
                         authority.InvokeAsync(
                             world =>
-                                Execute(request, scope.Registry, world.Project),
+                                Execute(request, GameModRuntime.For(world).Commands, world.Project),
                             request.Cancellation
                         )
                     );
@@ -136,7 +136,7 @@ public sealed class HttpCommandExecutionQueue(
                         commands,
                         authority.InvokeAsync(
                             world =>
-                                new HttpCommandAdapter(scope.Registry).Discover(
+                                new HttpCommandAdapter(GameModRuntime.For(world).Commands).Discover(
                                     request.Principal,
                                     null,
                                     world.Project,

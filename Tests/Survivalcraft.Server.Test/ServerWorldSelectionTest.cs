@@ -21,7 +21,7 @@ public sealed class ServerWorldSelectionTest
         using var runtime = GameModRuntime.StartFromProfile(
             new ModProfile(),
             Storage.GetSystemPath(GamePaths.ContentPackageCache),
-            includeClientAssets: false
+            side: Game.World.RuntimeSide.Authority
         );
         runtime.InitializeDatabase();
         var worlds = new WorldRepository(GamePaths.Worlds, [], new WorldProjectActivity(), static () => { });
@@ -34,7 +34,7 @@ public sealed class ServerWorldSelectionTest
             var world = ServerWorldSelection.Resolve(
                 new StartupContext(new RunningSetting(), new StartupRequest(), session),
                 worlds,
-                DatabaseManager.GameDatabase,
+                runtime.Database,
                 prepared
             );
 
@@ -60,7 +60,7 @@ public sealed class ServerWorldSelectionTest
         using var runtime = GameModRuntime.StartFromProfile(
             new ModProfile(),
             Storage.GetSystemPath(GamePaths.ContentPackageCache),
-            includeClientAssets: false
+            side: Game.World.RuntimeSide.Authority
         );
         runtime.InitializeDatabase();
         var worlds = new WorldRepository(GamePaths.Worlds, [], new WorldProjectActivity(), static () => { });
@@ -69,7 +69,7 @@ public sealed class ServerWorldSelectionTest
         try
         {
             worlds.CreateWorld(
-                DatabaseManager.GameDatabase,
+                runtime.Database,
                 new WorldSettings { Name = worldName, Seed = "saved-seed" },
                 new WorldHostingSettings { RunServer = runServer },
                 empty ? new ModProfile() : CreateProfile(),
@@ -82,7 +82,7 @@ public sealed class ServerWorldSelectionTest
             var world = ServerWorldSelection.Resolve(
                 new StartupContext(new RunningSetting(), new StartupRequest(), session),
                 worlds,
-                DatabaseManager.GameDatabase,
+                runtime.Database,
                 empty ? CreateProfile() : new ModProfile()
             );
 

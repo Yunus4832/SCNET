@@ -592,23 +592,7 @@ public sealed class WorldRepository
                 }
             }
 
-            var descriptors = new List<ModDescriptor> { BuiltInContentMod.CreateDescriptor() };
-            try
-            {
-                foreach (var requirement in desiredProfile.Packages)
-                {
-                    descriptors.Add(ReadPackage(requirement).CreateDescriptor());
-                }
-
-                ModDependencyResolver.Resolve(descriptors);
-            }
-            finally
-            {
-                foreach (var descriptor in descriptors)
-                {
-                    descriptor.Lifetime?.Dispose();
-                }
-            }
+            packages.ReadLoadPlan(desiredProfile);
 
             ArgumentException.ThrowIfNullOrWhiteSpace(cloneName);
             clone = CloneWorld(directoryName, cloneName);

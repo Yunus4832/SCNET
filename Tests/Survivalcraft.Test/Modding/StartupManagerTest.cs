@@ -7,6 +7,7 @@ using Engine.Network.Security;
 using Game.Application;
 using Game.Commands;
 using Game.Commands.BuiltIn;
+using Game.Content;
 using Game.FileStorage;
 using Game.Managers;
 using Game.Modding;
@@ -54,7 +55,13 @@ public sealed class StartupManagerTest : IDisposable
             initialSessionId = startup.Session.SessionId;
             if (existingWorld)
             {
-                world = SessionInfoManager.ResolveWorldSession(startup.Session, true, false, mods.LoadedProfile);
+                world = SessionInfoManager.ResolveWorldSession(
+                    startup.Session,
+                    true,
+                    false,
+                    mods.FullProfile,
+                    mods.Database
+                );
                 Assert.NotNull(world);
                 Assert.False(world.Hosting.RunServer);
             }
@@ -73,26 +80,18 @@ public sealed class StartupManagerTest : IDisposable
                     ]
                 }
             );
-            // Exercise the same restart handoff without opening a test window.
-
             GameExitManager.BeginSession();
             if (existingWorld)
             {
-                Assert.True(
-                    StartupModProfileBootstrapper.EnsureStartupSessionProfile(
-                        startup.Session,
-                        ModProfileManager.ResolveStartupProfile(startup.Session),
-                        directory
-                    )
-                );
+                var plan = StartupModProfileBootstrapper.PrepareLoadPlan(startup.Session, directory);
+                Assert.Empty(plan.FullProfile.Packages);
+                Assert.Empty(StartupManager.Profiles.LoadRunningSettings().PendingSessionId);
             }
-            else
-            {
-                var creationSession = SessionInfoSerializer.Clone(startup.Session);
-                creationSession.CreateWorldIfMissing = true;
-                creationSession.ForceWorldRunServer = true;
-                GameExitManager.RequestRestart(creationSession, new ModProfile());
-            }
+
+            var creationSession = SessionInfoSerializer.Clone(startup.Session);
+            creationSession.CreateWorldIfMissing = true;
+            creationSession.ForceWorldRunServer = true;
+            GameExitManager.RequestRestart(creationSession, new ModProfile());
 
             pendingSessionId = StartupManager.Profiles.LoadRunningSettings().PendingSessionId;
             Assert.False(string.IsNullOrWhiteSpace(pendingSessionId));
@@ -105,7 +104,13 @@ public sealed class StartupManagerTest : IDisposable
             Assert.Equal("RestartPlayer", resumed.Session.AutoJoinCharacterName);
             Assert.False(startup.Session.CreateWorldIfMissing);
             Assert.False(startup.Session.ForceWorldRunServer);
-            world = SessionInfoManager.ResolveWorldSession(resumed.Session, false, false, mods.LoadedProfile);
+            world = SessionInfoManager.ResolveWorldSession(
+                resumed.Session,
+                false,
+                false,
+                mods.FullProfile,
+                mods.Database
+            );
             Assert.NotNull(world);
             Assert.True(world.Hosting.RunServer);
             Assert.False(resumed.Session.CreateWorldIfMissing);
@@ -114,12 +119,15 @@ public sealed class StartupManagerTest : IDisposable
             world.Hosting.RunServer = false;
             ClientApplication.Worlds.ChangeWorld(world.DirectoryName, world.WorldSettings, world.Hosting);
             Assert.False(
-                SessionInfoManager.ResolveWorldSession(resumed.Session, false, false, mods.LoadedProfile)!.Hosting
+                SessionInfoManager.ResolveWorldSession(resumed.Session, false, false, mods.FullProfile, mods.Database)!
+                    .Hosting
                     .RunServer
             );
             ClientApplication.Worlds.DeleteWorld(world.DirectoryName);
             world = null;
-            Assert.Null(SessionInfoManager.ResolveWorldSession(resumed.Session, false, false, mods.LoadedProfile));
+            Assert.Null(
+                SessionInfoManager.ResolveWorldSession(resumed.Session, false, false, mods.FullProfile, mods.Database)
+            );
         }
         finally
         {
@@ -132,6 +140,104 @@ public sealed class StartupManagerTest : IDisposable
             if (Directory.Exists(directory)) { Directory.Delete(directory, true); }
 
             GameExitManager.BeginSession();
+        }
+    }
+
+    [Fact]
+    public async Task ColdWorldCreationPersistsCompleteProfileWithoutStartingServerOnlyModsInGui()
+    {
+        var name = "ScopedCreation" + Guid.NewGuid().ToString("N");
+        var repository = Directory.CreateTempSubdirectory("scnet-scoped-world-");
+        var startup = StartupManager.Load(["--session", name, "--world", name]);
+        WorldInfo? world = null;
+        try
+        {
+            using var package = ScpkgTestPackage.Create(
+                """
+                {
+                  "id": "test.authority",
+                  "name": "Authority",
+                  "version": "1.0.0",
+                  "scope": "server",
+                  "entrypoint": "Test.Entry, NotLoadedOnClient",
+                  "canRemoveFromWorld": true
+                }
+                """
+            );
+            var cache = new ContentPackageCache(repository.FullName);
+            var entry = await cache.ImportAsync(package);
+            var profile = new ModProfile
+            {
+                Id = startup.Session.SessionId,
+                Packages =
+                [
+                    new ModPackageRequirement
+                        { ModId = entry.Identifier, Version = entry.Version, PackageHash = entry.PackageHash }
+                ]
+            };
+            ModProfileManager.SaveSessionProfile(profile);
+
+            var plan = StartupModProfileBootstrapper.PrepareLoadPlan(startup.Session, repository.FullName);
+            using var mods = GameModRuntime.StartFromPlan(plan, RuntimeSide.Client);
+            mods.InitializeContentData();
+            Assert.Empty(mods.LoadedProfile.Packages);
+            Assert.Empty(StartupManager.Profiles.LoadRunningSettings().PendingSessionId);
+
+            world = SessionInfoManager.ResolveWorldSession(
+                startup.Session,
+                true,
+                false,
+                mods.FullProfile,
+                mods.Database
+            );
+            Assert.NotNull(world);
+            var saved = ModProfileManager.LoadRequiredWorldProfile(world.DirectoryName);
+            Assert.True(ModProfileIdentity.AreEquivalent(profile, saved));
+        }
+        finally
+        {
+            if (world is not null) { ClientApplication.Worlds.DeleteWorld(world.DirectoryName); }
+
+            ModProfileManager.DeleteSessionProfile(startup.Session.SessionId);
+            repository.Delete(true);
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void RemoteServerWithNoClientModsRequiresUnloadingActivePackages(bool explicitProfile)
+    {
+        using var mods = GameModRuntime.Start(
+            [
+                new ModDescriptor(
+                    new ModManifest("test.extra", "Extra", "1.0.0"),
+                    static () => new PackageEntrypointMod(),
+                    PackageHash: new string('a', 64)
+                )
+            ]
+        );
+        using (var replacement = CurrentModRuntime.BeginReplacement(mods)) { replacement.Commit(); }
+
+        try
+        {
+            var result = ModRestartHelper.PrepareRemoteSession(
+                new SessionInfo
+                {
+                    Target = SessionTarget.RemoteServer, RemoteTarget = new AddressNetworkTarget("127.0.0.1", 28887)
+                },
+                explicitProfile ? new ModProfile() : null,
+                [],
+                CancellationToken.None
+            );
+
+            Assert.True(result.RequiresRestart);
+            Assert.Empty(result.SessionProfile!.Packages);
+        }
+        finally
+        {
+            using var clear = CurrentModRuntime.BeginReplacement(null);
+            clear.Commit();
         }
     }
 

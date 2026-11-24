@@ -36,7 +36,7 @@ public sealed class MovingBlockPackageHandler : PackageHandlerBase<MovingBlockPa
                 }
 
                 var baseline = new EntitySystem.TemplatesDatabase.ValuesDictionary();
-                baseline.ApplyOverridesUseMessagePack(message4.AddData);
+                baseline.ApplyOverridesUseMessagePack(message4.AddData, project.GameDatabase.Database.FindType);
                 if (subsystemMovingBlocks.LoadAndAddMovingItem(baseline) is SubsystemMovingBlocks.MovingBlockSet m)
                 {
                     m.NetworkId = message4.NetworkId;

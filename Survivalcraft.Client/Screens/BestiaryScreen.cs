@@ -46,11 +46,12 @@ public class BestiaryScreen : Screen
                 _creaturesList.Items.Cast<BestiaryCreatureInfo>().ToList()
             );
         };
+        var database = CurrentModRuntime.Value!.Database;
         var list = new List<BestiaryCreatureInfo>();
-        foreach (var entitiesValuesDictionary in DatabaseManager.EntitiesValuesDictionaries)
+        foreach (var entitiesValuesDictionary in database.EntitiesValuesDictionaries)
         {
             var valuesDictionary =
-                DatabaseManager.FindValuesDictionaryForComponent(entitiesValuesDictionary, typeof(ComponentCreature));
+                database.FindValuesDictionaryForComponent(entitiesValuesDictionary, typeof(ComponentCreature));
             if (valuesDictionary == null)
             {
                 continue;
@@ -91,42 +92,42 @@ public class BestiaryScreen : Screen
             }
 
             var valuesDictionary2 =
-                DatabaseManager.FindValuesDictionaryForComponent(
+                database.FindValuesDictionaryForComponent(
                     entitiesValuesDictionary,
                     typeof(ComponentCreatureModel)
                 );
             var valuesDictionary3 =
-                DatabaseManager.FindValuesDictionaryForComponent(
+                database.FindValuesDictionaryForComponent(
                     entitiesValuesDictionary,
                     typeof(ComponentBody)
                 );
             var valuesDictionary4 =
-                DatabaseManager.FindValuesDictionaryForComponent(
+                database.FindValuesDictionaryForComponent(
                     entitiesValuesDictionary,
                     typeof(ComponentHealth)
                 );
             var valuesDictionary5 =
-                DatabaseManager.FindValuesDictionaryForComponent(
+                database.FindValuesDictionaryForComponent(
                     entitiesValuesDictionary,
                     typeof(ComponentMiner)
                 );
             var valuesDictionary6 =
-                DatabaseManager.FindValuesDictionaryForComponent(
+                database.FindValuesDictionaryForComponent(
                     entitiesValuesDictionary,
                     typeof(ComponentLocomotion)
                 );
             var valuesDictionary7 =
-                DatabaseManager.FindValuesDictionaryForComponent(
+                database.FindValuesDictionaryForComponent(
                     entitiesValuesDictionary,
                     typeof(ComponentHerdBehavior)
                 );
             var valuesDictionary8 =
-                DatabaseManager.FindValuesDictionaryForComponent(
+                database.FindValuesDictionaryForComponent(
                     entitiesValuesDictionary,
                     typeof(ComponentMount)
                 );
             var valuesDictionary9 =
-                DatabaseManager.FindValuesDictionaryForComponent(
+                database.FindValuesDictionaryForComponent(
                     entitiesValuesDictionary,
                     typeof(ComponentLoot)
                 );

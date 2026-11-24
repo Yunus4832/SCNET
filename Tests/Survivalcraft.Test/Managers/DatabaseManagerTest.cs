@@ -1,5 +1,6 @@
 using System.Reflection;
 
+using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Managers;
@@ -27,9 +28,9 @@ public sealed class DatabaseManagerTest
         parameters.SetValue("Second", 2);
         var template = new ValuesDictionary { DatabaseObject = definition };
         template.SetValue("Parameters", parameters);
-        var cache = (Dictionary<string, ValuesDictionary>)typeof(DatabaseManager)
-            .GetField("_valueDictionaries", BindingFlags.NonPublic | BindingFlags.Static)!
-            .GetValue(null)!;
+        var cache = (Dictionary<string, ValuesDictionary>)typeof(GameDatabase)
+            .GetField("_valueDictionaries", BindingFlags.NonPublic | BindingFlags.Instance)!
+            .GetValue(project.GameDatabase)!;
         cache.Add(definition.Name, template);
         try
         {
@@ -51,7 +52,7 @@ public sealed class DatabaseManagerTest
             Assert.Equal(2, firstValues.GetValue<int>("Second"));
             Assert.Equal(1, secondValues.GetValue<int>("First"));
             Assert.Equal(20, secondValues.GetValue<int>("Second"));
-            Assert.Same(template, DatabaseManager.FindEntityValuesDictionary(definition.Name, true));
+            Assert.Same(template, project.GameDatabase.FindEntityValuesDictionary(definition.Name, true));
             Assert.Same(parameters, template.GetValue<ValuesDictionary>("Parameters"));
             Assert.Equal(1, parameters.GetValue<int>("First"));
             Assert.Equal(2, parameters.GetValue<int>("Second"));

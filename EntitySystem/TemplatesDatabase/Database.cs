@@ -8,8 +8,15 @@ public class Database
 
     private readonly ReadOnlyList<DatabaseObjectType> _databaseObjectTypes;
 
-    public Database(DatabaseObject root, IEnumerable<DatabaseObjectType> databaseObjectTypes)
+    public Func<string, bool, Type?> FindType { get; }
+
+    public Database(
+        DatabaseObject root,
+        IEnumerable<DatabaseObjectType> databaseObjectTypes,
+        Func<string, bool, Type?>? findType = null
+    )
     {
+        FindType = findType ?? Engine.Core.Reflection.RuntimeTypeResolver.FindType;
         var objectTypes = databaseObjectTypes as DatabaseObjectType[] ?? databaseObjectTypes.ToArray();
         if (!objectTypes.Contains(root.Type))
         {

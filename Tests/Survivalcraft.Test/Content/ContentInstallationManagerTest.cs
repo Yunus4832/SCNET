@@ -37,7 +37,7 @@ public sealed class ContentInstallationManagerTest : IDisposable
     {
         using var package = ScpkgTestPackage.Create(
             """
-            {"id":"installer.example","name":"Installer Example","version":"1.0.0","canRemoveFromWorld":false}
+            {"id":"installer.example","name":"Installer Example","version":"1.0.0","scope":"both","canRemoveFromWorld":false}
             """,
             new Dictionary<string, string> { ["data/marker.txt"] = "installed" }
         );

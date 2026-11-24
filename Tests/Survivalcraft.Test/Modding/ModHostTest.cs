@@ -1,3 +1,5 @@
+using Content.Packaging;
+
 using EntitySystem.Core;
 
 using Game.Commands;
@@ -16,6 +18,20 @@ public class ModHostTest
     {
         project.InitializeComponent(component);
         return component;
+    }
+
+    [Theory]
+    [InlineData(ModScope.Server, RuntimeSide.Authority)]
+    [InlineData(ModScope.Client, RuntimeSide.Client)]
+    public void SingleSideModsCannotRegisterSharedDataOrMessages(ModScope scope, RuntimeSide side)
+    {
+        var host = new ModHost(side);
+        var manifest = new ModManifest("example.scoped", "Scoped", "1.0.0", Scope: scope);
+        var descriptor = new ModDescriptor(manifest, () => new RegisteringMod());
+        Assert.Throws<InvalidOperationException>(() => host.LoadAndStart([descriptor]));
+        var context = Assert.Single(host.Runtimes).Context;
+        Assert.Equal(side, context.Side);
+        Assert.Throws<InvalidOperationException>(() => context.Network);
     }
 
     [Fact]

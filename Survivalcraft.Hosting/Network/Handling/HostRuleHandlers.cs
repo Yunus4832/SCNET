@@ -18,14 +18,14 @@ public static class HostRuleHandlers
     public static PackageHandlerCatalog CreateAuthority(
         CommandRegistry commands,
         ModNetworkHooks network,
-        string modDataHash,
+        string clientModDataHash,
         CharacterSkinStore skins,
         Func<Project, ServerInfoResponsePackage> captureServerInfo
     )
     {
         var builder = new PackageHandlerCatalogBuilder();
         RegisterCommon(builder, captureServerInfo, skins);
-        builder.RegisterFamily(() => new ConnectionRequestPackageHandler(modDataHash));
+        builder.RegisterFamily(() => new ConnectionRequestPackageHandler(clientModDataHash));
         builder.RegisterFamily(() => new ModEnvelopePackageHandler(network));
         builder.RegisterFamily(() => new ComponentCharacterPackageHandler());
         builder.RegisterFamily(() => new ComponentHealthPackageHandler());

@@ -6,6 +6,8 @@ public sealed class LocalModRepository(string directoryPath)
 {
     private readonly ContentPackageCache _cache = new(directoryPath);
 
+    internal ModLoadPlan ReadLoadPlan(ModProfile profile) => ModLoadPlan.Read(profile, directoryPath);
+
     public IReadOnlyList<LocalModPackageEntry> ListAll()
     {
         return _cache.List()

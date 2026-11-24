@@ -387,8 +387,8 @@ public static class ServerStarter
         var world = ServerWorldSelection.Resolve(
             startup,
             _repository,
-            DatabaseManager.GameDatabase,
-            _modRuntime!.LoadedProfile
+            _modRuntime!.Database,
+            _modRuntime!.FullProfile
         );
         var serverPort = startupSession.ServerPort > 0
             ? startupSession.ServerPort
@@ -421,8 +421,7 @@ public static class ServerStarter
                 world,
                 startupSession,
                 net,
-                _modRuntime,
-                DatabaseManager.GameDatabase,
+                _ => _modRuntime,
                 WorldProjectPolicies.CaptureAuthority(HostingConfiguration.Preferences),
                 new BlockTextureStore(GamePaths.BlockTextures),
                 false
@@ -764,7 +763,7 @@ public static class ServerStarter
             Storage.GetSystemPath(GamePaths.ContentPackageCache),
             Log.Information,
             registerAppCommands: _registerAppCommands ?? RegisterProcessCommands,
-            includeClientAssets: false
+            side: RuntimeSide.Authority
         );
         using (var replacement = CurrentModRuntime.BeginReplacement(_modRuntime)) { replacement.Commit(); }
 

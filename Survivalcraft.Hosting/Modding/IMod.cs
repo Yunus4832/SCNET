@@ -11,6 +11,8 @@ public interface IMod
 
 public interface IModContext
 {
+    RuntimeSide Side { get; }
+
     ModManifest Manifest { get; }
 
     IModExtensions Extensions { get; }

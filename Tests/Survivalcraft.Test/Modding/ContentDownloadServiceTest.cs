@@ -265,6 +265,7 @@ public sealed class ContentDownloadServiceTest : IDisposable
                 "id": "{{identifier}}",
                 "name": "{{identifier}}",
                 "version": "{{version}}",
+                "scope": "both",
                 "canRemoveFromWorld": false
               }
               """,

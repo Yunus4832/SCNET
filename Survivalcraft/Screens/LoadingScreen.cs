@@ -66,24 +66,17 @@ public class LoadingScreen : Screen
             delegate
             {
                 var startupSession = StartupManager.Current.Session;
-                var profile = ModProfileManager.ResolveStartupProfile(startupSession);
-                if (StartupModProfileBootstrapper.EnsureStartupSessionProfile(
-                        startupSession,
-                        profile,
-                        Storage.GetSystemPath(ClientApplication.Paths.ContentPackageCache),
-                        Log.Information
-                    ))
-                {
-                    return;
-                }
-
+                var plan = StartupModProfileBootstrapper.PrepareLoadPlan(
+                    startupSession,
+                    Storage.GetSystemPath(ClientApplication.Paths.ContentPackageCache),
+                    Log.Information
+                );
                 Log.Information("初始化模组运行时");
                 GameEntry.SetModRuntime(
-                    GameModRuntime.StartFromProfile(
-                        profile,
-                        Storage.GetSystemPath(ClientApplication.Paths.ContentPackageCache),
-                        Log.Information,
-                        registerAppCommands: Commands.BuiltIn.BuiltInApplicationCommands.Register
+                    GameModRuntime.StartFromPlan(
+                        plan,
+                        RuntimeSide.Client,
+                        Commands.BuiltIn.BuiltInApplicationCommands.Register
                     )
                 );
                 AssetManager.Initialize();

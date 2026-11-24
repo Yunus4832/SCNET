@@ -23,7 +23,9 @@ public sealed record ServerInfoResponsePackage : ServerInfoPackage
 
     [Key(6)] public float TimeOfSeason { get; init; }
 
-    [Key(7)] public RequiredModProfile? RequiredModProfile { get; init; }
+    /// <summary>客户端加入同一世界时必须加载的精确包组合。空值表示无外部模组。</summary>
+    [Key(7)]
+    public RequiredModProfile? RequiredModProfile { get; init; }
 
     [Key(8), MaxLength(16)] public IReadOnlyList<ContentRepositoryDescriptor> TemporaryRepositories { get; init; } = [];
 }

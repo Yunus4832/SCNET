@@ -26,6 +26,11 @@ public static class ModProfileManager
     /// <summary>按启动目标选择完整配置，已有世界以存档为准，联机重启使用已准备的会话配置。</summary>
     public static ModProfile ResolveStartupProfile(SessionInfo session)
     {
+        if (session.Target == SessionTarget.RemoteServer)
+        {
+            return LoadSessionProfile(session.SessionId) ?? CreateDefault("default");
+        }
+
         if (session.Target is SessionTarget.World or SessionTarget.HostedWorld)
         {
             if (TryResolveWorldDirectory(session, out var directory)) { return LoadRequiredWorldProfile(directory); }

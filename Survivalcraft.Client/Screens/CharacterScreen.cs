@@ -298,8 +298,11 @@ public class CharacterScreen : Screen
 
     private void UpdateCharacterSexDescription()
     {
-        var valuesDictionary = DatabaseManager.FindValuesDictionaryForComponent(
-            DatabaseManager.FindEntityValuesDictionary(_characterData.GetEntityTemplateName(), true)!,
+        var valuesDictionary = _characterData.Project.GameDatabase.FindValuesDictionaryForComponent(
+            _characterData.Project.GameDatabase.FindEntityValuesDictionary(
+                _characterData.GetEntityTemplateName(),
+                true
+            )!,
             typeof(ComponentCreature)
         );
         if (valuesDictionary == null)

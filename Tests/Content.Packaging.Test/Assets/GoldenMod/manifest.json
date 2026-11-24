@@ -12,6 +12,7 @@
     "mediaType": "application/json"
   },
   "metadata": {
+    "scope": "both",
     "entrypoint": null,
     "canRemoveFromWorld": false,
     "dependencies": []

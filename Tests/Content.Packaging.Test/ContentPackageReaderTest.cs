@@ -1,10 +1,89 @@
 using System.IO.Compression;
 using System.Text;
+using System.Text.Json;
+
+using Content.Packaging.Payloads;
 
 namespace Content.Packaging.Test;
 
 public sealed class ContentPackageReaderTest
 {
+    [Theory]
+    [InlineData("")]
+    [InlineData("\"scope\": null,")]
+    [InlineData("\"scope\": 1,")]
+    [InlineData("\"scope\": \"Both\",")]
+    [InlineData("\"scope\": \"unknown\",")]
+    public void RejectsMissingOrInvalidModScope(string declaration)
+    {
+        var manifest = ParseModWithMetadata(declaration + "\"entrypoint\": null");
+        using var stream = new MemoryStream();
+
+        var exception = Assert.Throws<ContentPackageException>(() => ContentPackageWriter.Write(
+                stream,
+                manifest,
+                [Entry("payload/mod.json", "{\"formatVersion\":1}"), Entry("payload/data/example.txt", "data")]
+            )
+        );
+
+        Assert.Contains("scope", exception.Message);
+    }
+
+    [Theory]
+    [InlineData("client", null, null, ModScope.Client)]
+    [InlineData("client", null, "Presentation.Entry, Example", ModScope.Client)]
+    [InlineData("server", "Rules.Entry, Example", null, ModScope.Server)]
+    [InlineData("both", "Rules.Entry, Example", "Presentation.Entry, Example", ModScope.Both)]
+    public void ScopeSurvivesPackageRoundTrip(string scope, string? entrypoint, string? presentation, ModScope expected)
+    {
+        var manifest = ParseModWithMetadata(ModMetadata(scope, entrypoint, presentation));
+        using var stream = new MemoryStream();
+        ContentPackageWriter.Write(
+            stream,
+            manifest,
+            [
+                Entry("payload/mod.json", "{\"formatVersion\":1}"),
+                Entry($"payload/assets/{manifest.Identifier}/example.txt", "asset")
+            ]
+        );
+        stream.Position = 0;
+
+        Assert.Equal(expected, ModPayloadCodec.ReadScope(ContentPackageReader.Inspect(stream).Manifest.Metadata));
+    }
+
+    [Theory]
+    [InlineData("client", "Rules.Entry, Example", null, false, "entrypoint")]
+    [InlineData("server", "Rules.Entry, Example", "Presentation.Entry, Example", false, "clientContentEntrypoint")]
+    [InlineData("server", null, null, false, "entrypoint")]
+    [InlineData("server", "Rules.Entry, Example", null, true, "payload/data")]
+    [InlineData("client", null, "Presentation.Entry, Example", true, "payload/data")]
+    public void RejectsEntrypointsAndDataOutsideModScope(
+        string scope,
+        string? entrypoint,
+        string? presentation,
+        bool hasData,
+        string expected
+    )
+    {
+        var manifest = ParseModWithMetadata(ModMetadata(scope, entrypoint, presentation));
+        var entries = new List<ContentPackageWriteEntry>
+        {
+            Entry("payload/mod.json", "{\"formatVersion\":1}"),
+            Entry($"payload/assets/{manifest.Identifier}/example.txt", "asset")
+        };
+        if (hasData)
+        {
+            entries.Add(Entry("payload/data/blocks/example.csv", "data"));
+        }
+
+        using var stream = new MemoryStream();
+
+        var exception =
+            Assert.Throws<ContentPackageException>(() => ContentPackageWriter.Write(stream, manifest, entries));
+
+        Assert.Contains(expected, exception.Message);
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("\"canRemoveFromWorld\": null,")]
@@ -149,7 +228,7 @@ public sealed class ContentPackageReaderTest
 
         var hash = ContentPackageWriter.Write(package, manifest, entries);
 
-        Assert.Equal("ede046e0aa5548c81c19890f0d2ef587768d9aead961182f9706dd3fb19c281f", hash);
+        Assert.Equal("c1f93390c289a2aa6917cad031fb6e9ac4272b2c67ff5a930075d0492f518f1b", hash);
     }
 
     [Fact]
@@ -593,7 +672,7 @@ public sealed class ContentPackageReaderTest
         {
             {
                 _modManifest, ContentPackageType.Mod,
-                "4b091e14728ff86c256f0d891519c315673e6ccd1a0dc30d3dc864eabc6e018e", [
+                "4fd301fed2482fd35fca82508719edb72040e31d9b730314da6e01eec53cdee8", [
                     Entry("payload/mod.json", "{\"formatVersion\":1}"),
                     Entry("payload/data/example.txt", "golden mod data")
                 ]
@@ -667,6 +746,21 @@ public sealed class ContentPackageReaderTest
             }
         };
         return data;
+    }
+
+    private static ContentPackageManifest ParseModWithMetadata(string metadata)
+    {
+        var json = _modManifest.Replace(
+            "\"scope\": \"both\",\n    \"entrypoint\": null",
+            metadata,
+            StringComparison.Ordinal
+        );
+        return ContentPackageManifest.Parse(Encoding.UTF8.GetBytes(json));
+    }
+
+    private static string ModMetadata(string scope, string? entrypoint, string? presentation)
+    {
+        return JsonSerializer.Serialize(new { scope, entrypoint, clientContentEntrypoint = presentation })[1..^1];
     }
 
     private static MemoryStream CreateModPackage(
@@ -795,6 +889,7 @@ public sealed class ContentPackageReaderTest
                                             "mediaType": "application/json"
                                           },
                                           "metadata": {
+                                            "scope": "both",
                                             "entrypoint": null,
                                             "canRemoveFromWorld": false,
                                             "dependencies": []

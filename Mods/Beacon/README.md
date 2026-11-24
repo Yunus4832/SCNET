@@ -33,7 +33,7 @@ dotnet build Mods/Beacon/Beacon.slnx
 `Mods/Beacon/BeaconMod.Client/bin/Debug/net10.0/packages/scnet.beacon.scpkg`，同时包含规则与客户端程序集。
 `BeaconMod` 规则项目使用 `SCNET.Survivalcraft.Core` 与 `SCNET.Survivalcraft.Hosting` 编译契约，不单独生成 `.scpkg`。通过游戏文件导入后加入全局或世界模组配置；联机双方须加载相同的包。
 
-`metadata.entrypoint` 指向统一业务入口 `BeaconMod.ModEntry, BeaconMod`；
+`metadata.scope` 为 `both`。`metadata.entrypoint` 指向共享业务入口 `BeaconMod.ModEntry, BeaconMod`；
 `metadata.clientContentEntrypoint` 指向 `BeaconMod.Client.Presentation.BeaconClientContentModule, BeaconMod.Client`，
 只由客户端装配方块表现。GUI 与独立服务器使用同一个业务入口，不以运行模式选择另一套规则。
 

@@ -83,16 +83,33 @@ public static class GameManager
     {
         var session = startupSession ?? SessionInfoManager.CreateWorldSession(worldInfo);
         var settings = Configuration.HostingConfiguration.Preferences;
-        var mods = CurrentModRuntime.Value!;
-        Network.Handling.ApplicationMessageHandlers.InstallWorldHandlers(CommonLib.Net, mods);
+        var clientProfile = CurrentModRuntime.Value!.LoadedProfile;
+        var authorityNode = CommonLib.Net;
+        var profile = ModProfileManager.LoadWorldProfile(worldInfo.DirectoryName) ??
+                      throw new InvalidOperationException("The world mod profile is missing.");
+        var repository = Storage.GetSystemPath(GamePaths.ContentPackageCache);
         _runtimeGeneration++;
         return _worlds.LoadAuthorityAsync(
             new WorldLoadRequest(
                 worldInfo,
                 session,
-                CommonLib.Net,
-                mods,
-                DatabaseManager.GameDatabase,
+                authorityNode,
+                world =>
+                {
+                    var plan = ModLoadPlan.Read(profile, repository, Log.Information);
+                    if (!ModProfileIdentity.AreEquivalent(clientProfile, plan.ClientProfile))
+                    {
+                        throw new InvalidOperationException(
+                            "Reopen the world to apply its changed client mod profile."
+                        );
+                    }
+
+                    var mods = GameModRuntime.StartFromPlan(plan, RuntimeSide.Authority);
+                    world.OwnFinalWorldResource(mods);
+                    mods.InitializeContentData();
+                    Network.Handling.ApplicationMessageHandlers.InstallWorldHandlers(authorityNode, mods);
+                    return mods;
+                },
                 WorldProjectPolicies.CaptureAuthority(settings),
                 new BlockTextureStore(GamePaths.BlockTextures),
                 session.Target == SessionTarget.World
@@ -126,7 +143,7 @@ public static class GameManager
             var project = WorldProjectFactory.CreateClient(
                 runtime,
                 CurrentModRuntime.Value!,
-                DatabaseManager.GameDatabase,
+                CurrentModRuntime.Value!.Database,
                 messagePackData,
                 gamesWidget,
                 mapping,

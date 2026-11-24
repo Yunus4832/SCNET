@@ -4,17 +4,23 @@ public static class ModDependencyResolver
 {
     public static IReadOnlyList<ModDescriptor> Resolve(IEnumerable<ModDescriptor> descriptors)
     {
-        var mods = new Dictionary<ModId, ModDescriptor>();
-        foreach (var descriptor in descriptors)
+        return Resolve(descriptors, descriptor => descriptor.Manifest);
+    }
+
+    internal static IReadOnlyList<T> Resolve<T>(IEnumerable<T> contributions, Func<T, ModManifest> getManifest)
+    {
+        var mods = new Dictionary<ModId, (T Contribution, ModManifest Manifest)>();
+        foreach (var contribution in contributions)
         {
-            descriptor.Manifest.Validate();
-            if (!mods.TryAdd(descriptor.Manifest.ModId, descriptor))
+            var manifest = getManifest(contribution);
+            manifest.Validate();
+            if (!mods.TryAdd(manifest.ModId, (contribution, manifest)))
             {
-                throw new ModDependencyException($"Duplicate mod id {descriptor.Manifest.ModId}.");
+                throw new ModDependencyException($"Duplicate mod id {manifest.ModId}.");
             }
         }
 
-        var result = new List<ModDescriptor>(mods.Count);
+        var result = new List<T>(mods.Count);
         var states = new Dictionary<ModId, VisitState>();
         var path = new Stack<ModId>();
 
@@ -43,8 +49,8 @@ public static class ModDependencyResolver
 
             states[id] = VisitState.Visiting;
             path.Push(id);
-            var descriptor = mods[id];
-            foreach (var dependency in descriptor.Manifest.RequiredDependencies
+            var (contribution, manifest) = mods[id];
+            foreach (var dependency in manifest.RequiredDependencies
                          .OrderBy(item => item.Id, StringComparer.Ordinal))
             {
                 var dependencyId = new ModId(dependency.Id);
@@ -75,7 +81,7 @@ public static class ModDependencyResolver
 
             path.Pop();
             states[id] = VisitState.Visited;
-            result.Add(descriptor);
+            result.Add(contribution);
         }
     }
 

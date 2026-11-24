@@ -256,7 +256,7 @@ public sealed class WorldModEditTest : IDisposable
     private WorldInfo CreateWorld(ModProfile profile)
     {
         return _worlds.CreateWorld(
-            DatabaseManager.GameDatabase,
+            _runtime.Database,
             new WorldSettings { Name = "Original", Seed = "1234", GameMode = GameMode.Creative },
             new WorldHostingSettings(),
             profile
@@ -290,6 +290,7 @@ public sealed class WorldModEditTest : IDisposable
                 "id": "{{id}}",
                 "name": "{{id}}",
                 "version": "{{version}}",
+                "scope": "both",
                 "canRemoveFromWorld": {{canRemove.ToString().ToLowerInvariant()}},
                 "dependencies": {{dependencies}}
               }

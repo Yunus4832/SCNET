@@ -16,46 +16,42 @@ public static class ModRestartHelper
         ArgumentNullException.ThrowIfNull(remoteSession);
         cancellationToken.ThrowIfCancellationRequested();
 
-        if (requiredProfile is null)
+        var profile = requiredProfile ?? new ModProfile();
+        var repositoryPath = Storage.GetSystemPath(GamePaths.ContentPackageCache);
+        var downloadedAny = false;
+        if (profile.Packages.Count > 0)
         {
-            return RemoteModSessionPreparation.Ready();
-        }
-
-        var sessionProfile = ModProfileManager.CreateSessionProfile(string.Empty, requiredProfile);
-        var scopeId = Guid.NewGuid();
-        var context = ContentSourceContext.Session(
-            scopeId,
-            temporaryRepositories,
-            ContentRepositoryManager.Current.Snapshot()
-        );
-        bool downloadedAny;
-        try
-        {
-            downloadedAny = sessionProfile.Packages.Count > 0 &&
-                            ModProfileResolver.EnsurePackagesAvailable(
-                                sessionProfile,
-                                Storage.GetSystemPath(GamePaths.ContentPackageCache),
-                                context,
-                                log,
-                                cancellationToken,
-                                Localization.ClientLanguage.Resolver
-                            );
-        }
-        finally
-        {
-            ContentServerClientPool.Shared.RemoveScope(scopeId);
+            var scopeId = Guid.NewGuid();
+            var context = ContentSourceContext.Session(
+                scopeId,
+                temporaryRepositories,
+                ContentRepositoryManager.Current.Snapshot()
+            );
+            try
+            {
+                downloadedAny = ModProfileResolver.EnsurePackagesAvailable(
+                    profile,
+                    repositoryPath,
+                    context,
+                    log,
+                    cancellationToken,
+                    Localization.ClientLanguage.Resolver
+                );
+            }
+            finally { ContentServerClientPool.Shared.RemoveScope(scopeId); }
         }
 
         cancellationToken.ThrowIfCancellationRequested();
-        if (ModProfileIdentity.AreEquivalent(CurrentModRuntime.Value?.LoadedProfile, sessionProfile))
+        var plan = ModLoadPlan.ReadClientProfile(profile, repositoryPath, log);
+        if (ModProfileIdentity.AreEquivalent(CurrentModRuntime.Value?.LoadedProfile, plan.ClientProfile))
         {
             return RemoteModSessionPreparation.Ready();
         }
 
         return RemoteModSessionPreparation.RestartRequired(
             remoteSession,
-            sessionProfile,
-            CreateRestartReason(sessionProfile, downloadedAny)
+            plan.ClientProfile,
+            CreateRestartReason(plan.ClientProfile, downloadedAny)
         );
     }
 
@@ -89,23 +85,24 @@ public static class ModRestartHelper
         Action<string>? log
     )
     {
-        var sessionProfile = ModProfileManager.CreateSessionProfile(string.Empty, desiredProfile);
+        var repositoryPath = Storage.GetSystemPath(GamePaths.ContentPackageCache);
         var downloadedAny = desiredProfile.Packages.Count > 0 &&
                             ModProfileResolver.EnsurePackagesAvailable(
                                 desiredProfile,
-                                Storage.GetSystemPath(GamePaths.ContentPackageCache),
+                                repositoryPath,
                                 log,
                                 Localization.ClientLanguage.Resolver
                             );
-        if (ModProfileIdentity.AreEquivalent(CurrentModRuntime.Value?.LoadedProfile, desiredProfile))
+        var plan = ModLoadPlan.Read(desiredProfile, repositoryPath, log);
+        if (ModProfileIdentity.AreEquivalent(CurrentModRuntime.Value?.LoadedProfile, plan.ClientProfile))
         {
             return RemoteModSessionPreparation.Ready();
         }
 
         return RemoteModSessionPreparation.RestartRequired(
             worldSession,
-            sessionProfile,
-            CreateWorldRestartReason(desiredProfile, downloadedAny)
+            plan.FullProfile,
+            CreateWorldRestartReason(plan.ClientProfile, downloadedAny)
         );
     }
 

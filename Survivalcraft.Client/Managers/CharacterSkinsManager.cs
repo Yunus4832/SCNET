@@ -201,8 +201,9 @@ public static class CharacterSkinsManager
 
         var valuesDictionary = characterSex switch
         {
-            CharacterSex.Male => DatabaseManager.FindEntityValuesDictionary("MaleCharacter", true)!,
-            CharacterSex.Female => DatabaseManager.FindEntityValuesDictionary("FemaleCharacter", true)!,
+            CharacterSex.Male => CurrentModRuntime.Value!.Database.FindEntityValuesDictionary("MaleCharacter", true)!,
+            CharacterSex.Female =>
+                CurrentModRuntime.Value!.Database.FindEntityValuesDictionary("FemaleCharacter", true)!,
             _ => throw new InvalidOperationException("Unknown player class.")
         };
 
@@ -224,8 +225,9 @@ public static class CharacterSkinsManager
 
         var valuesDictionary = characterSex switch
         {
-            CharacterSex.Male => DatabaseManager.FindEntityValuesDictionary("MaleCharacter", true)!,
-            CharacterSex.Female => DatabaseManager.FindEntityValuesDictionary("FemaleCharacter", true)!,
+            CharacterSex.Male => CurrentModRuntime.Value!.Database.FindEntityValuesDictionary("MaleCharacter", true)!,
+            CharacterSex.Female =>
+                CurrentModRuntime.Value!.Database.FindEntityValuesDictionary("FemaleCharacter", true)!,
             _ => throw new InvalidOperationException("Unknown player class.")
         };
 

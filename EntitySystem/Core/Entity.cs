@@ -55,7 +55,7 @@ public class Entity : IDisposable
             var value = item.GetValue<bool>("IsOptional");
             var value2 = item.GetValue<string>("Class");
             var value3 = item.GetValue<int>("LoadOrder");
-            var type = RuntimeTypeResolver.FindType(value2, !value);
+            var type = project.GameDatabase.Database.FindType(value2, !value);
             if (type is null)
             {
                 continue;

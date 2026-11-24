@@ -1,3 +1,7 @@
+using System.Runtime.CompilerServices;
+
+using EntitySystem.Core;
+
 using Game.Modding.Content;
 using Game.Modding.Data;
 
@@ -14,7 +18,8 @@ public sealed class GameModRuntime : IDisposable
         GameDataCatalog data,
         ContentCatalog content,
         ModProfile loadedProfile,
-        IReadOnlyList<LoadedModInfo> loadedMods
+        IReadOnlyList<LoadedModInfo> loadedMods,
+        ModLoadPlan? plan
     )
     {
         Host = host;
@@ -24,10 +29,14 @@ public sealed class GameModRuntime : IDisposable
         Content = content;
         LoadedProfile = loadedProfile;
         LoadedMods = loadedMods;
-        ModDataHash = ModProfileFingerprint.Compute(loadedProfile);
+        FullProfile = plan?.FullProfile ?? loadedProfile;
+        _clientProfile = plan?.ClientProfile ?? loadedProfile;
+        ModDataHash = ModProfileFingerprint.Compute(_clientProfile);
     }
 
     public ModHost Host { get; }
+
+    public RuntimeSide Side => Host.Side;
 
     private readonly NamespacedRegistry<BlockRegistration> _blockRegistry;
 
@@ -42,6 +51,11 @@ public sealed class GameModRuntime : IDisposable
         get
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
+            if (Side != RuntimeSide.Client)
+            {
+                throw new InvalidOperationException("Preview catalogs belong to client mod runtimes.");
+            }
+
             if (!_contentDataInitialized)
             {
                 throw new InvalidOperationException("Content data has not been initialized.");
@@ -50,6 +64,13 @@ public sealed class GameModRuntime : IDisposable
             return _previewCatalog ??= BuildCatalog(BlockIndexMapping.Empty);
         }
     }
+
+    private static readonly ConditionalWeakTable<WorldRuntimeContext, GameModRuntime> _worldOwners = new();
+
+    /// <summary>返回创建该世界目录并持有其注册项的模组宿主。</summary>
+    public static GameModRuntime For(WorldRuntimeContext world) => _worldOwners.TryGetValue(world, out var runtime)
+        ? runtime
+        : throw new InvalidOperationException("The world has no mod runtime.");
 
     private readonly Dictionary<WorldRuntimeContext, BlockContentCatalog> _worldCatalogs = [];
 
@@ -72,6 +93,7 @@ public sealed class GameModRuntime : IDisposable
             EnsureCanBindWorld();
             ArgumentNullException.ThrowIfNull(runtime);
             ObjectDisposedException.ThrowIf(runtime.IsClosed, runtime);
+            EnsureWorldSide(runtime);
             var catalog = BuildCatalog(mapping, requireExactMapping);
             try
             {
@@ -91,9 +113,19 @@ public sealed class GameModRuntime : IDisposable
         lock (Host.Worlds.LifecycleGate)
         {
             EnsureCanBindWorld();
+            EnsureWorldSide(runtime);
             _ = new WorldContentBinding(runtime, catalog, () => ReleaseWorldCatalog(runtime));
             _ = new WorldRuleHooks(runtime, Gameplay, BlockBehaviors);
             _worldCatalogs.Add(runtime, catalog);
+            _worldOwners.Add(runtime, this);
+        }
+    }
+
+    private void EnsureWorldSide(WorldRuntimeContext runtime)
+    {
+        if (runtime.Side != Side)
+        {
+            throw new InvalidOperationException($"A {Side} mod runtime cannot own a {runtime.Side} world.");
         }
     }
 
@@ -145,8 +177,29 @@ public sealed class GameModRuntime : IDisposable
         {
             if (_worldCatalogs.Remove(runtime, out var catalog))
             {
+                _worldOwners.Remove(runtime);
                 catalog.Dispose();
             }
+        }
+    }
+
+    private readonly Dictionary<string, Type> _resolvedTypes = new(StringComparer.Ordinal);
+
+    /// <summary>在宿主和当前运行时的模组程序集中解析模板类型。</summary>
+    public Type? FindType(string name, bool throwIfNotFound = true)
+    {
+        lock (_resolvedTypes)
+        {
+            if (_resolvedTypes.TryGetValue(name, out var type)) { return type; }
+
+            type = System.Runtime.Loader.AssemblyLoadContext.Default.Assemblies
+                       .Select(assembly => assembly.GetType(name))
+                       .FirstOrDefault(candidate => candidate is not null) ??
+                   Host.Runtimes.Select(runtime => runtime.Descriptor.Entrypoints?.FindLoadedType(name))
+                       .SingleOrDefault(candidate => candidate is not null);
+            if (type is not null) { _resolvedTypes.Add(name, type); }
+
+            return type ?? (throwIfNotFound ? throw new TypeLoadException(name) : null);
         }
     }
 
@@ -170,7 +223,7 @@ public sealed class GameModRuntime : IDisposable
             var collision = Content.LoadCollisionGeometry(
                 catalog.RegisteredBlocks.Select(block => block.CollisionModelAsset).OfType<ResourceId>()
             );
-            catalog.Initialize(collision, Data.BuildClothing(), Data.BuildRecipes());
+            catalog.Initialize(collision, Data.BuildClothing(), Data.BuildRecipes(), Database);
             return catalog;
         }
         catch
@@ -183,6 +236,12 @@ public sealed class GameModRuntime : IDisposable
     public GameDataCatalog Data { get; }
 
     public ContentCatalog Content { get; }
+
+    private readonly ModProfile _clientProfile;
+
+    public ModProfile FullProfile { get; }
+
+    public GameDatabase Database { get; private set; } = null!;
 
     public ModProfile LoadedProfile { get; }
 
@@ -202,7 +261,7 @@ public sealed class GameModRuntime : IDisposable
 
     public ModProfile CreateServerRequiredProfile()
     {
-        var packages = LoadedProfile.Packages
+        var packages = _clientProfile.Packages
             .Select(package => new ModPackageRequirement
                 {
                     ModId = package.ModId,
@@ -222,10 +281,11 @@ public sealed class GameModRuntime : IDisposable
 
     public static GameModRuntime Start(
         IEnumerable<ModDescriptor>? externalMods = null,
-        Action<IModCommands, ModId>? registerAppCommands = null
+        Action<IModCommands, ModId>? registerAppCommands = null,
+        RuntimeSide side = RuntimeSide.Client
     )
     {
-        return StartFromDescriptors(externalMods ?? [], null, registerAppCommands, true);
+        return StartFromDescriptors(externalMods ?? [], null, registerAppCommands, side);
     }
 
     public static GameModRuntime StartFromProfile(
@@ -233,20 +293,27 @@ public sealed class GameModRuntime : IDisposable
         string localRepositoryPath,
         Action<string>? log = null,
         Action<IModCommands, ModId>? registerAppCommands = null,
-        bool includeClientAssets = true
+        RuntimeSide side = RuntimeSide.Client
     )
     {
-        var sources = LocalModLoadPlan.Resolve(profile, localRepositoryPath, log);
-        var externalMods = ModPackageCatalog.CreateLoadPlan(sources);
-        return StartFromDescriptors(externalMods, profile, registerAppCommands, includeClientAssets);
+        return StartFromPlan(ModLoadPlan.Read(profile, localRepositoryPath, log), side, registerAppCommands);
+    }
+
+    public static GameModRuntime StartFromPlan(
+        ModLoadPlan plan,
+        RuntimeSide side,
+        Action<IModCommands, ModId>? registerAppCommands = null
+    )
+    {
+        var sources = plan.GetPackages(side);
+        var externalMods = ModPackageCatalog.Discover(sources).Select(package => package.CreateDescriptor());
+        return StartFromDescriptors(externalMods, plan, registerAppCommands, side);
     }
 
     public void InitializeDatabase()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        DatabaseManager.Initialize();
-        DatabaseManager.DatabaseNodeField = Data.BuildDatabase();
-        DatabaseManager.LoadDataBaseFromXml(DatabaseManager.DatabaseNodeField);
+        Database = DatabaseManager.Create(Data.BuildDatabase(), FindType);
     }
 
     public void InitializeContentData()
@@ -282,6 +349,8 @@ public sealed class GameModRuntime : IDisposable
             catch (Exception error) { errors.Add(error); }
             finally { _previewCatalog = null; }
 
+            lock (_resolvedTypes) { _resolvedTypes.Clear(); }
+
             try { Host.StopAll(); }
             catch (Exception error) { errors.Add(error); }
 
@@ -305,16 +374,16 @@ public sealed class GameModRuntime : IDisposable
 
     private static GameModRuntime StartFromDescriptors(
         IEnumerable<ModDescriptor> descriptors,
-        ModProfile? loadedProfile,
+        ModLoadPlan? plan,
         Action<IModCommands, ModId>? registerAppCommands,
-        bool includeClientAssets
+        RuntimeSide side
     )
     {
-        var allDescriptors = new List<ModDescriptor>
-            { BuiltInContentMod.CreateDescriptor(registerAppCommands, includeClientAssets) };
-        allDescriptors.AddRange(descriptors);
+        var allDescriptors = descriptors.Prepend(
+            BuiltInContentMod.CreateDescriptor(registerAppCommands, side == RuntimeSide.Client)
+        );
 
-        var host = new ModHost();
+        var host = new ModHost(side);
         try
         {
             host.Extensions.GetRegistry<ContentRegistration>(ContentExtensions.RegistryName);
@@ -330,8 +399,12 @@ public sealed class GameModRuntime : IDisposable
                 dataRegistry,
                 data,
                 content,
-                CreateLoadedProfile(loadedMods, loadedProfile),
-                loadedMods
+                CreateLoadedProfile(
+                    loadedMods,
+                    side == RuntimeSide.Client ? plan?.ClientProfile : plan?.AuthorityProfile
+                ),
+                loadedMods,
+                plan
             );
         }
         catch

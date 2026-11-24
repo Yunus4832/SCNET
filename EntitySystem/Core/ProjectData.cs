@@ -36,7 +36,7 @@ public class ProjectData
     )
     {
         var rootNode = new ValuesDictionary();
-        rootNode.ApplyOverridesUseMessagePack(msgPack);
+        rootNode.ApplyOverridesUseMessagePack(msgPack, gameDatabase.Database.FindType);
         ExtensionData.ApplyOverrides(rootNode.GetValue("ExtensionData", new ValuesDictionary()));
         var attributeValue = rootNode.GetValue("Guid", Guid.Empty);
         var attributeValue2 = rootNode.GetValue("Name", string.Empty);
@@ -108,7 +108,7 @@ public class ProjectData
         var xElement = XmlUtils.FindChildElement(projectNode, "Subsystems", false);
         if (xElement != null)
         {
-            ValuesDictionary.ApplyOverrides(xElement);
+            ValuesDictionary.ApplyOverrides(xElement, gameDatabase.Database.FindType);
         }
 
         if (overrides != null)
@@ -125,7 +125,7 @@ public class ProjectData
         var extensionNode = XmlUtils.FindChildElement(projectNode, "ExtensionData", false);
         if (extensionNode != null)
         {
-            ExtensionData.ApplyOverrides(extensionNode);
+            ExtensionData.ApplyOverrides(extensionNode, gameDatabase.Database.FindType);
         }
     }
 

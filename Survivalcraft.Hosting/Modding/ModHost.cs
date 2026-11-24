@@ -1,7 +1,13 @@
+using Content.Packaging;
+
+using Game.Modding.Data;
+
 namespace Game.Modding;
 
-public sealed class ModHost
+public sealed class ModHost(RuntimeSide side = RuntimeSide.Client)
 {
+    public RuntimeSide Side { get; } = side;
+
     private readonly List<ModRuntime> _runtimes = [];
 
     private readonly HashSet<IDisposable> _disposedLifetimes = [];
@@ -38,7 +44,14 @@ public sealed class ModHost
             var loadPlan = ModDependencyResolver.Resolve(ownedDescriptors);
             foreach (var descriptor in loadPlan)
             {
+                if ((descriptor.Manifest.Scope, Side) is (ModScope.Server, RuntimeSide.Client)
+                    or (ModScope.Client, RuntimeSide.Authority))
+                {
+                    throw new InvalidOperationException($"Mod {descriptor.Manifest.Id} cannot run on {Side}.");
+                }
+
                 var context = new ModContext(
+                    Side,
                     descriptor.Manifest,
                     Extensions,
                     Gameplay,
@@ -155,6 +168,7 @@ public sealed class ModHost
     }
 
     private sealed class ModContext(
+        RuntimeSide side,
         ModManifest manifest,
         ExtensionRegistry extensions,
         GameplayHooks gameplay,
@@ -165,9 +179,11 @@ public sealed class ModHost
         CommandRegistry commands
     ) : IModContext
     {
+        public RuntimeSide Side { get; } = side;
+
         public ModManifest Manifest { get; } = manifest;
 
-        public IModExtensions Extensions { get; } = new OwnedExtensions(manifest.ModId, extensions);
+        public IModExtensions Extensions { get; } = new OwnedExtensions(manifest, extensions);
 
         public IModGameplayHooks Gameplay { get; } = gameplay.ForOwner(manifest.ModId);
 
@@ -175,18 +191,30 @@ public sealed class ModHost
 
         public IModPlayerContextActionHooks ContextActions { get; } = contextActions.ForOwner(manifest.ModId);
 
-        public IModNetwork Network { get; } = network.ForOwner(manifest.ModId);
+        public IModNetwork Network => Manifest.Scope == ModScope.Both
+            ? network.ForOwner(Manifest.ModId)
+            : throw new InvalidOperationException(
+                "Mod network messages require both client and authority participation."
+            );
 
         public IModWorldStates Worlds { get; } = worlds.ForOwner(manifest.ModId);
 
         public IModCommands Commands { get; } = new OwnedCommands(manifest.ModId, commands);
     }
 
-    private sealed class OwnedExtensions(ModId owner, ExtensionRegistry extensions) : IModExtensions
+    private sealed class OwnedExtensions(ModManifest manifest, ExtensionRegistry extensions) : IModExtensions
     {
         public IDisposable Register<T>(string registryName, ResourceId id, T value) where T : class
         {
-            return extensions.GetRegistry<T>(registryName).Register(owner, id, value);
+            if (manifest.Scope != ModScope.Both &&
+                registryName is BlockExtensions.RegistryName or
+                    BlockExtensions.DataRegistryName or XmlDataExtensions.DatabaseRegistryName or
+                    XmlDataExtensions.RecipeRegistryName or XmlDataExtensions.ClothingRegistryName)
+            {
+                throw new InvalidOperationException($"Shared registry {registryName} requires a both-scope mod.");
+            }
+
+            return extensions.GetRegistry<T>(registryName).Register(manifest.ModId, id, value);
         }
 
         public bool TryGet<T>(string registryName, ResourceId id, out T? value) where T : class

@@ -19,7 +19,7 @@ public sealed class CpuModRuntimeBoundaryTest
     [Fact]
     public void BuiltinRuntimeLoadsItsRealDatabaseAndCollisionCatalogWithoutApplicationAssemblies()
     {
-        using var runtime = GameModRuntime.Start();
+        using var runtime = GameModRuntime.Start(side: RuntimeSide.Authority);
         runtime.InitializeContentData();
         var world = new WorldRuntimeContext(RuntimeSide.Authority, false);
         var catalog = runtime.CreateWorldCatalog(world, BlockIndexMapping.Empty);
@@ -61,7 +61,7 @@ public sealed class CpuModRuntimeBoundaryTest
                         { ModId = "test.required", Version = "1.0.0", PackageHash = new string('a', 64) }
                 ]
             };
-            Assert.Throws<FileNotFoundException>(() => LocalModLoadPlan.Resolve(profile, directory));
+            Assert.Throws<FileNotFoundException>(() => ModLoadPlan.Read(profile, directory));
         }
         finally
         {
@@ -95,9 +95,10 @@ public sealed class CpuModRuntimeBoundaryTest
         Assert.Null(CurrentModRuntime.Value);
         var mod = new StatefulMod();
         using var previous = GameModRuntime.Start(
-            [new ModDescriptor(new ModManifest("test.state", "State", "1.0.0"), () => mod)]
+            [new ModDescriptor(new ModManifest("test.state", "State", "1.0.0"), () => mod)],
+            side: RuntimeSide.Authority
         );
-        using var next = GameModRuntime.Start();
+        using var next = GameModRuntime.Start(side: RuntimeSide.Authority);
         using (var install = CurrentModRuntime.BeginReplacement(previous)) { install.Commit(); }
 
         var world = new WorldRuntimeContext(RuntimeSide.Authority, false);
@@ -165,9 +166,10 @@ public sealed class CpuModRuntimeBoundaryTest
                     static () => new EmptyMod(),
                     failing
                 )
-            ]
+            ],
+            side: RuntimeSide.Authority
         );
-        using var next = GameModRuntime.Start();
+        using var next = GameModRuntime.Start(side: RuntimeSide.Authority);
         using (var install = CurrentModRuntime.BeginReplacement(previous)) { install.Commit(); }
 
         var notifications = 0;

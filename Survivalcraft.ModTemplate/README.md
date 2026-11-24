@@ -3,7 +3,7 @@
 This directory contains the template assets and the NuGet packaging project for the
 Survivalcraft mod template.
 
-- `Survivalcraft.Mod/` is the template content that `dotnet new` copies into a new mod project.
+- `Survivalcraft.Mod/` is the template content that `dotnet new scpkgmod --scope server|client|both` uses to generate a mod solution.
 - `Survivalcraft.ModTemplate.csproj` is the packable project that produces
   `SCNET.ModTemplates.<version>.nupkg`.
 

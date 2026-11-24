@@ -27,6 +27,7 @@ internal static class ScpkgTestPackage
         var metadata = JsonSerializer.SerializeToElement(
             new Dictionary<string, object?>
             {
+                ["scope"] = JsonNamingPolicy.CamelCase.ConvertName(definition.Scope.ToString()),
                 ["entrypoint"] = definition.Entrypoint,
                 ["canRemoveFromWorld"] = definition.CanRemoveFromWorld,
                 ["clientContentEntrypoint"] = definition.ClientContentEntrypoint,

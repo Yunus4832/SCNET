@@ -154,9 +154,9 @@ public sealed class ModProfileManagerTest : IDisposable
     }
 
     [Fact]
-    public void ResolveStartupProfileFallsBackToDefaultWhenNoProfileExists()
+    public void UnpreparedRemoteStartupDoesNotLoadGlobalTemplate()
     {
-        DeleteIfExists(ModProfileManager.GlobalProfilePath);
+        ModProfileManager.SaveGlobalProfile(ProfileWithPackage("global.mod"));
         DeleteDirectoryIfExists(Storage.CombinePaths(GamePaths.Config, "SessionProfiles"));
 
         var profile = ModProfileManager.ResolveStartupProfile(
@@ -529,7 +529,7 @@ public sealed class ModProfileManagerTest : IDisposable
 
         var worldDirectoryName = Storage.CombinePaths(GamePaths.Worlds, directoryName ?? worldName);
         ClientApplication.Worlds.CreateWorld(
-            DatabaseManager.GameDatabase,
+            runtime.Database,
             new WorldSettings { Name = worldName, Seed = "seed" },
             new WorldHostingSettings(),
             new ModProfile(),

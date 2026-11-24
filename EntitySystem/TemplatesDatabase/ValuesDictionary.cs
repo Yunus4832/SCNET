@@ -167,7 +167,7 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
         }
     }
 
-    public void ApplyOverrides(XElement overridesNode)
+    public void ApplyOverrides(XElement overridesNode, Func<string, bool, Type?>? findType = null)
     {
         foreach (var item in overridesNode.Elements())
         {
@@ -190,7 +190,7 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
                 }
                 else
                 {
-                    type = TemplateTypeNames.Resolve(attributeValue2)!;
+                    type = TemplateTypeNames.Resolve(attributeValue2, findType: findType)!;
                 }
 
                 var attributeValue3 = XmlUtils.GetAttributeValue(item, "Value", type);
@@ -212,12 +212,12 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
                     SetValue(attributeValue4, valuesDictionary);
                 }
 
-                valuesDictionary.ApplyOverrides(item);
+                valuesDictionary.ApplyOverrides(item, findType);
             }
         }
     }
 
-    public void ApplyOverridesUseMessagePack(byte[] messagePackData)
+    public void ApplyOverridesUseMessagePack(byte[] messagePackData, Func<string, bool, Type?>? findType = null)
     {
         var dynamicModel =
             MessagePackSerializer.Deserialize<IDictionary<object, object>>(
@@ -226,7 +226,7 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
             );
         try
         {
-            ApplyOverridesUseDictionary(dynamicModel);
+            ApplyOverridesUseDictionary(dynamicModel, findType);
         }
         catch (Exception ex)
         {
@@ -234,7 +234,10 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
         }
     }
 
-    private void ApplyOverridesUseDictionary(IDictionary<object, object> dictionary)
+    private void ApplyOverridesUseDictionary(
+        IDictionary<object, object> dictionary,
+        Func<string, bool, Type?>? findType
+    )
     {
         foreach (var keyValue in dictionary)
         {
@@ -260,7 +263,7 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
                 }
                 else
                 {
-                    type = TemplateTypeNames.Resolve(keyType)!;
+                    type = TemplateTypeNames.Resolve(keyType, findType: findType)!;
                 }
 
                 if (type == typeof(bool) || type.IsPrimitive || type == typeof(string))
@@ -294,7 +297,7 @@ public class ValuesDictionary : IEnumerable<KeyValuePair<string, object>>
                     SetValue(value2, valuesDictionary);
                 }
 
-                valuesDictionary.ApplyOverridesUseDictionary(subDic);
+                valuesDictionary.ApplyOverridesUseDictionary(subDic, findType);
             }
         }
     }

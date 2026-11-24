@@ -1,3 +1,5 @@
+using Content.Packaging;
+
 using Game.Modding;
 
 namespace Survivalcraft.Test.Modding;
@@ -13,7 +15,8 @@ public sealed class ModClientContentLoadingTest
               "id":"example.separated",
               "name":"Separated",
               "version":"1.0.0",
-               "canRemoveFromWorld":false,
+              "scope":"both",
+              "canRemoveFromWorld":false,
               "entrypoint":"Survivalcraft.Test.Modding.PackageEntrypointMod, Survivalcraft.Test",
               "clientContentEntrypoint":"Missing.Client.Content, Missing.Client"
             }
@@ -40,13 +43,15 @@ public sealed class ModClientContentLoadingTest
               "id":"example.presentation",
               "name":"Presentation",
               "version":"1.0.0",
-               "canRemoveFromWorld":false,
+              "scope":"client",
+              "canRemoveFromWorld":false,
               "clientContentEntrypoint":"Survivalcraft.Test.Modding.ClientContentEntryFixture, Survivalcraft.Test"
             }
             """,
             assemblyPath: typeof(ClientContentEntryFixture).Assembly.Location
         );
         var package = ModPackage.Read("presentation.scmod", stream);
+        Assert.Equal(ModScope.Client, package.Manifest.Scope);
         var descriptor = package.CreateDescriptor();
         using var lifetime = descriptor.Lifetime;
         Assert.NotNull(descriptor.Factory());
@@ -71,7 +76,8 @@ public sealed class ModClientContentLoadingTest
                 "id":"example.shared",
                 "name":"Shared",
                 "version":"1.0.0",
-                 "canRemoveFromWorld":false,
+                "scope":"both",
+                "canRemoveFromWorld":false,
                 "entrypoint":"{{coreEntry}}",
                 "clientContentEntrypoint":"{{clientEntry}}"
               }

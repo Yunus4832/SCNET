@@ -49,7 +49,8 @@ public sealed class WorldBlockRegistryLoadTest
             using var runtime = GameModRuntime.Start(
                 [
                     new ModDescriptor(new ModManifest("test", "Metadata", "1.0.0"), static () => new MetadataMod())
-                ]
+                ],
+                side: RuntimeSide.Authority
             );
             runtime.InitializeContentData();
             var node = new NetNode(
@@ -70,8 +71,7 @@ public sealed class WorldBlockRegistryLoadTest
                         world,
                         new SessionInfo { Target = SessionTarget.World },
                         node,
-                        runtime,
-                        DatabaseManager.GameDatabase,
+                        _ => runtime,
                         WorldProjectPolicies.CaptureAuthority(new HostPreferences()),
                         new BlockTextureStore(directory),
                         false
@@ -89,6 +89,48 @@ public sealed class WorldBlockRegistryLoadTest
         {
             Storage.RegisterFileSystemRoot(rootName, AppContext.BaseDirectory, readOnly: true);
             Directory.Delete(directory, true);
+        }
+    }
+
+    [Fact]
+    public void ReopeningDifferentWorldsKeepsPreviewAndReplicaBlockIdsIndependent()
+    {
+        Dispatcher.Initialize();
+        AssetManager.Initialize();
+        var descriptor = new ModDescriptor(
+            new ModManifest("test", "Metadata", "1.0.0"),
+            static () => new MetadataMod()
+        );
+        using var client = GameModRuntime.Start([descriptor]);
+        client.InitializeContentData();
+        var id = ResourceId.Parse("test:new");
+        var preview = client.PreviewCatalog.GetBlock(id);
+        var previewIndex = preview.BlockIndex;
+        foreach (var savedIndex in new[] { 300, 410 })
+        {
+            using var server = GameModRuntime.Start([descriptor], side: RuntimeSide.Authority);
+            server.InitializeContentData();
+            var authority = new WorldRuntimeContext(RuntimeSide.Authority, false);
+            var replica = new WorldRuntimeContext(RuntimeSide.Client, true);
+            try
+            {
+                var saved = new BlockIndexMapping([new(id, savedIndex)]);
+                var authoritative = server.CreateWorldCatalog(authority, saved);
+                var replicated = client.CreateWorldCatalog(replica, authoritative.Registry.Mapping, true);
+                Assert.Equal(savedIndex, authoritative.GetBlock(id).BlockIndex);
+                Assert.Equal(savedIndex, replicated.GetBlock(id).BlockIndex);
+                Assert.NotSame(authoritative.GetBlock(id), replicated.GetBlock(id));
+                Assert.NotSame(preview, replicated.GetBlock(id));
+                Assert.NotSame(client.Database, server.Database);
+            }
+            finally
+            {
+                replica.Close();
+                authority.Close();
+            }
+
+            Assert.Empty(client.WorldCatalogs);
+            Assert.Equal(previewIndex, client.PreviewCatalog.GetBlock(id).BlockIndex);
         }
     }
 

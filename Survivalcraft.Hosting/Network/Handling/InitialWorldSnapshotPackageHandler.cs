@@ -24,7 +24,7 @@ public sealed class InitialWorldSnapshotPackageHandler : PackageHandlerBase<Init
         foreach (var data in package.Characters)
         {
             var values = new EntitySystem.TemplatesDatabase.ValuesDictionary();
-            values.ApplyOverridesUseMessagePack(data);
+            values.ApplyOverridesUseMessagePack(data, project.GameDatabase.Database.FindType);
             var guid = values.GetValue("CharacterId", Guid.Empty);
             if (subsystemCharacters.Characters.Any(player => player.CharacterId == guid))
             {

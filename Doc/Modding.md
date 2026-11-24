@@ -17,15 +17,18 @@ dotnet new install ./Publish/NuGet/SCNET.ModTemplates.<模板版本>.nupkg
 创建并构建模组：
 
 ```bash
-dotnet new scpkgmod -n ExampleMod --modId example.mod
+dotnet new scpkgmod -n ExampleMod --modId example.mod --scope both
 dotnet build ExampleMod/ExampleMod.slnx
 ```
 
-包输出位置：
+三种 `--scope` 都会生成解决方案，默认是 `both`。构建后在对应项目的
+`bin/<Configuration>/<TargetFramework>/packages/<mod-id>.scpkg` 获取完整包。
 
-```text
-ExampleMod/ExampleMod.Client/bin/<Configuration>/<TargetFramework>/packages/<mod-id>.scpkg
-```
+| 范围 | 生成项目 | 打包项目 |
+| --- | --- | --- |
+| `server` | `ExampleMod` | `ExampleMod` |
+| `client` | `ExampleMod.Client` | `ExampleMod.Client` |
+| `both` | `ExampleMod`、`ExampleMod.Client` | `ExampleMod.Client` |
 
 ## 包结构
 
@@ -55,9 +58,9 @@ GUI 图集也输出直通 Alpha 的 WebP，约定见 [图集工具](../Tools/Gui
 
 ### 构建产物
 
-模板生成规则项目和客户端项目。规则使用 Core 与 Hosting SDK，客户端引用规则项目和 Client SDK，
-通过 `SCNET.ContentTool` 的私有构建依赖创建并验证完整包，宿主运行时程序集不会打入包中。
-只构建规则项目时可以检查共享规则。构建客户端项目或整个解决方案才会生成 `.scpkg`。
+规则项目使用 Core 与 Hosting SDK，客户端项目使用 Client SDK。`both` 模板中的客户端项目引用规则项目，
+构建客户端项目时将二者的程序集一起打包。打包项目通过 `SCNET.ContentTool` 的私有构建依赖创建并验证
+完整包，宿主运行时程序集不会打入包中。
 
 仓库内可构建 [信标](../Mods/Beacon/README.md) 与 [领地石](../Mods/TerritoryStone/README.md) 的独立解决方案。
 开发包在其客户端项目的 `bin/<Configuration>/<TargetFramework>/packages/` 下。
@@ -70,7 +73,19 @@ GUI 图集也输出直通 Alpha 的 WebP，约定见 [图集工具](../Tools/Gui
 
 ## 模组定义与世界状态
 
-模组清单的 metadata 必须显式声明 `canRemoveFromWorld`。模板默认是 `false`：
+模组清单的 metadata 必须显式声明 `scope`，该字段决定可用入口和贡献。
+
+| 范围 | 入口与贡献 |
+| --- | --- |
+| `server` | 通过 `metadata.entrypoint` 声明权威侧 `IMod`，可注册权威侧行为。 |
+| `client` | 通过 `metadata.clientContentEntrypoint` 声明 `IClientContentModule`，也可只提供表现资源。 |
+| `both` | 可提供共享规则、共享数据、客户端表现或资源贡献，可同时声明两个入口。 |
+
+入口使用带程序集名的类型名。没有 `IMod` 入口时，`metadata.entrypoint` 填写 `null`。
+方块逻辑、方块数据与数据库、配方、服饰等共享数据只允许由 `both` 模组注册，
+包内 `payload/data/` 也仅供 `both` 使用。
+
+`canRemoveFromWorld` 同样必须显式声明。对参与世界模组快照的模组，`false` 表示
 加入已有世界后，游戏禁止移除该 ModId；同一 ModId 替换版本或精确包仍可执行，但操作前克隆。
 作者只有在验证完全不加载模组时世界仍能打开、运行、保存后，才应声明为 `true`。
 允许移除不保证内容无损或残留清零，游戏不提供通用永久卸载回调。

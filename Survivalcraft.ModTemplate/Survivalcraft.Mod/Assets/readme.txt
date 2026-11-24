@@ -1,1 +1,1 @@
-This file is packaged as assets/example.mod/readme.txt.
+This file is packaged as payload/assets/example.mod/readme.txt.

@@ -1,5 +1,7 @@
 using Engine.Network;
 
+using EntitySystem.Core;
+
 using Game.Application;
 using Game.FileStorage;
 using Game.Network;
@@ -152,11 +154,13 @@ public static class SessionInfoManager
 
     private static bool RestoreWorldSession(SessionInfo sessionInfo, bool createIfMissing)
     {
+        var mods = CurrentModRuntime.Value!;
         var worldInfo = ResolveWorldSession(
             sessionInfo,
             createIfMissing,
             StartupManager.Current.Request.ForceWorldRunServer,
-            CurrentModRuntime.Value!.LoadedProfile
+            mods.FullProfile,
+            mods.Database
         );
         if (worldInfo is null) { return false; }
 
@@ -168,7 +172,8 @@ public static class SessionInfoManager
         SessionInfo sessionInfo,
         bool createIfMissing,
         bool forceWorldRunServer,
-        ModProfile loadedProfile
+        ModProfile fullProfile,
+        GameDatabase database
     )
     {
         createIfMissing |= sessionInfo.CreateWorldIfMissing;
@@ -186,10 +191,10 @@ public static class SessionInfoManager
             if (sessionInfo.WorldCreation is { } creation)
             {
                 worldInfo = ClientApplication.Worlds.CreateWorld(
-                    DatabaseManager.GameDatabase,
+                    database,
                     creation.Settings,
                     creation.Hosting,
-                    loadedProfile,
+                    fullProfile,
                     sessionInfo.World,
                     creation.Admission
                 );
@@ -201,7 +206,8 @@ public static class SessionInfoManager
                     sessionInfo.Seed,
                     sessionInfo.GameMode,
                     sessionInfo.TerrainCreation,
-                    loadedProfile,
+                    fullProfile,
+                    database,
                     runServer: forceWorldRunServer
                 );
             }
@@ -284,6 +290,7 @@ public static class SessionInfoManager
         GameMode? gameMode,
         TerrainCreationOptions terrainCreation,
         ModProfile initialProfile,
+        GameDatabase database,
         bool runServer
     )
     {
@@ -297,7 +304,7 @@ public static class SessionInfoManager
         var customWorldDirectoryName = Storage.CombinePaths(GamePaths.Worlds, worldSettings.Name);
         Log.Information($"Creating new world with seed: {worldSettings.Seed}");
         return ClientApplication.Worlds.CreateWorld(
-            DatabaseManager.GameDatabase,
+            database,
             worldSettings,
             new WorldHostingSettings { RunServer = runServer },
             initialProfile,

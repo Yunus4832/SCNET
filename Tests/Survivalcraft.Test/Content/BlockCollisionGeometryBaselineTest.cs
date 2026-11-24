@@ -30,7 +30,7 @@ public sealed class BlockCollisionGeometryBaselineTest
         {
             Dispatcher.Initialize();
             AssetManager.Initialize();
-            using var runtime = GameModRuntime.Start();
+            using var runtime = GameModRuntime.Start(side: RuntimeSide.Authority);
             runtime.InitializeContentData();
             var world = new WorldRuntimeContext(RuntimeSide.Authority, false);
             var catalog = runtime.CreateWorldCatalog(world, BlockIndexMapping.Empty);

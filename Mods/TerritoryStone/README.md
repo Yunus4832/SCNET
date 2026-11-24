@@ -16,7 +16,7 @@ dotnet build Mods/TerritoryStone/TerritoryStone.slnx
 `Mods/TerritoryStone/TerritoryStoneMod.Client/bin/Debug/net10.0/packages/scnet.territory.scpkg`。这是开发构建产物，
 不会写入仓库的 `Publish/` 目录。通过游戏的模组管理安装该包，再选择包含它的 profile。
 
-`metadata.entrypoint` 为 `TerritoryStoneMod.ModEntry, TerritoryStoneMod`，是 GUI 与独立服务器共用的业务入口；
+`metadata.scope` 为 `both`。`metadata.entrypoint` 为 `TerritoryStoneMod.ModEntry, TerritoryStoneMod`，是 GUI 与独立服务器共用的业务入口；
 `metadata.clientContentEntrypoint` 为 `TerritoryStoneMod.Client.Presentation.TerritoryClientContentModule, TerritoryStoneMod.Client`，
 只在客户端装配方块表现。单独构建规则项目不会生成完整模组包。
 
