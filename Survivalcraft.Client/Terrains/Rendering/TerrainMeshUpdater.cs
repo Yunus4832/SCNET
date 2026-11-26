@@ -334,7 +334,7 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
     )
     {
         var presentation = _presentation.ChunkPresentations.Get(chunk);
-        if (presentation.NeedsGroupedLighting(chunk))
+        if (presentation.NeedsGroupedLighting(chunk) && !(interactive && presentation.CanPreviewDisplayedLight(chunk)))
         {
             allowPendingLighting = false;
             interactive = false;

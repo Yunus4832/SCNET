@@ -33,6 +33,7 @@ internal sealed class TerrainMeshBuilder(
 
         var started = _time.GetTimestamp();
         generator.ResetCache();
+        generator.DisplayedEmissions = output.DisplayedEmissions(sliceIndex);
         if (output.BuildLights is { } lights) { generator.SetLightSnapshots(chunk.Coords, lights); }
 
         if (!output.Draws.TryGetValue(texture, out var terrainGeometry))
@@ -60,11 +61,16 @@ internal sealed class TerrainMeshBuilder(
                     sliceIndex,
                     output.BuildLights,
                     output.LightReadsForSlice(sliceIndex),
-                    generator.Presentations.ReplayableLightbulbIndex
+                    generator.Presentations.ReplayableLightbulbIndex,
+                    output
                 );
             }
 
-            if (output.MatchesSliceInputs(sliceIndex, inputs)) { return true; }
+            if (output.MatchesSliceInputs(sliceIndex, inputs))
+            {
+                generator.DisplayedEmissions = null;
+                return true;
+            }
 
             var refreshLighting = output.BuildLights != null && output.CanRefreshSliceLighting(sliceIndex, inputs);
             var relight = refreshLighting ? FindRelightSubsets(output, sliceIndex) : null;
@@ -141,6 +147,7 @@ internal sealed class TerrainMeshBuilder(
         {
             generator.SetGeometryNeighborhood(default, null);
             generator.SetLightReadTarget(null);
+            generator.DisplayedEmissions = null;
         }
     }
 
@@ -320,7 +327,14 @@ internal sealed class TerrainMeshBuilder(
             var presentation = generator.Presentations.Get(contents);
             // External generators may derive topology or vertex color from sampled light.
             work.CanReplayLighting &= presentation.SupportsTerrainLightingReplay;
-            presentation.GenerateTerrainVertices(generator, geometry, value, worldX, y, worldZ);
+            presentation.GenerateTerrainVertices(
+                generator,
+                geometry,
+                generator.ApplyDisplayedEmission(value, worldX, y, worldZ),
+                worldX,
+                y,
+                worldZ
+            );
         }
     }
 
@@ -356,11 +370,13 @@ internal sealed class TerrainMeshBuilder(
         int sliceIndex,
         Game.Terrains.Lighting.TerrainLightSnapshot?[]? lights = null,
         TerrainMeshLightReads? lightReads = null,
-        int lightbulb = -1
+        int lightbulb = -1,
+        TerrainChunkPresentation? output = null
     )
     {
         CaptureInputs(chunk, lights);
         var geometry = 1;
+        Dictionary<Point3, int>? emissions = null;
         var emissiveMaterial = 0;
         var x = MathUtils.Max(16 * sliceIndex - 1, 0);
         var x2 = MathUtils.Min(16 * (sliceIndex + 1) + 1, 256);
@@ -389,8 +405,14 @@ internal sealed class TerrainMeshBuilder(
                     var value = chunkAtCell.GetCellValueForGeometry(startIndex);
                     if (Terrain.ExtractContents(value) == lightbulb)
                     {
+                        var pos = new Point3(chunk.Origin.X + i, startIndex & 255, chunk.Origin.Y + j);
+                        if (output != null) { value = generator.ApplyDisplayedEmission(value, pos.X, pos.Y, pos.Z); }
+
                         var data = Terrain.ExtractData(value);
-                        emissiveMaterial = 31 * emissiveMaterial + LightbulbBlock.GetLightIntensity(data);
+                        var intensity = LightbulbBlock.GetLightIntensity(data);
+                        if (intensity > 0) { (emissions ??= [])[pos] = intensity; }
+
+                        emissiveMaterial = 31 * emissiveMaterial + intensity;
                         value = Terrain.ReplaceData(value, LightbulbBlock.SetLightIntensity(data, 0));
                     }
 
@@ -405,6 +427,7 @@ internal sealed class TerrainMeshBuilder(
             }
         }
 
+        output?.SetSliceEmissions(sliceIndex, emissions);
         geometry = 31 * geometry + terrain.SeasonTemperature;
         geometry = 31 * geometry + terrain.SeasonHumidity;
         return new TerrainSliceInputs(

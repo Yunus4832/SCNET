@@ -80,6 +80,59 @@ public sealed class TerrainMeshLifecycleTest
     }
 
     [Fact]
+    public void InteriorEditUsesDisplayedLightUntilItsReplacementIsUploaded()
+    {
+        using var terrain = new Terrain();
+        using var mesh = new TerrainChunkPresentation();
+        var chunk = terrain.AllocateChunk(0, 0);
+        TerrainMeshTestData.PrepareLighting(chunk);
+        var displayed = new TerrainLightSnapshot(new TerrainLightChannels(0, 15));
+        Assert.True(terrain.Lighting.TryPublish(chunk, terrain.Lighting.CaptureInput(chunk), displayed));
+        mesh.PrepareMeshUpdate(chunk);
+        TerrainMeshTestData.CompleteSlices(mesh);
+        Assert.True(mesh.CompleteMeshBuild(chunk));
+        mesh.MarkUploaded();
+
+        var next = new TerrainLightSnapshot(default);
+        Assert.True(terrain.Lighting.TryPublish(chunk, terrain.Lighting.CaptureInput(chunk), next));
+        mesh.lightingCohortPending = true;
+        mesh.MarkInteractiveCell(65);
+        mesh.RequestMeshRebuild();
+        mesh.PrepareMeshUpdate(chunk, true);
+        Assert.Same(displayed, mesh.BuildLights![4]);
+        TerrainMeshTestData.CompleteSlices(mesh);
+        Assert.True(mesh.CompleteMeshBuild(chunk));
+        Assert.True(mesh.HasDisplayedLightPreview);
+        mesh.MarkUploaded();
+        Assert.True(mesh.FinishInteractiveUpload());
+        mesh.RequestMeshRebuild();
+        mesh.PrepareMeshUpdate(chunk);
+        Assert.Same(next, mesh.BuildLights![4]);
+    }
+
+    [Fact]
+    public void ConcurrentLampMaterialChangeFallsBackToTheLightingBatch()
+    {
+        using var terrain = new Terrain();
+        using var mesh = new TerrainChunkPresentation();
+        var chunk = terrain.AllocateChunk(0, 0);
+        TerrainMeshTestData.Complete(chunk, mesh);
+        mesh.MarkUploaded();
+        mesh.lightingCohortPending = true;
+        mesh.MarkInteractiveCell(65);
+        mesh.RequestMeshRebuild();
+        mesh.PrepareMeshUpdate(chunk, true);
+        mesh.CompleteSliceGeometryUpdate(4, new TerrainSliceInputs(1, 0, 15));
+        TerrainMeshTestData.CompleteSlices(mesh);
+        Assert.False(mesh.CompleteMeshBuild(chunk));
+        Assert.False(mesh.CanPreviewDisplayedLight(chunk));
+        mesh.PrepareMeshUpdate(chunk);
+        TerrainMeshTestData.CompleteSlices(mesh);
+        Assert.True(mesh.CompleteMeshBuild(chunk));
+        Assert.False(mesh.HasDisplayedLightPreview);
+    }
+
+    [Fact]
     public void InteractivePreviewOnlyReusesUnchangedUploadedSlicesAndRequiresMaintenance()
     {
         using var terrain = new Terrain();

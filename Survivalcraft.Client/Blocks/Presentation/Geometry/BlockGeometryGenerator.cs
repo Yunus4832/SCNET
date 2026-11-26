@@ -81,9 +81,23 @@ public partial class BlockGeometryGenerator
         ResetCache();
     }
 
+    internal IReadOnlyDictionary<Point3, int>? DisplayedEmissions { private get; set; }
+
+    internal int ApplyDisplayedEmission(int value, int x, int y, int z)
+    {
+        if (DisplayedEmissions == null || Terrain.ExtractContents(value) != Presentations.ReplayableLightbulbIndex)
+        {
+            return value;
+        }
+
+        var intensity = DisplayedEmissions.GetValueOrDefault(new Point3(x, y, z));
+        return Terrain.ReplaceData(value, LightbulbBlock.SetLightIntensity(Terrain.ExtractData(value), intensity));
+    }
+
     public void ResetCache()
     {
         _cornerLightsPosition = new Point3(2147483647);
+        DisplayedEmissions = null;
         _lightSnapshots.Clear();
         _nearbyLightSnapshots = null;
         _modelResponses.Clear();
@@ -121,7 +135,7 @@ public partial class BlockGeometryGenerator
     private int ReadGeometryCell(int x, int y, int z)
     {
         return Terrain.IsCellValid(x, y, z)
-            ? FindGeometryChunk(x, z)?.GetCellValueForGeometry(x & 15, y, z & 15) ?? 0
+            ? ApplyDisplayedEmission(FindGeometryChunk(x, z)?.GetCellValueForGeometry(x & 15, y, z & 15) ?? 0, x, y, z)
             : 0;
     }
 
@@ -2540,7 +2554,7 @@ public partial class BlockGeometryGenerator
             if (above.Sky == 15) { light = new TerrainLightChannels(15, light.Block); }
         }
 
-        return new LitCell(value, light);
+        return new LitCell(ApplyDisplayedEmission(value, x, y, z), light);
     }
 
     private LitCell ReadLitCell(int x, int y, int z)

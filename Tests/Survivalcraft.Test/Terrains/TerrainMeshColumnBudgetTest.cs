@@ -250,12 +250,21 @@ public sealed class TerrainMeshColumnBudgetTest
         Assert.All(lit.Vertices, vertex => Assert.Equal(255, vertex.emissiveMaterial.A));
         mesh.MarkUploaded();
 
+        mesh.MarkInteractiveCell(2);
+        mesh.RequestMeshRebuild();
+        var preview = Build(0, true);
+        Assert.Equal(lit.Vertices, preview.Vertices);
+        Assert.True(mesh.HasDisplayedLightPreview);
+        mesh.MarkUploaded();
+        Assert.True(mesh.FinishInteractiveUpload());
+        mesh.RequestMeshRebuild();
+
         var unlitAgain = Build(0);
         Assert.True(mesh.CanReuseUploadedTopology);
         Assert.True(mesh.HasChangedLighting);
         Assert.Equal(unlit.Vertices, unlitAgain.Vertices);
 
-        (TerrainVertex[] Vertices, int[] Indices) Build(int intensity)
+        (TerrainVertex[] Vertices, int[] Indices) Build(int intensity, bool preview = false)
         {
             chunk.SetCellValueFast(
                 8,
@@ -264,7 +273,7 @@ public sealed class TerrainMeshColumnBudgetTest
                 Terrain.MakeBlockValue(lamp.BlockIndex, data: LightbulbBlock.SetLightIntensity(mounting, intensity))
             );
             chunk.NetworkContentVersion++;
-            mesh.PrepareMeshUpdate(chunk);
+            mesh.PrepareMeshUpdate(chunk, preview);
             Assert.True(builder.GenerateSlice(chunk, mesh, 0, TimeSpan.MaxValue));
             TerrainMeshTestData.CompleteSlices(mesh);
             Assert.True(mesh.CompleteMeshBuild(chunk));

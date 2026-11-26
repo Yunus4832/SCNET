@@ -311,12 +311,14 @@ public class TerrainRenderer : IDisposable
     {
         var edit = _presentation.EditCohorts.Find(chunk);
         var light = _lightGroupsByChunk.GetValueOrDefault(chunk);
+        if (mesh.HasDisplayedLightPreview && edit == null) { return true; }
+
         if (_activeCohort?.Contains(chunk) == true)
         {
             return !_staged.ContainsKey(chunk) &&
                    (_activeLightGroup != null
                        ? ReferenceEquals(light, _activeLightGroup)
-                       : light == null && ReferenceEquals(edit, _activeCohort));
+                       : (light == null || mesh.HasDisplayedLightPreview) && ReferenceEquals(edit, _activeCohort));
         }
 
         return edit == null && light == null && (!mesh.GeometryUploaded || !chunk.HasPendingLightingPresentation);
@@ -333,7 +335,8 @@ public class TerrainRenderer : IDisposable
     {
         return group.Count != 0 &&
                group.All(chunk =>
-                   !_lightGroupsByChunk.ContainsKey(chunk) &&
+                   (!_lightGroupsByChunk.ContainsKey(chunk) ||
+                    _presentation.ChunkPresentations.Get(chunk).HasDisplayedLightPreview) &&
                    ReferenceEquals(_presentation.EditCohorts.Find(chunk), group)
                );
     }
@@ -343,7 +346,10 @@ public class TerrainRenderer : IDisposable
     private bool LightGroupReady(TerrainLightUploadGroup group)
     {
         return group.Members.Count != 0 &&
-               group.Members.All(MeshReady) &&
+               group.Members.All(chunk => MeshReady(chunk) &&
+                                          !(_presentation.ChunkPresentations.Get(chunk).HasDisplayedLightPreview &&
+                                            _presentation.ChunkPresentations.Get(chunk).CanUploadGeometry(chunk))
+               ) &&
                group.Edits.All(edit => edit.All(chunk => ReferenceEquals(_presentation.EditCohorts.Find(chunk), edit))
                ) &&
                LightSourcesReady(group);
@@ -480,6 +486,24 @@ public class TerrainRenderer : IDisposable
     private void PrepareCohortUploads(Vector2 center, TerrainChunk[] chunks)
     {
         BuildLightGroups(center, chunks);
+        foreach (var edit in _presentation.EditCohorts.Groups)
+        {
+            if (edit.All(chunk => _presentation.ChunkPresentations.Get(chunk).CanRetainDisplayedLight(chunk)))
+            {
+                if (_activeLightGroup != null && edit.Overlaps(_activeLightGroup.Members) && EditGroupReady(edit))
+                {
+                    InvalidateStagedGeometry();
+                }
+            }
+            else
+            {
+                foreach (var chunk in edit)
+                {
+                    _presentation.ChunkPresentations.Get(chunk).CancelDisplayedLightPreview();
+                }
+            }
+        }
+
         if (_activeCohort != null)
         {
             if (_activeLightGroup is { } previous)
@@ -616,7 +640,9 @@ public class TerrainRenderer : IDisposable
                 return false;
             }
 
-            if (_activeCohort?.Contains(chunk) == true)
+            if (_activeCohort?.Contains(chunk) == true &&
+                !(presentation.HasDisplayedLightPreview &&
+                  _presentation.EditCohorts.Find(chunk) == null))
             {
                 _staged.Add(chunk, StageUpload(presentation));
                 return true;

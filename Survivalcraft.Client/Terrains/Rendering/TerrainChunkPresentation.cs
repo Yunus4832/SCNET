@@ -73,19 +73,40 @@ public sealed class TerrainChunkPresentation : IDisposable
         else { HiddenBlockModels?.Remove(cellIndex); }
     }
 
+    private readonly Dictionary<Point3, int>?[]
+        _sliceEmissions = new Dictionary<Point3, int>?[TerrainChunk.SlicesCount];
+
+    private readonly Dictionary<Point3, int>?[] _uploadedEmissions =
+        new Dictionary<Point3, int>?[TerrainChunk.SlicesCount];
+
+    private static readonly Dictionary<Point3, int> _noEmissions = [];
+
+    internal IReadOnlyDictionary<Point3, int>? DisplayedEmissions(int slice) =>
+        _activeMesh is { UsesDisplayedLight: true } ? _uploadedEmissions[slice] ?? _noEmissions : null;
+
+    internal void SetSliceEmissions(int slice, Dictionary<Point3, int>? emissions) =>
+        _sliceEmissions[slice] = emissions;
+
     private int _interactiveSlices;
 
     private bool _reusedInteractiveSlices;
 
+    private bool _allowDisplayedLight;
+
     internal void MarkInteractiveCell(int y)
     {
+        _allowDisplayedLight = true;
         for (var slice = Math.Max(0, (y - 1) / 16); slice <= Math.Min(15, (y + 1) / 16); slice++)
         {
             _interactiveSlices |= 1 << slice;
         }
     }
 
-    internal void MarkInteractiveSnapshot() => _interactiveSlices = 0xFFFF;
+    internal void MarkInteractiveSnapshot()
+    {
+        _allowDisplayedLight = false;
+        _interactiveSlices = 0xFFFF;
+    }
 
     internal bool TryReuseInteractiveSlice(int slice)
     {
@@ -176,6 +197,7 @@ public sealed class TerrainChunkPresentation : IDisposable
         Volatile.Write(ref _uploadedMesh, completed);
         _uploadedTopologyRevision = _topologyRevision;
         Array.Copy(generatedSliceInputs, _uploadedSliceInputs, TerrainChunk.SlicesCount);
+        Array.Copy(_sliceEmissions, _uploadedEmissions, TerrainChunk.SlicesCount);
         GeometryUploaded = true;
         HiddenBlockModels?.Clear();
     }
@@ -246,6 +268,10 @@ public sealed class TerrainChunkPresentation : IDisposable
         bool AllowPendingLighting
     )
     {
+        internal TerrainLightSnapshot?[]? DisplayLights { get; init; }
+
+        internal bool UsesDisplayedLight { get; init; }
+
         internal TerrainMeshLightReads LightReads { get; init; }
 
         internal ulong? SampledLightFingerprint { get; init; }
@@ -281,8 +307,53 @@ public sealed class TerrainChunkPresentation : IDisposable
                 _completedMesh is { AllowPendingLighting: true } && CanUsePublishedLighting(chunk));
     }
 
+    internal bool CanPreviewDisplayedLight(TerrainChunk chunk) =>
+        chunk.HasCurrentHeightData && CanRetainDisplayedLight(chunk);
+
+    internal bool CanRetainDisplayedLight(TerrainChunk chunk)
+    {
+        if (!_allowDisplayedLight ||
+            _interactiveSlices == 0 ||
+            _uploadedMesh is not { DisplayLights: not null } uploaded ||
+            uploaded.Generation != chunk.AllocationGeneration) { return false; }
+
+        for (var dx = -1; dx <= 1; dx++)
+        {
+            for (var dz = -1; dz <= 1; dz++)
+            {
+                var neighbor = chunk.Terrain.GetChunkAtCoords(chunk.Coords.X + dx, chunk.Coords.Y + dz);
+                var generation = neighbor is { HasContents: true } ? neighbor.AllocationGeneration : 0;
+                if (generation != uploaded.Neighbors[(dx + 1) * 3 + dz + 1].Geometry.Generation) { return false; }
+            }
+        }
+
+        return true;
+    }
+
+    internal void CancelDisplayedLightPreview()
+    {
+        if (!_allowDisplayedLight) { return; }
+
+        _allowDisplayedLight = false;
+        RequestMeshRebuild();
+    }
+
+    internal bool HasDisplayedLightPreview => _completedMesh is { UsesDisplayedLight: true };
+
+    private bool HasMatchingDisplayedMaterials()
+    {
+        for (var i = 0; i < generatedSliceInputs.Length; i++)
+        {
+            if (generatedSliceInputs[i].EmissiveMaterial != _uploadedSliceInputs[i].EmissiveMaterial) { return false; }
+        }
+
+        return true;
+    }
+
     internal bool CanUsePublishedLighting(TerrainChunk chunk)
     {
+        if (CanPreviewDisplayedLight(chunk)) { return true; }
+
         if (!GeometryUploaded || !chunk.HasContents || NeedsGroupedLighting(chunk)) { return false; }
 
         for (var x = -1; x <= 1; x++)
@@ -302,7 +373,8 @@ public sealed class TerrainChunkPresentation : IDisposable
 
     private bool Matches(TerrainChunk chunk, MeshBuildStamp stamp)
     {
-        return (!stamp.AllowPendingLighting || !NeedsGroupedLighting(chunk)) &&
+        return (!stamp.UsesDisplayedLight || _allowDisplayedLight) &&
+               (stamp.UsesDisplayedLight || !stamp.AllowPendingLighting || !NeedsGroupedLighting(chunk)) &&
                stamp.Generation == chunk.AllocationGeneration &&
                stamp.ContentVersion == chunk.NetworkContentVersion &&
                stamp.Revision == Volatile.Read(ref _requestedMeshRevision) &&
@@ -456,10 +528,13 @@ public sealed class TerrainChunkPresentation : IDisposable
     /// <summary>调用时须持有所属地形的访问锁。</summary>
     public TerrainMeshState PrepareMeshUpdate(TerrainChunk chunk, bool allowPendingLighting = false)
     {
-        if (_activeMesh is null || !Matches(chunk, _activeMesh))
+        var displayed = allowPendingLighting && CanPreviewDisplayedLight(chunk) ? _uploadedMesh?.DisplayLights : null;
+        if (_activeMesh is null ||
+            !Matches(chunk, _activeMesh) ||
+            displayed != null && !_activeMesh.UsesDisplayedLight)
         {
-            _activeMesh = CaptureStamp(chunk, allowPendingLighting);
-            _buildLights = CaptureLights(chunk);
+            _activeMesh = CaptureStamp(chunk, allowPendingLighting) with { UsesDisplayedLight = displayed != null };
+            _buildLights = displayed ?? CaptureLights(chunk);
             _reuseCompletedGeometry = false;
             if (_completedMesh is { SampledLightFingerprint: not null } previous &&
                 previous.Generation == _activeMesh.Generation &&
@@ -546,6 +621,13 @@ public sealed class TerrainChunkPresentation : IDisposable
             return false;
         }
 
+        if (_activeMesh.UsesDisplayedLight && !HasMatchingDisplayedMaterials())
+        {
+            _allowDisplayedLight = false;
+            _activeMesh = null;
+            return false;
+        }
+
         var lightReads = new TerrainMeshLightReads();
         foreach (ref readonly var reads in _sliceLightReads.AsSpan()) { lightReads.Include(in reads); }
 
@@ -566,10 +648,16 @@ public sealed class TerrainChunkPresentation : IDisposable
             return false;
         }
 
-        // Completed/GPU stamps keep the light fingerprint and release the immutable cell storage.
+        var displayLights =
+            _reusedInteractiveSlices && !_activeMesh.UsesDisplayedLight || lightReads.HasOutsideNeighbors
+                ? null
+                : _buildLights;
         _buildLights = null;
         WorkerMeshState = TerrainMeshState.Ready;
-        _activeMesh = _activeMesh with { LightReads = lightReads, SampledLightFingerprint = fingerprint };
+        _activeMesh = _activeMesh with
+        {
+            LightReads = lightReads, SampledLightFingerprint = fingerprint, DisplayLights = displayLights
+        };
         Volatile.Write(ref _completedMesh, _activeMesh);
         NewGeometryData = true;
         return true;
@@ -609,6 +697,8 @@ public sealed class TerrainChunkPresentation : IDisposable
         _interactiveSlices = 0;
         _reusedInteractiveSlices = false;
         Array.Clear(_uploadedSliceInputs);
+        Array.Clear(_sliceEmissions);
+        Array.Clear(_uploadedEmissions);
         WorkerMeshState = TerrainMeshState.Building;
         CompletedMeshSlices = 0;
         ActiveSlice = null;
