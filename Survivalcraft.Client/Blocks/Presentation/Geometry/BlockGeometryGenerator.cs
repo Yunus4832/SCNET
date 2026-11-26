@@ -1594,8 +1594,18 @@ public partial class BlockGeometryGenerator
         BlockMesh blockMesh,
         Color color,
         Matrix? matrix,
+        TerrainGeometrySubset subset
+    ) => GenerateMeshVerticesWithMaterial(x, y, z, blockMesh, color, matrix, subset, null);
+
+    internal void GenerateMeshVerticesWithMaterial(
+        int x,
+        int y,
+        int z,
+        BlockMesh blockMesh,
+        Color color,
+        Matrix? matrix,
         TerrainGeometrySubset subset,
-        int? lightbulbIntensity = null
+        int? lightbulbIntensity
     )
     {
         var vertices = subset.Vertices;

@@ -56,8 +56,7 @@ public class LightbulbBlockPresentation(LightbulbBlock block, BlockPresentationC
             : Block.CopperColor;
         if (mountingFace < BulbBlockMeshes.Length)
         {
-            generator.GenerateMeshVertices(
-                this,
+            generator.GenerateMeshVerticesWithMaterial(
                 x,
                 y,
                 z,
