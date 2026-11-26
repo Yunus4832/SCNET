@@ -42,7 +42,7 @@ public sealed class ClientTerrainConfirmationTest
             .SetValue(subsystem, behaviors);
         var prediction = new ClientTerrainPrediction(
             terrain,
-            coords => scheduler.InvalidateContentNeighborhood(coords, 1)
+            cell => scheduler.InvalidateContentNeighborhood(terrain.GetChunkAtCell(cell.X, cell.Z, false)!.Coords, 1)
         );
         typeof(SubsystemTerrain).GetProperty(nameof(SubsystemTerrain.CellPrediction))!.SetValue(subsystem, prediction);
         prediction.Begin(new Point3(15, 64, 15), 3, 0, 0);

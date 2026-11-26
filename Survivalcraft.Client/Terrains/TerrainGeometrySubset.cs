@@ -8,6 +8,24 @@ public class TerrainGeometrySubset
 
     public DynamicArray<TerrainVertex> Vertices = [];
 
+    internal List<TerrainBlockIndexRange>? RemovableBlocks { get; private set; }
+
+    internal void RecordRemovableBlock(int firstIndex, int cellIndex)
+    {
+        if (Indices.Count > firstIndex)
+        {
+            (RemovableBlocks ??= []).Add(new TerrainBlockIndexRange(firstIndex, Indices.Count, cellIndex));
+        }
+    }
+
+    internal void ClearGeometry()
+    {
+        Vertices.Clear();
+        Indices.Clear();
+        RemovableBlocks?.Clear();
+        ClearLighting();
+    }
+
     private TerrainVertexLightRun _firstLightRun;
 
     private DynamicArray<TerrainVertexLightRun>? _additionalLightRuns;
@@ -69,3 +87,6 @@ public class TerrainGeometrySubset
     {
     }
 }
+
+/// <summary>记录可单独跳过的方块模型在索引缓冲区中的范围。</summary>
+internal readonly record struct TerrainBlockIndexRange(int Start, int End, int CellIndex);

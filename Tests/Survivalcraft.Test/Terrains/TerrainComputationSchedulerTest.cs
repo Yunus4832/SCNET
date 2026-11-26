@@ -40,6 +40,28 @@ public sealed class TerrainComputationSchedulerTest
     }
 
     [Fact]
+    public void LightingMeshBlockingAnEditRunsBeforeUnrelatedMeshWork()
+    {
+        using var fixture = new ComputationWorld();
+        fixture.Populate();
+        var work = new Derived(fixture.Data);
+        fixture.Scheduler.AttachDerivedWork(work);
+        fixture.Scheduler.UpdateDemand([Location()]);
+        fixture.Drain();
+        var nearby = fixture.Data.GetChunkAtCoords(0, 0)!;
+        var blocking = fixture.Data.GetChunkAtCoords(1, 0)!;
+        work.Completed.Remove(nearby);
+        work.Completed.Remove(blocking);
+        work.BlockingChunk = blocking;
+        fixture.Scheduler.Request(nearby);
+        fixture.Scheduler.Request(blocking);
+        fixture.Scheduler.Step();
+        Assert.Contains(blocking, work.Completed);
+        Assert.DoesNotContain(nearby, work.Completed);
+        Assert.False(fixture.Scheduler.IsInteractive(blocking));
+    }
+
+    [Fact]
     public void InteractiveHeightPreparationDoesNotRunOrWaitForLighting()
     {
         using var fixture = new ComputationWorld();
@@ -649,6 +671,8 @@ public sealed class TerrainComputationSchedulerTest
 
         public TerrainChunk? PreviewChunk { get; set; }
 
+        public TerrainChunk? BlockingChunk { get; set; }
+
         public bool PreviewUsed { get; private set; }
 
         public bool HasCurrentGeometry(TerrainChunk chunk) => Completed.Contains(chunk);
@@ -656,6 +680,8 @@ public sealed class TerrainComputationSchedulerTest
         public bool HasUploadedGeometry(TerrainChunk chunk) => false;
 
         public bool HasPendingLightingPresentation(TerrainChunk chunk) => false;
+
+        public bool HasPriorityLightingPresentation(TerrainChunk chunk) => ReferenceEquals(chunk, BlockingChunk);
 
         public bool CanUpdateBeforeLighting(TerrainChunk chunk) =>
             ReferenceEquals(chunk, PreviewChunk) && !Completed.Contains(chunk);

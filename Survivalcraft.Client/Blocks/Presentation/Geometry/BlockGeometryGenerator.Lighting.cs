@@ -11,7 +11,13 @@ public partial class BlockGeometryGenerator
 
     private const int _wireLightSample = 9;
 
+    private const int _lightbulbSample = 10;
+
     private const int _heightFaceSample = 1 << 13;
+
+    private readonly int[] _relightCornerKeys = new int[1024];
+
+    private readonly TerrainLightChannels[] _relightCorners = new TerrainLightChannels[1024];
 
     private bool _recordLighting;
 
@@ -25,6 +31,8 @@ public partial class BlockGeometryGenerator
 
     internal void SetLightReadTarget(TerrainChunkPresentation.SliceWork? target)
     {
+        if (target != null) { Array.Clear(_relightCornerKeys); }
+
         _lightReadTarget = target;
         _lastLightReadSection = -1;
         _lastLightReadInterior = false;
@@ -42,12 +50,12 @@ public partial class BlockGeometryGenerator
         }
     }
 
-    private int PackLightCell(int x, int y, int z)
+    private int PackLightCell(int x, int y, int z, int kind = _cellLightSample)
     {
         var localX = x - (_lightingCenter.X << 4) + 1;
         var localZ = z - (_lightingCenter.Y << 4) + 1;
         return (uint)localX < 32 && (uint)localZ < 32 && (uint)y <= 256
-            ? _cellLightSample | (localX << 4) | (localZ << 9) | (y << 14)
+            ? kind | (localX << 4) | (localZ << 9) | (y << 14)
             : 0;
     }
 
@@ -103,7 +111,16 @@ public partial class BlockGeometryGenerator
             }
 
             var response = kind == _fullBrightSample ? TerrainLightResponse.FullBright : GetLightResponse(x, y, z);
-            foreach (ref var vertex in vertices) { vertex.Lighting = response; }
+            var emissiveMaterial = kind == _lightbulbSample
+                ? LightbulbBlockPresentation.GetEmissiveMaterial(
+                    LightbulbBlock.GetLightIntensity(Terrain.ExtractData(ReadGeometryCell(x, y, z)))
+                )
+                : default;
+            foreach (ref var vertex in vertices)
+            {
+                vertex.Lighting = response;
+                vertex.emissiveMaterial = emissiveMaterial;
+            }
 
             return;
         }
@@ -124,6 +141,17 @@ public partial class BlockGeometryGenerator
             // Height faces are emitted as quads, and their geometry height can differ from the sampled corner.
             var y = heightFace ? baseY + ((upperCorners >> ((i - run.End) & 3)) & 1) : (int)vertex.Y;
             var z = (int)vertex.Z;
+            var localX = x - (_lightingCenter.X << 4);
+            var localZ = z - (_lightingCenter.Y << 4);
+            var cacheable = _lightReadTarget != null && (uint)localX <= 16 && (uint)localZ <= 16 && (uint)y <= 256;
+            var key = (((y * 17 + localX) * 17 + localZ) << 3) | kind;
+            var slot = (int)((uint)key * 2654435761u >> 22);
+            if (cacheable && _relightCornerKeys[slot] == key)
+            {
+                vertex.Lighting = TerrainLightResponse.FromChannels(_relightCorners[slot]);
+                continue;
+            }
+
             var channels = kind switch
             {
                 1 => CalculateVertexLightFace0(x, y, z),
@@ -134,6 +162,12 @@ public partial class BlockGeometryGenerator
                 6 => CalculateVertexLightFace5(x, y, z),
                 _ => throw new InvalidOperationException("Terrain vertex has no reusable light sample.")
             };
+            if (cacheable)
+            {
+                _relightCornerKeys[slot] = key;
+                _relightCorners[slot] = channels;
+            }
+
             vertex.Lighting = TerrainLightResponse.FromChannels(channels);
         }
     }

@@ -69,6 +69,9 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
         return _presentation.ChunkPresentations.TryGet(chunk, out var mesh) && mesh.NeedsGroupedLighting(chunk);
     }
 
+    bool ITerrainDerivedWork.HasPriorityLightingPresentation(TerrainChunk chunk) =>
+        _presentation.ChunkPresentations.TryGet(chunk, out var mesh) && mesh.lightingPresentationPriority;
+
     bool ITerrainDerivedWork.CanUpdateBeforeLighting(TerrainChunk chunk) =>
         NeedsInteractiveMesh(chunk) && _presentation.ChunkPresentations.Get(chunk).CanUsePublishedLighting(chunk);
 
@@ -131,9 +134,10 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
             foreach (var chunk in chunks)
             {
                 var presentation = _presentation.ChunkPresentations.Get(chunk);
+                var interactive = _subsystemTerrain.Computations.IsInteractive(chunk);
                 var pendingLighting = !chunk.HasCurrentLight ||
                                       NeighborChunks(chunk).Any(neighbor => !neighbor.HasCurrentLight);
-                if (pendingLighting && !presentation.CanUsePublishedLighting(chunk))
+                if (pendingLighting && (!interactive || !presentation.CanUsePublishedLighting(chunk)))
                 {
                     complete = false;
                     continue;
@@ -147,9 +151,9 @@ public sealed class TerrainMeshUpdater : ITerrainDerivedWork, IDisposable
 
                     UpdateChunkMesh(
                         chunk,
-                        pendingLighting || _subsystemTerrain.Computations.IsInteractive(chunk),
+                        interactive,
                         remaining,
-                        true
+                        interactive
                     );
                 }
 

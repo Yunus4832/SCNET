@@ -101,9 +101,7 @@ public class TerrainChunk : IDisposable
 
     public double NetworkRequestTime;
 
-    internal long lightRequestContentVersion;
-
-    internal double lightRequestTime;
+    internal double? lightRequestTime;
 
     public long NetworkContentVersion;
 
@@ -227,9 +225,11 @@ public class TerrainChunk : IDisposable
         return 0;
     }
 
-    public int GetCellValueForGeometry(int index)
+    public int GetCellValueForGeometry(int index) => GetCellValueForGeometry(index, out _);
+
+    public int GetCellValueForGeometry(int index, out int value)
     {
-        var value = GetCellValueFast(index);
+        value = GetCellValueFast(index);
         var predictions = Volatile.Read(ref _geometryPredictions);
         return predictions is not null &&
                predictions.TryGetValue(index, out var prediction) &&

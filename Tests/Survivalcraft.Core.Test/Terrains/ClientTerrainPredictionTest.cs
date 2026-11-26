@@ -16,14 +16,14 @@ public sealed class ClientTerrainPredictionTest
         var chunk = terrain.AllocateChunk(0, 0);
         chunk.SetCellValueFast(15, 64, 15, 3);
         var changes = new List<Point3>();
-        var invalidated = new List<Point2>();
+        var invalidated = new List<Point3>();
         var prediction = new ClientTerrainPrediction(terrain, invalidated.Add);
         prediction.GeometryChanged += changes.Add;
         prediction.Begin(_cell, 3, 0, 0);
         prediction.OnCellChanged(_cell, 0);
         chunk.SetCellValueFast(15, 64, 15, 0);
         Assert.Equal(_cell, Assert.Single(changes));
-        Assert.Equal(new Point2(0, 0), Assert.Single(invalidated));
+        Assert.Equal(_cell, Assert.Single(invalidated));
         Assert.False(prediction.IsPending(_cell));
         Assert.Equal(0, terrain.GetCellValueForGeometry(15, 64, 15));
     }
@@ -51,7 +51,7 @@ public sealed class ClientTerrainPredictionTest
         var value = Terrain.MakeBlockValue(3, 7);
         chunk.SetCellValueFast(15, 64, 15, value);
         var revision = chunk.NetworkContentRevision;
-        var invalidated = new List<Point2>();
+        var invalidated = new List<Point3>();
         var prediction = new ClientTerrainPrediction(terrain, invalidated.Add);
         Assert.True(prediction.Begin(_cell, value, 0, 0) > 0);
 
@@ -59,7 +59,7 @@ public sealed class ClientTerrainPredictionTest
         Assert.Equal(0, terrain.GetCellValueForGeometry(15, 64, 15));
         Assert.Equal(revision, chunk.NetworkContentRevision);
         Assert.Equal(0, chunk.ModificationCounter);
-        Assert.Equal(new Point2(0, 0), Assert.Single(invalidated));
+        Assert.Equal(_cell, Assert.Single(invalidated));
     }
 
     [Fact]

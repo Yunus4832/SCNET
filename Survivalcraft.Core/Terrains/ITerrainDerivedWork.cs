@@ -9,6 +9,8 @@ public interface ITerrainDerivedWork
 
     bool HasPendingLightingPresentation(TerrainChunk chunk);
 
+    bool HasPriorityLightingPresentation(TerrainChunk chunk) => false;
+
     bool CanUpdateBeforeLighting(TerrainChunk chunk);
 
     TerrainDerivedWorkResult UpdateChunk(TerrainChunk chunk);

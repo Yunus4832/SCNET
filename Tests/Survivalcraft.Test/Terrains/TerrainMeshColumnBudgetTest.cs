@@ -4,6 +4,7 @@ using Engine.Core.Mathematics;
 using Engine.Graphics;
 
 using Game.Blocks;
+using Game.Blocks.Presentation;
 using Game.Blocks.Presentation.Geometry;
 using Game.ClientContent;
 using Game.Modding.Blocks;
@@ -181,6 +182,98 @@ public sealed class TerrainMeshColumnBudgetTest
             Assert.Equal(rebuiltSubsets[i].Vertices.ToArray(), refreshedSubsets[i].Vertices.ToArray());
             Assert.Equal(rebuiltSubsets[i].Indices.ToArray(), refreshedSubsets[i].Indices.ToArray());
         }
+    }
+
+    [Theory]
+    [InlineData(0, 0, 0, 0)]
+    [InlineData(15, 0, 15, 0)]
+    [InlineData(0, 12, 0, 11)]
+    public void PredictedOpeningLightsOnlyTheNewAirSample(int sky, int block, int expectedSky, int expectedBlock)
+    {
+        using var fixture = new Fixture();
+        var chunk = fixture.Chunk;
+        var samples = new byte[chunk.Cells.Length];
+        samples[TerrainChunk.CalculateCellIndex(8, 3, 8)] = new TerrainLightChannels(sky, block).Packed;
+        var lights = new TerrainLightSnapshot?[9];
+        lights[4] = TerrainLightSnapshot.Capture(samples);
+        var generator = fixture.Generator;
+        generator.SetLightSnapshots(chunk.Coords, lights);
+        var index = TerrainChunk.CalculateCellIndex(8, 2, 8);
+        chunk.SetGeometryPrediction(index, 3, 0);
+        Assert.Equal(new TerrainLightChannels(expectedSky, expectedBlock), generator.ReadLitCell(chunk, index).Light);
+        Assert.Equal(default, lights[4]!.Get(8, 2, 8));
+        chunk.RemoveGeometryPrediction(index);
+        Assert.Equal(default, generator.ReadLitCell(chunk, index).Light);
+    }
+
+    [Fact]
+    public void LightbulbIntensityChangesWithIdenticalSpatialLightReuseUploadedTopology()
+    {
+        using var fixture = new Fixture();
+        using var mesh = new TerrainChunkPresentation();
+        var terrain = fixture.Terrain;
+        var chunk = fixture.Chunk;
+        var lamp = fixture.World.Catalog.GetBlock(ResourceId.Parse("game:lightbulb"));
+        var presentation = (LightbulbBlockPresentation)fixture.Presentations.Get(lamp.BlockIndex);
+        var bulb = new BlockMesh();
+        bulb.Vertices.Add(new BlockMeshVertex { Color = Color.White });
+        bulb.Vertices.Add(new BlockMeshVertex { Position = Vector3.UnitX, Color = Color.White });
+        bulb.Vertices.Add(new BlockMeshVertex { Position = Vector3.UnitY, Color = Color.White });
+        bulb.Indices.Add(0);
+        bulb.Indices.Add(1);
+        bulb.Indices.Add(2);
+        presentation.BulbBlockMeshes[4] = bulb;
+        presentation.SidesBlockMeshes[4] = new BlockMesh();
+        var subsystem = fixture.World.Project.FindSubsystem<SubsystemTerrain>(true)!;
+        var electricity = new SubsystemElectricity();
+        fixture.World.Project.InitializeSubsystem(electricity);
+        typeof(SubsystemElectricity).GetProperty(nameof(SubsystemElectricity.SubsystemTerrain))!
+            .SetValue(electricity, subsystem);
+        var generator = new BlockGeometryGenerator(terrain, subsystem, electricity, null!, null!, null!);
+        var mounting = LightbulbBlock.SetMountingFace(0, 4);
+        var allocation = terrain.Lighting.CaptureInput(chunk);
+        var light = new TerrainLightSnapshot(new TerrainLightChannels(0, 15));
+        Assert.True(terrain.Lighting.TryPublish(chunk, allocation, light));
+        var builder = new TerrainMeshBuilder(terrain, generator, fixture.Texture);
+        chunk.SetTopHeightFast(8, 8, 2);
+
+        var unlit = Build(0);
+        Assert.NotEmpty(unlit.Vertices);
+        Assert.All(unlit.Vertices, vertex => Assert.Equal(0, vertex.emissiveMaterial.A));
+        mesh.MarkUploaded();
+
+        var lit = Build(15);
+        Assert.True(mesh.CanReuseUploadedTopology);
+        Assert.True(mesh.HasChangedLighting);
+        Assert.Equal(unlit.Indices, lit.Indices);
+        Assert.Equal(unlit.Vertices.Select(Geometry), lit.Vertices.Select(Geometry));
+        Assert.All(lit.Vertices, vertex => Assert.Equal(255, vertex.emissiveMaterial.A));
+        mesh.MarkUploaded();
+
+        var unlitAgain = Build(0);
+        Assert.True(mesh.CanReuseUploadedTopology);
+        Assert.True(mesh.HasChangedLighting);
+        Assert.Equal(unlit.Vertices, unlitAgain.Vertices);
+
+        (TerrainVertex[] Vertices, int[] Indices) Build(int intensity)
+        {
+            chunk.SetCellValueFast(
+                8,
+                2,
+                8,
+                Terrain.MakeBlockValue(lamp.BlockIndex, data: LightbulbBlock.SetLightIntensity(mounting, intensity))
+            );
+            chunk.NetworkContentVersion++;
+            mesh.PrepareMeshUpdate(chunk);
+            Assert.True(builder.GenerateSlice(chunk, mesh, 0, TimeSpan.MaxValue));
+            TerrainMeshTestData.CompleteSlices(mesh);
+            Assert.True(mesh.CompleteMeshBuild(chunk));
+            var subset = mesh.Draws[fixture.Texture][0].SubsetAlphaTest;
+            return (subset.Vertices.ToArray(), subset.Indices.ToArray());
+        }
+
+        static TerrainGeometryVertex Geometry(TerrainVertex vertex) =>
+            new(new Vector3(vertex.X, vertex.Y, vertex.Z), vertex.Tx, vertex.Ty, vertex.Color);
     }
 
     [Fact]

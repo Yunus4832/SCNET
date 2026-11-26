@@ -18,6 +18,8 @@ public class TerrainChunkGeometry
 
         public required VertexBuffer VertexBuffer;
 
+        internal List<TerrainBlockIndexRange>? RemovableBlocks { get; set; }
+
         internal VertexBuffer? LightingBuffer { get; set; }
 
         internal (int Begin, int End) VertexRange { get; init; }

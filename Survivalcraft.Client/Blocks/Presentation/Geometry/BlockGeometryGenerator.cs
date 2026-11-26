@@ -45,7 +45,7 @@ public partial class BlockGeometryGenerator
 
     private TerrainChunkPresentation.SliceWork? _lightReadTarget;
 
-    private readonly record struct LitCell(int Value, TerrainLightChannels Light);
+    internal readonly record struct LitCell(int Value, TerrainLightChannels Light);
 
     public readonly Terrain Terrain;
 
@@ -205,6 +205,7 @@ public partial class BlockGeometryGenerator
         vertex.Ty = (short)(ty * 32767f);
         vertex.Color = color;
         vertex.Lighting = TerrainLightResponse.FullBright;
+        vertex.emissiveMaterial = default;
     }
 
     public void GenerateCrossingFaceVertices(
@@ -1593,14 +1594,18 @@ public partial class BlockGeometryGenerator
         BlockMesh blockMesh,
         Color color,
         Matrix? matrix,
-        TerrainGeometrySubset subset
+        TerrainGeometrySubset subset,
+        int? lightbulbIntensity = null
     )
     {
         var vertices = subset.Vertices;
         var indices = subset.Indices;
         var count = vertices.Count;
         var response = TerrainLightResponse.FromChannels(ReadLight(x, y, z));
-        var sample = _recordLighting ? PackLightCell(x, y, z) : 0;
+        var emissiveMaterial = LightbulbBlockPresentation.GetEmissiveMaterial(lightbulbIntensity.GetValueOrDefault());
+        var sample = _recordLighting
+            ? PackLightCell(x, y, z, lightbulbIntensity.HasValue ? _lightbulbSample : _cellLightSample)
+            : 0;
         vertices.Count += blockMesh.Vertices.Count;
         for (var i = 0; i < blockMesh.Vertices.Count; i++)
         {
@@ -1628,6 +1633,7 @@ public partial class BlockGeometryGenerator
             );
             vertices.Array[count + i].Lighting =
                 blockMeshVertex.IsEmissive ? TerrainLightResponse.FullBright : response;
+            vertices.Array[count + i].emissiveMaterial = emissiveMaterial;
             if (_recordLighting)
             {
                 subset.RecordLighting(count + i, 1, blockMeshVertex.IsEmissive ? _fullBrightSample : sample);
@@ -2505,16 +2511,35 @@ public partial class BlockGeometryGenerator
         return snapshot?.Get(x & 15, y, z & 15) ?? default;
     }
 
-    private LitCell ReadLitCell(TerrainChunk chunk, int index)
+    internal LitCell ReadLitCell(TerrainChunk chunk, int index)
     {
-        return new LitCell(
-            chunk.GetCellValueForGeometry(index),
-            ReadLight(chunk.Origin.X + ((index >> 8) & 15), index & 255, chunk.Origin.Y + (index >> 12))
-        );
+        var x = chunk.Origin.X + ((index >> 8) & 15);
+        var y = index & 255;
+        var z = chunk.Origin.Y + (index >> 12);
+        var value = chunk.GetCellValueForGeometry(index, out var actual);
+        var light = ReadLight(x, y, z);
+        if (value == 0 &&
+            actual != 0 &&
+            !_subsystemTerrain.Catalog.Blocks[Terrain.ExtractContents(actual)].IsTransparent(actual))
+        {
+            var above = ReadLight(x, y + 1, z);
+            var adjacent = above.Max(ReadLight(x, y - 1, z))
+                .Max(ReadLight(x + 1, y, z)).Max(ReadLight(x - 1, y, z))
+                .Max(ReadLight(x, y, z + 1)).Max(ReadLight(x, y, z - 1));
+            light = light.Max(adjacent.Attenuate(1));
+            if (above.Sky == 15) { light = new TerrainLightChannels(15, light.Block); }
+        }
+
+        return new LitCell(value, light);
     }
 
     private LitCell ReadLitCell(int x, int y, int z)
     {
+        if ((uint)y < 256 && FindGeometryChunk(x, z) is { } chunk)
+        {
+            return ReadLitCell(chunk, TerrainChunk.CalculateCellIndex(x & 15, y, z & 15));
+        }
+
         return new LitCell(ReadGeometryCell(x, y, z), ReadLight(x, y, z));
     }
 

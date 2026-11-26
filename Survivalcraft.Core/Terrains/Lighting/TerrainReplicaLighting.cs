@@ -7,6 +7,8 @@ public sealed class TerrainReplicaLighting(
     TimeProvider? timeProvider = null
 )
 {
+    private static readonly TimeSpan _appearancePairingBudget = TimeSpan.FromMilliseconds(250);
+
     private static readonly TimeSpan _presentationBudget = TimeSpan.FromMilliseconds(500);
 
     private sealed record PresentationWindow(
@@ -39,6 +41,8 @@ public sealed class TerrainReplicaLighting(
 
         internal long contentVersion;
 
+        internal long? waitingForAppearanceSince;
+
         internal bool queued;
     }
 
@@ -55,6 +59,37 @@ public sealed class TerrainReplicaLighting(
             return _entries.TryGetValue(chunk.Coords, out var entry) &&
                    entry.allocation.Generation == chunk.AllocationGeneration &&
                    entry.contentVersion == chunk.NetworkContentVersion;
+        }
+    }
+
+    /// <summary>纯灯光外观最多应用到已收到的光照版本。光照缺失时限时等待，避免阻塞后续更新。</summary>
+    internal long? GetAppearanceLimit(TerrainChunk chunk)
+    {
+        lock (_gate)
+        {
+            var installed = chunk.NetworkContentVersion;
+            if (!_entries.TryGetValue(chunk.Coords, out var entry) ||
+                entry.allocation.Generation != chunk.AllocationGeneration)
+            {
+                return null;
+            }
+
+            if (IsWaitingForPresentation(entry, CurrentWindow())) { return installed; }
+
+            if (entry.contentVersion > installed)
+            {
+                entry.waitingForAppearanceSince = null;
+                return entry.contentVersion;
+            }
+
+            entry.waitingForAppearanceSince ??= _time.GetTimestamp();
+            if (_time.GetElapsedTime(entry.waitingForAppearanceSince.Value) < _appearancePairingBudget)
+            {
+                return installed;
+            }
+
+            entry.waitingForAppearanceSince = null;
+            return null;
         }
     }
 
@@ -132,7 +167,11 @@ public sealed class TerrainReplicaLighting(
             }
         }
 
-        foreach (var batch in previous) { batch.Release(); }
+        var held = CurrentWindow()?.Groups;
+        foreach (var batch in previous)
+        {
+            if (held?.ContainsKey(batch) != true) { batch.Release(); }
+        }
 
         return merged;
     }
@@ -191,6 +230,26 @@ public sealed class TerrainReplicaLighting(
         if (chunk?.AllocationGeneration == allocation.Generation) { chunk.LightingPresentationBatch = batch; }
     }
 
+    /// <summary>优先呈现已锁定的光照，暂缓与它重叠的后续版本。</summary>
+    public void SelectPresentationBatches(HashSet<TerrainLightPresentationBatch> batches)
+    {
+        lock (_gate)
+        {
+            if (CurrentWindow() is not { } window) { return; }
+
+            batches.RemoveWhere(batch => !window.Groups.ContainsKey(batch) && OverlapsHeldBatch(batch, window));
+            batches.UnionWith(window.Groups.Keys);
+        }
+    }
+
+    private static bool OverlapsHeldBatch(TerrainLightPresentationBatch batch, PresentationWindow window) =>
+        batch.Allocations.Any(window.Allocations.Contains);
+
+    private static bool IsWaitingForPresentation(Entry entry, PresentationWindow? window) =>
+        window != null &&
+        (window.Allocations.Contains(entry.allocation) ||
+         entry.batch is { IsPending: true } batch && OverlapsHeldBatch(batch, window));
+
     public TerrainLightPresentationBatch.Source[] CapturePresentationSources(TerrainLightPresentationBatch batch)
     {
         lock (_gate)
@@ -227,9 +286,11 @@ public sealed class TerrainReplicaLighting(
         {
             if (!batch.IsPending) { return false; }
 
-            if (CurrentWindow()?.Groups.TryGetValue(batch, out var pinned) == true)
+            if (CurrentWindow() is { } window)
             {
-                return sources.SequenceEqual(pinned);
+                if (window.Groups.TryGetValue(batch, out var pinned)) { return sources.SequenceEqual(pinned); }
+
+                if (OverlapsHeldBatch(batch, window)) { return false; }
             }
 
             foreach (var source in sources)
@@ -257,13 +318,12 @@ public sealed class TerrainReplicaLighting(
         {
             if (CurrentWindow() != null ||
                 groups.Count == 0 ||
-                !groups.All(pair =>
-                    pair.Value.Length != 0 &&
-                    CanPresent(pair.Key, pair.Value) &&
-                    pair.Value.All(source => _entries[source.Allocation.Coords].heldSequence < source.Sequence)
+                !groups.All(pair => pair.Value.Length != 0 && CanPresent(pair.Key, pair.Value)) ||
+                !groups.Values.Any(sources =>
+                    sources.Any(source => _entries[source.Allocation.Coords].heldSequence < source.Sequence)
                 )) { return false; }
 
-            // A cancelled or expired window must give the content pump a chance to apply the buffered edits.
+            // Reopening requires new light data. Unchanged neighbors can participate without a new sequence.
             foreach (var sources in groups.Values)
             {
                 foreach (var source in sources) { _entries[source.Allocation.Coords].heldSequence = source.Sequence; }
@@ -294,7 +354,7 @@ public sealed class TerrainReplicaLighting(
                 if (!newer) { batch.Release(); }
             }
 
-            if (_window?.Groups.Keys.Any(groups.ContainsKey) == true) { _window = null; }
+            if (_window?.Groups.Keys.Any(groups.ContainsKey) == true) { EndWindow(); }
         }
     }
 
@@ -312,7 +372,7 @@ public sealed class TerrainReplicaLighting(
     {
         lock (_gate)
         {
-            if (HasHeldAppearance(chunk)) { _window = null; }
+            if (HasHeldAppearance(chunk)) { EndWindow(); }
         }
     }
 
@@ -322,10 +382,24 @@ public sealed class TerrainReplicaLighting(
             (_time.GetElapsedTime(window.Started) >= _presentationBudget ||
              window.Groups.Keys.Any(batch => !batch.IsPending)))
         {
-            _window = null;
+            EndWindow();
         }
 
         return _window;
+    }
+
+    private void EndWindow()
+    {
+        if (_window is not { } window) { return; }
+
+        _window = null;
+        foreach (var batch in window.Groups.Keys)
+        {
+            if (!batch.Allocations.Any(allocation => ReferenceEquals(FindPendingBatch(allocation), batch)))
+            {
+                batch.Release();
+            }
+        }
     }
 
     public bool IsPresentationApplied(TerrainChunk chunk, TerrainLightPresentationBatch batch)
@@ -345,7 +419,7 @@ public sealed class TerrainReplicaLighting(
         var applied = new List<TerrainChunk>();
         lock (_gate)
         {
-            var held = CurrentWindow()?.Allocations;
+            var window = CurrentWindow();
             var count = Math.Min(32, _pending.Count);
             for (var i = 0; i < count; i++)
             {
@@ -363,7 +437,7 @@ public sealed class TerrainReplicaLighting(
                     continue;
                 }
 
-                if (held?.Contains(allocation) == true)
+                if (IsWaitingForPresentation(entry, window))
                 {
                     entry.queued = true;
                     _pending.Enqueue(allocation);
@@ -388,6 +462,7 @@ public sealed class TerrainReplicaLighting(
                     chunk.DerivedRevisions.PublishLight(request, !ReferenceEquals(previous, entry.snapshot)))
                 {
                     entry.appliedSequence = entry.sequence;
+                    chunk.lightRequestTime = null;
                     applied.Add(chunk);
                 }
                 else
@@ -419,7 +494,7 @@ public sealed class TerrainReplicaLighting(
         {
             if (_entries.TryGetValue(allocation.Coords, out var entry) && entry.allocation == allocation)
             {
-                if (_window?.Allocations.Contains(allocation) == true) { _window = null; }
+                if (_window?.Allocations.Contains(allocation) == true) { EndWindow(); }
 
                 BindPresentation(entry, null);
                 _entries.Remove(allocation.Coords);

@@ -889,7 +889,11 @@ public sealed class TerrainComputationScheduler : IDisposable
 
     private TerrainWorkPriority Priority(TerrainChunk chunk, TerrainWorkStage stage)
     {
-        if (IsInteractive(chunk)) { return TerrainWorkPriority.Critical; }
+        if (IsInteractive(chunk) ||
+            stage == TerrainWorkStage.Derived && _derived?.HasPriorityLightingPresentation(chunk) == true)
+        {
+            return TerrainWorkPriority.Critical;
+        }
 
         if (stage == TerrainWorkStage.Content && Distance(chunk) <= 64 * 64) { return TerrainWorkPriority.Critical; }
 

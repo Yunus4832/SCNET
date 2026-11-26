@@ -1,5 +1,3 @@
-using Engine.Graphics;
-
 using Game.Terrains.Lighting;
 
 namespace Game.Terrains.Rendering;
@@ -18,13 +16,6 @@ public readonly record struct TerrainLightResponse(
     private static readonly float[] _responses = CreateResponses();
 
     private static readonly TerrainLightResponse[] _channelResponses = CreateChannelResponses();
-
-    internal static VertexDeclaration VertexDeclaration { get; } = new(
-        new VertexElement(0, VertexElementFormat.NormalizedByte4, VertexElementSemantic.TextureCoordinate1),
-        new VertexElement(4, VertexElementFormat.NormalizedByte4, VertexElementSemantic.TextureCoordinate2),
-        new VertexElement(8, VertexElementFormat.NormalizedByte4, VertexElementSemantic.TextureCoordinate3),
-        new VertexElement(12, VertexElementFormat.NormalizedByte4, VertexElementSemantic.TextureCoordinate4)
-    );
 
     public static TerrainLightResponse FullBright { get; } = new(Color.White, Color.White, Color.White, Color.White);
 

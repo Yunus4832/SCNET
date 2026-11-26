@@ -122,12 +122,17 @@ public sealed class TerrainLightingCalculatorTest
         }
 
         var source = new Point3(15, 64, 8);
-        Assert.True(calculator.TryApplyEmissionEdit(source, 0, lamp));
-        Assert.True(terrain.Lighting.TryGetCurrentSnapshot(chunks[0], out var litLeft));
-        Assert.True(terrain.Lighting.TryGetCurrentSnapshot(chunks[1], out var litRight));
-        Assert.Equal(15, litLeft.Get(15, 64, 8).Block);
-        Assert.Equal(14, litRight.Get(0, 64, 8).Block);
-        Assert.True(calculator.TryApplyEmissionEdit(source, lamp, 0));
+        for (var i = 0; i < 8; i++)
+        {
+            Assert.True(calculator.TryApplyEmissionEdit(source, 0, lamp));
+            Assert.True(terrain.Lighting.TryGetCurrentSnapshot(chunks[0], out var litLeft));
+            Assert.True(terrain.Lighting.TryGetCurrentSnapshot(chunks[1], out var litRight));
+            Assert.Equal(15, litLeft.Get(15, 64, 8).Block);
+            Assert.Equal(14, litRight.Get(0, 64, 8).Block);
+            Assert.True(calculator.TryApplyEmissionEdit(source, lamp, 0));
+            Assert.True(terrain.Lighting.TryGetCurrentSnapshot(chunks[1], out var darkRight));
+            Assert.Equal(11, darkRight.Get(0, 64, 8).Block);
+        }
 
         foreach (var chunk in expectedChunks) { Prepare(oracle, chunk); }
 

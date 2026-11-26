@@ -23,7 +23,8 @@ public sealed class TerrainLightResponseTest
         );
         var vertex = new TerrainVertex
         {
-            X = 12.5f, Y = 64, Z = -16.5f, Tx = 2000, Ty = -3000, Color = Color.Green, Lighting = lighting
+            X = 12.5f, Y = 64, Z = -16.5f, Tx = 2000, Ty = -3000, Color = Color.Green,
+            Lighting = lighting, emissiveMaterial = new Color(200, 220, 230)
         };
         var geometry = new TerrainGeometryVertex(
             new Vector3(vertex.X, vertex.Y, vertex.Z),
@@ -33,9 +34,10 @@ public sealed class TerrainLightResponseTest
         );
         var vertexBytes = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref vertex, 1));
         var geometryBytes = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref geometry, 1));
-        var lightingBytes = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref lighting, 1));
+        var stream = new TerrainVertexLighting(lighting, vertex.emissiveMaterial);
+        var lightingBytes = MemoryMarshal.AsBytes(MemoryMarshal.CreateReadOnlySpan(ref stream, 1));
         Assert.Equal(TerrainGeometryVertex.VertexDeclaration.VertexStride, geometryBytes.Length);
-        Assert.Equal(TerrainLightResponse.VertexDeclaration.VertexStride, lightingBytes.Length);
+        Assert.Equal(TerrainVertexLighting.VertexDeclaration.VertexStride, lightingBytes.Length);
         Assert.Equal(TerrainVertex.VertexDeclaration.VertexStride, geometryBytes.Length + lightingBytes.Length);
         Assert.True(vertexBytes[..geometryBytes.Length].SequenceEqual(geometryBytes));
         Assert.True(vertexBytes[geometryBytes.Length..].SequenceEqual(lightingBytes));
@@ -86,8 +88,11 @@ public sealed class TerrainLightResponseTest
     public void ResponseUsesSixteenBytesAndPreservesEveryChannelCombination()
     {
         Assert.Equal(16, Marshal.SizeOf<TerrainLightResponse>());
-        Assert.Equal(36, Marshal.SizeOf<TerrainVertex>());
-        Assert.Equal(36, TerrainVertex.VertexDeclaration.VertexStride);
+        Assert.Equal(20, Marshal.SizeOf<TerrainVertexLighting>());
+        Assert.Equal(20, TerrainVertexLighting.VertexDeclaration.VertexStride);
+        Assert.Equal(40, Marshal.SizeOf<TerrainVertex>());
+        Assert.Equal(40, TerrainVertex.VertexDeclaration.VertexStride);
+        Assert.Equal(36, Marshal.OffsetOf<TerrainVertex>(nameof(TerrainVertex.emissiveMaterial)).ToInt32());
         Assert.Equal(20, Marshal.OffsetOf<TerrainVertex>(nameof(TerrainVertex.Lighting)).ToInt32());
         for (var packed = 0; packed < 256; packed++)
         {

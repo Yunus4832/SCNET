@@ -44,6 +44,8 @@ public sealed class TerrainChunkPresentation : IDisposable
 
     internal volatile bool lightingCohortPending;
 
+    internal volatile bool lightingPresentationPriority;
+
     internal bool NeedsGroupedLighting(TerrainChunk chunk) =>
         lightingCohortPending || chunk.HasPendingLightingPresentation;
 
@@ -59,7 +61,17 @@ public sealed class TerrainChunkPresentation : IDisposable
 
     private TerrainLightSnapshot?[]? _buildLights;
 
+    private bool _reuseCompletedGeometry;
+
     private readonly TerrainSliceInputs[] _uploadedSliceInputs = new TerrainSliceInputs[TerrainChunk.SlicesCount];
+
+    internal HashSet<int>? HiddenBlockModels { get; private set; }
+
+    internal void SetBlockModelHidden(int cellIndex, bool hidden)
+    {
+        if (hidden) { (HiddenBlockModels ??= []).Add(cellIndex); }
+        else { HiddenBlockModels?.Remove(cellIndex); }
+    }
 
     private int _interactiveSlices;
 
@@ -111,7 +123,11 @@ public sealed class TerrainChunkPresentation : IDisposable
         {
             for (var i = 0; i < generatedSliceInputs.Length; i++)
             {
-                if (generatedSliceInputs[i].Lighting != _uploadedSliceInputs[i].Lighting) { return true; }
+                if (generatedSliceInputs[i].Lighting != _uploadedSliceInputs[i].Lighting ||
+                    generatedSliceInputs[i].EmissiveMaterial != _uploadedSliceInputs[i].EmissiveMaterial)
+                {
+                    return true;
+                }
             }
 
             return false;
@@ -136,6 +152,16 @@ public sealed class TerrainChunkPresentation : IDisposable
         return uploaded != null && Matches(chunk, uploaded);
     }
 
+    /// <summary>上传网格已使用与当前区块相符的光照，可供掉落物取样。</summary>
+    internal bool HasCurrentUploadedLighting(TerrainChunk chunk)
+    {
+        var uploaded = Volatile.Read(ref _uploadedMesh);
+        return uploaded is { AllowPendingLighting: false } &&
+               chunk.HasCurrentLight &&
+               !NeedsGroupedLighting(chunk) &&
+               Matches(chunk, uploaded);
+    }
+
     /// <summary>实际 GPU 上传成功后，在持有几何锁时调用。</summary>
     public void MarkUploaded()
     {
@@ -151,6 +177,7 @@ public sealed class TerrainChunkPresentation : IDisposable
         _uploadedTopologyRevision = _topologyRevision;
         Array.Copy(generatedSliceInputs, _uploadedSliceInputs, TerrainChunk.SlicesCount);
         GeometryUploaded = true;
+        HiddenBlockModels?.Clear();
     }
 
     public TerrainMeshState WorkerMeshState { get; private set; }
@@ -214,6 +241,8 @@ public sealed class TerrainChunkPresentation : IDisposable
         long ContentVersion,
         long Revision,
         NeighborInput[] Neighbors,
+        int SeasonTemperature,
+        int SeasonHumidity,
         bool AllowPendingLighting
     )
     {
@@ -277,6 +306,8 @@ public sealed class TerrainChunkPresentation : IDisposable
                stamp.Generation == chunk.AllocationGeneration &&
                stamp.ContentVersion == chunk.NetworkContentVersion &&
                stamp.Revision == Volatile.Read(ref _requestedMeshRevision) &&
+               stamp.SeasonTemperature == chunk.Terrain.SeasonTemperature &&
+               stamp.SeasonHumidity == chunk.Terrain.SeasonHumidity &&
                MatchesNeighbors(chunk, stamp);
     }
 
@@ -395,6 +426,8 @@ public sealed class TerrainChunkPresentation : IDisposable
             chunk.NetworkContentVersion,
             Volatile.Read(ref _requestedMeshRevision),
             CaptureNeighbors(chunk),
+            chunk.Terrain.SeasonTemperature,
+            chunk.Terrain.SeasonHumidity,
             allowPendingLighting
         );
     }
@@ -427,11 +460,20 @@ public sealed class TerrainChunkPresentation : IDisposable
         {
             _activeMesh = CaptureStamp(chunk, allowPendingLighting);
             _buildLights = CaptureLights(chunk);
+            _reuseCompletedGeometry = false;
             if (_completedMesh is { SampledLightFingerprint: not null } previous &&
                 previous.Generation == _activeMesh.Generation &&
                 previous.Revision == _activeMesh.Revision &&
                 SameNeighborGeometry(previous.Neighbors, _activeMesh.Neighbors))
             {
+                _reuseCompletedGeometry = WorkerMeshState == TerrainMeshState.Ready &&
+                                          previous.SeasonTemperature == _activeMesh.SeasonTemperature &&
+                                          previous.SeasonHumidity == _activeMesh.SeasonHumidity &&
+                                          SameNeighborGeometry(
+                                              previous.Neighbors,
+                                              _activeMesh.Neighbors,
+                                              useHalo: false
+                                          );
                 _activeMesh = _activeMesh with
                 {
                     LightReads = previous.LightReads,
@@ -459,11 +501,11 @@ public sealed class TerrainChunkPresentation : IDisposable
         return WorkerMeshState;
     }
 
-    private static bool SameNeighborGeometry(NeighborInput[] first, NeighborInput[] second)
+    private static bool SameNeighborGeometry(NeighborInput[] first, NeighborInput[] second, bool useHalo = true)
     {
         for (var i = 0; i < first.Length; i++)
         {
-            if (!MatchesGeometry(first[i].Geometry, second[i].Geometry, i, true)) { return false; }
+            if (!MatchesGeometry(first[i].Geometry, second[i].Geometry, i, useHalo)) { return false; }
         }
 
         return true;
@@ -578,6 +620,24 @@ public sealed class TerrainChunkPresentation : IDisposable
         Array.Clear(_sliceTopologyValid);
         Array.Clear(_sliceLightReads);
         _recordedLightReads = 0;
+    }
+
+    /// <summary>仅在完整网格的几何输入仍一致时，直接用新光照更新分片指纹。</summary>
+    internal bool TryReuseSliceGeometry(int slice, out TerrainSliceInputs inputs)
+    {
+        if (_reuseCompletedGeometry &&
+            _sliceGeometryValid[slice] &&
+            _buildLights != null)
+        {
+            inputs = generatedSliceInputs[slice] with
+            {
+                Lighting = LightReadsForSlice(slice).Fingerprint(_buildLights)
+            };
+            return true;
+        }
+
+        inputs = default;
+        return false;
     }
 
     internal bool CanRefreshSliceLighting(int slice, TerrainSliceInputs inputs)

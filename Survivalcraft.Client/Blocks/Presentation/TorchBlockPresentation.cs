@@ -4,8 +4,10 @@ using Game.Modding.Blocks;
 
 namespace Game.Blocks.Presentation;
 
-public class TorchBlockPresentation(TorchBlock block, BlockPresentationCatalog catalog)
-    : BlockPresentation(block, catalog)
+public class TorchBlockPresentation(
+    TorchBlock block,
+    BlockPresentationCatalog catalog
+) : BlockPresentation(block, catalog)
 {
     protected new TorchBlock Block => (TorchBlock)base.Block;
 
@@ -25,6 +27,8 @@ public class TorchBlockPresentation(TorchBlock block, BlockPresentationCatalog c
         var mountingFace = Terrain.ExtractData(value);
         if (mountingFace < BlockMeshesByVariant.Length)
         {
+            var subset = geometry.SubsetOpaque;
+            var firstIndex = subset.Indices.Count;
             generator.GenerateMeshVertices(
                 this,
                 x,
@@ -33,8 +37,9 @@ public class TorchBlockPresentation(TorchBlock block, BlockPresentationCatalog c
                 BlockMeshesByVariant[mountingFace],
                 Color.White,
                 null,
-                geometry.SubsetOpaque
+                subset
             );
+            subset.RecordRemovableBlock(firstIndex, TerrainChunk.CalculateCellIndex(x & 15, y, z & 15));
         }
     }
 

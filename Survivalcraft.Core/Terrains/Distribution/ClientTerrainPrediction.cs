@@ -1,7 +1,7 @@
 namespace Game.Terrains.Distribution;
 
 /// <summary>临时覆盖网格表现，不写入权威单元格，也不触发方块行为。</summary>
-public sealed class ClientTerrainPrediction(Terrain terrain, Action<Point2> predictionChanged)
+public sealed class ClientTerrainPrediction(Terrain terrain, Action<Point3> predictionChanged)
 {
     public const double TimeoutSeconds = 3;
 
@@ -40,7 +40,7 @@ public sealed class ClientTerrainPrediction(Terrain terrain, Action<Point2> pred
         chunk.SetGeometryPrediction(index, expectedValue, replacementValue);
         _pending.Add(_nextId, new PendingEdit(cell, chunk, index, now + TimeoutSeconds));
         GeometryChanged?.Invoke(cell);
-        predictionChanged(chunk.Coords);
+        predictionChanged(cell);
         return _nextId;
     }
 
@@ -104,7 +104,7 @@ public sealed class ClientTerrainPrediction(Terrain terrain, Action<Point2> pred
             if (before != after)
             {
                 GeometryChanged?.Invoke(pending.Cell);
-                predictionChanged(pending.Chunk.Coords);
+                predictionChanged(pending.Cell);
             }
         }
     }

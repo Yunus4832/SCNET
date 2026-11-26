@@ -155,6 +155,14 @@ public sealed class SubsystemTerrainPresentation : Subsystem, IDrawable, IUpdate
         var owner = TerrainSubsystem.Terrain.GetChunkAtCell(cell.X, cell.Z, false);
         if (owner == null) { return; }
 
+        var index = TerrainChunk.CalculateCellIndex(cell.X & 15, cell.Y, cell.Z & 15);
+        var actual = Terrain.ExtractContents(owner.GetCellValueFast(index));
+        var predicted = Terrain.ExtractContents(owner.GetCellValueForGeometry(index));
+        ChunkPresentations.Get(owner).SetBlockModelHidden(
+            index,
+            actual != predicted && TerrainSubsystem.Catalog.Blocks[actual] is TorchBlock
+        );
+
         if (EditCohorts.Find(owner) is { } group)
         {
             foreach (var chunk in group) { ChunkPresentations.Get(chunk).MarkInteractiveCell(cell.Y); }

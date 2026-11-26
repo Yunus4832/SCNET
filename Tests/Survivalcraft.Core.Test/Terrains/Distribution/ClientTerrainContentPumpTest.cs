@@ -167,7 +167,7 @@ public sealed class ClientTerrainContentPumpTest
     }
 
     [Fact]
-    public void InstalledContentWithoutMatchingLightRequestsOnlyABaselineAfterTheRetryWindow()
+    public void AdvancingContentWithoutMatchingLightDoesNotRestartTheBaselineRetryWindow()
     {
         using var terrain = new Terrain();
         var chunk = terrain.AllocateChunk(0, 0);
@@ -182,16 +182,19 @@ public sealed class ClientTerrainContentPumpTest
         var transport = new RecordingTransport();
 
         Assert.Equal(0, RequestAt(1));
+        chunk.NetworkContentVersion = 3;
+        Assert.Equal(0, RequestAt(3));
+        chunk.NetworkContentVersion = 4;
         Assert.Equal(0, RequestAt(5.999));
         Assert.Equal(1, RequestAt(6));
         Assert.Equal(
-            new ChunkContentRequest(allocation, 2, RequestLightBaseline: true),
+            new ChunkContentRequest(allocation, 4, RequestLightBaseline: true),
             Assert.Single(transport.Requests)
         );
         Assert.False(chunk.IsRequested);
         Assert.Equal(0, RequestAt(10.999));
 
-        Assert.True(lighting.Receive(TerrainLightSectionsCodec.Capture(allocation, 2, 2, 0, snapshot, null)));
+        Assert.True(lighting.Receive(TerrainLightSectionsCodec.Capture(allocation, 4, 2, 0, snapshot, null)));
         Assert.Equal(0, RequestAt(11));
         Assert.Single(lighting.Drain());
         Assert.True(chunk.HasCurrentLight);

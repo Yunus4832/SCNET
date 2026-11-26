@@ -14,6 +14,7 @@ void main(
     in float4 a_light1 : TEXCOORD2,
     in float4 a_light2 : TEXCOORD3,
     in float4 a_light3 : TEXCOORD4,
+    in float4 a_emissiveMaterial : TEXCOORD5,
 #endif
 	out float4 v_color : COLOR,
 	out float2 v_texcoord : TEXCOORD,
@@ -28,7 +29,15 @@ void main(
 	// Vertex color
 	v_color = a_color;
 #ifdef TERRAIN_LIGHT_RESPONSE
-    v_color.rgb *= calculateLight(a_light0, a_light1, a_light2, a_light3);
+    if (a_emissiveMaterial.a > 0.5)
+    {
+        v_texcoord += float2(0.75, -0.25);
+        v_color.rgb = a_emissiveMaterial.rgb;
+    }
+    else
+    {
+        v_color.rgb *= calculateLight(a_light0, a_light1, a_light2, a_light3);
+    }
 #endif
 	
     v_viewOffset = a_position - u_viewPosition;
@@ -57,10 +66,12 @@ attribute vec2 a_texcoord;
 // <Semantic Name='TEXCOORD2' Attribute='a_light1' />
 // <Semantic Name='TEXCOORD3' Attribute='a_light2' />
 // <Semantic Name='TEXCOORD4' Attribute='a_light3' />
+// <Semantic Name='TEXCOORD5' Attribute='a_emissiveMaterial' />
 attribute vec4 a_light0;
 attribute vec4 a_light1;
 attribute vec4 a_light2;
 attribute vec4 a_light3;
+attribute vec4 a_emissiveMaterial;
 #endif
 
 varying vec4 v_color;
@@ -84,7 +95,15 @@ void main()
 	// Vertex color
 	v_color = a_color;
 #ifdef TERRAIN_LIGHT_RESPONSE
-    v_color.rgb *= calculateLight(a_light0, a_light1, a_light2, a_light3);
+    if (a_emissiveMaterial.a > 0.5)
+    {
+        v_texcoord += vec2(0.75, -0.25);
+        v_color.rgb = a_emissiveMaterial.rgb;
+    }
+    else
+    {
+        v_color.rgb *= calculateLight(a_light0, a_light1, a_light2, a_light3);
+    }
 #endif
 	
     v_viewOffset = a_position - u_viewPosition;

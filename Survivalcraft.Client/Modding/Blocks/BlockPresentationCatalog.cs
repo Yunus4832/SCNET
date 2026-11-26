@@ -31,6 +31,8 @@ public sealed class BlockPresentationCatalog : IDisposable
 
     private bool _initialized;
 
+    internal int ReplayableLightbulbIndex { get; } = -1;
+
     public BlockContentCatalog Rules { get; }
 
     public FurnitureDesignPresentation Furniture { get; }
@@ -64,6 +66,12 @@ public sealed class BlockPresentationCatalog : IDisposable
 
                 _byId.Add(registration.Id, presentation);
                 _byIndex.Add(block.BlockIndex, presentation);
+                if (block.GetType() == typeof(LightbulbBlock) &&
+                    presentation.GetType() == typeof(LightbulbBlockPresentation))
+                {
+                    ReplayableLightbulbIndex = block.BlockIndex;
+                }
+
                 var fields = presentation.GetType().GetRuntimeFields()
                     .Where(field => field.IsPublic && !field.IsStatic).ToDictionary(field => field.Name);
                 foreach (var value in rules.GetAssetValues(registration.Id))

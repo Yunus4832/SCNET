@@ -3,12 +3,83 @@ using Engine.Core.Mathematics;
 using Game.Protocol.Serialization;
 using Game.Protocol.Terrain;
 using Game.Terrains;
+using Game.Terrains.Distribution;
 using Game.Terrains.Lighting;
 
 namespace Survivalcraft.Core.Test.Terrains;
 
 public sealed class TerrainReplicaLightingTest
 {
+    [Fact]
+    public void AppearanceDeltasStopAtMatchingLightWhileLaterDeltasRemainQueued()
+    {
+        using var terrain = new Terrain();
+        var chunk = Prepare(terrain, 1);
+        var allocation = new ChunkAllocationId(chunk.Coords, chunk.AllocationGeneration);
+        var clock = new PresentationClock();
+        var inbox = new TerrainReplicaLighting(terrain, _ => true, clock);
+        var dark = new TerrainLightSnapshot(default);
+        var lit = dark.WithSection(4, new TerrainLightSection(new TerrainLightChannels(0, 15)));
+        Assert.True(inbox.Receive(TerrainLightSectionsCodec.Capture(allocation, 1, 1, 0, dark, null)));
+        Assert.Single(inbox.Drain());
+        var cell = new Point3(0, 64, 0);
+        var deltas = new ClientTerrainDeltaCoordinator(
+            terrain,
+            delta =>
+            {
+                chunk.SetCellValueFast(0, 64, 0, delta.Value);
+                inbox.Requeue(chunk);
+            },
+            (target, _) => inbox.GetAppearanceLimit(target)
+        );
+
+        Assert.Equal(TerrainDeltaApplyResult.Buffered, deltas.Receive(new TerrainCellDelta(cell, 1, 1, 2)));
+        Assert.Equal(TerrainDeltaApplyResult.Buffered, deltas.Receive(new TerrainCellDelta(cell, 0, 2, 3)));
+        Assert.Equal(1, chunk.NetworkContentVersion);
+        Assert.True(inbox.Receive(TerrainLightSectionsCodec.Capture(allocation, 2, 2, 1, lit, dark)));
+        Assert.True(deltas.ResumePresentation());
+        Assert.Equal(2, chunk.NetworkContentVersion);
+        Assert.Equal(1, deltas.PendingDeltaCount);
+        Assert.False(deltas.ResumePresentation());
+        Assert.Single(inbox.Drain());
+        Assert.True(terrain.Lighting.TryGetCurrentSnapshot(chunk, out var matched));
+        Assert.Equal(15, matched.Get(0, 64, 0).Block);
+
+        Assert.True(inbox.Receive(TerrainLightSectionsCodec.Capture(allocation, 3, 3, 2, dark, lit)));
+        Assert.True(deltas.ResumePresentation());
+        Assert.Equal(3, chunk.NetworkContentVersion);
+        Assert.Single(inbox.Drain());
+        Assert.False(deltas.HasDeferredPresentation);
+    }
+
+    [Fact]
+    public void MissingLightReleasesTheAppearanceLimitAfterTheWait()
+    {
+        using var terrain = new Terrain();
+        var chunk = Prepare(terrain, 1);
+        var allocation = new ChunkAllocationId(chunk.Coords, chunk.AllocationGeneration);
+        var clock = new PresentationClock();
+        var inbox = new TerrainReplicaLighting(terrain, _ => true, clock);
+        Assert.True(
+            inbox.Receive(
+                TerrainLightSectionsCodec.Capture(
+                    allocation,
+                    1,
+                    1,
+                    0,
+                    new TerrainLightSnapshot(default),
+                    null
+                )
+            )
+        );
+
+        Assert.Equal(1, inbox.GetAppearanceLimit(chunk));
+        clock.Advance(TimeSpan.FromMilliseconds(251));
+        Assert.Null(inbox.GetAppearanceLimit(chunk));
+        chunk.NetworkContentVersion++;
+        Assert.Equal(2, inbox.GetAppearanceLimit(chunk));
+    }
+
     [Fact]
     public void ExpiredAppearanceCannotBePinnedAgainBeforeItsDelayedLightPackageArrives()
     {
@@ -51,19 +122,8 @@ public sealed class TerrainReplicaLightingTest
         Assert.False(inbox.HasHeldAppearance(a));
         Assert.True(inbox.CanPresent(batch, original));
 
-        Assert.True(
-            inbox.Receive(
-                new TerrainLightBatchPackage
-                {
-                    Updates =
-                    [
-                        TerrainLightSectionsCodec.Capture(first, 1, 3, 2, dark, lit),
-                        TerrainLightSectionsCodec.Capture(second, 1, 3, 2, dark, lit)
-                    ]
-                }
-            )
-        );
-        Assert.Equal(2, inbox.Drain().Count);
+        Assert.True(inbox.Receive(TerrainLightSectionsCodec.Capture(first, 1, 3, 2, dark, lit)));
+        Assert.Single(inbox.Drain());
         groups[batch] = inbox.CapturePresentationSources(batch);
         Assert.True(inbox.TryHoldPresentation(groups));
     }
@@ -132,6 +192,86 @@ public sealed class TerrainReplicaLightingTest
         Assert.True(inbox.CanPresent(batch, groups[batch]));
         inbox.CompletePresentation(groups);
         Assert.False(batch.IsPending);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MergedIncomingBatchCannotReplaceTheLightingBeingPreparedForDisplay(bool expires)
+    {
+        using var terrain = new Terrain();
+        var a = Prepare(terrain, 1);
+        var b = Prepare(terrain, 1, 1);
+        var c = Prepare(terrain, 1, 2);
+        var first = new ChunkAllocationId(a.Coords, a.AllocationGeneration);
+        var second = new ChunkAllocationId(b.Coords, b.AllocationGeneration);
+        var third = new ChunkAllocationId(c.Coords, c.AllocationGeneration);
+        var clock = new PresentationClock();
+        var inbox = new TerrainReplicaLighting(terrain, _ => true, clock);
+        var dark = new TerrainLightSnapshot(default);
+        var lit = dark.WithSection(4, new TerrainLightSection(new TerrainLightChannels(0, 15)));
+        foreach (var allocation in new[] { first, second, third })
+        {
+            Assert.True(inbox.Receive(TerrainLightSectionsCodec.Capture(allocation, 1, 1, 0, dark, null)));
+        }
+
+        Assert.Equal(3, inbox.Drain().Count);
+        Assert.True(
+            inbox.Receive(
+                new TerrainLightBatchPackage
+                {
+                    Updates =
+                    [
+                        TerrainLightSectionsCodec.Capture(first, 1, 2, 1, lit, dark),
+                        TerrainLightSectionsCodec.Capture(second, 1, 2, 1, lit, dark)
+                    ]
+                }
+            )
+        );
+        Assert.Equal(2, inbox.Drain().Count);
+
+        var original = Assert.IsType<TerrainLightPresentationBatch>(a.LightingPresentationBatch);
+        var sources = inbox.CapturePresentationSources(original);
+        var groups = new Dictionary<TerrainLightPresentationBatch, TerrainLightPresentationBatch.Source[]>
+        {
+            [original] = sources
+        };
+        Assert.True(inbox.TryHoldPresentation(groups));
+        Assert.True(
+            inbox.Receive(
+                new TerrainLightBatchPackage
+                {
+                    Updates =
+                    [
+                        TerrainLightSectionsCodec.Capture(second, 1, 3, 2, dark, lit),
+                        TerrainLightSectionsCodec.Capture(third, 2, 2, 1, lit, dark)
+                    ]
+                }
+            )
+        );
+
+        var merged = Assert.IsType<TerrainLightPresentationBatch>(a.LightingPresentationBatch);
+        Assert.NotSame(original, merged);
+        var visibleBatches = new HashSet<TerrainLightPresentationBatch> { merged };
+        inbox.SelectPresentationBatches(visibleBatches);
+        Assert.Same(original, Assert.Single(visibleBatches));
+        Assert.True(inbox.CanPresent(original, sources));
+        Assert.False(inbox.CanPresent(merged, inbox.CapturePresentationSources(merged)));
+        Assert.Equal(1, inbox.GetAppearanceLimit(c));
+        Assert.Empty(inbox.Drain());
+
+        if (expires) { clock.Advance(TimeSpan.FromMilliseconds(501)); }
+        else { inbox.CompletePresentation(groups); }
+
+        visibleBatches = [merged];
+        inbox.SelectPresentationBatches(visibleBatches);
+        Assert.Same(merged, Assert.Single(visibleBatches));
+        Assert.False(original.IsPending);
+        Assert.True(merged.IsPending);
+        Assert.Equal(2, inbox.GetAppearanceLimit(c));
+        c.NetworkContentVersion = 2;
+        Assert.Equal(2, inbox.Drain().Count);
+        Assert.True(inbox.CanPresent(merged, inbox.CapturePresentationSources(merged)));
     }
 
     private sealed class PresentationClock : TimeProvider

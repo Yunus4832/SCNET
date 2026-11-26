@@ -4,6 +4,7 @@ using EntitySystem.Core;
 using EntitySystem.TemplatesDatabase;
 
 using Game.Modding.Blocks;
+using Game.Terrains.Lighting;
 
 namespace Game.Subsystems;
 
@@ -12,6 +13,8 @@ public sealed class SubsystemPickablesPresentation : Subsystem, IDrawable
     private SubsystemPickables _pickables = null!;
 
     private SubsystemTerrain _subsystemTerrain = null!;
+
+    private SubsystemTerrainPresentation _terrainPresentation = null!;
 
     private SubsystemGameInfo _subsystemGameInfo = null!;
 
@@ -22,6 +25,8 @@ public sealed class SubsystemPickablesPresentation : Subsystem, IDrawable
     private BlockPresentationCatalog _blockPresentations = null!;
 
     private readonly Dictionary<Pickable, float> _lightSamples = new(ReferenceEqualityComparer.Instance);
+
+    private readonly Dictionary<TerrainChunk, TerrainLightSnapshot?> _drawLights = [];
 
     private bool _subscribed;
 
@@ -49,7 +54,9 @@ public sealed class SubsystemPickablesPresentation : Subsystem, IDrawable
         var totalElapsedGameTime = _subsystemGameInfo.TotalElapsedGameTime;
         _drawBlockEnvironmentData.SubsystemTerrain = _subsystemTerrain;
         var matrix = Matrix.CreateRotationY((float)MathUtils.Remainder(totalElapsedGameTime, 6.2831854820251465));
+        var daylight = LightingManager.CaptureSkyLightValue(_subsystemTerrain);
         var drawDistance = MathUtils.Min(_subsystemSky.VisibilityRange, 30f);
+        _drawLights.Clear();
         foreach (var pickable in _pickables.Pickables)
         {
             var position = pickable.Position;
@@ -70,27 +77,25 @@ public sealed class SubsystemPickablesPresentation : Subsystem, IDrawable
             var cellY = Terrain.ToCell(position.Y);
             var z = Terrain.ToCell(position.Z);
             var chunkAtCell = _subsystemTerrain.Terrain.GetChunkAtCell(x, z, false);
-            if (chunkAtCell is
-                {
-                    HasContents: true
-                } &&
-                cellY is >= 0 and < 255 &&
-                !IsInsidePredictedOpaqueBlock(
-                    _subsystemTerrain.Terrain,
-                    new Point3(x, cellY, z),
-                    _subsystemTerrain.Catalog
-                ))
+            if (chunkAtCell is { HasContents: true } && cellY is >= 0 and < 255)
             {
                 _drawBlockEnvironmentData.Humidity = _subsystemTerrain.Terrain.GetSeasonalHumidity(x, z);
                 _drawBlockEnvironmentData.Temperature = _subsystemTerrain.Terrain.GetSeasonalTemperature(x, z) +
                                                         SubsystemWeather.GetTemperatureAdjustmentAtHeight(cellY);
-                var f = MathUtils.Max(position.Y - cellY - 0.75f, 0f) / 0.25f;
-                var light = MathUtils.Lerp(
-                    (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, cellY, z) ?? 0),
-                    (LightingManager.SampleEffectiveLight(_subsystemTerrain, x, cellY + 1, z) ?? 0),
-                    f
-                );
-                _lightSamples[pickable] = light;
+                if (GetDrawLight(chunkAtCell) is { } light &&
+                    !IsInsidePredictedOpaqueBlock(
+                        _subsystemTerrain.Terrain,
+                        new Point3(x, cellY, z),
+                        _subsystemTerrain.Catalog
+                    ))
+                {
+                    var f = MathUtils.Max(position.Y - cellY - 0.75f, 0f) / 0.25f;
+                    _lightSamples[pickable] = MathUtils.Lerp(
+                        LightingManager.GetEffectiveLight(light.Get(x & 15, cellY, z & 15), daylight),
+                        LightingManager.GetEffectiveLight(light.Get(x & 15, cellY + 1, z & 15), daylight),
+                        f
+                    );
+                }
             }
 
             if (!_lightSamples.TryGetValue(pickable, out var sampledLight))
@@ -127,7 +132,22 @@ public sealed class SubsystemPickablesPresentation : Subsystem, IDrawable
             }
         }
 
+        _drawLights.Clear();
         PrimitivesRenderer3D.Flush(camera.ViewProjectionMatrix);
+    }
+
+    private TerrainLightSnapshot? GetDrawLight(TerrainChunk chunk)
+    {
+        if (_drawLights.TryGetValue(chunk, out var light)) { return light; }
+
+        if (_terrainPresentation.ChunkPresentations.TryGet(chunk, out var mesh) &&
+            mesh.HasCurrentUploadedLighting(chunk))
+        {
+            _subsystemTerrain.Terrain.Lighting.TryGetCurrentSnapshot(chunk, out light);
+        }
+
+        _drawLights.Add(chunk, light);
+        return light;
     }
 
     internal static bool IsInsidePredictedOpaqueBlock(Terrain terrain, Point3 cell, BlockContentCatalog catalog)
@@ -147,6 +167,7 @@ public sealed class SubsystemPickablesPresentation : Subsystem, IDrawable
 
         _pickables = Project.FindSubsystem<SubsystemPickables>(true)!;
         _subsystemTerrain = Project.FindSubsystem<SubsystemTerrain>(true)!;
+        _terrainPresentation = Project.FindSubsystem<SubsystemTerrainPresentation>(true)!;
         _subsystemGameInfo = Project.FindSubsystem<SubsystemGameInfo>(true)!;
         _subsystemSky = Project.FindSubsystem<SubsystemSkyPresentation>(true)!;
         _subsystemAudio = Project.FindSubsystem<SubsystemAudio>(true)!;

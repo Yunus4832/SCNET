@@ -4,34 +4,22 @@ using Game.Terrains.Lighting;
 namespace Game.Terrains.Distribution;
 
 /// <summary>管理客户端内容的交接、应用及按需重试调度。</summary>
-public sealed class ClientTerrainContentPump : IDisposable
+public sealed class ClientTerrainContentPump(
+    SubsystemTerrain world,
+    IChunkContentTransport transport,
+    ClientChunkContentCoordinator contents,
+    ClientTerrainDeltaCoordinator deltas
+) : IDisposable
 {
     public const double NetworkChunkRequestRetrySeconds = 5.0;
 
-    private readonly SubsystemTerrain _world;
+    private readonly ClientChunkContentApplication _application = new(transport, contents, deltas);
 
-    private readonly IChunkContentTransport _transport;
-
-    private readonly ClientChunkContentApplication _application;
-
-    private readonly TerrainMainWorkRequest _contentRequest;
-
-    public ClientTerrainContentPump(
-        SubsystemTerrain world,
-        IChunkContentTransport transport,
-        ClientChunkContentCoordinator contents,
-        ClientTerrainDeltaCoordinator deltas
-    )
-    {
-        _world = world;
-        _transport = transport;
-        _application = new ClientChunkContentApplication(transport, contents, deltas);
-        _contentRequest = world.WorkExecutor.CreateMainRequest();
-    }
+    private readonly TerrainMainWorkRequest _contentRequest = world.WorkExecutor.CreateMainRequest();
 
     public bool TryDrainReceivedContents()
     {
-        if (!_transport.HasPendingWork && !_application.HasDeferredPresentation && !_contentRequest.IsPending)
+        if (!transport.HasPendingWork && !_application.HasDeferredPresentation && !_contentRequest.IsPending)
         {
             return true;
         }
@@ -42,8 +30,8 @@ public sealed class ClientTerrainContentPump : IDisposable
 
         try
         {
-            _transport.SetPriorityCenters(
-                _world.Demands.Locations.Where(item => item.Key >= 0)
+            transport.SetPriorityCenters(
+                world.Demands.Locations.Where(item => item.Key >= 0)
                     .Select(item => item.Value.Center).ToArray()
             );
             _application.Pump();
@@ -55,15 +43,15 @@ public sealed class ClientTerrainContentPump : IDisposable
     public void UpdateRequests()
     {
         if (RequestChunkContents(
-                _world.Terrain.AllocatedChunks,
-                _world.Demands.Locations.Values.ToArray(),
-                _transport,
+                world.Terrain.AllocatedChunks,
+                world.Demands.Locations.Values.ToArray(),
+                transport,
                 Time.RealTime,
-                _world.ReplicaLighting
+                world.ReplicaLighting
             ) >
             0)
         {
-            _world.WorkExecutor.Wake();
+            world.WorkExecutor.Wake();
         }
     }
 
@@ -71,8 +59,8 @@ public sealed class ClientTerrainContentPump : IDisposable
     {
         chunk.IsRequested = false;
         chunk.NetworkRequestTime = 0.0;
-        chunk.lightRequestContentVersion = 0;
-        _world.WorkExecutor.Wake();
+        chunk.lightRequestTime = null;
+        world.WorkExecutor.Wake();
     }
 
     public void Dispose() => _contentRequest.Dispose();
@@ -130,9 +118,8 @@ public sealed class ClientTerrainContentPump : IDisposable
             chunk.NeedsContentValidation ||
             chunk.NetworkContentVersion <= 0) { return false; }
 
-        if (chunk.lightRequestContentVersion != chunk.NetworkContentVersion || now < chunk.lightRequestTime)
+        if (chunk.lightRequestTime == null || now < chunk.lightRequestTime)
         {
-            chunk.lightRequestContentVersion = chunk.NetworkContentVersion;
             chunk.lightRequestTime = now;
         }
 

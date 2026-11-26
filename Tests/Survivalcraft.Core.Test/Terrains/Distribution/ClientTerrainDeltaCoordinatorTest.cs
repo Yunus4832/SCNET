@@ -47,7 +47,7 @@ public sealed class ClientTerrainDeltaCoordinatorTest
         var coordinator = new ClientTerrainDeltaCoordinator(
             terrain,
             applied.Add,
-            (_, pending) => held && pending.All(delta => delta.Value == 42)
+            (target, pending) => held && pending.All(delta => delta.Value == 42) ? target.NetworkContentVersion : null
         );
 
         var first = Delta(10, 11, 42);

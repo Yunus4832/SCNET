@@ -6309,7 +6309,7 @@
                 <SubsystemTemplate Name="PickablesPresentation" Guid="7f453009-b23a-555f-a735-51841c86d0cc" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
                     <Parameter Name="ConstructionSide" Guid="1421b0a0-ccb4-58ac-aade-44a3da4f86b3" Value="Presentation" Type="string"/>
                     <Parameter Name="Class" Guid="f624f327-67f5-5923-9598-8d076c89b934" Value="Game.Subsystems.SubsystemPickablesPresentation" Type="string"/>
-                    <Parameter Name="Dependencies" Guid="c1fae215-868d-55fd-9b2c-d6aad4880f80" Value="Pickables,Terrain,GameInfo,SkyPresentation,Audio,Particles,BlockPresentation" Type="string"/>
+                    <Parameter Name="Dependencies" Guid="c1fae215-868d-55fd-9b2c-d6aad4880f80" Value="Pickables,Terrain,TerrainPresentation,GameInfo,SkyPresentation,Audio,Particles,BlockPresentation" Type="string"/>
                 </SubsystemTemplate>
                 <SubsystemTemplate Name="MovingBlocksPresentation" Guid="527878c3-4745-57f1-9b6e-7cff76fdc9c3" InheritanceParent="a3914c13-7801-46a6-b23a-9e2b36e9defb">
                     <Parameter Name="ConstructionSide" Guid="ca317831-1af3-506c-91b4-c6bd8e6511e0" Value="Presentation" Type="string"/>

@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using Engine.Graphics;
 
 using Game.Blocks.Presentation;
-using Game.Blocks.Presentation.Geometry;
 
 namespace Game.Terrains.Rendering;
 
@@ -15,16 +14,10 @@ internal sealed class TerrainMeshBuilder(
     TimeProvider? timeProvider = null
 )
 {
-    private readonly Terrain _terrain = terrain;
-
-    private readonly BlockGeometryGenerator _generator = generator;
-
-    private readonly Texture2D _texture = texture;
-
     private readonly TimeProvider _time = timeProvider ?? TimeProvider.System;
 
-    private readonly Game.Terrains.Lighting.TerrainLightSnapshot?[] _hashLights =
-        new Game.Terrains.Lighting.TerrainLightSnapshot?[9];
+    private readonly Lighting.TerrainLightSnapshot?[] _hashLights =
+        new Lighting.TerrainLightSnapshot?[9];
 
     private readonly TerrainChunk?[] _neighbors = new TerrainChunk?[9];
 
@@ -39,10 +32,10 @@ internal sealed class TerrainMeshBuilder(
         if (maximumTime <= TimeSpan.Zero) { return false; }
 
         var started = _time.GetTimestamp();
-        _generator.ResetCache();
-        if (output.BuildLights is { } lights) { _generator.SetLightSnapshots(chunk.Coords, lights); }
+        generator.ResetCache();
+        if (output.BuildLights is { } lights) { generator.SetLightSnapshots(chunk.Coords, lights); }
 
-        if (!output.Draws.TryGetValue(_texture, out var terrainGeometry))
+        if (!output.Draws.TryGetValue(texture, out var terrainGeometry))
         {
             terrainGeometry = new TerrainGeometry[TerrainChunk.SlicesCount];
             for (var i = 0; i < TerrainChunk.SlicesCount; i++)
@@ -50,18 +43,27 @@ internal sealed class TerrainMeshBuilder(
                 terrainGeometry[i] = new TerrainGeometry(output.Draws, i);
             }
 
-            output.Draws.Add(_texture, terrainGeometry);
+            output.Draws.Add(texture, terrainGeometry);
         }
 
         var work = output.ActiveSlice;
         if (work == null)
         {
-            var inputs = CalculateSliceInputs(
-                chunk,
-                sliceIndex,
-                output.BuildLights,
-                output.LightReadsForSlice(sliceIndex)
-            );
+            if (output.TryReuseSliceGeometry(sliceIndex, out var inputs))
+            {
+                CaptureInputs(chunk, output.BuildLights);
+            }
+            else
+            {
+                inputs = CalculateSliceInputs(
+                    chunk,
+                    sliceIndex,
+                    output.BuildLights,
+                    output.LightReadsForSlice(sliceIndex),
+                    generator.Presentations.ReplayableLightbulbIndex
+                );
+            }
+
             if (output.MatchesSliceInputs(sliceIndex, inputs)) { return true; }
 
             var refreshLighting = output.BuildLights != null && output.CanRefreshSliceLighting(sliceIndex, inputs);
@@ -74,9 +76,7 @@ internal sealed class TerrainMeshBuilder(
                 {
                     foreach (var subset in draw[sliceIndex].Subsets)
                     {
-                        subset.Vertices.Clear();
-                        subset.Indices.Clear();
-                        subset.ClearLighting();
+                        subset.ClearGeometry();
                     }
                 }
             }
@@ -92,8 +92,8 @@ internal sealed class TerrainMeshBuilder(
             throw new InvalidOperationException("Terrain slice cursor does not match the active build.");
         }
 
-        _generator.SetGeometryNeighborhood(chunk.Coords, _neighbors);
-        _generator.SetLightReadTarget(output.BuildLights != null ? work : null);
+        generator.SetGeometryNeighborhood(chunk.Coords, _neighbors);
+        generator.SetLightReadTarget(output.BuildLights != null ? work : null);
         try
         {
             if (work.RelightSubsets is { } subsets)
@@ -139,8 +139,8 @@ internal sealed class TerrainMeshBuilder(
         }
         finally
         {
-            _generator.SetGeometryNeighborhood(default, null);
-            _generator.SetLightReadTarget(null);
+            generator.SetGeometryNeighborhood(default, null);
+            generator.SetLightReadTarget(null);
         }
     }
 
@@ -190,7 +190,7 @@ internal sealed class TerrainMeshBuilder(
 
                 var run = subset.GetLightingRun(work.LightRunIndex);
                 var end = Math.Min(work.LightVertexIndex + 64, run.End);
-                _generator.RefreshLighting(subset, run, work.LightVertexIndex, end);
+                generator.RefreshLighting(subset, run, work.LightVertexIndex, end);
                 work.LightVertexIndex = end;
                 if (end == run.End) { work.LightRunIndex++; }
             }
@@ -272,12 +272,12 @@ internal sealed class TerrainMeshBuilder(
         var value = chunk.GetCellValueForGeometry(x, y, z);
         if (Terrain.ExtractContents(value) is var contents &&
             contents != 0 &&
-            _generator.Presentations.Get(contents) is WaterBlockPresentation water &&
+            generator.Presentations.Get(contents) is WaterBlockPresentation water &&
             FluidBlock.GetIsTop(Terrain.ExtractData(value)))
         {
             work.CanReplayLighting &= water.SupportsTerrainLightingReplay;
             water.GenerateSurface(
-                _generator,
+                generator,
                 geometry,
                 value,
                 chunk.Origin.X + x,
@@ -317,10 +317,10 @@ internal sealed class TerrainMeshBuilder(
             var contents = Terrain.ExtractContents(value);
             if (contents == 0) { continue; }
 
-            var presentation = _generator.Presentations.Get(contents);
+            var presentation = generator.Presentations.Get(contents);
             // External generators may derive topology or vertex color from sampled light.
             work.CanReplayLighting &= presentation.SupportsTerrainLightingReplay;
-            presentation.GenerateTerrainVertices(_generator, geometry, value, worldX, y, worldZ);
+            presentation.GenerateTerrainVertices(generator, geometry, value, worldX, y, worldZ);
         }
     }
 
@@ -340,11 +340,11 @@ internal sealed class TerrainMeshBuilder(
         {
             for (var dz = -1; dz <= 1; dz++)
             {
-                var neighbor = _terrain.GetChunkAtCoords(chunk.Coords.X + dx, chunk.Coords.Y + dz);
+                var neighbor = terrain.GetChunkAtCoords(chunk.Coords.X + dx, chunk.Coords.Y + dz);
                 _neighbors[(dx + 1) * 3 + dz + 1] = neighbor is { HasContents: true } ? neighbor : null;
                 Game.Terrains.Lighting.TerrainLightSnapshot? snapshot = null;
                 if (lights != null) { snapshot = lights[(dx + 1) * 3 + dz + 1]; }
-                else if (neighbor != null) { _terrain.Lighting.TryGetPublishedSnapshot(neighbor, out snapshot); }
+                else if (neighbor != null) { terrain.Lighting.TryGetPublishedSnapshot(neighbor, out snapshot); }
 
                 _hashLights[(dx + 1) * 3 + dz + 1] = snapshot;
             }
@@ -355,11 +355,13 @@ internal sealed class TerrainMeshBuilder(
         TerrainChunk chunk,
         int sliceIndex,
         Game.Terrains.Lighting.TerrainLightSnapshot?[]? lights = null,
-        TerrainMeshLightReads? lightReads = null
+        TerrainMeshLightReads? lightReads = null,
+        int lightbulb = -1
     )
     {
         CaptureInputs(chunk, lights);
         var geometry = 1;
+        var emissiveMaterial = 0;
         var x = MathUtils.Max(16 * sliceIndex - 1, 0);
         var x2 = MathUtils.Min(16 * (sliceIndex + 1) + 1, 256);
         for (var i = -1; i <= 16; i++)
@@ -384,7 +386,15 @@ internal sealed class TerrainMeshBuilder(
                 var endIndex = startIndex + endY - startY;
                 while (startIndex < endIndex)
                 {
-                    geometry = 31 * geometry + chunkAtCell.GetCellValueForGeometry(startIndex);
+                    var value = chunkAtCell.GetCellValueForGeometry(startIndex);
+                    if (Terrain.ExtractContents(value) == lightbulb)
+                    {
+                        var data = Terrain.ExtractData(value);
+                        emissiveMaterial = 31 * emissiveMaterial + LightbulbBlock.GetLightIntensity(data);
+                        value = Terrain.ReplaceData(value, LightbulbBlock.SetLightIntensity(data, 0));
+                    }
+
+                    geometry = 31 * geometry + value;
                     startIndex++;
                 }
 
@@ -395,11 +405,12 @@ internal sealed class TerrainMeshBuilder(
             }
         }
 
-        geometry = 31 * geometry + _terrain.SeasonTemperature;
-        geometry = 31 * geometry + _terrain.SeasonHumidity;
+        geometry = 31 * geometry + terrain.SeasonTemperature;
+        geometry = 31 * geometry + terrain.SeasonHumidity;
         return new TerrainSliceInputs(
             geometry,
-            (lightReads ?? TerrainMeshLightReads.AroundSlice(sliceIndex)).Fingerprint(_hashLights)
+            (lightReads ?? TerrainMeshLightReads.AroundSlice(sliceIndex)).Fingerprint(_hashLights),
+            emissiveMaterial
         );
     }
 }

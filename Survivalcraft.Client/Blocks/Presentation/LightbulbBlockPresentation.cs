@@ -12,8 +12,6 @@ public class LightbulbBlockPresentation(LightbulbBlock block, BlockPresentationC
 
     public readonly BlockMesh[] BulbBlockMeshes = new BlockMesh[6];
 
-    public readonly BlockMesh[] BulbBlockMeshesLit = new BlockMesh[6];
-
     public readonly BlockMesh[] SidesBlockMeshes = new BlockMesh[6];
 
     public readonly BlockMesh StandaloneBulbBlockMesh = new();
@@ -58,35 +56,17 @@ public class LightbulbBlockPresentation(LightbulbBlock block, BlockPresentationC
             : Block.CopperColor;
         if (mountingFace < BulbBlockMeshes.Length)
         {
-            if (lightIntensity <= 0)
-            {
-                generator.GenerateMeshVertices(
-                    this,
-                    x,
-                    y,
-                    z,
-                    BulbBlockMeshes[mountingFace],
-                    Color.White,
-                    null,
-                    geometry.SubsetAlphaTest
-                );
-            }
-            else
-            {
-                var r = (byte)(195 + lightIntensity * 4);
-                var g = (byte)(180 + lightIntensity * 5);
-                var b = (byte)(165 + lightIntensity * 6);
-                generator.GenerateMeshVertices(
-                    this,
-                    x,
-                    y,
-                    z,
-                    BulbBlockMeshesLit[mountingFace],
-                    new Color(r, g, b),
-                    null,
-                    geometry.SubsetOpaque
-                );
-            }
+            generator.GenerateMeshVertices(
+                this,
+                x,
+                y,
+                z,
+                BulbBlockMeshes[mountingFace],
+                Color.White,
+                null,
+                geometry.SubsetAlphaTest,
+                lightIntensity
+            );
 
             generator.GenerateMeshVertices(
                 this,
@@ -101,6 +81,10 @@ public class LightbulbBlockPresentation(LightbulbBlock block, BlockPresentationC
             generator.GenerateWireVertices(value, x, y, z, mountingFace, 0.875f, Vector2.Zero, geometry.SubsetOpaque);
         }
     }
+
+    internal static Color GetEmissiveMaterial(int intensity) => intensity == 0
+        ? default
+        : new Color(195 + intensity * 4, 180 + intensity * 5, (165 + intensity * 6) * 230 / 255);
 
     public override void DrawBlock(
         PrimitivesRenderer3D primitivesRenderer,
@@ -161,17 +145,6 @@ public class LightbulbBlockPresentation(LightbulbBlock block, BlockPresentationC
                 Color.White
             );
             BulbBlockMeshes[i].TransformTextureCoordinates(Matrix.CreateTranslation(0.1875f, 0.25f, 0f));
-            BulbBlockMeshesLit[i] = new BlockMesh();
-            BulbBlockMeshesLit[i].AppendModelPrimitive(
-                topNode.RequireMesh().Primitives[0],
-                nodeAbsoluteTransform * m,
-                true,
-                false,
-                false,
-                false,
-                new Color(255, 255, 230)
-            );
-            BulbBlockMeshesLit[i].TransformTextureCoordinates(Matrix.CreateTranslation(0.9375f, 0f, 0f));
             SidesBlockMeshes[i] = new BlockMesh();
             SidesBlockMeshes[i].AppendModelPrimitive(
                 sidesNode.RequireMesh().Primitives[0],

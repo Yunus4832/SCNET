@@ -4,7 +4,7 @@ namespace Game.Terrains.Distribution;
 public sealed class ClientTerrainDeltaCoordinator(
     Terrain terrain,
     Action<TerrainCellDelta> apply,
-    Func<TerrainChunk, IEnumerable<TerrainCellDelta>, bool>? deferPresentation = null
+    Func<TerrainChunk, IEnumerable<TerrainCellDelta>, long?>? presentationLimit = null
 )
 {
     public const int MaximumPendingDeltasPerChunk = 256;
@@ -32,7 +32,11 @@ public sealed class ClientTerrainDeltaCoordinator(
             var chunk = _terrain.GetChunkAtCoords(coords.X, coords.Y);
             if (chunk is not { HasContents: true, NeedsContentValidation: false }) { continue; }
 
-            if (ApplyAvailable(chunk) != TerrainDeltaApplyResult.Buffered) { return true; }
+            var installed = chunk.NetworkContentVersion;
+            if (ApplyAvailable(chunk) != TerrainDeltaApplyResult.Buffered || chunk.NetworkContentVersion != installed)
+            {
+                return true;
+            }
         }
 
         return false;
@@ -138,16 +142,19 @@ public sealed class ClientTerrainDeltaCoordinator(
         }
 
         var applied = false;
-        if (deltas.ContainsKey(chunk.NetworkContentVersion) &&
-            deferPresentation?.Invoke(chunk, deltas.Values) == true)
-        {
-            _presentationDeferred.Add(coords);
-            return TerrainDeltaApplyResult.Buffered;
-        }
-
+        var limit = deltas.ContainsKey(chunk.NetworkContentVersion)
+            ? presentationLimit?.Invoke(chunk, deltas.Values)
+            : null;
         _presentationDeferred.Remove(coords);
-        while (deltas.Remove(chunk.NetworkContentVersion, out var delta))
+        while (deltas.TryGetValue(chunk.NetworkContentVersion, out var delta))
         {
+            if (delta.ResultContentVersion > limit)
+            {
+                _presentationDeferred.Add(coords);
+                return TerrainDeltaApplyResult.Buffered;
+            }
+
+            deltas.Remove(chunk.NetworkContentVersion);
             PendingDeltaCount--;
             _apply(delta);
             chunk.NetworkContentVersion = delta.ResultContentVersion;

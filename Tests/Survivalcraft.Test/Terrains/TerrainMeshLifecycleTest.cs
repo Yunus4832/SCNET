@@ -9,6 +9,46 @@ namespace Survivalcraft.Test.Terrains;
 public sealed class TerrainMeshLifecycleTest
 {
     [Fact]
+    public void RebuildingASubsetClearsThePreviousTorchIndexRanges()
+    {
+        var subset = new TerrainGeometrySubset();
+        subset.Indices.Add(0);
+        subset.Indices.Add(1);
+        subset.Indices.Add(2);
+        subset.RecordRemovableBlock(0, 123);
+        Assert.Equal(new TerrainBlockIndexRange(0, 3, 123), Assert.Single(subset.RemovableBlocks!));
+
+        subset.ClearGeometry();
+        Assert.Empty(subset.RemovableBlocks!);
+        Assert.Empty(subset.Indices);
+    }
+
+    [Fact]
+    public void PickableLightingWaitsForAuthoritativeMeshUpload()
+    {
+        using var terrain = new Terrain();
+        using var mesh = new TerrainChunkPresentation();
+        var chunk = terrain.AllocateChunk(0, 0);
+        TerrainMeshTestData.Complete(chunk, mesh);
+        Assert.False(mesh.HasCurrentUploadedLighting(chunk));
+        mesh.MarkUploaded();
+        Assert.True(mesh.HasCurrentUploadedLighting(chunk));
+
+        mesh.RequestMeshRebuild();
+        mesh.PrepareMeshUpdate(chunk, true);
+        TerrainMeshTestData.CompleteSlices(mesh);
+        Assert.True(mesh.CompleteMeshBuild(chunk));
+        mesh.MarkUploaded();
+        Assert.False(mesh.HasCurrentUploadedLighting(chunk));
+
+        mesh.RequestMeshRebuild();
+        TerrainMeshTestData.Complete(chunk, mesh);
+        Assert.False(mesh.HasCurrentUploadedLighting(chunk));
+        mesh.MarkUploaded();
+        Assert.True(mesh.HasCurrentUploadedLighting(chunk));
+    }
+
+    [Fact]
     public void InteractiveBuildPinsLightWhileGeometryChangesStillRestartIt()
     {
         using var terrain = new Terrain();
@@ -374,6 +414,8 @@ public sealed class TerrainMeshLifecycleTest
         Publish(sampledChanged);
         Assert.False(mesh.HasCurrentUploadedGeometry(target));
         Assert.Equal(TerrainMeshState.Building, mesh.PrepareMeshUpdate(target));
+        Assert.True(mesh.TryReuseSliceGeometry(0, out var inputs));
+        Assert.NotEqual(default, inputs.Lighting);
         mesh.CompleteMeshSlice();
 
         var dark = new TerrainLightSection(default);
@@ -395,6 +437,8 @@ public sealed class TerrainMeshLifecycleTest
         neighbor.SetCellValueFast(0, 50, 8, Terrain.MakeBlockValue(1));
         neighbor.NetworkContentVersion++;
         Assert.False(mesh.HasCurrentUploadedGeometry(target));
+        Assert.Equal(TerrainMeshState.Building, mesh.PrepareMeshUpdate(target));
+        Assert.False(mesh.TryReuseSliceGeometry(0, out _));
 
         void Publish(TerrainLightSnapshot snapshot)
         {

@@ -20,6 +20,8 @@ public struct TerrainVertex
 
     public TerrainLightResponse Lighting;
 
+    internal Color emissiveMaterial;
+
     public static readonly VertexDeclaration VertexDeclaration = new(
         new VertexElement(0, VertexElementFormat.Vector3, VertexElementSemantic.Position),
         new VertexElement(12, VertexElementFormat.NormalizedShort2, VertexElementSemantic.TextureCoordinate),
@@ -27,6 +29,7 @@ public struct TerrainVertex
         new VertexElement(20, VertexElementFormat.NormalizedByte4, VertexElementSemantic.TextureCoordinate1),
         new VertexElement(24, VertexElementFormat.NormalizedByte4, VertexElementSemantic.TextureCoordinate2),
         new VertexElement(28, VertexElementFormat.NormalizedByte4, VertexElementSemantic.TextureCoordinate3),
-        new VertexElement(32, VertexElementFormat.NormalizedByte4, VertexElementSemantic.TextureCoordinate4)
+        new VertexElement(32, VertexElementFormat.NormalizedByte4, VertexElementSemantic.TextureCoordinate4),
+        new VertexElement(36, VertexElementFormat.NormalizedByte4, VertexElementSemantic.TextureCoordinate5)
     );
 }
