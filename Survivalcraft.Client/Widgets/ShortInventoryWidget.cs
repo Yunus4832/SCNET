@@ -6,6 +6,8 @@ public class ShortInventoryWidget : CanvasWidget
 {
     private const float _horizontalMargin = 25f;
 
+    private const int _maxSlotsPerPage = 10;
+
     private const float _pageButtonWidth = 44f;
 
     private const float _sideControlsReservedWidth = 320f;
@@ -98,7 +100,7 @@ public class ShortInventoryWidget : CanvasWidget
             _inventory.VisibleSlotsCount = MathUtils.Clamp(
                 (int)(availableWidth / 72f),
                 6,
-                pagedInventory.HotbarSlotsCount
+                Math.Min(pagedInventory.HotbarSlotsCount, _maxSlotsPerPage)
             );
         }
 
